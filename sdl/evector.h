@@ -514,7 +514,7 @@ static olxstr strof(const TVector<FT> &v) {
   }
   olxstr_buf t;
   olxcstr fmt;
-  if (olx_is_float(olx_get_primitive_type(v[0]))) {
+  if (olx_is_float<FT>::is) {
     fmt = olxcstr("%12.4") << olx_format_modifier(v[0]) << "e";
   }
   else {

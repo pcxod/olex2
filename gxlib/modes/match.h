@@ -167,8 +167,8 @@ void TMatchMode::FitAtoms(TXAtomPList& AtomsToMatch, bool group) {
     vec3d rv((AtomsToMatch[1]->crd() - AtomsToMatch[3]->crd()).Normalise());
     vec3d v1((AtomsToMatch[5]->crd() - AtomsToMatch[3]->crd()));
     vec3d v2((AtomsToMatch[4]->crd() - AtomsToMatch[3]->crd()));
-    v1 = rv.Normal(v1);
-    v2 = rv.Normal(v2);
+    v1 = rv.NormalThrough(v1);
+    v2 = rv.NormalThrough(v2);
     // replacing the rotation vector for the one with correct orientation
     rv = v1.XProdVec(v2).Normalise();
     mat3d rm = mat3d::CreateRotationMatrix(rv, v1.CAngle(v2));

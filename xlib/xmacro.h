@@ -84,6 +84,7 @@ public:
   static DefMacro(LstFS)
   static DefMacro(ASR)
   static DefMacro(Describe)
+  static DefMacro(AnalyseModel)
   static DefMacro(Sort)
   static DefMacro(SGInfo)
   static DefMacro(SAInfo)
@@ -108,6 +109,7 @@ public:
   static DefMacro(Cif2Doc)
   static DefMacro(CifCreate)
   static DefMacro(CifCreate_4NoSpherA2)
+  static DefMacro(XYZCluster_4NoSpherA2)
   static DefMacro(FcfCreate)
 
   static DefMacro(CalcCHN)
@@ -170,6 +172,7 @@ public:
   static DefMacro(Lowdin)
   static DefMacro(Adopt)
   static DefMacro(ADPInfo)
+  static DefMacro(Wigl)
 
   static DefFunc(Lst)
   static DefFunc(FileName)
@@ -212,6 +215,10 @@ public:
   static DefFunc(HKLF)
   static DefFunc(StrDir)
   static DefFunc(HAddCount)
+  // requires smtbx_refinement_least_squares_ext.pyd
+  static DefFunc(SetOlex2RefinementListener)
+  // might do nothing id no listener set!
+  static DefFunc(SetOlex2RefinementInterrupt)
 
   static void ChangeCell(const mat3d& tm, const TSpaceGroup& sg,
     const olxstr& resHKL_FN);

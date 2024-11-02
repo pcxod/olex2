@@ -207,6 +207,9 @@
     <ClCompile Include="..\..\..\olex\ctrls\listboxext.cpp">
       <Filter>ctrl\sources</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\olex\html\htmlprep.cpp">
+      <Filter>html\sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\olex\cmdline.h">
@@ -360,6 +363,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\olex\html\htmlmanager.h">
+      <Filter>html\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\olex\html\htmlprep.h">
       <Filter>html\headers</Filter>
     </ClInclude>
   </ItemGroup>

@@ -212,34 +212,40 @@
       <FloatingPointModel>Precise</FloatingPointModel>
       <FloatingPointExceptions>true</FloatingPointExceptions>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <BrowseInformation>true</BrowseInformation>
+      <BrowseInformation>false</BrowseInformation>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <SmallerTypeCheck>false</SmallerTypeCheck>
       <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FunctionLevelLinking>false</FunctionLevelLinking>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>Full</Optimization>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <PreprocessorDefinitions>_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
-      <MinimalRebuild>true</MinimalRebuild>
-      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <StructMemberAlignment>Default</StructMemberAlignment>
       <FloatingPointModel>Fast</FloatingPointModel>
       <FloatingPointExceptions>false</FloatingPointExceptions>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
-      <BrowseInformation>true</BrowseInformation>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <BrowseInformation>false</BrowseInformation>
       <WarningLevel>Level3</WarningLevel>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DebugInformationFormat>None</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <SDLCheck>false</SDLCheck>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -269,6 +275,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <OmitFramePointers>false</OmitFramePointers>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -276,7 +283,7 @@
       <TargetEnvironment>X64</TargetEnvironment>
     </Midl>
     <ClCompile>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>Full</Optimization>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <WholeProgramOptimization>false</WholeProgramOptimization>
@@ -288,14 +295,17 @@
       <StructMemberAlignment>Default</StructMemberAlignment>
       <FloatingPointModel>Fast</FloatingPointModel>
       <FloatingPointExceptions>false</FloatingPointExceptions>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <BrowseInformation>false</BrowseInformation>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>None</DebugInformationFormat>
       <AdditionalIncludeDirectories>$(OLX_WX_DIR)\include</AdditionalIncludeDirectories>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <OmitFramePointers>true</OmitFramePointers>
+      <SDLCheck>false</SDLCheck>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-static|Win32'">
@@ -379,6 +389,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <CallingConvention>Cdecl</CallingConvention>
       <FunctionLevelLinking>true</FunctionLevelLinking>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
@@ -408,6 +419,7 @@
       <CallingConvention>Cdecl</CallingConvention>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
@@ -506,6 +518,7 @@
     <ClCompile Include="..\..\..\sdl\istream.cpp" />
     <ClCompile Include="..\..\..\sdl\libfile.cpp" />
     <ClCompile Include="..\..\..\sdl\library.cpp" />
+    <ClCompile Include="..\..\..\sdl\libstr.cpp" />
     <ClCompile Include="..\..\..\sdl\log.cpp" />
     <ClCompile Include="..\..\..\sdl\macroerror.cpp" />
     <ClCompile Include="..\..\..\sdl\macrolib.cpp" />
@@ -590,10 +603,13 @@
     <ClInclude Include="..\..\..\sdl\istream.h" />
     <ClInclude Include="..\..\..\sdl\libfile.h" />
     <ClInclude Include="..\..\..\sdl\library.h" />
+    <ClInclude Include="..\..\..\sdl\libstr.h" />
     <ClInclude Include="..\..\..\sdl\linked_list.h" />
     <ClInclude Include="..\..\..\sdl\linked_operators.h" />
     <ClInclude Include="..\..\..\sdl\listalg.h" />
+    <ClInclude Include="..\..\..\sdl\list_joiner.h" />
     <ClInclude Include="..\..\..\sdl\log.h" />
+    <ClInclude Include="..\..\..\sdl\logfile.h" />
     <ClInclude Include="..\..\..\sdl\macroerror.h" />
     <ClInclude Include="..\..\..\sdl\macrolib.h" />
     <ClInclude Include="..\..\..\sdl\math\align.h" />
@@ -608,6 +624,7 @@
     <ClInclude Include="..\..\..\sdl\math\spline.h" />
     <ClInclude Include="..\..\..\sdl\md5.h" />
     <ClInclude Include="..\..\..\sdl\olxalg.h" />
+    <ClInclude Include="..\..\..\sdl\olxdll.h" />
     <ClInclude Include="..\..\..\sdl\olxfunc.h" />
     <ClInclude Include="..\..\..\sdl\olxpptr.h" />
     <ClInclude Include="..\..\..\sdl\olxptr.h" />
@@ -634,7 +651,11 @@
     <ClInclude Include="..\..\..\sdl\sorted.h" />
     <ClInclude Include="..\..\..\sdl\sortedlist.h" />
     <ClInclude Include="..\..\..\sdl\sparser.h" />
+    <ClInclude Include="..\..\..\sdl\stable_sort.h" />
+    <ClInclude Include="..\..\..\sdl\state_manager.h" />
+    <ClInclude Include="..\..\..\sdl\std_sort.h" />
     <ClInclude Include="..\..\..\sdl\strmask.h" />
+    <ClInclude Include="..\..\..\sdl\tagholder.h" />
     <ClInclude Include="..\..\..\sdl\talist.h" />
     <ClInclude Include="..\..\..\sdl\testsuit.h" />
     <ClInclude Include="..\..\..\sdl\tests\alg_test.h" />
@@ -657,6 +678,7 @@
     <ClInclude Include="..\..\..\sdl\threex3.h" />
     <ClInclude Include="..\..\..\sdl\tptrlist.h" />
     <ClInclude Include="..\..\..\sdl\typelist.h" />
+    <ClInclude Include="..\..\..\sdl\type_splitter.h" />
     <ClInclude Include="..\..\..\sdl\undo.h" />
     <ClInclude Include="..\..\..\sdl\utf16.h" />
     <ClInclude Include="..\..\..\sdl\utf8file.h" />

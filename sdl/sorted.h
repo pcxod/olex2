@@ -15,8 +15,8 @@ BeginEsdlNamespace()
 namespace sorted {
 
   /* The function assumes that there are at least two elements in the list and
-  that the given entity is greater that the first ans smalelr that the last
-  entry.
+  that the given entity is greater than the first and smaller than the last
+  entry. Returns index of the first entry that is greater than the reference.
   */
   template <class ListClass, class Comparator, typename TypeClass>
   size_t FindInsertIndex(const ListClass &list, const Comparator &cmp,
@@ -37,8 +37,9 @@ namespace sorted {
   }
 
   /* The function assumes that there are at least two elements in the list and
-  that the given entity is greater that the first ans smalelr that the last
-  entry.
+  that the given entity is greater than the first ans smaller than the last
+  entry. Returns index of the first entry that is greater or equal and true/false
+  if the value in the list (equal).
   */
   template <class ListClass, class Comparator, typename TypeClass>
   olx_pair_t<size_t, bool> FindInsertIndexEx(const ListClass &list,

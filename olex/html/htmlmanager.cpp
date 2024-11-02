@@ -348,7 +348,7 @@ void THtmlManager::funGetItemState(const TStrObjList &Params, TMacroData &E) {
   if (sw->GetFileIndex() == InvalidIndex) {
     E.SetRetVal<olxstr>("-1");
   }
-  else if (sw->GetFileIndex() == UnknownSwitchState) {
+  else if (sw->GetFileIndex() == THtmlPreprocessor::UnknownSwitchState) {
     E.SetRetVal<olxstr>("-2");
   }
   else {
@@ -378,7 +378,7 @@ void THtmlManager::funIsItem(const TStrObjList &Params, TMacroData &E) {
     return;
   }
   olxstr itemName((Params.Count() == 1) ? Params[0] : Params[1]);
-  E.SetRetVal(html->GetRoot().FindSwitch(itemName) != NULL);
+  E.SetRetVal(html->GetRoot().FindSwitch(itemName) != 0);
 }
 //.............................................................................
 void THtml::SetShowTooltips(bool v, const olxstr& html_name)  {
@@ -713,12 +713,16 @@ THtmlManager::Control THtmlManager::FindControl(const olxstr &name,
   THtml* html = (ind == InvalidIndex) ? main : FindHtml(name.SubStringTo(ind));
   olxstr objName = (ind == InvalidIndex) ? name : name.SubStringFrom(ind + 1);
   if (html == 0) {
+    const size_t ci = main->Objects.IndexOf(name);
+    if (ci != InvalidIndex) {
+      return Control(main, main->GetObject(ci), main->GetWindow(ci), name);
+    }
     me.ProcessingError(location,
-      "could not locate specified popup: ").quote() << hn;
+      "could not locate specified popup/item: ").quote() << (hn << '/' << name);
     return Control(0, 0, 0, objName);
   }
   if (objName.Equals("self")) {
-    if (needs == 1) {
+    if (needs == 1) { //AOlxCtrl
       me.ProcessingError(__OlxSrcInfo,
         "wrong control name: ").quote() << objName;
     }
@@ -729,8 +733,13 @@ THtmlManager::Control THtmlManager::FindControl(const olxstr &name,
     me.ProcessingError(__OlxSrcInfo,
       "wrong html object name: ").quote() << objName;
   }
-  return Control(html, ci == InvalidIndex ? 0 : html->GetObject(ci),
-    ci == InvalidIndex ? 0 : html->GetWindow(ci), objName);
+  AOlxCtrl* ctrl = 0;
+  wxWindow* wxw = 0;
+  if (ci != InvalidIndex) {
+    ctrl = html->GetObject(ci);
+    wxw = html->GetWindow(ci);
+  }
+  return Control(html, ctrl, wxw, objName);
 }
 //.............................................................................
 void THtmlManager::funGetState(const TStrObjList &Params, TMacroData &E) {
@@ -843,8 +852,7 @@ void THtmlManager::macLstObj(TStrObjList &Cmds, const TParamList &Options,
       "undefined html window: ").quote() << hn;
     return;
   }
-  TStrList all;
-  all.SetCapacity(html->Objects.Count());
+  TStrList all(olx_reserve(html->Objects.Count()));
   for (size_t i = 0; i < html->Objects.Count(); i++)
     all.Add(html->Objects.GetKey(i));
   for (size_t i = 0; i < Popups.Count(); i++) {
@@ -1242,7 +1250,7 @@ void THtmlManager::funSnippet(const TStrObjList &Params,
   olx_object_ptr<IDataInputStream> is = TFileHandlerManager::GetInputStream(Params[0]);
   if (is == 0) {
     TBasicApp::NewLogEntry(logError) <<
-      (olxstr("THtmlSwitch::File does not exist: ").quote() << Params[0]);
+      (olxstr("Snippet::File does not exist: ").quote() << Params[0]);
     return;
   }
   TStrList lines;
@@ -1282,10 +1290,12 @@ void THtmlManager::funSnippet(const TStrObjList &Params,
     }
     pn.TrimWhiteChars();
     idx = values.IndexOf(pn);
-    if (idx != InvalidIndex)
+    if (idx != InvalidIndex) {
       values.GetValue(idx) = vl;
-    else
+    }
+    else {
       values.Add(pn, vl);
+    }
   }
   for (size_t i=data_start; i < lines.Count(); i++) {
     bool remove=false;
@@ -1454,7 +1464,7 @@ TLibrary *THtmlManager::ExportLibrary(const olxstr &name) {
   this_InitFuncD(Call, fpOne,
     "Calls event of specified control, expects [popup.]control.event");
   this_InitFuncD(Snippet, fpAny^fpNone,
-    "Loades a file (first arg), replaces #name from name=val for following "
+    "Loads a file (first arg), replaces #name from name=val for following "
     "params and returns the result.");
   return &Library;
 }

@@ -83,6 +83,14 @@ public:
     p->p = 0;
     return p_;
   }
+  void reset(ptr *def=0) {
+    if (self().dec_ref() == 0) {
+      p = new olx_ptr_<ptr>(def);
+    }
+    else {
+      p->p = def;
+    }
+  }
   bool operator == (const this_t& ap) const {
     return *p == *ap.p;
   }
@@ -145,8 +153,8 @@ template <typename ptr> struct olx_object_ptr
 
 protected:
   friend parent_t;
-  void dec_ref() {
-    parent_t::p->template dec_ref<true, false>();
+  int dec_ref() {
+    return parent_t::p->template dec_ref<true, false>();
   }
 };
 
@@ -197,8 +205,8 @@ template <typename ptr> struct olx_array_ptr
   typedef ptr object_t;
 protected:
   friend parent_t;
-  void dec_ref() {
-    parent_t::p->template dec_ref<true, true>();
+  int dec_ref() {
+    return parent_t::p->template dec_ref<true, true>();
   }
 };
 

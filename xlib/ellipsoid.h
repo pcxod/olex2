@@ -19,7 +19,7 @@
 BeginXlibNamespace()
 
 /* Ellipsoid always must be in the cartesian frame */
-struct GramCharlier4;
+struct GramCharlier;
 class TEllipsoid : public ACollectionItem {
   bool NPD;  // not positive defined
   evecd Quad, Esd;  // quadratic form of the elipsoid and esd
@@ -29,7 +29,7 @@ class TEllipsoid : public ACollectionItem {
   list
   */
   size_t Id;
-  olx_object_ptr<GramCharlier4> anharmonic;
+  olx_object_ptr<GramCharlier> anharmonic;
 public:
   TEllipsoid();
   TEllipsoid(const TEllipsoid& e);
@@ -50,15 +50,15 @@ public:
 
   bool IsAnharmonic() const { return anharmonic.ok(); }
 
-  const olx_object_ptr<GramCharlier4>& GetAnharmonicPart() const {
+  const olx_object_ptr<GramCharlier>& GetAnharmonicPart() const {
     return anharmonic;
   }
 
-  olx_object_ptr<GramCharlier4>& GetAnharmonicPart() {
+  olx_object_ptr<GramCharlier>& GetAnharmonicPart() {
     return anharmonic;
   }
 
-  void SetAnharmonicPart(GramCharlier4* anh) {
+  void SetAnharmonicPart(GramCharlier* anh) {
     anharmonic = anh;
   }
 
@@ -142,24 +142,21 @@ public:
   DefPropP(size_t, Id);
 };
 
-struct GramCharlier4 {
+struct GramCharlier {
   tensor::tensor_rank_3 C;
   tensor::tensor_rank_4 D;
+  int order;
 
-  GramCharlier4() {}
-
-  GramCharlier4(const GramCharlier4 &o)
-    : C(o.C), D(o.D)
-  {}
-
-  compd calculate(const vec3i &h) const {
-    const double pi_sq = M_PI * M_PI;
-    double c = C.sum_up(h), d = D.sum_up(h);
-    return compd(
-      1 + d * pi_sq*pi_sq * 2 / 3,
-      -c * pi_sq*M_PI * 4 / 3);
+  GramCharlier(int order);
+  GramCharlier(const IStrList& str) {
+    FromStrings(str);
   }
-
+  compd Calculate(const vec3i& h) const;
+  void FromStrings(const IStrList& str);
+  TDataItem& ToDataItem(TDataItem &i) const;
+  static olx_object_ptr<GramCharlier> FromDataItem(const TDataItem& i);
+protected:
+  GramCharlier() {}
 };
 
   typedef TTypeList<TEllipsoid>  TEllpList;

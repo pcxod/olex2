@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -51,13 +51,40 @@ TSimpleRestraint &TSimpleRestraint::AddAtom(TCAtom& aa, const smatd* ma) {
   return *this;
 }
 //..............................................................................
+TSimpleRestraint& TSimpleRestraint::AddAtomPair(TSAtom& aa, TSAtom& ab) {
+  AddAtom(aa.CAtom(), aa.GetMatrix().IsFirst() ? 0 : &aa.GetMatrix());
+  AddAtom(ab.CAtom(), ab.GetMatrix().IsFirst() ? 0 : &ab.GetMatrix());
+  return *this;
+}
+//..............................................................................
 void TSimpleRestraint::Delete() {
   Atoms.Clear();
+  if (GetVarRef(0) != 0) {
+    XVarReference *vr = Parent.GetRM().Vars.ReleaseRef(*this, 0);
+    if (vr != 0) {
+      delete vr;
+    }
+    SetVarRef(0, 0);
+  }
 }
 //..............................................................................
 TSimpleRestraint &TSimpleRestraint::Validate() {
-  size_t group_size = ListType >= 2 && ListType <= 4 ? ListType : InvalidIndex;
-  Atoms.Validate(group_size);
+  Atoms.Validate(GetGroupSize());
+  if (ListType >= rltAtoms1N && (ListType <= rltAtoms4N) &&
+    Atoms.IsExplicit() && !Atoms.IsExpandable())
+  {
+    size_t min_ac = (ListType-rltAtoms1N)+1;
+    if (Atoms.RefCount() < min_ac) {
+      Atoms.Clear();
+    }
+  }
+  if (Atoms.IsEmpty() && GetVarRef(0) != 0) {
+    XVarReference* vr = Parent.GetRM().Vars.ReleaseRef(*this, 0);
+    if (vr != 0) {
+      delete vr;
+    }
+    SetVarRef(0, 0);
+  }
   return *this;
 }
 //..............................................................................
@@ -69,10 +96,11 @@ void TSimpleRestraint::Assign(const TSimpleRestraint& sr) {
   Esd1 = sr.Esd1;
   AllNonHAtoms = sr.AllNonHAtoms;
   Position = sr.Position;
+  remarks = sr.remarks;
 }
 //..............................................................................
 void TSimpleRestraint::EndAUSort() {
-  Atoms.EndAUSort(ListType == rltAtoms);
+  Atoms.EndAUSort(ListType >= rltAtoms1N && ListType <= rltAtoms4N);
 }
 //..............................................................................
 void TSimpleRestraint::ToDataItem(TDataItem& item) const {
@@ -88,7 +116,7 @@ void TSimpleRestraint::ToDataItem(TDataItem& item) const {
 ConstPtrList<PyObject> TSimpleRestraint::PyExport(TPtrList<PyObject>& atoms,
   TPtrList<PyObject>& equiv)
 {
-  size_t group_size = ListType >= 2 && ListType <= 4 ? ListType : InvalidIndex;
+  size_t group_size = GetGroupSize();
   TTypeList<TAtomRefList> ats = Atoms.Expand(Parent.GetRM(), group_size);
   TPtrList<PyObject> rv;
   if (group_size != InvalidIndex) {
@@ -216,7 +244,7 @@ TIString TSimpleRestraint::ToString() const {
 void TSimpleRestraint::OnAUUpdate() {
   Atoms.OnAUUpdate();
   // reduce subgroups symmetry to AU
-  size_t group_size = ListType >= 2 && ListType <= 4 ? ListType : InvalidIndex;
+  size_t group_size = GetGroupSize();
   if (group_size != InvalidIndex) {
     TPtrList<ExplicitCAtomRef> tr = Atoms.GetExplicit();
     for (size_t i = 0; i < tr.Count(); i+= group_size) {
@@ -246,7 +274,6 @@ void TSRestraintList::Assign(const TSRestraintList& rl)  {
   if (rl.GetRestraintListType() != RestraintListType) {
     throw TInvalidArgumentException(__OlxSourceInfo, "list type mismatch");
   }
-
   Clear();
   for (size_t i=0; i < rl.Count(); i++) {
     AddNew().Assign(rl.Restraints[i]);
@@ -256,6 +283,9 @@ void TSRestraintList::Assign(const TSRestraintList& rl)  {
 void TSRestraintList::ValidateRestraint(TSimpleRestraint& sr)  {
   if (sr.GetListType() != RestraintListType) {
     throw TInvalidArgumentException(__OlxSourceInfo, "list type mismatch");
+  }
+  if (sr.Validate().IsEmpty()) {
+    return;
   }
   // check if there is a restraint for all non-H atoms and locate the sr
   size_t ri = InvalidIndex;
@@ -318,6 +348,20 @@ void TSRestraintList::ValidateRestraint(TSimpleRestraint& sr)  {
   }
 }
 //..............................................................................
+void TSRestraintList::ValidateAll() {
+  size_t valid_cnt = 0;
+  for (size_t i = 0; i < Restraints.Count(); i++) {
+    if (!Restraints[i].Validate().IsValid()) {
+      Restraints.NullItem(i);
+    }
+    else {
+      Restraints[i].SetId(valid_cnt);
+      valid_cnt++;
+    }
+  }
+  Restraints.Pack();
+}
+//..............................................................................
 void TSRestraintList::Clear() {
   for (size_t i = 0; i < Restraints.Count(); i++) {
     if (Restraints[i].GetVarRef(0) != 0) {
@@ -331,7 +375,11 @@ TSimpleRestraint& TSRestraintList::Release(size_t i) {
   if (Restraints[i].GetVarRef(0) != 0) {
     RefMod.Vars.ReleaseRef(Restraints[i], 0);
   }
-  return Restraints.Release(i);
+  TSimpleRestraint &rv = Restraints.Release(i);
+  for (size_t ri = i; ri < Restraints.Count(); ri++) {
+    Restraints[ri].SetId(ri);
+  }
+  return rv;
 }
 //..............................................................................
 void TSRestraintList::Restore(TSimpleRestraint& sr)  {
@@ -339,6 +387,7 @@ void TSRestraintList::Restore(TSimpleRestraint& sr)  {
     throw TInvalidArgumentException(__OlxSourceInfo,
       "restraint parent differs");
   }
+  sr.SetId(Restraints.Count());
   Restraints.Add(sr);
   if (sr.GetVarRef(0) != 0) {
     RefMod.Vars.RestoreRef(sr, 0, sr.GetVarRef(0));

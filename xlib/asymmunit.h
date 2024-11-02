@@ -200,8 +200,10 @@ public:
   void RearrangeAtoms(const TSizeList& indices);
   // sorts residues by class and number
   void SortResidues();
-  // if a number is provided, searches by Number otherwise - by ClassName
-  ConstPtrList<TResidue> FindResidues(const olxstr& resi) const;
+  /* if a number is provided, searches by Number otherwise - by ClassName
+  * when max_n (>0) is provided the list will contain max_n entries at max
+  */
+  ConstPtrList<TResidue> FindResidues(const olxstr& resi, size_t max_n=InvalidIndex) const;
   // this is called internally by the TCAtom, to sync connectivity info
   void _OnAtomTypeChanged(TCAtom& caller);
   // called by the ref model
@@ -221,6 +223,9 @@ public:
   TCAtom* FindCAtomById(size_t id) const {
     return (id >= CAtoms.Count()) ? 0 : CAtoms[id];
   }
+  TCAtom* FindCAtom(const Atom3DId& id) const;
+  /* returned list size will match the input size but may contains nulls */
+  TCAtomPList::const_list_type FindCAtoms(const TArrayList<Atom3DId> & ids) const;
   /* makes specified type detached or attached. When re-attaching the atoms they
   could also be unmasked
   */
@@ -380,6 +385,8 @@ public:
       const cm_Element* new_element,
       bool check_atom) const;
     void SetLabel(TCAtom& a, const olxstr& label, bool update_type = false);
+    // checks if the given labels exists globally
+    bool Exists(const olxstr& label) const;
   };
 };
 

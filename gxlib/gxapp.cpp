@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -14,6 +14,7 @@
 #include "gllabels.h"
 #include "xplane.h"
 #include "xline.h"
+#include "xangle.h"
 #include "xgrowline.h"
 #include "xgrowpoint.h"
 #include "xgrid.h"
@@ -589,6 +590,16 @@ void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
   }
   Lines.Pack();
 
+  for (size_t i = 0; i < Angles.Count(); i++) {
+    if (Angles[i].IsVisible()) {
+      Angles[i].Create();
+    }
+    else {
+      Angles.NullItem(i);
+    }
+  }
+  Angles.Pack();
+
   for (size_t i=0; i < LooseObjects.Count(); i++) {
     if (!LooseObjects[i]->IsVisible()) {
       delete LooseObjects[i];
@@ -1161,8 +1172,10 @@ olxstr TGXApp::GetSelectionInfo(bool list) const {
 }
 //..............................................................................
 olxstr TGXApp::GetObjectInfoAt(int x, int y) const {
-  AGDrawObject *G = SelectObject(x, y);
-  if (G == NULL) return EmptyString();
+  AGDrawObject *G = SelectObject(x, y, false);
+  if (G == 0) {
+    return EmptyString();
+  }
   olxstr rv;
   if (G->IsSelected()) {
     rv = GetSelectionInfo();
@@ -1621,6 +1634,7 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IOlxObject* Sender,
       StoreGroup(GetSelection(), SelectionCopy[0]);
       StoreLabels();
       ClearLines();
+      ClearAngles();
       LoadingFile = true;
     }
     else if (MsgSubId == msiExit) {
@@ -1632,6 +1646,7 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IOlxObject* Sender,
       ClearGroupDefinitions();
       ClearLabels();
       ClearLines();
+      ClearAngles();
       XGrid().Clear();
       CreateObjects(false);
       GetRenderer().SetZoom(GetRenderer().CalcZoom());
@@ -1979,9 +1994,16 @@ TXAtom* TGXApp::GetXAtom(const olxstr& AtomName, bool clearSelection) {
     }
   }
   AtomIterator ai(*this);
+  bool use_resi_n = AtomName.Contains('_'),
+    use_part = AtomName.Contains('^');
   while (ai.HasNext()) {
     TXAtom& xa = ai.Next();
-    if (xa.GetLabel().Equalsi(AtomName)) {
+    olxstr an = use_resi_n ? xa.CAtom().GetResiLabel(use_part)
+      : xa.CAtom().GetLabel();
+    if (!use_resi_n && use_part && xa.CAtom().GetPart() != 0) {
+      an << '^' << (olxch)('a' + olx_abs(xa.CAtom().GetPart()) - 1);
+    }
+    if (an.Equalsi(AtomName)) {
       return &xa;
     }
   }
@@ -2112,6 +2134,7 @@ ConstPtrList<TXAtom> TGXApp::FindXAtoms(const IStrList& toks, bool getAll,
             }
           }
           TXAtom* XAFrom = rv.GetLast();
+          TXAtomPList l;
           AtomIterator ai(*this);
           while (ai.HasNext()) {
             TXAtom& XA = ai.Next();
@@ -2122,20 +2145,22 @@ ConstPtrList<TXAtom> TGXApp::FindXAtoms(const IStrList& toks, bool getAll,
               continue;
             }
             if (XATo != 0) {
-              if (CompareStr(XA.GetLabel(), XAFrom->GetLabel(), true) > 0 &&
-                CompareStr(XA.GetLabel(), XATo->GetLabel(), true) < 0)
+              if (XA.CAtom().GetId() > XAFrom->CAtom().GetId() &&
+                XA.CAtom().GetId() < XATo->CAtom().GetId())
               {
-                rv.Add(XA);
+                l.Add(XA);
               }
             }
-            else {
-              if (CompareStr(XA.GetLabel(), XAFrom->GetLabel(), true) > 0 &&
-                XA.GetType() == XAFrom->GetType())
-              {
-                rv.Add(XA);
-              }
+            else if (XA.CAtom().GetId() > XAFrom->CAtom().GetId()) {
+              l.Add(XA);
             }
           }
+          QuickSorter::Sort(l, ComplexComparator::Make(
+            ComplexAccessor::MakeP(
+              TSAtom::CAtomAccessor(),
+              FunctionAccessor::MakeConst(&TCAtom::GetId)),
+            TPrimitiveComparator()));
+          rv.AddAll(l);
           if (XATo != 0) {
             rv.Add(XATo);
           }
@@ -2288,7 +2313,7 @@ TUndoData* TGXApp::Name(TXAtom& XA, const olxstr& _Name) {
 }
 //..............................................................................
 TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
-  bool ClearSelection, bool NameResi)
+  bool ClearSelection, bool NameResi, bool DoNotSteal)
 {
   TXAtomPList Atoms;
   olx_object_ptr<TNameUndo> undo;
@@ -2307,6 +2332,11 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
       const olxstr Tmp = XA->GetLabel();
       olxstr NL = XA->GetType().symbol;
       NL << j++;
+      if (DoNotSteal && lc.Exists(NL)) {
+        TBasicApp::NewLogEntry(logWarning)
+          << "Existing label encountered: " << NL;
+        return undo.release();
+      }
       const olxstr oldL = XA->GetLabel();
       lc.SetLabel(XA->CAtom(), NL);
       undo->AddAtom(XA->CAtom(), oldL);
@@ -2323,6 +2353,11 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
       Atoms << XA;
       if (ClearSelection) {
         SelectAll(false);
+      }
+      if (DoNotSteal && lc.Exists(To)) {
+        TBasicApp::NewLogEntry(logWarning)
+          << "Existing label encountered: " << To;
+        return 0;
       }
       undo = dynamic_cast<TNameUndo *>(Name(*XA, To));
     }
@@ -2342,6 +2377,11 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
           const olxstr Tmp = XA->GetLabel();
           olxstr NL = XA->GetType().symbol;
           NL << j++;
+          if (DoNotSteal && lc.Exists(NL)) {
+            TBasicApp::NewLogEntry(logWarning)
+              << "Existing label encountered: " << NL;
+            return 0;
+          }
           const olxstr oldL = XA->GetLabel();
           lc.SetLabel(XA->CAtom(), NL);
           undo->AddAtom(XA->CAtom(), oldL);
@@ -2361,6 +2401,11 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
             const olxstr Tmp = XA->GetLabel();
             olxstr NL = elm->symbol;
             NL << Tmp.SubStringFrom(From.Length()-1);
+            if (DoNotSteal && lc.Exists(NL)) {
+              TBasicApp::NewLogEntry(logWarning)
+                << "Existing label encountered: " << NL;
+              return 0;
+            }
             bool recreate = XA->GetType() != *elm;
             const olxstr oldL = XA->GetLabel();
             lc.SetLabel(XA->CAtom(), NL);
@@ -2383,6 +2428,11 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
             const olxstr Tmp = XA->GetLabel();
             olxstr NL = XA->GetType().symbol;
             NL << j++;
+            if (DoNotSteal && lc.Exists(NL)) {
+              TBasicApp::NewLogEntry(logWarning)
+                << "Existing label encountered: " << NL;
+              return 0;
+            }
             const olxstr oldL = XA->GetLabel();
             lc.SetLabel(XA->CAtom(), NL);
             undo->AddAtom(XA->CAtom(), oldL);
@@ -2428,6 +2478,11 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
                 }
               }
             }
+          }
+          if (DoNotSteal && lc.Exists(NL)) {
+            TBasicApp::NewLogEntry(logWarning)
+              << "Existing label encountered: " << NL;
+            return 0;
           }
           const olxstr oldL = XA->GetLabel();
           lc.SetLabel(XA->CAtom(), NL, false);
@@ -2678,16 +2733,16 @@ TXGlLabel *TGXApp::AddLabel(const olxstr& Name, const vec3d& center, const olxst
   return gl;
 }
 //..............................................................................
-TXLine *TGXApp::AddLine(const olxstr& Name, const vec3d& base, const vec3d& edge)  {
-  TGPCollection *gpc = GetRenderer().FindCollection(Name);
+TXLine* TGXApp::AddLine(const olxstr& Name, const vec3d& base, const vec3d& edge) {
+  TGPCollection* gpc = GetRenderer().FindCollection(Name);
   if (gpc != 0 && gpc->ObjectCount() != 0) {
     if (!gpc->GetObject(0).Is<TXLine>()) {
-      TBasicApp::NewLogEntry(logError) << "The given collection name is alreay"
+      TBasicApp::NewLogEntry(logError) << "The given collection name is already"
         " in use by other object type";
       return 0;
     }
   }
-  TXLine *XL = new TXLine(*GlRenderer,
+  TXLine* XL = new TXLine(*GlRenderer,
     Name.IsEmpty() ? olxstr("TXLine") << LooseObjects.Count() : Name,
     base, edge);
   XL->Create();
@@ -2698,6 +2753,35 @@ TXLine* TGXApp::AddLine(const olxstr& Name, const TSAtom& base, const TSAtom& ed
   TXLine* x = AddLine(Name, base.crd(), edge.crd());
   VcoVContainer vcovc(XFile().GetAsymmUnit());
   TEValueD y = vcovc.CalcDistance(base, edge);
+  x->GetGlLabel().SetLabel(y.ToString());
+  return x;
+}
+//..............................................................................
+TXAngle* TGXApp::AddAngle(const olxstr& Name, const vec3d& center,
+  const vec3d& from, const vec3d& to)
+{
+  TGPCollection* gpc = GetRenderer().FindCollection(Name);
+  if (gpc != 0 && gpc->ObjectCount() != 0) {
+    if (!gpc->GetObject(0).Is<TXAngle>()) {
+      TBasicApp::NewLogEntry(logError) << "The given collection name is already"
+        " in use by other object type";
+      return 0;
+    }
+  }
+  TXAngle* XA = new TXAngle(*GlRenderer,
+    Name.IsEmpty() ? olxstr("TXAngle") << LooseObjects.Count() : Name,
+    center, from, to);
+  XA->Create();
+  XA->GetGlLabel().SetVisible(true);
+  return &Angles.Add(XA);
+}
+//..............................................................................
+TXAngle* TGXApp::AddAngle(const olxstr& Name, const TSAtom& center,
+  const TSAtom& from, const TSAtom& to)
+{
+  TXAngle* x = AddAngle(Name, center.crd(), from.crd(), to.crd());
+  VcoVContainer vcovc(XFile().GetAsymmUnit());
+  TEValueD y = vcovc.CalcAngle(from, center, to);
   x->GetGlLabel().SetLabel(y.ToString());
   return x;
 }
@@ -4079,6 +4163,9 @@ void TGXApp::SetStructureVisible(bool v) {
       Lines[i].SetVisible(v);
     }
   }
+  for (size_t i = 0; i < Angles.Count(); i++) {
+    Angles[i].SetVisible(v);
+  }
   PlaneIterator(*this).ForEach(AGDrawObject::FlagSetter(sgdoHidden, !v));
   XLabels.ForEach(AGDrawObject::FlagSetter(sgdoHidden, !v));
   if (v) {
@@ -5332,6 +5419,9 @@ void TGXApp::SaveStructureStyle(TDataItem& item) const {
   {
     TDataItem &pr = name_reg.AddItem("Atoms");
     for (size_t i = 0; i < TXAtom::NamesRegistry().Count(); i++) {
+      if (!TXAtom::NamesRegistry().GetKey(i).IsValid(*this)) {
+        continue;
+      }
       TDataItem& di = pr.AddItem("item");
       TXAtom::NamesRegistry().GetKey(i).ToDataItem(di, *this);
       di.AddField("value", TXAtom::NamesRegistry().GetValue(i));
@@ -5340,6 +5430,9 @@ void TGXApp::SaveStructureStyle(TDataItem& item) const {
   {
     TDataItem &pr = name_reg.AddItem("Bonds");
     for (size_t i = 0; i < TXBond::NamesRegistry().Count(); i++) {
+      if (!TXBond::NamesRegistry().GetKey(i).IsValid(*this)) {
+        continue;
+      }
       TDataItem& di = pr.AddItem("item");
       TXBond::NamesRegistry().GetKey(i).ToDataItem(di, *this);
       di.AddField("value", TXBond::NamesRegistry().GetValue(i));
@@ -5477,6 +5570,13 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const {
     }
   }
 
+  TDataItem& angles = item.AddItem("Angles");
+  for (size_t i = 0; i < Angles.Count(); i++) {
+    if (Angles[i].IsVisible()) {
+      Angles[i].ToDataItem(angles.AddItem("object"));
+    }
+  }
+
   TDataItem &user_objects = item.AddItem("UserObjects");
   for (size_t i=0; i < UserObjects.Count(); i++) {
     if (UserObjects[i].IsVisible()) {
@@ -5533,14 +5633,20 @@ void TGXApp::LoadStructureStyle(const TDataItem &item) {
     TDataItem& br = name_reg->GetItemByName("Bonds");
     if (version > 0) {
       for (size_t i = 0; i < ar.ItemCount(); i++) {
-        TXAtom::NamesRegistry().Add(
-          TSAtom::Ref(ar.GetItemByIndex(i), *this),
-          ar.GetItemByIndex(i).GetFieldByName("value"));
+        try {
+          TXAtom::NamesRegistry().Add(
+            TSAtom::Ref(ar.GetItemByIndex(i), *this),
+            ar.GetItemByIndex(i).GetFieldByName("value"));
+        }
+        catch (const TExceptionBase& e) {}
       }
       for (size_t i = 0; i < br.ItemCount(); i++) {
-        TXBond::NamesRegistry().Add(
-          TSBond::Ref(br.GetItemByIndex(i), *this),
-          br.GetItemByIndex(i).GetFieldByName("value"));
+        try {
+          TXBond::NamesRegistry().Add(
+            TSBond::Ref(br.GetItemByIndex(i), *this),
+            br.GetItemByIndex(i).GetFieldByName("value"));
+        }
+        catch (const TExceptionBase& e) {}
       }
     }
     else {
@@ -5558,6 +5664,7 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis) {
   ClearXObjects();
   ClearLabels();
   ClearLines();
+  ClearAngles();
   LabelInfo.Clear();
   ClearGroupDefinitions();
   DeleteXFiles();
@@ -5617,6 +5724,15 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis) {
       for (size_t i = 0; i < lines->ItemCount(); i++) {
         Lines.Add(new TXLine(*GlRenderer))
           .FromDataItem(lines->GetItemByIndex(i));
+      }
+    }
+  }
+  {
+    TDataItem* angles = item.FindItem("Angles");
+    if (angles != 0) {
+      for (size_t i = 0; i < angles->ItemCount(); i++) {
+        Angles.Add(
+          new TXAngle(*GlRenderer, angles->GetItemByIndex(i)));
       }
     }
   }

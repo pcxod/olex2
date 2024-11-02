@@ -115,6 +115,22 @@ T* olx_memmove(T* dest, const T1& src, size_t sz) {
   return (T*)memmove(dest, src, sz * sizeof(T));
 }
 
+struct olx_capacity_t {
+  size_t capacity, inc;
+  double inc_k;
+  olx_capacity_t(size_t cap=0, size_t inc = 5, double inc_k = 1.5)
+    : capacity(cap), inc(inc), inc_k(inc_k)
+  {}
+  size_t new_size(size_t sz) const { return static_cast<size_t>(sz*inc_k) + inc; }
+};
+
+/* onece list size reaches capacity, the new capacity is set to
+seze * inc_k + inc
+*/
+inline olx_capacity_t olx_reserve(size_t cap, size_t inc = 5, double inc_k = 1.5) {
+  return olx_capacity_t(cap, inc, inc_k);
+}
+
 template <typename A>
 struct olx_type {
   template <typename B>
@@ -164,7 +180,12 @@ protected:
   size_t GetCapacity()  const { return SData == 0 ? 0 : SData->Length; }
   size_t _Increment, _Length;
   mutable size_t _Start;
-  TTIString() {}
+  TTIString()
+    : SData(0), _Increment(8), _Length(0), _Start(0)
+  {}
+  TTIString(size_t cap)
+    : SData(new Buffer(cap)), _Increment(8), _Length(0), _Start(0)
+  {}
   void checkBufferForModification(size_t newSize) const {
     if (SData == 0) {
       SData = new Buffer(newSize + _Increment);
@@ -244,6 +265,17 @@ public:
     }
 #endif
     return SData->Data[_Start + i];
+  }
+  void Assign(const TTIString& v) {
+    if (SData != 0 && --SData->RefCnt == 0) {
+      delete SData;
+    }
+    _Start = v._Start;
+    _Length = v._Length;
+    SData = v.SData;
+    if (SData != 0) {
+      SData->RefCnt++;
+    }
   }
   /* reads content of the string to external buffer, which must be able to
  accommodate string length + 1 for the end of string char

@@ -18,7 +18,7 @@
 #include "pers_util.h"
 
 TDUnitCell::TDUnitCell(TGlRenderer& R, const olxstr& collectionName) :
-AGDrawObject(R, collectionName), Edges(24)
+  AGDrawObject(R, collectionName), Edges(24)
 {
   SetSelectable(false);
   Reciprocal = false;
@@ -27,13 +27,15 @@ AGDrawObject(R, collectionName), Edges(24)
   CellToCartesian.I();
   HklToCartesian.I();
   olxstr label_cn("duc_label");
-  for( int i=0; i < 4; i++ )
+  for (int i = 0; i < 4; i++) {
     (Labels[i] = new TXGlLabel(Parent, label_cn))->SetVisible(false);
+  }
 }
 //...........................................................................
 TDUnitCell::~TDUnitCell() {
-  for (int i=0; i < 4; i++)
+  for (int i = 0; i < 4; i++) {
     delete Labels[i];
+  }
 }
 //...........................................................................
 void TDUnitCell::Init(const TAsymmUnit &au) {
@@ -224,8 +226,9 @@ void TDUnitCell::ListPrimitives(TStrList &List) const {}
 void TDUnitCell::UpdatePrimitives(int32_t Mask)  {}
 //..............................................................................
 void TDUnitCell::UpdateLabel() {
-  for (int i=0; i < 4; i++)
+  for (int i = 0; i < 4; i++) {
     Labels[i]->Update();
+  }
 }
 //..............................................................................
 void TDUnitCell::Update() {
@@ -235,18 +238,20 @@ void TDUnitCell::Update() {
   }
 }
 //..............................................................................
-void TDUnitCell::SetVisible(bool v)  {
+void TDUnitCell::SetVisible(bool v) {
   AGDrawObject::SetVisible(v);
-  for( int i=0; i < 4; i++ )
+  for (int i = 0; i < 4; i++) {
     Labels[i]->SetVisible(v);
+  }
 }
 //..............................................................................
 void TDUnitCell::ToDataItem(TDataItem& di) const {
   di.AddField("reciprocal", IsReciprocal());
   di.AddField("visible", IsVisible());
   TDataItem& labels = di.AddItem("Labels");
-  for (int i=0; i < 4; i++)
-    Labels[i]->ToDataItem(labels.AddItem(olxstr((olxch)('x'+i))));
+  for (int i = 0; i < 4; i++) {
+    Labels[i]->ToDataItem(labels.AddItem(olxstr((olxch)('a' + i))));
+  }
   TDataItem& vertices = di.AddItem("Vertices");
   vertices.AddField("o", PersUtil::VecToStr(Edges[0]));
   vertices.AddField("a", PersUtil::VecToStr(Edges[1]));
@@ -254,12 +259,13 @@ void TDUnitCell::ToDataItem(TDataItem& di) const {
   vertices.AddField("c", PersUtil::VecToStr(Edges[5]));
 }
 //..............................................................................
-void TDUnitCell::FromDataItem(const TDataItem& di)  {
+void TDUnitCell::FromDataItem(const TDataItem& di) {
   Reciprocal = di.FindField("reciprocal").ToBool();
   SetVisible(di.FindField("visible", TrueString()).ToBool());
   const TDataItem& labels = di.GetItemByName("Labels");
-  for (int i=0; i < 4; i++)
+  for (int i = 0; i < 4; i++) {
     Labels[i]->FromDataItem(labels.GetItemByIndex(i));
+  }
   TDataItem* vertices = di.FindItem("Vertices");
   if (vertices != 0) {
     Edges[0] = PersUtil::VecFromStr<vec3d>(vertices->GetFieldByName('o'));
@@ -288,8 +294,9 @@ const_strlist TDUnitCell::ToPov(olx_cdict<TGlMaterial, olxstr> &materials) const
       ',' << pov::to_str(crdc.crd(GetEdge(i+1))) << ", 0.01} texture {" <<
       p_mat << "}}";
   }
-  for (int i=0; i < 4; i++)
+  for (int i = 0; i < 4; i++) {
     out << Labels[i]->ToPov(materials);
+  }
   out.Add("  }}");
   return out;
 }
@@ -315,8 +322,9 @@ const_strlist TDUnitCell::ToWrl(olx_cdict<TGlMaterial, olxstr> &materials) const
   out.Add("  color Color{ color[") <<
     wrl::to_str(m.AmbientF) << "]}";
   out.Add("  colorIndex[0 0 0 0]}}");
-  for (int i=0; i < 4; i++)
+  for (int i = 0; i < 4; i++) {
     out << Labels[i]->ToWrl(materials);
+  }
   out.Add(" ]}");
   return out;
 }

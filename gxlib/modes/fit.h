@@ -153,8 +153,7 @@ public:
       rm.Vars.GetVar(var));
     olxset<TAfixGroup*, TPointerComparator> afix_groups;
     if (DoSplit) {
-      DistanceGenerator::atom_map_1_t atom_map;
-      atom_map.SetCapacity(Atoms.Count());
+      DistanceGenerator::atom_map_1_t atom_map(olx_reserve(Atoms.Count()));
       DistanceGenerator::atom_set_t atom_set;
       atom_set.SetCapacity(Atoms.Count());
       bool set_parts = part == DefNoPart;
@@ -258,7 +257,7 @@ public:
       if (Restrain) {
         DistanceGenerator ds;
         ds.Generate(au, atom_set, true, false);
-        ds.GenerateSADI(rm, atom_map);
+        ds.GenerateSADI(rm, atom_map, 0.02, 0.04);
       }
       if (RestrainU) {
         TSimpleRestraint &r1 = rm.rRIGU.AddNew();

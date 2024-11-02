@@ -25,8 +25,11 @@ const unsigned short
   peInvalidOption       = 0x0008,
   peInvalidArgCount     = 0x0010,
   peIllegalState        = 0x0020,
+  peProcessingBreak     = 0x0040,
   // these are for special handling
-  peUnhandled           = 0x1000;
+  peUnhandled           = 0x1000,
+  // set false if called as a function with ()
+  piMacroCall           = 0x2000;
 
 class TMacroData : public IOlxObject {
   unsigned short ProcessError;
@@ -68,7 +71,10 @@ public:
 
   void ProcessingException(const olxstr& location,
     const TExceptionBase& exc);
-
+  
+  void Break() {
+    ProcessError |= peProcessingBreak;
+  }
   bool IsSuccessful() const {
     return ((ProcessError & 0x0FFF) == 0);
   }
@@ -90,10 +96,15 @@ public:
   bool IsIllegalState() const {
     return (ProcessError & peIllegalState) != 0;
   }
+  bool IsBreakCalled() const {
+    return (ProcessError & peProcessingBreak) != 0;
+  }
 
   bool IsHandled() const {
     return (ProcessError & peUnhandled) == 0;
   }
+
+  DefPropBFIsSet(MacroCall, ProcessError, piMacroCall);
 
   const olxstr& GetInfo() const { return ErrorInfo; }
   DefPropC(olxstr, Location)

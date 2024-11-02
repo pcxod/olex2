@@ -505,6 +505,7 @@
     <ClCompile Include="..\..\..\olex\dgenopt.cpp" />
     <ClCompile Include="..\..\..\olex\dgrad.cpp" />
     <ClCompile Include="..\..\..\olex\html\htmlmanager.cpp" />
+    <ClCompile Include="..\..\..\olex\html\htmlprep.cpp" />
     <ClCompile Include="..\..\..\olex\main_gui.cpp" />
     <ClCompile Include="..\..\..\olex\nui\nui.cpp" />
     <ClCompile Include="..\..\..\olex\nui\skeleton.cpp" />
@@ -570,6 +571,7 @@
     <ClInclude Include="..\..\..\olex\dgrad.h" />
     <ClInclude Include="..\..\..\olex\edit.h" />
     <ClInclude Include="..\..\..\olex\html\htmlmanager.h" />
+    <ClInclude Include="..\..\..\olex\html\htmlprep.h" />
     <ClInclude Include="..\..\..\olex\nui\nui.h" />
     <ClInclude Include="..\..\..\olex\tasks.h" />
     <ClInclude Include="..\..\..\repository\cdsfs.h" />

@@ -12,7 +12,7 @@
 #include "typelist.h"
 #include "paramlist.h"
 
-class THtml;
+class THtmlPreprocessor;
 class THtmlSwitch {
 protected:
   olxstr Name;
@@ -24,13 +24,14 @@ protected:
   THtmlSwitch *ParentSwitch;
 protected:
   bool UpdateSwitch;
-  THtml* ParentHtml;
+  THtmlPreprocessor* ParentHtml;
 public:
-  THtmlSwitch(THtml *_parent_html, THtmlSwitch *_parent_switch) :
-      ParentHtml(_parent_html),
-        ParentSwitch(_parent_switch),
-        UpdateSwitch(true),
-        FileIndex(0) {}
+  THtmlSwitch(THtmlPreprocessor *_parent_html, THtmlSwitch *_parent_switch)
+    : ParentHtml(_parent_html),
+    ParentSwitch(_parent_switch),
+    UpdateSwitch(true),
+    FileIndex(0)
+  {}
   virtual ~THtmlSwitch() {  Clear();  }
   void Clear();
 

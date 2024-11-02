@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -42,7 +42,7 @@ void TSPlane::Init(const TTypeList< olx_pair_t<TSAtom*, double> >& atoms) {
     points.AddNew(atoms[i].GetA()->crd(), atoms[i].GetB());
   }
   _Init(points);
-  Crds.Clear().AddAll(atoms);
+  Crds.Clear().AddCopyAll(atoms);
 }
 //..............................................................................
 void TSPlane::_Init(const TTypeList<olx_pair_t<vec3d, double> >& points) {

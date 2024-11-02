@@ -83,7 +83,7 @@ class TGlRenderer : public AActionHandler {
   TPtrList<TGlGroup> FGroups;   // list of groups
   TGlGroup* FSelection;  // list of selected objects
   class TTextureManager* TextureManager;
-  bool FSceneComplete, Selecting;
+  bool FSceneComplete, Selecting, Picking;
 //__________________ perspective related stuff
   bool FPerspective;
   ematd PerspectiveMatrix;
@@ -169,6 +169,7 @@ public:
   // if true, then min/max are not updated for newly created objects
   bool IsSceneComplete() const {  return FSceneComplete;  }
   bool IsSelecting() const {  return Selecting;  }
+  bool IsPicking() const { return Picking; }
   void SetSceneComplete(bool v) {  FSceneComplete = v;  }
   // basis manipulation
   TEBasis& GetBasis() {  return FBasis; }
@@ -269,7 +270,7 @@ public:
   // this is to be used by groups
   void HandleSelection(const AGDrawObject &o, const TGlPrimitive &p,
     bool SelectObjects, bool SelectPrimitives) const;
-  AGDrawObject* SelectObject(int x, int y);
+  AGDrawObject* SelectObject(int x, int y, bool picking);
   TGlPrimitive* SelectPrimitive(int x, int y);
 
   size_t GroupCount() const {  return FGroups.Count();  }

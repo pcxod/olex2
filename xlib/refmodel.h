@@ -217,6 +217,8 @@ public:
   void Validate();
   // creates a human readable description of the refinement
   const_strlist Describe();
+  const_strlist AnalyseModel() const;
+  size_t MergeSADI();
 #ifdef _PYTHON
   PyObject* PyExport(bool export_connectivity);
 #endif
@@ -383,7 +385,7 @@ Friedel opposites of components 1 ... m
   // internal: sorts all possible atom containers
   void Sort_();
   /* For internal use - this returns sensible results only in between a call to
-  BenAUSort_ and EndAUSorte_ each [TCAtom::GetId()] returns previous value
+  BeforeAUSort_ and EndAUSorte_ each [TCAtom::GetId()] returns previous value
   */
   const TSizeList & GetOldAtomIds_() { return old_atom_ids; }
 
@@ -594,6 +596,7 @@ Friedel opposites of components 1 ... m
   bool IsDefaultRestraint(const TSameGroup &restraint) const;
   // feeds on .options - instance static
   bool DoShowRestraintDefaults() const;
+  void SortAtomsOrderOut();
   void LibHasOccu(const TStrObjList& Params, TMacroData& E);
   void LibOSF(const TStrObjList& Params, TMacroData& E);
   void LibBASF(const TStrObjList& Params, TMacroData& E);
@@ -612,6 +615,7 @@ Friedel opposites of components 1 ... m
     TMacroData &E);
   void LibModelSrc(const TStrObjList &Params, TMacroData &E);
   void LibStoreParam(TStrObjList& Cmds, const TParamList& Opts, TMacroData& E);
+  void LibClearParams(TStrObjList& Cmds, const TParamList& Opts, TMacroData& E);
 
   TLibrary* ExportLibrary(const olxstr& name=EmptyString());
   struct VPtr : public olx_virtual_ptr<RefinementModel> {

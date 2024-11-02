@@ -88,9 +88,8 @@ public:
   TSAtom& GetAtom(size_t i) { return *Crds[i].a; }
   double GetWeight(size_t i) const { return Crds[i].GetB(); }
   void _PlaneSortByAtomTags() {
-    InsertSorter::Sort(Crds,
-      ComplexComparator::Make(AtomTagAccessor(), TPrimitiveComparator()),
-      DummySortListener());
+    QuickSorter::Sort(Crds,
+      ComplexComparator::Make(AtomTagAccessor(), TPrimitiveComparator()));
   }
   /* returns inverse intersects with the lattice vectors, the vector is divided
   by modulus of the smallest non-zero value. Takes the orthogonalisation matrix

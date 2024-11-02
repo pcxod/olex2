@@ -11,6 +11,7 @@
 #define __olx_sdl_sortedlist_H
 #include "typelist.h"
 #include "sorted.h"
+#include "esort.h"
 BeginEsdlNamespace()
 
 template <typename, typename> class ConstSortedObjectList;
@@ -25,6 +26,12 @@ public:
   TTSortedListBase() {}
   TTSortedListBase(const Comparator &cmp)
     : cmp(cmp)
+  {}
+  TTSortedListBase(const olx_capacity_t &cap)
+    : list(cap)
+  {}
+  TTSortedListBase(const Comparator& cmp, const olx_capacity_t& cap)
+    : list(cap), cmp(cmp)
   {}
   TTSortedListBase(const TTSortedListBase& l)
     : list(l.list), cmp(l.cmp)
@@ -60,6 +67,7 @@ public:
   }
   void Delete(size_t ind)  {  list.Delete(ind);  }
   void Clear()  {  list.Clear();  }
+  void SetCapacity(const olx_capacity_t &cap) { list.SetCapacity(cap); }
   void SetCapacity(size_t cap)  {  list.SetCapacity(cap);  }
   void SetIncrement(size_t incr)  {  list.SetIncrement(incr);  }
   // may be useful for copy constructors, etc
@@ -84,6 +92,12 @@ public:
   TTSortedList() {}
   TTSortedList(const Comparator &cmp)
     : __parent_t(cmp)
+  {}
+  TTSortedList(const olx_capacity_t& cap)
+    : __parent_t(cap)
+  {}
+  TTSortedList(const Comparator& cmp, const olx_capacity_t& cap)
+    : __parent_t(cmp, cap)
   {}
   TTSortedList(const TTSortedList& l)
     : __parent_t(l)
@@ -114,6 +128,12 @@ public:
   SortedTypeList(const Comparator & cmp)
     : _parent_t(cmp)
   {}
+  SortedTypeList(const olx_capacity_t& cap)
+    :_parent_t(cap)
+  {}
+  SortedTypeList(const Comparator& cmp, const olx_capacity_t& cap)
+    : _parent_t(cmp, cap)
+  {}
   SortedTypeList(const SortedTypeList& l)
     : _parent_t(l)
   {}
@@ -128,12 +148,13 @@ public:
   added, pos is is initialised with the item index, if item is already in the
   list - it is deleted and the list will not be modified
   */
-  bool AddUnique(TypeClass* entry, size_t* pos = NULL) {
+  bool AddUnique(TypeClass* entry, size_t* pos = 0) {
     return AddUnique(*entry, pos);
   }
-  bool AddUnique(TypeClass& entry, size_t* pos = NULL) {
-    if (sorted::AddUnique(_parent_t::list, _parent_t::cmp, entry, pos))
+  bool AddUnique(TypeClass& entry, size_t* pos = 0) {
+    if (sorted::AddUnique(_parent_t::list, _parent_t::cmp, entry, pos)) {
       return true;
+    }
     delete &entry;
     return false;
   }
@@ -149,16 +170,21 @@ template <class ObjectClass> class TObjectList {
   TPtrList<ObjectClass> list;
 public:
   TObjectList() {}
+  TObjectList(const olx_capacity_t &cap)
+    : list(cap)
+  {}
   TObjectList(const TObjectList& li) {
     SetCapacity(li.Count());
-    for (size_t i=0; i < li.Count(); i++)
+    for (size_t i = 0; i < li.Count(); i++) {
       Add(li[i]);
+    }
   }
   ~TObjectList()  {  list.DeleteItems();  }
   void TakeOver(TObjectList &l, bool do_delete=false)  {
     list.TakeOver(l.list);
-    if( do_delete )
-      delete &l;
+    if (do_delete) {
+      delete& l;
+    }
   }
   ObjectClass& operator [] (size_t i) const {  return *list[i];  }
   ObjectClass& GetLast() const {  return *list.GetLast();  }
@@ -167,8 +193,9 @@ public:
   TObjectList& operator = (const TObjectList<ObjectClass>& li) {
     Clear();
     SetCapacity(li.Count());
-    for( size_t i=0; i < li.Count(); i++ )
+    for (size_t i = 0; i < li.Count(); i++) {
       Add(li[i]);
+    }
     return *this;
   }
   void Add(const ObjectClass& obj)  {  list.Add(new ObjectClass(obj));  }
@@ -180,12 +207,11 @@ public:
     list.Clear();
   }
   void Delete(size_t ind)  {
-    if( list[ind] != NULL )
-      delete list[ind];
+    olx_del_obj(list[ind]);
     list.Delete(ind);
   }
+  void SetCapacity(const olx_capacity_t &cap) { list.SetCapacity(cap); }
   void SetCapacity(size_t cap)  {  list.SetCapacity(cap);  }
-  void SetIncrement(size_t incr)  {  list.SetIncrement(incr);  }
 public:
   typedef ObjectClass list_item_type;
 };
@@ -203,6 +229,12 @@ public:
   SortedObjectList() {}
   SortedObjectList(const Comparator &cmp) :
     _parent_t(cmp)
+  {}
+  SortedObjectList(const olx_capacity_t& cap)
+  : _parent_t(cap)
+  {}
+  SortedObjectList(const Comparator& cmp, const olx_capacity_t& cap) :
+    _parent_t(cmp, cap)
   {}
   SortedObjectList(const SortedObjectList& l)
     : _parent_t(l)

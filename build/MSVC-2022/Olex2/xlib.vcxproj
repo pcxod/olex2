@@ -199,27 +199,34 @@
       <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FunctionLevelLinking>false</FunctionLevelLinking>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <Optimization>Disabled</Optimization>
-      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
-      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <Optimization>Full</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <AdditionalIncludeDirectories>..\..\..\sdl;..\..\..\repository;..\..\..\xlib;$(OLX_PY_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_PYTHON;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
-      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <StructMemberAlignment>Default</StructMemberAlignment>
       <FloatingPointModel>Fast</FloatingPointModel>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
-      <BrowseInformation>true</BrowseInformation>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <BrowseInformation>false</BrowseInformation>
       <WarningLevel>Level3</WarningLevel>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DebugInformationFormat>None</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <SDLCheck>false</SDLCheck>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-static|Win32'">
@@ -270,6 +277,7 @@
       <CallingConvention>Cdecl</CallingConvention>
       <FloatingPointExceptions>true</FloatingPointExceptions>
       <FunctionLevelLinking>true</FunctionLevelLinking>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Lib>
       <LinkTimeCodeGeneration>false</LinkTimeCodeGeneration>
@@ -293,7 +301,7 @@
       <StructMemberAlignment>Default</StructMemberAlignment>
       <FloatingPointModel>Precise</FloatingPointModel>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <BrowseInformation>true</BrowseInformation>
+      <BrowseInformation>false</BrowseInformation>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <SmallerTypeCheck>false</SmallerTypeCheck>
@@ -302,6 +310,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <OmitFramePointers>false</OmitFramePointers>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -309,7 +318,7 @@
       <TargetEnvironment>X64</TargetEnvironment>
     </Midl>
     <ClCompile>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>Full</Optimization>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <WholeProgramOptimization>false</WholeProgramOptimization>
@@ -321,14 +330,17 @@
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <StructMemberAlignment>Default</StructMemberAlignment>
       <FloatingPointModel>Fast</FloatingPointModel>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <BrowseInformation>false</BrowseInformation>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>None</DebugInformationFormat>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FloatingPointExceptions>false</FloatingPointExceptions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <OmitFramePointers>true</OmitFramePointers>
+      <SDLCheck>false</SDLCheck>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-static|x64'">
@@ -386,6 +398,7 @@
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <FloatingPointExceptions>true</FloatingPointExceptions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
@@ -407,10 +420,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\repository\refinement_listener.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ac.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ag.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Al.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Am.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ar.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_As.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_At.cpp" />
@@ -419,12 +434,15 @@
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ba.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Be.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Bi.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Bk.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Br.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_C.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ca.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Cd.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ce.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Cf.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Cl.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Cm.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Co.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Cr.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Cs.cpp" />
@@ -460,6 +478,7 @@
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Nd.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ne.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ni.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Np.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_O.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Os.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_P.cpp" />
@@ -470,6 +489,7 @@
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Po.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Pr.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Pt.cpp" />
+    <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Pu.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ra.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Rb.cpp" />
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Re.cpp" />
@@ -1153,6 +1173,7 @@
     <ClCompile Include="..\..\..\xlib\ciftab.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\repository\refinement_listener.h" />
     <ClInclude Include="..\..\..\sdl\tests\file_test.h" />
     <ClInclude Include="..\..\..\xlib\afixgroup.h" />
     <ClInclude Include="..\..\..\xlib\analysis.h" />

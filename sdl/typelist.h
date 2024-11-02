@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -9,7 +9,6 @@
 
 #ifndef __olx_sdl_typelist_H
 #define __olx_sdl_typelist_H
-#include "esort.h"
 #include "etraverse.h"
 #include "exception.h"
 #include "tptrlist.h"
@@ -37,6 +36,8 @@ protected:
 public:
   // creates a new empty objects
   TTypeListExt() {}
+  // allocates storage for the given capacity
+  explicit TTypeListExt(const olx_capacity_t& cap) : List(cap) {}
   TTypeListExt(size_t size, bool do_allocate = true) : List(size) {
     if (do_allocate) {
       for (size_t i = 0; i < size; i++) {
@@ -127,25 +128,23 @@ public:
   //..............................................................................
   const TPtrList<T>& ptr() const { return List; }
   //..............................................................................
-    //virtual IOlxObject* Replicate() const {
-    //  TTypeListExt* list =
-    //    new TTypeListExt(Count(), false);
-    //  for( size_t i=0; i < Count(); i++ )
-    //    list->List[i] = new T(*List[i]);
-    //  return list;
-    //}
-  //..............................................................................
-    /* creates new copies of the objest, be careful as the copy constructor must
-    exist
-    */
-  template <class alist> void AddAll(const alist& list) {
+  // creates new copies of objects, be careful as the copy constructor must exist
+  template <class alist> void AddCopyAll(const alist& list) {
     List.SetCapacity(list.Count() + List.Count());
     for (size_t i = 0; i < list.Count(); i++) {
       List.Add(new T(list[i]));
     }
   }
   //..............................................................................
-    //adds a new object into the list - will be deleted
+  // objects will be deleted - make sure the owning container releases them!
+  template <class alist> void AddAll(const alist& list) {
+    List.SetCapacity(list.Count() + List.Count());
+    for (size_t i = 0; i < list.Count(); i++) {
+      List.Add(list[i]);
+    }
+  }
+  //..............................................................................
+  //adds a new object into the list - will be deleted
   template <class obj_t>
   obj_t& Add(obj_t& Obj) { return *List.Add(&Obj); }
   //adds a new object into the list - will be deleted
@@ -366,15 +365,19 @@ public:
     return Assign(list);
   }
   //..............................................................................
+  olx_capacity_t& GetCapacity() { return List.GetCapacity(); }
+  const olx_capacity_t& GetCapacity() const { return List.GetCapacity(); }
+  //..............................................................................
+  TTypeListExt& SetCapacity(const olx_capacity_t &c) {
+    List.SetCapacity(c);
+    return *this;
+  }
+  //..............................................................................
   TTypeListExt& SetCapacity(size_t v) {
     List.SetCapacity(v);
     return *this;
   }
   //..............................................................................
-  TTypeListExt& SetIncrement(size_t v) {
-    List.SetIncrement(v);
-    return *this;
-  }
   //..............................................................................
   void Delete(size_t index) {
     if (List[index] != 0) {
@@ -391,8 +394,9 @@ public:
       List.Count() + 1);
 #endif
     for (size_t i = 0; i < count; i++) {
-      if (List[from + i] != NULL)
+      if (List[from + i] != 0) {
         delete (DestructCast*)List[from + i];
+      }
     }
     List.DeleteRange(from, count);
   }
@@ -420,7 +424,9 @@ public:
   }
   //..............................................................................
   TTypeListExt& Shrink(size_t newSize) {
-    if (newSize >= List.Count())  return *this;
+    if (newSize >= List.Count()) {
+      return *this;
+    }
     for (size_t i = newSize; i < List.Count(); i++)
       if (List[i] != 0) {
         delete (DestructCast*)List[i];
@@ -565,6 +571,7 @@ public:
   };
   typedef T list_item_type;
   typedef ConstTypeListExt<T, DestructCast> const_list_type;
+  olx_list_2_std;
 };
 
 template <class T>
@@ -595,6 +602,17 @@ template <class T>
     template <class alist> TTypeList& operator = (const alist& list)  {
       TTypeListExt<T,T>::operator = (list);
       return *this;
+    }
+    template <class Functor>
+    ConstTypeList<T> Filter(const Functor& f) const {
+      TTypeList rv;
+      rv.SetCapacity(this->List.Count());
+      for (size_t i = 0; i < this->List.Count(); i++) {
+        if (f.OnItem(this->GetItem(i), i)) {
+          rv.Add(new T(this->GetItem(i)));
+        }
+      }
+      return rv;
     }
   public:
     typedef T list_item_type;

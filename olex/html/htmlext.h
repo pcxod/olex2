@@ -20,7 +20,7 @@
 #include "edict.h"
 #include "../ctrls.h"
 #include "widgetcellext.h"
-class THtmlSwitch;
+#include "htmlprep.h"
 
 enum {
   html_parent_resize = 2
@@ -28,12 +28,13 @@ enum {
 
 class THtmlManager;
 
-class THtml : public wxHtmlWindow, public AEventsDispatcher, public AOlxCtrl {
+class THtml : public wxHtmlWindow, public AEventsDispatcher, public AOlxCtrl,
+  public THtmlPreprocessor
+{
 private:
   bool Movable, PageLoadRequested, ShowTooltips;
   olxdict<const IOlxObject*, int, TPointerComparator> Locks;
   olxstr PageRequested;
-  olxstr PopupName;
   static size_t &stateTooltipsVisible() {
     static size_t v=InvalidIndex;
     return v;
@@ -65,7 +66,6 @@ protected:
 
   THtmlSwitch* Root;
   olxstr_dict<AnAssociation3<AOlxCtrl*,wxWindow*,bool>, true> Objects;
-  olxstr_dict<size_t,true> SwitchStates;
   TTypeList<TStrList> Groups;
   class TObjectsState  {
     olxstr_dict<olxstr_dict<olxstr,false>*, true> Objects;
@@ -86,8 +86,6 @@ protected:
   };
   TObjectsState ObjectsState;
 protected:
-  size_t GetSwitchState(const olxstr& switchName);
-  void ClearSwitchStates()  {  SwitchStates.Clear();  }
   olxstr GetObjectValue(const AOlxCtrl *Object);
   const olxstr& GetObjectData(const AOlxCtrl *Object);
   bool GetObjectState(const AOlxCtrl *Object, const olxstr& state);
@@ -105,12 +103,9 @@ public:
     const olxstr &pop_name=EmptyString(), int flags=4);
   virtual ~THtml();
 
-  const olxstr &GetPopupName() const {  return PopupName;  }
   void OnKeyDown(wxKeyEvent &event);
   void OnChar(wxKeyEvent &event);
   void OnNavigation(wxNavigationKeyEvent &event);
-
-  void SetSwitchState(THtmlSwitch &sw, size_t state);
 
   int GetBorders() const {  return wxHtmlWindow::m_Borders;  }
   void SetFonts(const olxstr &normal, const olxstr &fixed);
@@ -154,10 +149,8 @@ public:
 
   bool LoadPage(const wxString &File);
   bool UpdatePage(bool update_indices=true);
-  DefPropC(olxstr, WebFolder)
+  DefPropC(olxstr, WebFolder);
 
-  void CheckForSwitches(THtmlSwitch& Sender, bool IsZip);
-  void UpdateSwitchState(THtmlSwitch& Switch, olxstr& String);
   THtmlSwitch& GetRoot() const {  return *Root; }
   bool ItemState(const olxstr& ItemName, short State);
   /*

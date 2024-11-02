@@ -135,16 +135,19 @@ public:
   static bool SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms,
     TIndexList& index, TStrList& SL,
     RefinementModel::ReleasedItems* processed);
-  /**/
-  static TSizeList::const_list_type DrySave(const TAsymmUnit& au);
+  /* returns atom Ids as they will be saved according to constraints */
+  static TSizeList::const_list_type DrySave(const TAsymmUnit& au,
+    bool expandSAME=true);
   static void ValidateRestraintsAtomNames(RefinementModel& rm,
     bool report = true);
-  static bool ParseRestraint(RefinementModel &rm, const TStrList& toks,
-    bool warnings = true, size_t r_position=InvalidIndex);
+  static bool ParseRestraint(RefinementModel &rm,
+    const TStrList& toks, bool warnings = true, size_t r_position=InvalidIndex,
+    class TSimpleRestraint** r=0);
   static void SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     RefinementModel::ReleasedItems* processed, RefinementModel& rm);
   static void SaveExtras(TStrList& SL, const TCAtomPList* atoms,
-    RefinementModel::ReleasedItems* processed, RefinementModel& rm);
+    RefinementModel::ReleasedItems* processed, RefinementModel& rm,
+    bool hyphenate=true);
 
   void ParseRestraints(RefinementModel& rm, const TStringToList<olxstr,
     TInsList*>& SL, bool warnings = true);
@@ -248,6 +251,8 @@ public:
   const TStringToList<olxstr, bool>& GetIncluded() const {
     return included;
   }
+  // updates olex2_same file
+  void UpdateSameFile(const olxstr& olex2_same, bool include);
   virtual IOlxObject* Replicate() const { return new TIns; }
 };
 

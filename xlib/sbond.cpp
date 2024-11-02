@@ -9,6 +9,7 @@
 
 #include "sbond.h"
 #include "lattice.h"
+#include "xapp.h"
 
 TSBond::TSBond(TNetwork *P) :
   TBasicBond<TNetwork,TSAtom>(P), Order(sboUndefined)
@@ -17,15 +18,49 @@ TSBond::TSBond(TNetwork *P) :
   Deleted = false;
 }
 //..............................................................................
-void TSBond::OnAtomSet()  {
-  if( FA && FB )  {
-    if( FA->GetType().z < FB->GetType().z )
+void TSBond::OnAtomSet() {
+  if (FA != 0 && FB != 0) {
+    if (FA->GetType().z < FB->GetType().z) {
       olx_swap(FA, FB);
-    else if( FA->GetType().z == FB->GetType().z )  {
-      if( FA->GetLabel().Compare(FB->GetLabel()) < 0 )
+    }
+    else if (FA->GetType().z == FB->GetType().z) {
+      if (FA->GetLabel().Compare(FB->GetLabel()) < 0) {
         olx_swap(FA, FB);
+      }
     }
   }
+}
+//..............................................................................
+TSBond::Ref TSBond::GetRef(const TSAtom& a_, const TSAtom& b_) {
+  const TSAtom* a = &a_, * b = &b_;
+  if (a->GetType().z < b->GetType().z) {
+    olx_swap(a, b);
+  }
+  else if (a->GetType().z == b->GetType().z) {
+    if (a->GetLabel().Compare(b->GetLabel()) < 0) {
+      olx_swap(a, b);
+    }
+  }
+  return Ref(a->GetRef(), b->GetRef());
+}
+//..............................................................................
+TSBond::Ref TSBond::GetRef(const TCAtom& a_, const smatd* ma_,
+  const TCAtom& b_, const smatd* mb_)
+{
+  const TCAtom* a = &a_, * b = &b_;
+  const smatd* ma = ma_, * mb = mb_;
+  if (a->GetType().z < b->GetType().z) {
+    olx_swap(a, b);
+    olx_swap(ma, mb);
+  }
+  else if (a->GetType().z == b->GetType().z) {
+    if (a->GetLabel().Compare(b->GetLabel()) < 0) {
+      olx_swap(a, b);
+      olx_swap(ma, mb);
+    }
+  }
+  return Ref(TSAtom::Ref(*a, ma == 0 ? ~0 : ma->GetId()),
+    TSAtom::Ref(*b, mb == 0 ? ~0 : mb->GetId()));
 }
 //..............................................................................
 void TSBond::ToDataItem(TDataItem& item) const {
@@ -106,6 +141,10 @@ int TSBond::Ref::Compare(const Ref& r) const {
 void TSBond::Ref::ToDataItem(TDataItem& item, const TXApp& app, bool use_id) const {
   a.ToDataItem(item.AddItem("a"), app, use_id);
   b.ToDataItem(item.AddItem("b"), app, use_id);
+}
+//..............................................................................
+bool TSBond::Ref::IsValid(const TXApp& app) const {
+  return a.IsValid(app) && b.IsValid(app);
 }
 //..............................................................................
 void TSBond::Ref::FromDataItem(const TDataItem& item, const class TXApp& app) {

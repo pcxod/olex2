@@ -742,11 +742,12 @@ struct GraphAnalyser {
 };
 
 //..............................................................................
-size_t TNetwork_NodeCounter(const TSAtom& a)  {
+size_t TNetwork_NodeCounter(const TSAtom& a) {
   size_t nc = 0;
-  for( size_t i=0; i < a.NodeCount(); i++ )  {
-    if( !a.Node(i).IsAvailable() || a.Node(i).GetType() == iHydrogenZ )
+  for (size_t i = 0; i < a.NodeCount(); i++) {
+    if (!a.Node(i).IsAvailable() || a.Node(i).GetType() == iHydrogenZ) {
       continue;
+    }
     nc++;
   }
   return nc;
@@ -840,38 +841,196 @@ bool TNetwork::DoMatch(TNetwork& net,
 //..............................................................................
 bool TNetwork::IsSubgraphOf(TNetwork& net,
   TTypeList<olx_pair_t<size_t, size_t> >& res,
-  const TSizeList& rootsToSkip )
+  const TSizeList& rootsToSkip)
 {
-  if( NodeCount() > net.NodeCount() )  return false;
-  TSAtom* thisSa = NULL;
+  if (NodeCount() > net.NodeCount()) {
+    return false;
+  }
+  TSAtom* thisSa = 0;
   size_t maxbc = 0;
-  for( size_t i=0; i < NodeCount(); i++ )  {
+  for (size_t i = 0; i < NodeCount(); i++) {
     Node(i).SetTag(0);
-    if( Node(i).NodeCount() > maxbc )  {
+    if (Node(i).NodeCount() > maxbc) {
       thisSa = &Node(i);
       maxbc = Node(i).NodeCount();
     }
   }
-  TEGraph<uint64_t, TSAtom*> thisGraph( thisSa->GetType().z, thisSa);
+  TEGraph<uint64_t, TSAtom*> thisGraph(thisSa->GetType().z, thisSa);
   BuildGraph(thisGraph.GetRoot());
   TIntList GraphId;
-  for( size_t i=0; i < net.NodeCount(); i++ )  {
+  for (size_t i = 0; i < net.NodeCount(); i++) {
     TSAtom* thatSa = &net.Node(i);
-    if( thisSa->NodeCount() > thatSa->NodeCount() )  continue;
-    if( thisSa->GetType() != thatSa->GetType() )  continue;
-    if( rootsToSkip.IndexOf(i) != InvalidIndex )
+    if (thisSa->NodeCount() > thatSa->NodeCount()) {
       continue;
-    for( size_t j=0; j < net.NodeCount(); j++ )
+    }
+    if (thisSa->GetType() != thatSa->GetType()) {
+      continue;
+    }
+    if (rootsToSkip.IndexOf(i) != InvalidIndex) {
+      continue;
+    }
+    for (size_t j = 0; j < net.NodeCount(); j++) {
       net.Node(j).SetTag(0);
+    }
     TEGraph<uint64_t, TSAtom*> thatGraph(thatSa->GetType().z, thatSa);
     BuildGraph(thatGraph.GetRoot());
     //continue;
-    if( thisGraph.GetRoot().IsSubgraphOf(thatGraph.GetRoot()) )  {
+    if (thisGraph.GetRoot().IsSubgraphOf(thatGraph.GetRoot())) {
       ResultCollector(thisGraph.GetRoot(), thatGraph.GetRoot(), res);
       return true;
     }
   }
   return false;
+}
+//..............................................................................
+int proximity_comparator(const TSAtom &a, const TSAtom &b) {
+  return olx_cmp(a.crd().Length(), b.crd().Length());
+}
+
+bool proximity_check(const TSAtom& ref, const TSAtom& a,
+  bool check_type, bool check_connectivity, double delta)
+{
+  if (check_type && a.GetType() != ref.GetType()) {
+    return false;
+  }
+  if (check_connectivity) {
+    if (check_type) {
+      olx_pdict<short, size_t> rc, ac;
+      for (size_t i = 0; i < a.NodeCount(); i++) {
+        if (a.Node(i).IsAvailable() && a.Node(i).GetType() != iHydrogenZ) {
+          ac.Add(a.Node(i).GetType().z)++;
+        }
+      }
+      for (size_t i = 0; i < ref.NodeCount(); i++) {
+        if (ref.Node(i).IsAvailable() && ref.Node(i).GetType() != iHydrogenZ) {
+          rc.Add(ref.Node(i).GetType().z)++;
+        }
+      }
+      if (ac.Count() != rc.Count()) {
+        return false;
+      }
+      for (size_t i = 0; i < ac.Count(); i++) {
+        if (ac.GetKey(i) != rc.GetKey(i) || ac.GetValue(i) != rc.GetValue(i)) {
+          return false;
+        }
+      }
+      double d = ref.crd().DistanceTo(a.crd());
+      return d < delta;
+    }
+    else {
+      return TNetwork_NodeCounter(ref) == TNetwork_NodeCounter(a)
+        && ref.crd().DistanceTo(a.crd()) < delta;
+    }
+  }
+  return true;
+}
+
+bool proximity_check_up(size_t ii, const TSAtom &a, double l,
+  const TSAtomPList &lb,
+  TTypeList< olx_pair_t<size_t, size_t> >& res,
+  bool check_atom_types, bool check_connectivity, double delta)
+{
+  while (ii < lb.Count()) {
+    double l1 = lb[ii]->crd().Length();
+    if (olx_abs(l1 - l) > delta) {
+      break;
+    }
+    if (lb[ii]->IsProcessed()) {
+      ii++;
+      continue;
+    }
+    if (proximity_check(a, *lb[ii], check_atom_types, check_connectivity, delta)) {
+      lb[ii]->SetProcessed(true);
+      res.AddNew(a.GetTag(), lb[ii]->GetTag());
+      return true;
+    }
+    ii++;
+  }
+  return false;
+}
+
+bool proximity_check_dn(size_t ii, const TSAtom& a, double l,
+  const TSAtomPList& lb,
+  TTypeList< olx_pair_t<size_t, size_t> >& res,
+  bool check_atom_types, bool check_connectivity, double delta)
+{
+  while (ii != InvalidIndex) {
+    double l1 = lb[ii]->crd().Length();
+    if (olx_abs(l1 - l) > delta) {
+      break;
+    }
+    if (lb[ii]->IsProcessed()) {
+      ii--;
+      continue;
+    }
+    if (proximity_check(a, *lb[ii], check_atom_types, check_connectivity, delta)) {
+      lb[ii]->SetProcessed(true);
+      res.AddNew(a.GetTag(), lb[ii]->GetTag());
+      return true;
+    }
+    ii--;
+  }
+  return false;
+}
+
+bool TNetwork::ProximityMatch(const TNetwork& net,
+  TTypeList< olx_pair_t<size_t, size_t> >& res,
+  bool check_atom_types, bool check_connectivity, double delta)
+{
+  TSAtomPList la = GetNodes(), lb = net.GetNodes();
+  la.ForEach(ACollectionItem::IndexTagSetter());
+  lb.ForEach(ACollectionItem::IndexTagSetter());
+
+  la.Pack(olx_alg::olx_not(FunctionAccessorAnalyser::Make(
+    FunctionAccessor::MakeConst(&TSAtom::IsAvailable))));
+  lb.Pack(olx_alg::olx_not(FunctionAccessorAnalyser::Make(
+    FunctionAccessor::MakeConst(&TSAtom::IsAvailable))));
+
+  if (lb.Count() < la.Count()) {
+    return false;
+  }
+  FunctionComparator::ComparatorSF_<TSAtom> cmp = FunctionComparator::Make(&proximity_comparator);
+  QuickSorter::Sort(lb, cmp);
+  
+  lb.ForEach(TSAtom::FlagSetter(satom_Processed, false));
+
+  double lb_f = lb[0]->crd().Length(),
+    lb_l = lb.GetLast()->crd().Length();
+  typedef olx_pair_t<size_t, size_t> pair_t;
+  for (size_t i = 0; i < la.Count(); i++) {
+    const TSAtom& a = *la[i];
+    double l = a.crd().Length();
+    bool found = false;
+    if (l < lb_f) {
+      if (olx_abs(l - lb_f) > delta) {
+        return false;
+      }
+      if (proximity_check_up(0, a, l, lb, res, check_atom_types, check_connectivity, delta)) {
+        continue;
+      }
+    }
+    else if (l > lb_l) {
+      if (olx_abs(l - lb_l) > delta) {
+        return false;
+      }
+      if (proximity_check_dn(lb.Count() - 1, a, l, lb, res, check_atom_types, check_connectivity, delta)) {
+        continue;
+      }
+    }
+    else {
+      size_t ii = sorted::FindInsertIndex(lb, cmp, a);
+      if (proximity_check_up(ii-1, a, l, lb, res, check_atom_types, check_connectivity, delta)) {
+        continue;
+      }
+      if (proximity_check_dn(ii, a, l, lb, res, check_atom_types, check_connectivity, delta)) {
+        continue;
+      }
+    }
+    if (!found) {
+      return false;
+    }
+  }
+  return true;
 }
 //..............................................................................
 bool TNetwork::TryRing(TSAtom& sa, size_t node, TSAtomPList& ring,

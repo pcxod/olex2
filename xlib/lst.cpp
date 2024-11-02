@@ -104,7 +104,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
     else if (!URefC && SL[i].Contains("Unique reflections,")) {
       Toks.Strtok(SL[i], ' ');
       if (Toks.Count() < 3) continue;
-      params("ref_unique", Toks[0]);
+      params.Add("ref_unique", Toks[0], true);
       URefC = true;
     }
     else if (!DRef  && SL[i].Contains("Disagreeable Reflections")) {

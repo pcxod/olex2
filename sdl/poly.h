@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -79,7 +79,7 @@ public:
   TPolynomMember& operator = (const TPolynomMember& P) {
     FMembers.Clear();
     FMult = P.FMult;
-    FMembers.AddAll(P.FMembers);
+    FMembers.AddCopyAll(P.FMembers);
     return *this;
   }
 
@@ -144,7 +144,7 @@ public:
 
   TPolynom& operator = (const TPolynom& P) {
     FMembers.Clear();
-    FMembers.AddAll(P.FMembers);
+    FMembers.AddCopyAll(P.FMembers);
     return *this;
   }
 

@@ -196,12 +196,16 @@ const wxBitmap& TImgButton::ChooseBitmap() const {
 void TImgButton::Render(wxDC& dc) const {
   const wxBitmap& bmp = ChooseBitmap();
   if (bmp.IsOk()) {
+#ifdef __MAC__
+    dc.DrawBitmap(bmp, 0, 0, true);
+#else
     wxBitmap tbmp(bmp.GetWidth(), bmp.GetHeight(), bmp.GetDepth());
     wxMemoryDC mdc(tbmp);
     mdc.SetBackground(wxBrush(GetBackgroundColour()));
     mdc.Clear();
     mdc.DrawBitmap(bmp, 0, 0, true);
     dc.Blit(0, 0, bmp.GetWidth(), bmp.GetHeight(), &mdc, 0, 0, wxCOPY);
+#endif
   }
 }
 //..............................................................................

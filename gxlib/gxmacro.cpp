@@ -1,3 +1,12 @@
+/******************************************************************************
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
+*                                                                             *
+* This file is part of the OlexSys Development Framework.                     *
+*                                                                             *
+* This source file is distributed under the terms of the licence located in   *
+* the root folder.                                                            *
+******************************************************************************/
+
 #include "gxmacro.h"
 #include "sfutil.h"
 #include "maputil.h"
@@ -25,6 +34,7 @@
 #include "rmsds_adp.h"
 #include "glalg.h"
 #include "listalg.h"
+#include "xangle.h"
 
 #define gxlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.Register(\
@@ -59,7 +69,8 @@ void GXLibMacros::Export(TLibrary& lib) {
   gxlib_InitMacro(Name,
     "s-simply changes suffix of provided atoms to the provided one (or none)&;"
     "cs-leaves current selection unchanged&;"
-    "r-synchronise names in the residues"
+    "r-synchronise names in the residues&;"
+    "ns-do not steal labels from other atoms"
     ,
     fpNone|fpOne|fpTwo|fpThree,
     "Names atoms. If the 'sel' keyword is used and a number (or just the number)"
@@ -145,7 +156,7 @@ void GXLibMacros::Export(TLibrary& lib) {
     "Shows/hides atom labels. Options may work as argument too. No options/args toggles the"
     "labels visibility [a boolean value can be used as an arg]");
   gxlib_InitMacro(Label,
-    "type-type of labels to make - subscript, brackers, default&;"
+    "type-type of labels to make - subscript, brackets, default&;"
     "symm-symmetry dependent tag type {[$], #, X, full}&;"
     "resi-add residue number(#) or name (n) like -resi=_# or -resi=@n&;"
     "a-aligns labels trying to avoid overlapping&;",
@@ -191,11 +202,16 @@ void GXLibMacros::Export(TLibrary& lib) {
     "form, which specify a view from k1*a+l1*b+m1*c to k2*a+l2*b+m2*c, three "
     "values pecify the view normal and nine values provide a full matrix");
   gxlib_InitMacro(Line,
-    "n-just sets current view normal to the line without creating the object&;"
+    "n-just sets current view normal to the line without creating the object"
+    " or the collection name to put the bond to&;"
     "f-consider input in fractional coordinates vs Cartesian&;"
     "e-adds esd to the value",
     fpAny,
     "Creates a line or best line for provided atoms");
+  gxlib_InitMacro(Angle,
+    "n-the collection name",
+    fpAny,
+    "Creates an angle object atoms/bonds");
   gxlib_InitMacro(Mpln,
     "n-just orient, do not create plane&;"
     "r-create regular plane&;"
@@ -232,7 +248,9 @@ void GXLibMacros::Export(TLibrary& lib) {
     "u-unselect all&;"
     "l-consider the list of bonds as independent when printing info&;"
     "c-copies printed values to the clipboard&;"
-    "i-invert selection&;",
+    "i-invert selection&;"
+    "p-extra part to use (along with 0) in the case of disorder with sel sel&;"
+    ,
     fpAny,
     "If no arguments provided, prints current selection. This includes "
     "distances, angles and torsion angles and other geometrical parameters. "
@@ -359,6 +377,10 @@ void GXLibMacros::Export(TLibrary& lib) {
     "o-matches overlayed lattices&;"
     "m-moves the atoms to the overlayed position permanently. Only valid for "
     "two atoms groups and selection of at least three atom pairs&;"
+    "p-uses proximity match vs full graph match&;"
+    "pcc-checks connectivity for the proximity match [true]&;"
+    "pct-checks types for the proximity match [true]&;"
+    "pd-distance threshold for the proximity match [1A]&;"
     ,
     fpNone|fpOne|fpTwo,
     "Fragment matching, alignment and label transfer routine");
@@ -692,8 +714,9 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
   }
   bool changeSuffix = Options.Contains('s');
   bool nameResi = Options.GetBoolOption('r', false, true);
+  bool doNotSteal = Options.GetBoolOption("ns", true, true);
   if (changeSuffix) {
-    TXAtomPList xatoms = app.FindXAtoms(Cmds, true, !Options.Contains("cs"));
+    TXAtomPList xatoms = app.FindXAtoms(Cmds, true, !Options.GetBoolOption("cs"));
     if (!xatoms.IsEmpty()) {
       TUndoData *ud = app.GetUndo().Push(app.ChangeSuffix(
         xatoms, Options.FindValue('s')));
@@ -716,19 +739,20 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
       if (spi != InvalidIndex) {
         app.GetUndo().Push(
           app.Name(Cmds[0].SubStringTo(spi),
-          Cmds[0].SubStringFrom(spi+1), !Options.Contains("cs"), nameResi)
+          Cmds[0].SubStringFrom(spi+1), !Options.GetBoolOption("cs"),
+            nameResi, doNotSteal)
         );
       }
       else {
         app.GetUndo().Push(
-          app.Name("sel", Cmds[0], !Options.Contains("cs"),
-          nameResi));
+          app.Name("sel", Cmds[0], !Options.GetBoolOption("cs"),
+          nameResi, doNotSteal));
       }
       processed = true;
     }
     else if (Cmds.Count() == 2) {
-      app.GetUndo().Push(app.Name(Cmds[0], Cmds[1], !Options.Contains("cs"),
-        nameResi));
+      app.GetUndo().Push(app.Name(Cmds[0], Cmds[1], !Options.GetBoolOption("cs"),
+        nameResi, doNotSteal));
       processed = true;
     }
     if (!processed) {
@@ -1166,10 +1190,15 @@ void GXLibMacros::macBRad(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //.............................................................................
-void GXLibMacros::macTelpV(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &Error)
+void GXLibMacros::macTelpV(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& Error)
 {
-  float p = Cmds[0].ToFloat();
+  double p = Cmds[0].ToDouble();
+  if (!Error.IsMacroCall()) {
+    Error.SetRetVal(app.ProbFactor(p));
+    return;
+  }
+
   if (p > 0) {
     app.CalcProbFactor(p);
   }
@@ -1188,7 +1217,12 @@ void GXLibMacros::macInfo(TStrObjList &Cmds, const TParamList &Options,
     Options.FindValue('p', "-3").ToInt(),
     Options.GetBoolOption('f', false, false)
   );
-  TBasicApp::NewLogEntry() << Output;
+  if (Error.IsMacroCall()) {
+    TBasicApp::NewLogEntry() << Output;
+  }
+  else {
+    Error.SetRetVal(Output.Text('\n'));
+  }
   if (Options.Contains('c')) {
     app.ToClipboard(Output);
   }
@@ -2049,7 +2083,18 @@ void GXLibMacros::macLine(TStrObjList &Cmds, const TParamList &Options,
   app.Draw();
 }
 //.............................................................................
-void GXLibMacros::macMpln(TStrObjList &Cmds, const TParamList &Options,
+void GXLibMacros::macAngle(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& Error)
+{
+  TXAtomPList Atoms = app.FindXAtoms(Cmds, false, true);
+  if (Atoms.Count() != 3) {
+    return;
+  }
+  olxstr name = Options.FindValue('n');
+  app.AddAngle(name, *Atoms[1], *Atoms[0], *Atoms[2]);
+}
+//.............................................................................
+void GXLibMacros::macMpln(TStrObjList & Cmds, const TParamList & Options,
   TMacroData &Error)
 {
   olxstr rings_name = Options.FindValue("rings");
@@ -2466,27 +2511,39 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     if (atoms.IsEmpty()) {
       return;
     }
+    olxstr extra_part = Options.FindValue('p');
+    olx_object_ptr<olx_pset<int> > parts;
+    if (extra_part.IsInt()) {
+      parts = new olx_pset<int>();
+      parts->Add(0);
+      parts->Add(extra_part.ToInt());
+    }
     TAsymmUnit& au = app.XFile().GetAsymmUnit();
     ACollectionItem::Unify(atoms);
     using namespace olx_analysis;
     TCAtomPList fa(atoms, FunctionAccessor::MakeConst(&TSAtom::CAtom));
     fragments::fragment fr(fa);
     TTypeList<fragments::fragment> frags =
-      fragments::extract(app.XFile().GetAsymmUnit(), fr);
+      fragments::extract(app.XFile().GetAsymmUnit(), fr, &parts);
     app.XFile().GetAsymmUnit().GetAtoms().ForEach(
-      ACollectionItem::TagSetter(0));
+      ACollectionItem::TagSetter(-1));
+    // ensure the atom selection order is the same for all frags!
+    olx_pdict<size_t, TXAtom*> au_atoms;
+    TGXApp::AtomIterator ai = app.GetAtoms();
+    while (ai.HasNext()) {
+      TXAtom& a = ai.Next();
+      if (a.IsAUAtom()) {
+        au_atoms.Add(a.CAtom().GetId(), &a);
+      }
+    }
     for (size_t fi = 0; fi <= frags.Count(); fi++) {
       fragments::fragment *f = (fi == 0 ? &fr : &frags[fi - 1]);
       for (size_t j = 0; j < f->count(); j++) {
-        (*f)[j].SetTag(1);
+        app.GetRenderer().Select(*au_atoms[(*f)[j].GetId()], flag);
       }
     }
-    TGXApp::AtomIterator ai = app.GetAtoms();
-    while (ai.HasNext()) {
-      TXAtom &a = ai.Next();
-      if (a.IsVisible() && a.CAtom().GetTag() == 1) {
-        app.GetRenderer().Select(a, flag);
-      }
+    if (!frags.IsEmpty()) {
+      TBasicApp::NewLogEntry() << "Total of " << (frags.Count()+1) << " fragments found";
     }
   }
   else if (Cmds.Count() == 1 && Cmds[0].Equalsi("res")) {
@@ -2950,7 +3007,7 @@ void GXLibMacros::macPiM(TStrObjList &Cmds, const TParamList &Options,
       if (XElementLib::IsMetal(rings[0][i]->GetType())) {
         check_metal = false;
         metals.Add(rings[0][i]);
-        rings[0][i] = NULL;
+        rings[0][i] = 0;
       }
     }
     rings[0].Pack();
@@ -4391,21 +4448,23 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
 {
   static const olxstr StartMatchCBName("startmatch");
   TActionQueueLock __queuelock(app.FindActionQueue(olxappevent_GL_DRAW));
-  // restore if already applied
   TLattice& latt = app.XFile().GetLattice();
   // note that this may be different to the overlayed file!!
-  const TAsymmUnit &au = latt.GetAsymmUnit();
-  for (size_t i = 0; i < app.XFiles().Count(); i++) {
-    app.XFile(i).GetLattice().RestoreADPs();
+  const TAsymmUnit& au = latt.GetAsymmUnit();
+  // restore if already applied
+  if (Options.GetBoolOption('u')) {
+    for (size_t i = 0; i < app.XFiles().Count(); i++) {
+      app.XFile(i).GetLattice().RestoreADPs();
+    }
+    if (app.XFiles().Count() > 1) {
+      app.AlignXFiles();
+      app.CenterView(true);
+    }
+    else {
+      app.CenterView();
+    }
+    app.UpdateBonds();
   }
-  if (app.XFiles().Count() > 1) {
-    app.AlignXFiles();
-    app.CenterView(true);
-  }
-  else {
-    app.CenterView();
-  }
-  app.UpdateBonds();
   if (Cmds.Count() == 1 && Cmds[0].Equalsi("cell")) {
     if (app.XFiles().Count() < 2) {
       E.ProcessingError(__OlxSrcInfo, "an overlayed file is expected");
@@ -4461,13 +4520,13 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
     //v = tm*(v-tr);
     return;
   }
-  const bool exclude_h = Options.GetBoolOption('h');
-  if (Options.GetBoolOption('u')) { // do nothing...
-    return;
-  }
+  //if (Options.GetBoolOption('u')) { // do nothing...
+  //  return;
+  //}
   olex2::IOlex2Processor::GetInstance()->callCallbackFunc(
     StartMatchCBName, TStrList() << EmptyString());
   const bool TryInvert = Options.GetBoolOption('i');
+  const bool exclude_h = Options.GetBoolOption('h');
   double(*weight_calculator)(const TSAtom&) = &TSAtom::weight_unit;
 
   if (Options.Contains('w')) {
@@ -4507,8 +4566,18 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
       TSizeList sk;
       TNetwork &netA = atoms[0]->GetNetwork(),
         &netB = atoms[1]->GetNetwork();
-      bool match = subgraph ? netA.IsSubgraphOf(netB, res, sk) :
-        netA.DoMatch(netB, res, TryInvert, weight_calculator);
+      bool match;
+      if (Options.GetBoolOption('p')) {
+        match = netA.ProximityMatch(netB, res,
+          Options.GetBoolOption("pcc", false, true),
+          Options.GetBoolOption("pct", false, true),
+          Options.FindValue("pd", "1").ToDouble()
+          );
+      }
+      else {
+        match = subgraph ? netA.IsSubgraphOf(netB, res, sk) :
+          netA.DoMatch(netB, res, TryInvert, weight_calculator);
+      }
       TBasicApp::NewLogEntry() << "Graphs match: " << match;
       if (match) {
         match_cnt++;
@@ -4609,7 +4678,6 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
             "Atom B";
           tab.ColName(2) = tab.ColName(5) = tab.ColName(8) = tab.ColName(11) =
             "Dist/A";
-          TBasicApp::NewLogEntry() << "Matching pairs:";
           for (size_t i = 0; i < sorted_pairs.Count(); i++) {
             size_t idx = sorted_pairs.GetValue(i);
             size_t c_off = (i % 4) * 3, r_i = i / 4;

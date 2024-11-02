@@ -169,6 +169,16 @@ void TCAtom::Assign(const TCAtom& S)  {
   if (S.GetDisp().ok()) {
     disp = new Disp(*S.GetDisp());
   }
+  AttachedSites.Clear();
+  AttachedSitesI.Clear();
+  for (size_t i = 0; i < S.AttachedSiteCount(); i++) {
+    const TCAtom::Site& s = S.GetAttachedSite(i);
+    AttachedSites.AddNew(&Parent->GetAtom(s.atom->GetId()), s.matrix);
+  }
+  for (size_t i = 0; i < S.AttachedSiteICount(); i++) {
+    const TCAtom::Site& s = S.GetAttachedSiteI(i);
+    AttachedSitesI.AddNew(&Parent->GetAtom(s.atom->GetId()), s.matrix);
+  }
 }
 //..............................................................................
 int TCAtom::GetAfix() const {
@@ -295,17 +305,22 @@ PyObject* TCAtom::PyExport(bool export_attached_sites) {
         E[0], E[1], E[2], E[3], E[4], E[5])
     );
     if (GetEllipsoid()->IsAnharmonic()) {
-      GramCharlier4 &a = GetEllipsoid()->GetAnharmonicPart();
+      GramCharlier &a = GetEllipsoid()->GetAnharmonicPart();
       PyObject* anh = PyDict_New();
-      PythonExt::SetDictItem(anh, "C",
-        Py_BuildValue("(dddddddddd)", a.C[0], a.C[1], a.C[2], a.C[3], a.C[4],
-          a.C[5], a.C[6], a.C[7], a.C[8], a.C[9])
-      );
-      PythonExt::SetDictItem(anh, "D",
-        Py_BuildValue("(ddddddddddddddd)",
-          a.D[0], a.D[1], a.D[2], a.D[3], a.D[4], a.D[5], a.D[6], a.D[7],
-          a.D[8], a.D[9], a.D[10], a.D[11], a.D[12], a.D[13], a.D[14])
-      );
+      if (a.order >= 3) {
+        PythonExt::SetDictItem(anh, "C",
+          Py_BuildValue("(dddddddddd)", a.C[0], a.C[1], a.C[2], a.C[3], a.C[4],
+            a.C[5], a.C[6], a.C[7], a.C[8], a.C[9])
+        );
+      }
+      if (a.order >= 4) {
+        PythonExt::SetDictItem(anh, "D",
+          Py_BuildValue("(ddddddddddddddd)",
+            a.D[0], a.D[1], a.D[2], a.D[3], a.D[4], a.D[5], a.D[6], a.D[7],
+            a.D[8], a.D[9], a.D[10], a.D[11], a.D[12], a.D[13], a.D[14])
+        );
+      }
+      PythonExt::SetDictItem(anh, "order", Py_BuildValue("i", a.order));
       PythonExt::SetDictItem(main, "anharmonic_adp", anh);
     }
   }
@@ -395,16 +410,9 @@ void TCAtom::FromDataItem(TDataItem& item) {
     Uiso = GetEllipsoid()->GetUeq();
     TDataItem *cgi = adp->FindItem("CG");
     if (cgi != 0) {
-      TStrList toks(cgi->GetValue(), ',');
-      if (toks.Count() == 25) {
-        olx_object_ptr<GramCharlier4> cg = new GramCharlier4();
-        for (size_t i = 0; i < 10; i++) {
-          cg->C[i] = toks[i].ToDouble();
-        }
-        for (size_t i = 0; i < 15; i++) {
-          cg->D[i] = toks[i + 10].ToDouble();
-        }
-      }
+      olx_object_ptr<GramCharlier> cg = new GramCharlier(
+        TStrList(cgi->GetValue(), ','));
+      GetEllipsoid()->SetAnharmonicPart(cg.release());
     }
   }
   else {
@@ -608,6 +616,34 @@ SiteSymmCon TCAtom::GetSiteConstraints() const {
   return rv;
 }
 //..............................................................................
+bool TCAtom::IsPositionFixed(bool any) const {
+  size_t fixed_cnt = 0;
+  for (size_t j = 0; j < 3; j++) {
+    if (GetVarRef(catom_var_name_X + j) != 0 &&
+      GetVarRef(catom_var_name_X + j)->relation_type == relation_None)
+    {
+      fixed_cnt++;
+    }
+  }
+  return any ? fixed_cnt != 0 : fixed_cnt == 3;
+}
+//..............................................................................
+bool TCAtom::IsADPFixed(bool any) const {
+  if (GetEllipsoid() == 0) {
+    return GetVarRef(catom_var_name_Uiso) != 0 &&
+      GetVarRef(catom_var_name_Uiso)->relation_type == relation_None;
+  }
+  size_t fixed_cnt = 0;
+  for (size_t j = 0; j < 3; j++) {
+    if (GetVarRef(catom_var_name_U11 + j) != 0 &&
+      GetVarRef(catom_var_name_U11 + j)->relation_type == relation_None)
+    {
+      fixed_cnt++;
+    }
+  }
+  return any ? fixed_cnt != 0 : fixed_cnt == 6;
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 int TCAtomComparator::Compare(const TCAtom& a1, const TCAtom& a2) {
@@ -793,5 +829,69 @@ TIString TCAtom::ToString() const {
   olxstr_buf rv = GetResiLabel(true);
   rv << " {Id:" << GetId() << ", Tag: " << GetTag() << '}';
   return olxstr(rv);
+}
+//..............................................................................
+Atom3DId TCAtom::Get3DId() const {
+  return Atom3DId((int8_t)GetType().z, Center);
+}
+//..............................................................................
+//..............................................................................
+//..............................................................................
+Atom3DId::Atom3DId(int8_t z, const vec3d& crd, double multiplier) {
+  id = ((uint64_t)z) & z_mask;
+  static const int64_t k = mask_m / cell_m;
+  int64_t x = multiplier == 1 ? (int64_t)(crd[0] * k)
+    : ((int64_t)(crd[0] * multiplier)) / multiplier * k;
+  if (x < 0) {
+    id |= a_sig;
+    id |= (((-x) << 8) & a_mask);
+  }
+  else {
+    id |= ((olx_abs(x) << 8) & a_mask);
+  }
+  x = multiplier == 1 ? (int64_t)(crd[1] * k)
+    : ((int64_t)(crd[1] * multiplier)) / multiplier * k;
+  if (x < 0) {
+    id |= b_sig;
+    id |= (((-x) << 25) & b_mask);
+  }
+  else {
+    id |= ((x << 25) & b_mask);
+  }
+  x = multiplier == 1 ? (int64_t)(crd[2] * k)
+    : ((int64_t)(crd[2] * multiplier)) / multiplier * k;
+  if (x < 0) {
+    id |= c_sig;
+    id |= (((-x) << 42) & c_mask);
+  }
+  else {
+    id |= ((x << 42) & c_mask);
+  }
+}
+//..............................................................................
+vec3d Atom3DId::get_crd() const {
+  static const double k = (double)cell_m / mask_m;
+  vec3d r((double)((id & a_mask) >> 8) * k,
+    (double)((id & b_mask) >> 25) * k,
+    (double)((id & c_mask) >> 42) * k);
+  if ((id & a_sig) != 0) {
+    r[0] = -r[0];
+  }
+  if ((id & b_sig) != 0) {
+    r[1] = -r[1];
+  }
+  if ((id & c_sig) != 0) {
+    r[2] = -r[2];
+  }
+  return r;
+}
+//..............................................................................
+olxstr Atom3DId::ToString() const {
+  return olxstr(id);
+}
+//..............................................................................
+Atom3DId& Atom3DId::operator = (const olxstr& s) {
+  s.ToNumber(id);
+  return *this;
 }
 //..............................................................................

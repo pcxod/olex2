@@ -49,6 +49,7 @@ public:
   DefMacro(Load)
   DefMacro(Matr)
   DefMacro(Line)
+  DefMacro(Angle)
   DefMacro(Mpln)
   DefMacro(Lpln)
   DefMacro(Cent)

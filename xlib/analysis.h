@@ -72,7 +72,7 @@ namespace alg {
   */
   bool check_connectivity(const TCAtom &a, const cm_Element &e);
   ConstArrayList<size_t> find_hetero_indices(const TCAtomPList &atoms,
-    const cm_Element *re=NULL);
+    const cm_Element *re=0);
   /* locates an evironment around the given point (in fractional coordinates)
   and rates it according to simple geometrical measurements as distances and
   angles
@@ -96,7 +96,7 @@ struct peaks {
     return olx_cmp(a2.GetQPeak(), a1.GetQPeak());
   }
   static ConstPtrList<TCAtom> extract(TAsymmUnit &au,
-    bool *all_peaks=NULL);
+    bool *all_peaks=0);
   struct range {
   protected:
     mutable double mean;
@@ -373,6 +373,8 @@ public:
     the given tag the atom has
     */
     static size_t get_neighbour_count(const TCAtom &a, index_t tag);
+    // as above - tag is ignored
+    static size_t get_neighbour_count(const TCAtom& a);
     /* sets tags for the atoms and their neighbours - this is enought to mask
     the atoms out of the whole AU
     */
@@ -381,12 +383,14 @@ public:
     friend struct fragments;
   };
   static ConstTypeList<fragment> extract(TAsymmUnit &au);
-  /* extracts all given fragemts from the asymmetric unit
+  /* extracts all given fragments from the given atoms
   */
   static ConstTypeList<fragment> extract(const TCAtomPList &atoms,
-    const fragment &f);
-  static ConstTypeList<fragment> extract(TAsymmUnit &au, const fragment &f) {
-    return extract(au.GetAtoms(), f);
+    const fragment &f, const olx_pset<int> *parts=0);
+  static ConstTypeList<fragment> extract(TAsymmUnit &au, const fragment &f,
+    const olx_pset<int>* parts=0)
+  {
+    return extract(au.GetAtoms(), f, parts);
   }
 };
 

@@ -217,7 +217,7 @@ void TXApp::CalcSFEx(const TRefList& refs, TArrayList<TEComplex<double> >& F,
           B = exp(B);
           if (atoms[j]->GetEllipsoid()->IsAnharmonic()) {
             l += atoms[j]->GetEllipsoid()->GetAnharmonicPart()
-              ->calculate(hkl) * compd(B*ca, B*sa);
+              ->Calculate(hkl) * compd(B*ca, B*sa);
           }
           else {
             l.Re() += B * ca;
@@ -610,12 +610,11 @@ void TXApp::FindRings(const olxstr& Condition, TTypeList<TSAtomPList>& rings) {
   else {
     RingContentFromStr(Condition, ring);
   }
-  if (rings.IsEmpty()) {
-    for (size_t i = 0; i < XFile().GetLattice().FragmentCount(); i++) {
-      XFile().GetLattice().GetFragment(i).FindRings(ring, rings);
-    }
-  }
 
+  for (size_t i = 0; i < XFile().GetLattice().FragmentCount(); i++) {
+    XFile().GetLattice().GetFragment(i).FindRings(ring, rings);
+  }
+  
   for (size_t i = 0; i < rings.Count(); i++) {
     if (rings.IsNull(i)) {
       continue;
@@ -996,8 +995,9 @@ void TXApp::SetAtomUiso(TSAtom& sa, double val) {
         sa.CAtom().SetUisoScale(olx_abs(val));
         sa.CAtom().SetUiso(olx_abs(val) * sa.Node(ni).CAtom().GetUiso());
       }
-      else
+      else {
         throw TInvalidArgumentException(__OlxSourceInfo, "U owner");
+      }
     }
     else {
       if (val > 1 && size_t(val / 10) >= rm.Vars.VarCount()) {
@@ -1327,6 +1327,18 @@ double TXApp::GetMinHBondAngle()  {
   }
 }
 //..............................................................................
+double TXApp::GetEXYZSeparation() {
+  TXApp& a = GetInstance();
+  if (a.exyz_separation.ok()) {
+    return *a.exyz_separation;
+  }
+  else {
+    a.exyz_separation = TBasicApp::GetInstance().GetOptions()
+      .FindValue("exyz_separation", "0.5").ToDouble();
+    return *a.exyz_separation;
+  }
+}
+//..............................................................................
 bool TXApp::DoPreserveFVARs() {
   TXApp &a = GetInstance();
   if (a.preserve_fvars.ok()) {
@@ -1432,7 +1444,40 @@ bool TXApp::DoStackRestraints() {
       .FindValue("stack_restraints", TrueString()).ToBool();
     return *a.stack_restraints;
   }
-
+}
+//..............................................................................
+bool TXApp::DoUseExternalExplicitSAME() {
+  TXApp& a = GetInstance();
+  if (a.external_explicit_same.ok()) {
+    return *a.external_explicit_same;
+  }
+  else {
+    a.external_explicit_same = TBasicApp::GetInstance().GetOptions()
+      .FindValue("external_explicit_same", FalseString()).ToBool();
+    return *a.external_explicit_same;
+  }
+}
+//..............................................................................
+bool TXApp::DoUseExplicitSAME() {
+  TXApp& a = GetInstance();
+  if (a.explicit_same.ok()) {
+    return *a.explicit_same;
+  }
+  else {
+    a.explicit_same = TBasicApp::GetInstance().GetOptions()
+      .FindValue("explicit_same", FalseString()).ToBool();
+    return *a.explicit_same;
+  }
+}
+//..............................................................................
+void TXApp::ResetOptions() {
+  preserve_fvars.reset();
+  min_hbond_angle.reset();
+  exyz_separation.reset();
+  safe_afix.reset();
+  rename_parts.reset();
+  stack_restraints.reset();
+  external_explicit_same.reset();
 }
 //..............................................................................
 const_strlist TXApp::BangList(const TSAtom& A) {

@@ -16,6 +16,7 @@
 #include "integration.h"
 #include "utf8file.h"
 #include "olxstate.h"
+#include "htmlprep.h"
 
 #ifdef _UNICODE
   #define _StrFormat_ wxT("%ls")
@@ -99,6 +100,7 @@ TAG_HANDLER_PROC(tag)  {
   return false;
 }
 TAG_HANDLER_END(RECT)
+
 // Z-ordered image tag
 TAG_HANDLER_BEGIN(CIRCLE, "ZCIRCLE")
 TAG_HANDLER_PROC(tag)  {
@@ -121,8 +123,8 @@ TAG_HANDLER_PROC(tag)  {
   }
   return false;
 }
-
 TAG_HANDLER_END(CIRCLE)
+
 // extended image tag
 TAG_HANDLER_BEGIN(IMAGE, "ZIMG")
 TAG_HANDLER_PROC(tag) {
@@ -189,7 +191,7 @@ TAG_HANDLER_PROC(tag) {
   }
 
   olx_object_ptr<wxFSFile> fsFile = TFileHandlerManager::GetFSFileHandler( src );
-  if (fsFile == 0) {
+  if (!fsFile.ok()) {
     TBasicApp::NewLogEntry(logError) << "Could not locate image: '"
       << src << '\'';
   }
@@ -397,8 +399,9 @@ TAG_HANDLER_PROC(tag) {
         contC->SetAlignHor(halign);
       }
     }
-    else
+    else {
       m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Text, fl));
+    }
 
     if (tag.HasParam(wxT("ONCHANGE"))) {
       Text->OnChange.data =
@@ -508,13 +511,28 @@ TAG_HANDLER_PROC(tag) {
   }
 /******************* LABEL ***************************************************/
   else if (TagName.Equalsi("label")) {
-    TLabel *Text = new TLabel(html, Value);
+    long style = wxBG_STYLE_CUSTOM;
+    if (halign == wxHTML_ALIGN_CENTER) {
+      style = wxALIGN_CENTRE_HORIZONTAL;
+    }
+    else if (halign == wxHTML_ALIGN_RIGHT) {
+      style = wxALIGN_RIGHT;
+    }
+    TLabel *Text = new TLabel(html, Value, style);
     Text->SetFont(m_WParser->GetDC()->GetFont());
     CreatedObject = Text;
     CreatedWindow = Text;
     Text->WI.SetWidth(ax);
     Text->WI.SetHeight(ay);
     Text->SetData(Data);
+    if (GetBoolAttribute(tag, "FIT")) {
+      //Text->SetMaxSize(Text->GetBestSize());
+      Text->SetInitialSize();
+    }
+    olxstr markup = tag.GetParam(wxT("MARKUP"));
+    if (!markup.IsEmpty()) {
+      Text->SetLabelMarkup(markup.u_str());
+    }
     m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Text, fl));
   }
 /******************* BUTTON ***************************************************/
@@ -629,7 +647,8 @@ TAG_HANDLER_PROC(tag) {
         ExpandMacroShortcuts(tag.GetParam(wxT("HINT")),macro_map));
     }
     if (tag.HasParam(wxT("DOWN"))) {
-      Btn->SetDown(tag.GetParam(wxT("DOWN")).CmpNoCase(wxT("true")) == 0);
+      Btn->SetDown(
+        ExpandMacroShortcuts(tag.GetParam(wxT("DOWN")), macro_map).ToBool());
     }
 
     olxstr modeDependent = tag.GetParam(wxT("MODEDEPENDENT"));
@@ -712,7 +731,7 @@ TAG_HANDLER_PROC(tag) {
       CreatedObject = Box;
       CreatedWindow = Box;
       if (tag.HasParam(wxT("ITEMS"))) {
-        olxstr Items = tag.GetParam(wxT("ITEMS"));
+        olxstr Items = ExpandMacroShortcuts(tag.GetParam(wxT("ITEMS")), macro_map);
         op->processFunction(Items, SrcInfo, true);
         TStrList SL(Items, ';');
         Box->AddItems(SL);
@@ -771,14 +790,14 @@ TAG_HANDLER_PROC(tag) {
     int min = 0, max = 100, value = 0;
     try {
       if (tag.HasParam(wxT("MIN"))) {
-        olxstr v = tag.GetParam(wxT("MIN"));
+        olxstr v = ExpandMacroShortcuts(tag.GetParam(wxT("MIN")), macro_map);
         if (!v.IsEmpty()) {
           op->processFunction(v, SrcInfo, true);
           min = (int)v.ToDouble();
         }
       }
       if (tag.HasParam(wxT("MAX"))) {
-        olxstr v = tag.GetParam(wxT("MAX"));
+        olxstr v = ExpandMacroShortcuts(tag.GetParam(wxT("MAX")), macro_map);
         if (!v.IsEmpty()) {
           op->processFunction(v, SrcInfo, true);
           max = (int)v.ToDouble();
@@ -813,7 +832,7 @@ TAG_HANDLER_PROC(tag) {
           new wxHtmlContainerCell(m_WParser->GetContainer());
         THtml::WordCell* wc =
           new THtml::WordCell(Label.u_str(), *m_WParser->GetDC());
-        if (LinkInfo != NULL) {
+        if (LinkInfo != 0) {
           wc->SetLink(*LinkInfo);
         }
         wc->SetDescent(0);
@@ -892,7 +911,7 @@ TAG_HANDLER_PROC(tag) {
     CreatedObject = Box;
     CreatedWindow = Box;
     if (tag.HasParam(wxT("CHECKED"))) {
-      Tmp = tag.GetParam(wxT("CHECKED"));
+      Tmp = ExpandMacroShortcuts(tag.GetParam(wxT("CHECKED")), macro_map);
       op->processFunction(Tmp, SrcInfo, false);
       if (Tmp.IsEmpty()) {
         Box->SetChecked(true);
@@ -1158,6 +1177,157 @@ TAG_HANDLER_PROC(tag) {
 }
 TAG_HANDLER_END(INPUT)
 
+TAG_HANDLER_BEGIN(IGNORE, "IGNORE")
+TAG_HANDLER_PROC(tag) {
+  if (tag.HasParam(wxT("TEST"))) {
+    olex2::IOlex2Processor* op = olex2::IOlex2Processor::GetInstance();
+    olxstr f = tag.GetParam("TEST");
+    if (op->processFunction(f) && f.IsBool() && f.ToBool()) {
+      ParseInner(tag);
+    }
+  }
+  return true;
+}
+TAG_HANDLER_END(IGNORE)
+
+TAG_HANDLER_BEGIN(SNIPPET, "SNIPPET")
+TAG_HANDLER_PROC(tag) {
+  olxstr src = tag.GetParam("SRC");
+  olx_object_ptr<IDataInputStream> is = TFileHandlerManager::GetInputStream(src);
+  if (is == 0) {
+    TBasicApp::NewLogEntry(logError) <<
+      (olxstr("Snippet::File does not exist: ").quote() << src);
+    return true;
+  }
+  TStrList lines;
+#ifdef _UNICODE
+  lines = TUtf8File::ReadLines(*is, false);
+#else
+  lines.LoadFromTextStream(*is);
+#endif
+  olxstr_dict<olxstr, true> values;
+  size_t data_start = 0;
+  for (size_t i = 0; i < lines.Count(); i++) {
+    if (!lines[i].StartsFrom('#')) {
+      data_start = i;
+      break;
+    }
+    size_t idx = lines[i].IndexOf('=');
+    if (idx == InvalidIndex) {
+      values(lines[i].SubStringFrom(1).TrimWhiteChars(), EmptyString());
+    }
+    else {
+      olxstr name = lines[i].SubStringTo(idx).SubStringFrom(1).TrimWhiteChars().c_str();
+      values(name, lines[i].SubStringFrom(idx + 1));
+    }
+  }
+
+  using namespace exparse;
+  olxstr alp = tag.GetAllParams();
+  size_t st = 0;
+  olxstr attr_name;
+  for (size_t i = 0; i < alp.Length(); i++) {
+    olxch ch = alp.CharAt(i);
+    if (ch == '=') {
+      attr_name = alp.SubString(st, i - st).c_str();
+    }
+    if (parser_util::is_quote(ch)) {
+      olxstr val;
+      size_t v_start = i;
+      parser_util::parse_string(alp, val, i);
+      val = val.c_str();
+      values.Add(attr_name, val, true);
+      st = i + 1;
+    }
+  }
+
+  for (size_t i = data_start; i < lines.Count(); i++) {
+    bool remove = false;
+    int replaces = 0;
+    size_t idx = InvalidIndex;
+    while (true) {
+      idx = lines[i].FirstIndexOf('#', idx + 1);
+      if (idx == InvalidIndex) {
+        break;
+      }
+      size_t j = idx + 1;
+      for (; j < lines[i].Length(); j++) {
+        if (!olxstr::o_isalphanumeric(lines[i].CharAt(j))) {
+          break;
+        }
+      }
+      if (j - idx > 1) {
+        olxstr pn = lines[i].SubString(idx + 1, j - idx - 1);
+        if (values.HasKey(pn)) {
+          lines[i].Delete(idx, j - idx);
+          lines[i].Insert(values[pn], idx);
+          idx = InvalidIndex;
+          replaces++;
+          remove = false;
+        }
+        if (replaces == 0)
+          remove = true;
+      }
+    }
+    if (remove) {
+      lines.Delete(i--);
+      continue;
+    }
+  }
+  wxString snippet = lines.Text(NewLineSequence(), data_start).u_str();
+  ParseInnerSource(snippet);
+  return true;
+}
+TAG_HANDLER_END(SNIPPET)
+
+TAG_HANDLER_BEGIN(INCLUDE, "INCLUDE")
+TAG_HANDLER_PROC(tag) {
+  if (tag.HasParam(wxT("TEST"))) {
+    olex2::IOlex2Processor* op = olex2::IOlex2Processor::GetInstance();
+    olxstr f = tag.GetParam("TEST");
+    if (!op->processFunction(f) && f.IsBool() && f.ToBool()) {
+      return true;
+    }
+  }
+  olxstr src = tag.GetParam("SRC");
+  olx_object_ptr<IDataInputStream> is = TFileHandlerManager::GetInputStream(src);
+  if (is == 0) {
+    TBasicApp::NewLogEntry(logError) <<
+      (olxstr("Include::File does not exist: ").quote() << src);
+    return true;
+  }
+  TStrList lines;
+#ifdef _UNICODE
+  lines = TUtf8File::ReadLines(*is, false);
+#else
+  lines.LoadFromTextStream(*is);
+#endif
+  TParamList params;
+  using namespace exparse;
+  olxstr alp = tag.GetAllParams();
+  size_t st = 0;
+  olxstr attr_name;
+  for (size_t i = 0; i < alp.Length(); i++) {
+    olxch ch = alp.CharAt(i);
+    if (ch == '=') {
+      attr_name = alp.SubString(st, i - st).c_str();
+    }
+    if (parser_util::is_quote(ch)) {
+      olxstr val;
+      size_t v_start = i;
+      parser_util::parse_string(alp, val, i);
+      val = val.c_str();
+      params.AddParam(attr_name, val);
+      st = i + 1;
+    }
+  }
+  THtmlPreprocessor p;
+  olxstr html = p.Preprocess(lines.Text(NewLineSequence()), params);
+  ParseInnerSource(html.u_str());
+  return true;
+}
+TAG_HANDLER_END(INCLUDE)
+
 TAGS_MODULE_BEGIN(Input)
     TAGS_MODULE_ADD(INPUT)
     TAGS_MODULE_ADD(IMAGE)
@@ -1165,4 +1335,7 @@ TAGS_MODULE_BEGIN(Input)
     TAGS_MODULE_ADD(CIRCLE)
     TAGS_MODULE_ADD(SWITCHINFOS)
     TAGS_MODULE_ADD(SWITCHINFOE)
-TAGS_MODULE_END(Input)
+    TAGS_MODULE_ADD(IGNORE)
+    TAGS_MODULE_ADD(INCLUDE)
+    TAGS_MODULE_ADD(SNIPPET)
+  TAGS_MODULE_END(Input)

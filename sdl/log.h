@@ -14,6 +14,9 @@
 #include "datastream.h"
 #include "actions.h"
 #include "estrlist.h"
+// convenience macro
+#define OLX_DISABLE_LOGGING()\
+ volatile TLog::Disabler olx_log_disabler = TBasicApp::GetInstance().GetLog().Disable()
 BeginEsdlNamespace()
 
 enum  {
@@ -30,6 +33,7 @@ class TLog : public IOlxObject, public IDataOutputStream {
   TArrayList<olx_pair_t<IDataOutputStream*, bool> > Streams;
   TActionQList Actions;
   bool verbose;
+  int disabled;
 protected:
   virtual size_t Write(const void* Data, size_t size);
   virtual uint64_t GetSize() const { return 0; }
@@ -38,14 +42,14 @@ protected:
 
   void Add(const olxstr& str) {
     for (size_t i = 0; i < Streams.Count(); i++) {
-      Streams[i].a->Writeln(str);
+      Streams[i].a->Writeln(disabled != 0 ? EmptyString() : str);
     }
   }
   template <class List>
   void Add(const List& lst) {
     for (size_t i = 0; i < lst.Count(); i++) {
       for (size_t j = 0; j < Streams.Count(); j++) {
-        Streams[j].a->Writeln(lst[i]);
+        Streams[j].a->Writeln(disabled != 0 ? EmptyString() : lst[i]);
       }
     }
   }
@@ -69,7 +73,7 @@ public:
   // use this operators for unconditional 'printing'
   TLog& operator << (const olxstr& str) {
     for (size_t i = 0; i < Streams.Count(); i++) {
-      Streams[i].a->Write(str);
+      Streams[i].a->Write(disabled != 0 ? EmptyString() : str);
     }
     return *this;
   }
@@ -120,6 +124,24 @@ public:
     const olxstr& location = EmptyString())
   {
     return LogEntry(*this, evt, annotate, location);
+  }
+  //..............................................................................
+  struct Disabler {
+  private:
+    TLog& parent;
+  public:
+    Disabler(TLog& parent)
+      : parent(parent)
+    {
+      parent.disabled++;
+    }
+    ~Disabler() {
+      parent.disabled--;
+    }
+  };
+  //..............................................................................
+  Disabler Disable() {
+    return Disabler(*this);
   }
   //..............................................................................
   TActionQueue& OnInfo;

@@ -13,6 +13,7 @@
 #include "gpcollection.h"
 #include "styles.h"
 #include "glprimitive.h"
+#include "stable_sort.h"
 UseGlNamespace()
 
 TGlGroup::TGlGroup(TGlRenderer& R, const olxstr& collectionName) :
@@ -361,3 +362,7 @@ vec3d TGlGroup::CalcCenter() const {
   return c;
 }
 //..............................................................................
+void TGlGroup::SortObjectsByTag() {
+  // need a stable sort!!
+  StableQuickSorter::Sort(Objects, ACollectionItem::TagComparator());
+}

@@ -248,7 +248,7 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
     for (size_t j=0; j < mc; j++) {
       vec3d v = Atoms[ind]->ccrd() - Matrices[j] * Atoms[i]->ccrd();
       const vec3i shift = v.Round<int>();
-      // collect asymetric unit bonds
+      // collect asymmetric unit bonds
       if (j == 0 && shift.IsNull()) {  // I
         AU->CellToCartesian(v);
         const double qd = v.QLength();
@@ -332,8 +332,9 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
           {
             volatile olx_scope_cs cs_(GetCriticalSection());
             Atoms[ind]->AttachSite(Atoms[i], matr);
-            if (i != ind)
+            if (i != ind) {
               Atoms[i]->AttachSite(Atoms[ind], Latt->GetUnitCell().InvMatrix(matr));
+            }
           }
           else if (TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], matr, qd,
             Latt->GetDeltaI()))

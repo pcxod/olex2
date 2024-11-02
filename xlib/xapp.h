@@ -64,11 +64,15 @@ protected:
   TLibrary Library;
   olxstr CifTemplatesDir;  // the folder with CIF templates/data
   ASelectionOwner* SelectionOwner;
-  olx_object_ptr<bool> preserve_fvars;
-  olx_object_ptr<double> min_hbond_angle;
-  olx_object_ptr<bool> safe_afix;
-  olx_object_ptr<bool> rename_parts;
-  olx_object_ptr<bool> stack_restraints;
+  olx_object_ptr<double> min_hbond_angle,
+    exyz_separation;
+  olx_object_ptr<bool>
+    preserve_fvars,
+    safe_afix,
+    rename_parts,
+    stack_restraints,
+    external_explicit_same,
+    explicit_same;
   size_t max_label_length;
   bool interactions_i;
   SortedObjectList<int, TPrimitiveComparator> interactions_from,
@@ -208,6 +212,8 @@ public:
   }
   // the returned value (in degrees) must be cached if used in loops etc
   static double GetMinHBondAngle();
+  // possibly should go to TGXApp...
+  static double GetEXYZSeparation();
   // preserve free vaiable if referenced once only
   static bool DoPreserveFVARs();
   // if true - AFIX are validated adter naming, deleting and HADD
@@ -219,6 +225,9 @@ public:
   static SortedObjectList<int, TPrimitiveComparator>& GetInteractionsFrom();
   static SortedObjectList<int, TPrimitiveComparator>& GetInteractionsTo();
   static bool DoStackRestraints();
+  static bool DoUseExternalExplicitSAME();
+  static bool DoUseExplicitSAME();
+  void ResetOptions();
 
   static const_strlist BangList(const TSAtom &A);
   static void BangTable(const TSAtom& A, TTTable<TStrList>& Table);

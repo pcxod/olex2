@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -24,6 +24,7 @@
 #include "absorpc.h"
 #include "analysis.h"
 #include "estopwatch.h"
+#include "olxvar.h"
 
 TBasicCFile::TBasicCFile()
   : RefMod(AsymmUnit), AsymmUnit(0)
@@ -44,8 +45,14 @@ void TBasicCFile::SaveToFile(const olxstr& fn) {
   sw.start("Saving to strings...");
   SaveToStrings(L);
   sw.start("UTF8 encoding to file");
-  TUtf8File::WriteLines(fn, L, false);
-  FileName = fn;
+  try {
+    FileName = fn;
+    TUtf8File::WriteLines(fn, L, false);
+  }
+  catch (const TExceptionBase& exc) {
+    FileName.SetLength(0);
+    throw TFunctionFailedException(__OlxSourceInfo, exc);
+  }
 }
 //..............................................................................
 void TBasicCFile::PostLoad() {
@@ -99,7 +106,6 @@ void TBasicCFile::LoadStrings(const TStrList &lines, const olxstr &nameToken) {
     FileName.SetLength(0);
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
-  FileName = nameToken;
   PostLoad();
 }
 //..............................................................................
@@ -112,12 +118,13 @@ void TBasicCFile::LoadFromFile(const olxstr& _fn) {
     throw TEmptyFileException(__OlxSourceInfo, _fn);
   }
   try {
+    FileName = file_n.file_name;
     LoadStrings(L, _fn);
   }
   catch (const TExceptionBase& exc) {
+    FileName.SetLength(0);
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
-  FileName = file_n.file_name;
 }
 //..............................................................................
 void TBasicCFile::GenerateCellForCartesianFormat() {
@@ -375,6 +382,8 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
               TBasicApp::NewLogEntry(logError) << "Loading the refinement model "
                 "from the embedded RES file.";
               GetRM().Assign(ins.GetRM(), false);
+              // a little hack here!
+              TOlxVars::SetVar("cif_uses_masks", ins.InsExists("ABIN"));
               //ExpandHKLSource(GetRM(), fn);
               GetRM().SetHKLSource(EmptyString());
               rm_updated = true;
@@ -388,6 +397,7 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
         catch (const TExceptionBase &exc) {
           TBasicApp::NewLogEntry(logError) << "Failed to update the refinement"
             " model from the embedded RES file.";
+          exc.GetException()->PrintStackTrace();
         }
         // build bonds from the CIF
         if (!rm_updated) {
@@ -395,7 +405,7 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
         }
       }
       OnFileLoad.Execute(this, Loader);
-      if (generator.ok() && generator->IsValid()) {
+      if (generator.ok() && generator->IsValid() && TBasicApp::HasGUI()) {
         TBasicApp::NewLogEntry(logWarning) << "Displaying CIF bonds only, use "
           "'fuse' to recalculate from scratch";
         GetLattice().Init(generator);
@@ -601,10 +611,12 @@ void TXFile::UpdateAsymmUnit() {
   for (size_t i = 0; i < GetAsymmUnit().EllpCount(); i++) {
     LL->GetAsymmUnit().NewEllp() = GetAsymmUnit().GetEllp(i);
   }
+  while (LL->GetAsymmUnit().AtomCount() < GetAsymmUnit().AtomCount()) {
+    LL->GetAsymmUnit().NewAtom();
+  }
   for (size_t i = 0; i < GetAsymmUnit().AtomCount(); i++) {
     TCAtom& CA = GetAsymmUnit().GetAtom(i);
-    TCAtom& CA1 = LL->GetAsymmUnit().AtomCount() <= i ?
-      LL->GetAsymmUnit().NewAtom() : LL->GetAsymmUnit().GetAtom(i);
+    TCAtom& CA1 = LL->GetAsymmUnit().GetAtom(i);
     CA1.Assign(CA);
   }
   LL->GetAsymmUnit().AssignResidues(GetAsymmUnit());
@@ -623,11 +635,12 @@ void TXFile::Sort(const TStrList& ins, const TParamList &options) {
     return;
   }
   olxdict<TCAtom *, size_t, TPointerComparator> original_ids;
+  TAsymmUnit &au = GetAsymmUnit();
   if (!FLastLoader->IsNative()) {
     UpdateAsymmUnit();
-    original_ids.SetCapacity(GetAsymmUnit().AtomCount());
-    for (size_t i = 0; i < GetAsymmUnit().AtomCount(); i++) {
-      original_ids.Add(&GetAsymmUnit().GetAtom(i), i);
+    original_ids.SetCapacity(au.AtomCount());
+    for (size_t i = 0; i < au.AtomCount(); i++) {
+      original_ids.Add(&au.GetAtom(i), i);
     }
   }
   const bool sort_resi_n = options.GetBoolOption("rn", false, true);
@@ -636,7 +649,7 @@ void TXFile::Sort(const TStrList& ins, const TParamList &options) {
   default_sorter.sequence.AddNew(&AtomSorter::atom_cmp_Mw);
   default_sorter.sequence.AddNew(&AtomSorter::atom_cmp_Label);
   TStrList labels;
-  TCAtomPList &list = GetAsymmUnit().GetResidue(0).GetAtomList();
+  TCAtomPList &list = au.GetResidue(0).GetAtomList();
   size_t moiety_index = InvalidIndex, h_cnt = 0, del_h_cnt = 0, free_h_cnt = 0;
   bool keeph = true;
   for (size_t i = 0; i < list.Count(); i++) {
@@ -772,51 +785,73 @@ void TXFile::Sort(const TStrList& ins, const TParamList &options) {
     }
     if (keeph) {
       // this will not work with SAME
-      AtomSorter::KeepH(list, GetAsymmUnit(), &AtomSorter::atom_cmp_Label);
+      AtomSorter::KeepH(list, au, &AtomSorter::atom_cmp_Label);
     }
   }
   catch (const TExceptionBase& exc) {
     TBasicApp::NewLogEntry(logError) << exc.GetException()->GetError();
   }
   if (sort_resi_n) {
-    GetAsymmUnit().SortResidues();
+    au.SortResidues();
     if (!FLastLoader->IsNative()) {
       FLastLoader->GetAsymmUnit().SortResidues();
     }
   }
   if (options.GetBoolOption("r", false, true)) {
     // apply default sorting to the residues
-    for (size_t i = 1; i < GetAsymmUnit().ResidueCount(); i++) {
-      AtomSorter::Sort(GetAsymmUnit().GetResidue(i).GetAtomList(),
+    for (size_t i = 1; i < au.ResidueCount(); i++) {
+      AtomSorter::Sort(au.GetResidue(i).GetAtomList(),
         acs);
     }
   }
+  bool changes = true;
+  size_t changes_cnt = 0;
   // comply to residues before dry-save
-  GetAsymmUnit().ComplyToResidues();
-  GetAsymmUnit().GetAtoms().ForEach(ACollectionItem::IndexTagSetter());
-  GetRM().Sort_();
-  {
-    TSizeList indices = TIns::DrySave(GetAsymmUnit());
-    if (indices.Count() != GetAsymmUnit().AtomCount()) {
-      throw TFunctionFailedException(__OlxSourceInfo, "assert");
+  while (changes) {
+    changes = false;
+    au.ComplyToResidues();
+    au.GetAtoms().ForEach(ACollectionItem::IndexTagSetter());
+    GetRM().Sort_();
+    TSizeList indices = TIns::DrySave(au, false);
+    au.RearrangeAtoms(indices);
+    TSizeList indices1 = TIns::DrySave(au, false);
+    olxstr_buf offending;
+    for (size_t i = 0; i < indices.Count(); i++) {
+      if (indices[i] != indices1[i]) {
+        changes = true;
+        break;
+      }
     }
-    GetAsymmUnit().RearrangeAtoms(indices);
+    if (++changes_cnt > 3) {
+      TBasicApp::NewLogEntry(logError) << "Atom order resolution has not converged!";
+      olxstr_buf offending;
+      for (size_t i = 0; i < indices.Count(); i++) {
+        if (indices[i] != indices1[i]) {
+          offending << ", " << au.GetAtom(indices[i]).GetResiLabel() << "<->"
+            << au.GetAtom(indices1[i]).GetResiLabel();
+          if (offending.Length() > 256) {
+            break;
+          }
+        }
+      }
+      TBasicApp::NewLogEntry(logInfo) << olxstr(offending).SubStringFrom(2);
+      break;
+    }
+    au.SetNonHAtomTags_();
+    au._UpdateAtomIds();
   }
-  GetAsymmUnit().SetNonHAtomTags_();
   GetRM().AfterAUSort_();
-  GetAsymmUnit()._UpdateAtomIds();
   // 2010.11.29, ASB bug fix for ADPS on H...
   GetUnitCell().UpdateEllipsoids();
   GetLattice().RestoreADPs(false);
 
   if (!FLastLoader->IsNative()) {
     TSizeList new_indices(original_ids.Count(), olx_list_init::zero());
-    for (size_t i = 0; i < GetAsymmUnit().AtomCount(); i++) {
-      new_indices[i] =
-        original_ids[&GetAsymmUnit().GetAtom(i)];
+    for (size_t i = 0; i < au.AtomCount(); i++) {
+      new_indices[i] = original_ids[&au.GetAtom(i)];
     }
     FLastLoader->RearrangeAtoms(new_indices);
-    FLastLoader->GetAsymmUnit().AssignResidues(GetAsymmUnit());
+    FLastLoader->GetAsymmUnit().AssignResidues(au);
   }
 }
 //..............................................................................
@@ -826,9 +861,6 @@ void TXFile::UpdateAtomIds() {
   }
   TAsymmUnit &au = GetAsymmUnit();
   TSizeList indices = TIns::DrySave(au);
-  if (indices.Count() != au.AtomCount()) {
-    throw TFunctionFailedException(__OlxSourceInfo, "assert");
-  }
   bool uniform = true;
   for (size_t i = 0; i < indices.Count(); i++) {
     if (indices[i] != i) {
@@ -909,7 +941,14 @@ void TXFile::SaveToFile(const olxstr& FN, int flags) {
   olxstr Ext = TEFile::ExtractFileExt(FN);
   TBasicCFile *Loader = FindFormat(Ext);
   TBasicCFile *LL = FLastLoader;
+
   if (!Loader->IsNative()) {
+    if (!TXApp::DoUseExplicitSAME() && !TXApp::DoUseExternalExplicitSAME()) {
+      GetRM().rSAME.BeginAUSort();
+      GetRM().rSAME.FixOverlapping();
+      GetRM().rSAME.PrepareSave();
+      GetRM().rSAME.EndAUSort();
+    }
     if (LL != Loader) {
       if (!Loader->Adopt(*this, flags)) {
         throw TFunctionFailedException(__OlxSourceInfo,
@@ -925,6 +964,20 @@ void TXFile::SaveToFile(const olxstr& FN, int flags) {
   OnFileSave.Enter(this);
   IOlxObject* Cause = 0;
   try {
+    // save external SAME if used
+    if (olx_is<TIns>(Loader)) {
+      TIns& ins = *dynamic_cast<TIns*>(Loader);
+      olxstr inc_name_full = TEFile::ChangeFileExt(FN, Olex2SameExt());
+      bool inc = false;
+      if (TXApp::DoUseExternalExplicitSAME()) {
+        TStrList same = GetRM().rSAME.GenerateList();
+        if (!same.IsEmpty()) {
+          TUtf8File::WriteLines(inc_name_full, same, false);
+          inc = true;
+        }
+      }
+      ins.UpdateSameFile(TEFile::ExtractFileName(inc_name_full), inc);
+    }
     if (!TBasicApp::GetInstance().GetOptions()
       .FindValue("absolute_hkl_path", FalseString()).ToBool())
     {
@@ -1617,5 +1670,24 @@ olxstr TXFile::GetStructureDataFolder() const {
     }
   }
   return EmptyString();
+}
+//..............................................................................
+const olxstr& TXFile::Olex2SameExt() {
+  static olxstr ext = "olex2_same";
+  return ext;
+}
+//..............................................................................
+void TXFile::SetLastLoader(const TBasicCFile* ll) {
+  if (ll == 0) {
+    FLastLoader = 0;
+    return;
+  }
+  for (size_t i = 0; i < FileFormats.Count(); i++) {
+    if (olx_type_check(*ll, *FileFormats.GetObject(i))) {
+      FLastLoader = FileFormats.GetObject(i);
+      return;
+    }
+  }
+  throw TInvalidArgumentException(__OlxSourceInfo, "unknown loader type!");
 }
 //..............................................................................

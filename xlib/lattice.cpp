@@ -1931,10 +1931,10 @@ size_t TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
           count += 3;
         }
         else {
-          if (d < 1.25) {
+          if (d < 1.35) {
             if (NAE.Count() > 1) {
               bool done = false;
-              if (NAE.Count() == 2) { // check acetylene again
+              if (NAE.Count() == 2 && d < 1.2) { // check acetylene again
                 vec3d v = (NAE.GetCAtom(0) == atom.CAtom() ? NAE.GetCrd(1)
                   : NAE.GetCrd(0));
                 double ang = (v - NAE.GetBase().crd())
@@ -2686,7 +2686,7 @@ void TLattice::RemoveNonHBonding(TAtomEnvi& Envi, size_t max) {
   Envi.SortByDistance();
 }
 //..............................................................................
-void TLattice::SetAnis(const TCAtomPList& atoms, bool anis, bool anharmonic) {
+void TLattice::SetAnis(const TCAtomPList& atoms, bool anis, int anharmonic) {
   if (atoms.IsEmpty()) {
     return;
   }
@@ -2706,8 +2706,12 @@ void TLattice::SetAnis(const TCAtomPList& atoms, bool anis, bool anharmonic) {
         ee[0] = ee[1] = ee[2] = atoms[i]->GetUiso();
         atoms[i]->UpdateEllp(ee);
       }
-      atoms[i]->GetEllipsoid()->SetAnharmonicPart(
-        anharmonic ? new GramCharlier4() : 0);
+      if (anharmonic > 2) {
+        atoms[i]->GetEllipsoid()->SetAnharmonicPart(new GramCharlier(anharmonic));
+      }
+      else {
+        atoms[i]->GetEllipsoid()->SetAnharmonicPart(0);
+      }
     }
   }
   GetUnitCell().UpdateEllipsoids();
@@ -2907,9 +2911,10 @@ void TLattice::LoadPlanes_(const TDataItem& item, bool rebuild_defs) {
   }
 }
 //..............................................................................
-void TLattice::SetGrowInfo(GrowInfo* grow_info)  {
-  if( _GrowInfo != NULL )
+void TLattice::SetGrowInfo(GrowInfo* grow_info) {
+  if (_GrowInfo != 0) {
     delete _GrowInfo;
+  }
   _GrowInfo = grow_info;
 }
 //..............................................................................
@@ -2918,35 +2923,25 @@ void TLattice::SetPlaneDefinitions(const TTypeList<TSPlane::Def> &pd) {
 }
 //..............................................................................
 TLattice::GrowInfo* TLattice::GetGrowInfo() const {
-  if( !IsGenerated() )  return NULL;
+  if (!IsGenerated()) {
+    return 0;
+  }
   const TAsymmUnit& au = GetAsymmUnit();
   GrowInfo& gi = *(new GrowInfo);
-  gi.matrices.SetCount( Matrices.Count() );
   gi.unc_matrix_count = GetUnitCell().MatrixCount();
-  // save matrix tags and init gi.matrices
-  TArrayList<uint32_t> mtags(Matrices.Count());
-  for( size_t i=0; i < Matrices.Count(); i++ )  {
-    mtags[i] = Matrices[i]->GetId();
-    (gi.matrices[i] = new smatd(*Matrices[i]))->SetRawId(mtags[i]);
-    Matrices[i]->SetRawId((uint32_t)i);
-  }
-
   gi.info.SetCount(au.AtomCount());
   const size_t ac = Objects.atoms.Count();
-  for( size_t i=0; i < ac; i++ )  {
+  for (size_t i = 0; i < ac; i++) {
     TSAtom& sa = Objects.atoms[i];
     gi.info[sa.CAtom().GetId()] << sa.GetMatrix().GetId();
   }
-  // restore matrix tags
-  for( size_t i=0; i < mtags.Count(); i++ )
-    Matrices[i]->SetRawId(mtags[i]);
   return &gi;
 }
 //..............................................................................
 bool TLattice::ApplyGrowInfo() {
-  TAsymmUnit& au = GetAsymmUnit();
+  const TUnitCell& uc = GetUnitCell();
   if (_GrowInfo == 0 || !Objects.atoms.IsEmpty() || !Matrices.IsEmpty() ||
-    GetUnitCell().MatrixCount() != _GrowInfo->unc_matrix_count)
+    uc.MatrixCount() != _GrowInfo->unc_matrix_count)
   {
     if (_GrowInfo != 0) {
       delete _GrowInfo;
@@ -2954,27 +2949,29 @@ bool TLattice::ApplyGrowInfo() {
     }
     return false;
   }
-  Matrices.Assign(_GrowInfo->matrices);
-  _GrowInfo->matrices.Clear();
-  Objects.atoms.IncCapacity(au.AtomCount()*Matrices.Count());
+  TAsymmUnit& au = GetAsymmUnit();
+  ClearMatrices();
+  olx_pdict< uint32_t, size_t> mmap;
+  size_t cnt = olx_sum(_GrowInfo->info,
+    FunctionAccessor::MakeConst(
+      (size_t (TUIntList::*)() const) &TUIntList::Count)); // GCC!!!
+  Objects.atoms.IncCapacity(cnt);
   for (size_t i = 0; i < au.AtomCount(); i++) {
-    TCAtom& ca = GetAsymmUnit().GetAtom(i);
+    TCAtom& ca = au.GetAtom(i);
     // we still need masked and detached atoms here
     if (ca.IsDeleted()) {
       continue;
     }
-    if (ca.GetType() == iQPeakZ ||
-      i >= _GrowInfo->info.Count() ||
-      _GrowInfo->info[i].IsEmpty())
-    {
-      for (size_t j = 0; j < Matrices.Count(); j++) {
-        GenerateAtom(ca, *Matrices[j]);
-      }
-      continue;
-    }
-    const TIndexList& mi = _GrowInfo->info[i];
+    const TArrayList<uint32_t>& mi = _GrowInfo->info[i];
     for (size_t j = 0; j < mi.Count(); j++) {
-      GenerateAtom(ca, *Matrices[mi[j]]);
+      smatd m = smatd::FromId(mi[j], uc.GetMatrix(smatd::GetContainerId(mi[j])));
+      size_t idx = mmap.Find(mi[j], InvalidIndex);
+      if (idx == InvalidIndex) {
+        Matrices.Add(new smatd(m));
+        idx = Matrices.Count() - 1;
+        mmap.Add(mi[j], idx);
+      }
+      GenerateAtom(ca, *Matrices[idx]);
     }
   }
   delete _GrowInfo;
@@ -3437,6 +3434,41 @@ bool TLattice::IsPolymeric(bool use_peaks) const {
     }
   }
   return false;
+}
+//..............................................................................
+olx_object_ptr<TLattice::GrowInfo> TLattice::Match(
+  const TTypeList<Atom3DId>& ids)
+{
+  const TAsymmUnit& au = GetAsymmUnit();
+  const TUnitCell& uc = GetUnitCell();
+  olx_object_ptr<GrowInfo> gi = new GrowInfo();
+  gi->info.SetCount(au.AtomCount());
+  gi->unc_matrix_count = uc.MatrixCount();
+  const TCAtomPList& atoms = au.GetAtoms();
+  const smatd_list& matrices = uc.GetMatrices();
+  for (size_t i = 0; i < ids.Count(); i++) {
+    vec3d crd = ids[i].get_crd();
+    short z = ids[i].get_z();
+    for (size_t ai = 0; ai < atoms.Count(); ai++) {
+      if (atoms[ai]->GetType().z != z) {
+        continue;
+      }
+      for (size_t mi = 0; mi < matrices.Count(); mi++) {
+        vec3d v = crd - matrices[mi] * atoms[ai]->ccrd();
+        const vec3i shift = v.Round<int>();
+        au.CellToCartesian(v -= shift);
+        const double qd = v.QLength();
+        if (qd < 1e-4) {
+          smatd m = matrices[mi];
+          m.t += shift;
+          uc.InitMatrixId(m);
+          gi->info[atoms[ai]->GetId()].Add(m.GetId());
+          break;
+        }
+      }
+    }
+  }
+  return gi;
 }
 //..............................................................................
 //..............................................................................

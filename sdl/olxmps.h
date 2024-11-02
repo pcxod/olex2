@@ -140,7 +140,12 @@ public:
       item.SetId((uint16_t)(Items.Count() - 1));
       TThreadPool::AllocateTask(item);
     }
-    TThreadPool::DoRun();
+    try {
+      TThreadPool::DoRun();
+    }
+    catch (const TExceptionBase& e) {
+      throw TFunctionFailedException(__OlxSourceInfo, e);
+    }
   }
   ~TListIteratorManager() {
     Tasks.Delete(0);

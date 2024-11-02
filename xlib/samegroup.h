@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -27,6 +27,10 @@ protected:
   void SetAtomIds(uint16_t);
   // on release
   void ClearAtomIds() { SetAtomIds(~0); }
+  // re-orders this groups and dependent groups atoms according to tags
+  void Reorder();
+  // initialises atom_map_N
+  olx_object_ptr<DistanceGenerator> get_generator() const;
 public:
   TSameGroup(uint16_t id, TSameGroupList& parent);
   ~TSameGroup();
@@ -41,6 +45,9 @@ public:
   void OnAUUpdate();
   void BeginAUSort();
   void EndAUSort();
+
+  TStrList::const_list_type Analyse(bool log,
+    TPtrList<const TSameGroup> *offending=0) const;
 
   void Clear() {
     SetAtomIds(~0);
@@ -83,14 +90,54 @@ public:
 
   bool DoOverlap(const TSameGroup &g) const;
 
+  // returns OVERLAP_ bit mask
+  int DoOverlapEx(const TSameGroup& g) const;
+
+  bool IsSubgroupOf(const TSameGroup& g) const;
+
+  bool IsSupergroupOf(const TSameGroup& g) const {
+    return g.IsSubgroupOf(*this);
+  }
+
+  // could return null, the returned value owned by the parent
+  TSameGroup* ToExplicit(TTypeList<TSameGroup> *dest=0) const;
+
+  // generates SADI list
+  TStrList::const_list_type GenerateList() const;
+
+  // a list of restrained distances for atom indices in the AU
+  DistanceGenerator::pair_list_t::const_list_type GetRestrainedDistances() const {
+    TTypeList<DistanceGenerator::pair_list_t> rv1;
+    GetRestrainedDistances(rv1, rv1);
+    // GCC cannot deduce return type??? cannot use FunctionAccessor::MakeConst directly
+    size_t (DistanceGenerator::pair_list_t:: * f)() const = &DistanceGenerator::pair_list_t::Count;
+    size_t sz = olx_sum(rv1, FunctionAccessor::MakeConst(f));
+    DistanceGenerator::pair_list_t rv(olx_reserve(sz));
+    for (size_t i = 0; i < rv1.Count(); i++) {
+      rv.AddCopyAll(rv1[i]);
+    }
+    return rv;
+  }
+
+  void GetRestrainedDistances(TTypeList<DistanceGenerator::pair_list_t> &d12,
+    TTypeList<DistanceGenerator::pair_list_t>& d13) const;
+
+  void GetRestrainedDistances(
+    olx_pdict<double, TTypeList<DistanceGenerator::pair_list_t> >& ds) const;
+
+  // expands SAME into SADI lists of the parent RefinementModel
+  void Expand(TStrList* log=0) const;
+
   double Esd12, Esd13;
 
   void ToDataItem(TDataItem& item) const;
+  void ToDataItem_HRF(TDataItem& item) const;
 #ifdef _PYTHON
   PyObject* PyExport(PyObject* main, TPtrList<PyObject>& allGroups,
     TPtrList<PyObject>& atoms, TPtrList<PyObject>& equiv);
 #endif
   void FromDataItem(TDataItem& item);
+  void FromDataItem_HRF(TDataItem& item);
   // for releasing/restoring items SetId must be called
   friend class TSameGroupList;
 };
@@ -101,21 +148,21 @@ public:
 
   class RefinementModel& RM;
 
-  TSameGroupList(RefinementModel& parent) : RM(parent) {}
-  TSameGroup& New() {
-    return Groups.Add(new TSameGroup((uint16_t)Groups.Count(), *this));
-  }
+  TSameGroupList(RefinementModel& parent)
+    : RM(parent)
+  {}
+  // if the dest is not specified - this objects keeps ownership
+  TSameGroup& New(TSameGroup* ref = 0, TTypeList<TSameGroup>* dest = 0);
+
   TSameGroup& Build(const olxstr &exp, const olxstr &resi=EmptyString());
-  TSameGroup& NewDependent(TSameGroup& on) {
-    TSameGroup& rv = Groups.Add(
-      new TSameGroup((uint16_t)Groups.Count(), *this));
-    on.AddDependent(rv);
-    return rv;
-  }
   void FixIds();
   TSameGroup& operator [] (size_t i) { return Groups[i]; }
-  const TSameGroup& operator [] (size_t i) const { return Groups[i]; }
+  const TSameGroup& operator [] (size_t i) const {
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, i, 0, Groups.Count());
+    return Groups[i];
+  }
   size_t Count() const { return Groups.Count(); }
+  bool IsEmpty() const { return Groups.IsEmpty(); }
   // searches a group by the content
   TSameGroup *Find(const TSameGroup &g) const;
   void Clear() { Groups.Clear(); }
@@ -123,18 +170,59 @@ public:
   void Release(TSameGroup& sg);
   void Restore(TSameGroup& sg);
   void Delete(const TPtrList <TSameGroup> &groups);
+  void Delete(TSameGroup& g) {
+    Delete(TPtrList<TSameGroup>() << g);
+  }
   void Sort();
+  void Analyse();
+  void FixOverlapping();
+  void PrepareSave();
+  // works on Reference groups only
+  TPtrList<TSameGroup>::const_list_type
+    FindSupergroups(const TSameGroup& sg,
+      const olxdict<const TSameGroup*, TAtomRefList, TPointerComparator>* sg_atoms=0) const;
   // this is called internally by the RM
   void OnAUUpdate();
   void BeginAUSort();
   void SortGroupContent();
   void EndAUSort();
 
+  TStrList::const_list_type GenerateList() const;
+  // expands all SAME into SADI lists
+  void Expand(TStrList *log=0);
+
   void ToDataItem(TDataItem& item) const;
+  // fo INS header - easy to read and update
+  void ToDataItem_HRF(TDataItem& item) const;
 #ifdef _PYTHON
   PyObject* PyExport(TPtrList<PyObject>& atoms, TPtrList<PyObject>& equiv);
+  TPtrList<PyObject>::const_list_type PyExportAsSADI(
+    TPtrList<PyObject>& atoms, TPtrList<PyObject>& equiv);
 #endif
+  // auto selects which format to use based on 'n' field
   void FromDataItem(TDataItem& item);
+private:
+  void FromDataItem_HRF(TDataItem& item);
+  void FromDataItem_(TDataItem& item, size_t n);
+  // supergroups first
+  static void SortSupergroups(TPtrList<TSameGroup>& groups,
+    const olxdict<const TSameGroup*, TAtomRefList, TPointerComparator>& sg_atoms);
+
+  // used when extra groups are generated by ToExplicit
+  struct GroupTrimmer {
+    TTypeList<TSameGroup> &groups;
+    size_t sz;
+    GroupTrimmer(TTypeList<TSameGroup>& groups)
+      : groups(groups),
+      sz(groups.Count())
+    {}
+    ~GroupTrimmer() {
+      while (groups.Count() > sz) {
+        groups.GetLast().ReleasedClear();
+        groups.Delete(groups.Count() - 1);
+      }
+    }
+  };
 };
 
 EndXlibNamespace()

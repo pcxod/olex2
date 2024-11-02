@@ -173,8 +173,8 @@ protected:
   void process_command_list(TStrObjList& Cmds, bool enable);
   olx_cdict<TMouseRegion, AGDrawObject *> object_cache;
   void OnObjectDelete(APerishable *o);
-  AGDrawObject *find_object(int x, int y);
-  void ClearObjectCache(IOlxObject *caller=NULL);
+  AGDrawObject *find_object(int x, int y, bool picking);
+  void ClearObjectCache(IOlxObject *caller=0);
 public:
   TGlMouse(TGlRenderer *Parent, TDFrame *Frame);
   virtual ~TGlMouse();

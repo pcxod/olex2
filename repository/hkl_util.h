@@ -39,8 +39,7 @@ namespace hkl_util {
   typename fingerprint_t::const_list_type calc_fingerprint(const ref_list_t& refs,
     size_t fp_len = 10)
   {
-    TTypeList<olx_pair_t<double, size_t> > rv;
-    rv.SetCapacity(fp_len);
+    TTypeList<olx_pair_t<double, size_t> > rv(olx_reserve(fp_len));
     double minI = 1e3, maxI = -1e-3;
     for (size_t i = 0; i < refs.Count(); i++) {
       olx_update_min_max(refs[i].GetI(), minI, maxI);

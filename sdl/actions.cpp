@@ -244,12 +244,11 @@ bool TActionQList::Execute(const olxstr& Name, const IOlxObject* Sender,
 //..............................................................................
 void TActionQList::Clear() {
   size_t ac = 0;
-  TPtrList<AActionHandler> hands;
   for (size_t i = 0; i < Queues.Count(); i++) {
     ac += Queues.GetValue(i)->HandlerCount();
   }
 
-  hands.SetCapacity(ac);
+  TPtrList<AActionHandler> hands(olx_reserve(ac));
   ac = 0;
   for (size_t i = 0; i < Queues.Count(); i++) {
     TActionQueue* Q = Queues.GetValue(i);

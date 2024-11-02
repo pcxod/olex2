@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -30,24 +30,30 @@ void TThreadSlot::Resume()  {
   suspended = false;
 }
 void TThreadSlot::SetTask(ITask& _task)  {
-  if( task != NULL )  // should never happen...
+  if (task != 0) { // should never happen...
     throw TFunctionFailedException(__OlxSourceInfo, "Slot is occupied");
+  }
   task = &_task;
 }
 int TThreadSlot::Run() {
-  while( true )  {
-    if( Terminate ) {
+  while (true) {
+    if (Terminate) {
       Running = false;
       break;
     }
-    if( suspended )  {
+    if (suspended) {
       Yield();
       olx_sleep(1);
       continue;
     }
-    if( task != NULL )  {
-      task->Run();
-      task = NULL;
+    if (task != 0) {
+      try {
+        task->Run();
+      }
+      catch (const TExceptionBase& e) {
+        exception = new TFunctionFailedException(__OlxSrcInfo, e);
+      }
+      task = 0;
       suspended = true;
     }
   }
@@ -61,18 +67,21 @@ void TThreadPool::_checkThreadCount()  {
     throw TInvalidArgumentException(__OlxSourceInfo,
       "undefined number of possible threads");
   }
-  while( tasks.Count() < (size_t)max_th )
+  while (tasks.Count() < (size_t)max_th) {
     tasks.Add(new TThreadSlot);
+  }
   while( tasks.Count() > (size_t)max_th )  {
-    if( tasks.GetLast().IsRunning() )
+    if (tasks.GetLast().IsRunning()) {
       tasks.GetLast().Join(true);
+    }
     tasks.Delete(tasks.Count()-1);
   }
 }
 
 void TThreadPool::AllocateTask(ITask& task) {
-  if( current_task == 0 )
+  if (current_task == 0) {
     _checkThreadCount();
+  }
   if( current_task >= tasks.Count() ) {
     throw TFunctionFailedException(__OlxSourceInfo,
       "Number of requested and available slots mismatch");
@@ -80,22 +89,24 @@ void TThreadPool::AllocateTask(ITask& task) {
   tasks[current_task++].SetTask(task);
 }
 
-void TThreadPool::DoRun()  {
-  if( current_task == 0 )
+void TThreadPool::DoRun() {
+  if (current_task == 0) {
     throw TFunctionFailedException(__OlxSourceInfo, "No slots were allocated");
-  for( size_t i=0; i < current_task; i++ )  {
-    if( tasks[i].IsRunning() )
+  }
+  for (size_t i = 0; i < current_task; i++) {
+    if (tasks[i].IsRunning()) {
       tasks[i].Resume();
-    else if( !tasks[i].Start() )  {
+    }
+    else if (!tasks[i].Start()) {
       throw TFunctionFailedException(__OlxSourceInfo,
         "Failed to start thread");
     }
   }
   bool running = true;
-  while( running )  {
+  while (running) {
     running = false;
-    for( size_t i=0; i < current_task; i++ )  {
-      if( !tasks[i].IsSuspended() )  {
+    for (size_t i = 0; i < current_task; i++) {
+      if (!tasks[i].IsSuspended()) {
         running = true;
         break;
       }
@@ -104,4 +115,9 @@ void TThreadPool::DoRun()  {
     //olx_sleep(50);
   }
   current_task = 0;
+  for (size_t i = 0; i < current_task; i++) {
+    if (tasks[i].exception.ok()) {
+      throw TFunctionFailedException(__OlxSourceInfo, *tasks[i].exception);
+    }
+  }
 }

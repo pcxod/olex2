@@ -56,8 +56,8 @@ PyObject* rotated_adp_constraint::PyExport() const {
 #endif
 //.............................................................................
 olxstr rotated_adp_constraint::ToInsStr(const RefinementModel& rm) const {
-  return olxstr("", 64).stream(' ') << GetName() << source.GetLabel()
-    << destination.GetLabel() << dir.id << angle << refine_angle;
+  return olxstr("", 64).stream(' ') << GetName() << source.GetResiLabel(true)
+    << destination.GetResiLabel(true) << dir.id << angle << refine_angle;
 }
 //.............................................................................
 const olxstr& rotated_adp_constraint::GetName()  {

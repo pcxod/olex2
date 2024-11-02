@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -514,9 +514,10 @@ ConstTypeList<Index::ResultEntry> IndexManager::Search(const olxstr &cfg_name,
               << im.indices[i].root);
         index_name = ind.root.name = im.indices[i].root;
       }
-      else
+      else {
         index_name = ind.root.name;
-      res.AddAll(ind.Search(cell, vol_diff, true));
+      }
+      res.AddCopyAll(ind.Search(cell, vol_diff, true));
     }
     catch(...)  {
       TBasicApp::NewLogEntry(logException) <<

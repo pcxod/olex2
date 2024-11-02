@@ -46,7 +46,7 @@ protected:
   TParamList Options;
   TStrList Arguments;
   virtual olxstr GetPlatformString_(bool full) const;
-
+  virtual bool HasGUI_() const { return false; }
   /* this list of actions will be processes in the next OnTimer call
   (from the main thread)
   */
@@ -152,6 +152,9 @@ public:
   }
 
   static bool HasInstance();
+  static bool HasGUI() {
+    return GetInstance().HasGUI_();
+  }
   /* Creates a log file, just a name is expected: like olex2 or olex2c, the
   timestamp will be appended to make it 'unique'. If the name is not an
   absolute path - the InsatnceDir is used

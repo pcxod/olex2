@@ -505,3 +505,22 @@ void TGraphicsStyles::SaveToFile(const olxstr& FN) {
   DF.SaveToXLFile(FN);
 }
 //..............................................................................
+void TGraphicsStyles::SetDefaultMaterial(
+  const olxstr& object_name, const olxstr& p_name, const TGlMaterial& m)
+{
+  if (object_name.IsEmpty() || p_name.IsEmpty()) {
+    return;
+  }
+  TGraphicsStyle* st = FindStyle(object_name);
+  if (st == 0) {
+    st = &NewStyle(object_name);
+    st->CreatePrimitiveMaterial(p_name, m);
+  }
+  else {
+    size_t i = st->IndexOfMaterial(p_name);
+    if (i == InvalidIndex) {
+      st->CreatePrimitiveMaterial(p_name, m);
+    }
+  }
+}
+//..............................................................................

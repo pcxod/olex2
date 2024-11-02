@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -18,12 +18,15 @@ class RefinementModel;
 class TSRestraintList;
 // restraint atom list types
 const short
-  rltNone   = 0, // default value for the constructor...
-  rltAtoms  = 1, // set of independent atoms
-  rltGroup2 = 2, // set of "bonds" - atom pairs
-  rltGroup3 = 3, // set of "angles" - atom triplets
-  rltGroup4 = 4, // dihedrals
-  rltGroup  = 5; // atoms represent a group
+  rltNone    = 0, // default value for the constructor...
+  rltAtoms1N = 1, // set of independent atoms
+  rltAtoms2N = 2, // set of 2 or more independent atoms
+  rltAtoms3N = 3, // set of 3 or more independent atoms
+  rltAtoms4N = 4, // set of 4 or more independent atoms
+
+  rltGroup2  = 5, // set of "bonds" - atom pairs
+  rltGroup3  = 6, // set of "angles" - atom triplets
+  rltGroup4  = 7; // dihedrals
 
 const short
   rptNone   = 0x0000,
@@ -32,6 +35,8 @@ const short
   rptEsd1   = 0x0004,
   rptValue1 = 0x0008
   ;
+
+class TSAtom;
 
 class TSimpleRestraint : public IXVarReferencer {
   TSRestraintList& Parent;
@@ -57,8 +62,9 @@ public:
     AddAtom(aa, ma);
     return AddAtom(ab, mb);
   }
+  TSimpleRestraint& AddAtomPair(TSAtom& aa, TSAtom& ab);
   void AtomsFromExpression(const olxstr &e, const olxstr &resi = EmptyString());
-  void SetAtoms(const TPtrList<class TSAtom> &atoms) {
+  void SetAtoms(const TPtrList<TSAtom> &atoms) {
     Atoms.Build(atoms);
   }
   void ConvertToImplicit() { Atoms.ConvertToImplicit(); }
@@ -66,10 +72,12 @@ public:
   const TSRestraintList& GetParent() const { return Parent; }
   TSRestraintList& GetParent() { return Parent; }
   const AtomRefList &GetAtoms() const { return Atoms; }
+  // clears atoms and assiciated VarRef
   void Delete();
   bool IsEmpty() const { return Atoms.IsEmpty(); }
   olxstr GetAtomExpression() const { return Atoms.GetExpression(); }
   void UpdateResi() { Atoms.UpdateResi(); }
+  // in the case the atom list becomes empty - clears VarRef
   TSimpleRestraint &Validate();
   // this is called internally by the RM
   void OnAUUpdate();
@@ -81,17 +89,25 @@ public:
 
   short GetListType() const { return ListType; }
 
+  size_t GetGroupSize() const {
+    return ListType >= rltGroup2 && ListType <= rltGroup4
+      ? ((ListType - rltGroup2) + 2)
+      : InvalidIndex;
+  }
+
   size_t GetId() const { return Id; }
   DefPropP(size_t, Position)
   DefPropP(double, Value)
   DefPropP(double, Esd)
   DefPropP(double, Esd1)
   DefPropBIsSet(AllNonHAtoms)
+  TStrList remarks;
 
-    // compares pointer addresses only!
-    bool operator == (const TSimpleRestraint& sr) const { return this == &sr; }
+  // compares pointer addresses only!
+  bool operator == (const TSimpleRestraint& sr) const { return this == &sr; }
   // IXVarReferencer implementation
   virtual size_t VarCount() const { return 1; }
+  // for "released" restraints this must be deleted manually
   virtual XVarReference* GetVarRef(size_t var_index) const {
     if (var_index != 0) {
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
@@ -122,7 +138,9 @@ public:
     }
     Value = val;
   }
-  virtual bool IsValid() const { return true; }
+  virtual bool IsValid() const {
+    return Atoms.IsEmpty() ? AllNonHAtoms : true;
+  }
   virtual olxstr GetIdName() const;
   void ToDataItem(TDataItem& item) const;
   virtual TIString ToString() const;
@@ -153,9 +171,7 @@ public:
   values are removed
   */
   void ValidateRestraint(TSimpleRestraint& sr);
-  void ValidateAll() {
-    olx_list_call(Restraints, &TSimpleRestraint::Validate);
-  }
+  void ValidateAll();
   bool DoAllowSymmetry() const {
     return AllowSymm;
   }

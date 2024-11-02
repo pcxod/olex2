@@ -89,10 +89,12 @@ bool TGlMouse::MouseUp(int x, int y, short Shift, short button) {
         if (res == false && SelectionEnabled && Shift == 0 && button == smbLeft &&
           is_click && !FDblClick)  // right click
         {
-          if (PColl != 0 && PColl != &FParent->GetSelection())
+          if (PColl != 0 && PColl != &FParent->GetSelection()) {
             FParent->Select(*PColl);
-          else
+          }
+          else {
             FParent->Select(*MData.GetObject());
+          }
           FParent->Draw();
           res = true;
         }
@@ -125,7 +127,7 @@ bool TGlMouse::MouseUp(int x, int y, short Shift, short button) {
 //..............................................................................
 bool TGlMouse::DblClick()  {
   FDblClick = true;
-  MData.SetObject(find_object(MData.DownX, MData.DownY));
+  MData.SetObject(find_object(MData.DownX, MData.DownY, false));
   return MData.HasObject() ? MData.GetObject()->OnDblClick(this, MData) : false;
 }
 //..............................................................................
@@ -163,7 +165,7 @@ bool TGlMouse::MouseDown(int x, int y, short Shift, short button) {
   MData.DownX = x;
   MData.DownY = y;
   MData.Event = smeMouseDown;
-  MData.SetObject(find_object(x, y));
+  MData.SetObject(find_object(x, y, button == smbLeft));
   if (MData.HasObject()) {
     TGlGroup *PColl = FindObjectGroup(*MData.GetObject());
     if (PColl != 0) {
@@ -259,10 +261,10 @@ void TGlMouse::OnObjectDelete(APerishable *o) {
   ClearObjectCache(o);
 }
 //..............................................................................
-AGDrawObject *TGlMouse::find_object(int x, int y) {
+AGDrawObject *TGlMouse::find_object(int x, int y, bool picking) {
   AGDrawObject *o = object_cache.Find(TMouseRegion(x,y), 0);
   if (o == 0) {
-    o = FParent->SelectObject(x, y);
+    o = FParent->SelectObject(x, y, picking);
     if (o != 0) {
       object_cache.Add(TMouseRegion(x, y), o);
       o->AddDestructionObserver(

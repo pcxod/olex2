@@ -18,6 +18,7 @@
 #endif
 
 #include "wxzipfs.h"
+#include "httpfs.h"
 
 TFileHandlerManager::TFileHandlerManager() {
 #ifdef _PYTHON
@@ -132,6 +133,24 @@ olx_object_ptr<wxFSFile> TFileHandlerManager::_GetFSFileHandler(const olxstr &FN
     wxInputStream *wxIS = zw->OpenWxEntry(ze.EntryName);
     return wxIS == 0 ? 0 : new wxFSFile(
       wxIS, ze.EntryName.u_str(), st, es, wxDateTime((time_t)0));
+  }
+  else if (FN.StartsFromi("http://") || FN.StartsFromi("https://")) {
+    try {
+      THttpFileSystem fs;
+      TUrl url(FN);
+      fs.SetUrl(url);
+      olx_object_ptr<TEFile> is = fs.OpenFileAsFile(url.GetPath());
+      if (is.ok()) {
+        size_t sz = is->GetSize();
+        olx_array_ptr<char> bf = new char[sz];
+        is->Read(bf, sz);
+        return new wxFSFile(new wxMemoryInputStream(
+          bf, sz), es, st, es, wxDateTime((time_t)0));
+      }
+    }
+    catch (TExceptionBase& e) {
+    }
+    return 0;
   }
   else {
     TMemoryBlock *mb = GetMemoryBlock(FN);

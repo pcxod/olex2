@@ -10,7 +10,7 @@
 #include "wildcard.h"
 
 void Wildcard::Build(const olxstr& msk) {
-  mask = msk.ToLowerCase();
+  mask = caseInsensitive ? msk.ToLowerCase() : msk;
   hasWildcards = mask.ContainAnyOf("*?");
   if (hasWildcards) {
     toks.Strtok(mask, '*');
@@ -30,14 +30,15 @@ bool Wildcard::DoesMatch(const olxstr& _str) const {
     return false;
   }
   if (!hasWildcards) {
-    return mask.Equalsi(_str.ToLowerCase());
+    return caseInsensitive ? mask.Equalsi(_str.ToLowerCase())
+      : mask.Equals(_str.ToLowerCase());
   }
   // this will work for '*' mask
   if (toks.IsEmpty()) {
     return true;
   }
   // need to check if the mask starts from a '*' or ends with it
-  const olxstr str = _str.ToLowerCase();
+  const olxstr str = caseInsensitive ? _str.ToLowerCase() : _str;
   size_t off = 0, start = 0, end = str.Length();
   if (mask[0] != '*')  {
     const olxstr& tmp = toks[0];
@@ -106,9 +107,9 @@ bool Wildcard::IsMask(const olxstr &m) {
 //.............................................................................
 //.............................................................................
 //.............................................................................
-void WildcardList::Add(const olxstr &item) {
+void WildcardList::Add(const olxstr &item, bool caseInsensitive) {
   if (Wildcard::IsMask(item)) {
-    w_cards.AddNew(item);
+    w_cards.AddNew(item, caseInsensitive);
   }
   else {
     items.Add(item);

@@ -11,6 +11,10 @@
 #define __olx_sdl_constlist_H
 #include "ebase.h"
 #undef GetObject
+
+#define olx_list_2_std\
+  size_t size() const { return this->Count(); }
+
 BeginEsdlNamespace()
 
 template <class obj_t>

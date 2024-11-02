@@ -49,6 +49,7 @@
 #include "symmparser.h"
 #include "xreflection.h"
 #include "xline.h"
+#include "xangle.h"
 
 #include "ins.h"
 #include "cif.h"
@@ -96,12 +97,15 @@
 #include "exparse/exptree.h"
 #include "math/libmath.h"
 #include "libfile.h"
+#include "libstr.h"
 #include "gxmacro.h"
 #include "auto.h"
 
 #ifdef _CUSTOM_BUILD_
   #include "custom_base.h"
 #endif
+
+#include "refinement_listener.h"
 
 #ifdef __GNUC__
   #undef Bool
@@ -162,6 +166,10 @@ TMainForm::TMainForm(TGlXApp *Parent)
   HtmlManager(*(new THtmlManager(this))),
   _ProcessHandler(*this)
 {
+#ifdef _WIN32
+  void InitCommonControls();
+#endif // _WIN32
+
   //Bindings
   {
     Bind(wxEVT_SIZE, &TMainForm::OnSize, this);
@@ -245,7 +253,6 @@ TMainForm::TMainForm(TGlXApp *Parent)
     Bind(wxEVT_MENU, &TMainForm::OnGraphicsStyle, this, ID_GStyleSave);
     Bind(wxEVT_MENU, &TMainForm::OnGraphicsStyle, this, ID_GStyleOpen);
   }
-    
   idle_time = idle_start = 0;
   TEGC::AddP(&HtmlManager);
   nui_interface = 0;
@@ -546,12 +553,12 @@ void TMainForm::XApp(Olex2App *XA)  {
     " file in the interactive shell (on windows ShellExecute is used to avoid "
     "flickering console)");
   this_InitMacroD(Save, EmptyString(), fpAny^fpNone,
-    "Saves style/scene/view/gview/model");
+    "Saves style/scene/view/gview/model/ginfo");
   GetLibrary().Register(
     new TMacro<TMainForm>(this, &TMainForm::macLoad, "Load",
       "c-when loading style clears current model customisation [false]",
       fpAny^fpNone,
-      "Loads style/scene/view/gview/model/radii. For radii accepts sfil, vdw, pers"),
+      "Loads style/scene/view/gview/model/radii/ginfo. For radii accepts sfil, vdw, pers"),
     libChain
   );
   this_InitMacro(Link, , fpNone|fpOne);
@@ -726,7 +733,9 @@ void TMainForm::XApp(Olex2App *XA)  {
   this_InitMacroD(ViewLattice, EmptyString(), fpOne,
     "Loads cell information from provided file and displays it on screen as "
     "lattice points/grid");
-  this_InitMacroD(AddObject, EmptyString(), fpAny^(fpNone|fpOne|fpTwo),
+  this_InitMacroD(AddObject,
+    "g-grow for spheres using current model",
+    fpAny^(fpNone|fpOne|fpTwo),
     "Adds a new user defined object to the graphical scene");
   this_InitMacroD(DelObject, EmptyString(), fpOne,
     "Deletes graphical object by name");
@@ -906,6 +915,7 @@ void TMainForm::XApp(Olex2App *XA)  {
     "Gets/Sets display update status");
   Library.AttachLibrary(FXApp->ExportLibrary());
   Library.AttachLibrary(LibFile::ExportLibrary());
+  Library.AttachLibrary(LibStr::ExportLibrary());
   Library.AttachLibrary(LibMath::ExportLibrary());
   //Library.AttachLibrary(olxstr::ExportLibrary("str"));
   Library.AttachLibrary(PythonExt::GetInstance()->ExportLibrary());
@@ -1308,6 +1318,8 @@ void TMainForm::StartupInit() {
     gls.CreateFont("AtomLabels", Font.GetNativeFontInfoDesc())).SetMaterial(glm);
   gls.RegisterFontForType<TXBond>(
     gls.CreateFont("BondLabels", Font.GetNativeFontInfoDesc())).SetMaterial(glm);
+  gls.RegisterFontForType<TXAngle>(
+    gls.CreateFont("AngleLabels", Font.GetNativeFontInfoDesc())).SetMaterial(glm);
   gls.CreateFont("Tooltip", Font.GetNativeFontInfoDesc()).SetMaterial(glm);
   gls.RegisterFontForType<TDBasis>(gls._GetFont(4));
   gls.RegisterFontForType<TDUnitCell>(gls._GetFont(4));
@@ -1527,10 +1539,10 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
     size_t tc = OlexPyCore::GetRunningPythonThreadsCount();
     if (tc > 0) {
       PyGILState_STATE st = PyGILState_Ensure();
-      Py_BEGIN_ALLOW_THREADS
-        olx_sleep(5);
-      Py_END_ALLOW_THREADS
-        PyGILState_Release(st);
+      Py_BEGIN_ALLOW_THREADS;
+      olx_sleep(5);
+      Py_END_ALLOW_THREADS;
+      PyGILState_Release(st);
     }
   }
 
@@ -1675,7 +1687,7 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
       time_t FileT = TEFile::FileAge(FListenFile);
       if (FileMT != FileT) {
         FObjectUnderMouse = 0;
-        processMacro((olxstr("reap_listen -b -r \"") << FListenFile) + '\"', "OnListen");
+        processMacro((olxstr("reap_listen \"") << FListenFile) + '\"', "OnListen");
         FileMT = FileT;
       }
     }
@@ -3613,7 +3625,7 @@ int TMainForm::TranslateShortcut(const olxstr& sk) {
 }
 //..............................................................................
 bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons) {
-  AGDrawObject *G = FXApp->SelectObject(x, y);
+  AGDrawObject *G = FXApp->SelectObject(x, y, false);
   if (Modes->GetCurrent() != 0 && Modes->GetCurrent()->OnDblClick()) {
     return true;
   }
@@ -3952,8 +3964,9 @@ PyObject* pyIsControl(PyObject* self, PyObject* args)  {
   olxstr cname, pname;  // control and popup (if any) name
   if( !PythonExt::ParseTuple(args, "w|w", &cname, &pname) )
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w|w");
-  if (!pname.IsEmpty())
+  if (!pname.IsEmpty()) {
     cname = pname << "->" << cname;
+  }
   return Py_BuildValue("b", TGlXApp::GetMainForm()->IsControl(cname));
 }
 //..............................................................................
@@ -3967,20 +3980,21 @@ PyObject* pyResetIdleTime(PyObject* self, PyObject* args)  {
   return PythonExt::PyNone();
 }
 //..............................................................................
-PyObject* pyGetUserInput(PyObject* self, PyObject* args)  {
+PyObject* pyGetUserInput(PyObject* self, PyObject* args) {
   olxstr title, str;
   int flags = 0;
-  if( !PythonExt::ParseTuple(args, "iww", &flags, &title, &str) )
+  if (!PythonExt::ParseTuple(args, "iww", &flags, &title, &str)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "iww");
+  }
   const bool MultiLine = (flags != 1);
-  TdlgEdit *dlg = new TdlgEdit(TGlXApp::GetMainForm(), MultiLine);
+  TdlgEdit* dlg = new TdlgEdit(TGlXApp::GetMainForm(), MultiLine);
   dlg->SetTitle(title.u_str());
   dlg->SetText(str);
 
   PyObject* rv;
-  if( dlg->ShowModal() == wxID_OK )
+  if (dlg->ShowModal() == wxID_OK)
     rv = PythonExt::BuildString(dlg->GetText());
-  else  {
+  else {
     rv = Py_None;
     Py_IncRef(rv);
   }
@@ -3992,6 +4006,15 @@ PyObject* pyPPI(PyObject* self, PyObject* args) {
   wxWindowDC wx_dc(TGlXApp::GetMainForm());
   wxSize ppi = wx_dc.GetPPI();
   return Py_BuildValue("(ii)", ppi.GetX(), ppi.GetY());
+}
+//..............................................................................
+PyObject* pyPreprocessHtml(PyObject* self, PyObject* args) {
+  olxstr html;
+  if (!PythonExt::ParseTuple(args, "w", &html)) {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
+  }
+  THtmlPreprocessor htmlp;
+  return PythonExt::BuildString(htmlp.Preprocess(html));
 }
 //..............................................................................
 static PyMethodDef CORE_Methods[] = {
@@ -4006,6 +4029,7 @@ static PyMethodDef CORE_Methods[] = {
   {"GetPPI", pyPPI, METH_VARARGS, "Returns screen PPI"},
   { "GetIdleTime", pyGetIdleTime, METH_VARARGS, "Returns idle time" },
   { "ResetIdleTime", pyResetIdleTime, METH_VARARGS, "Resets idle time to 0" },
+  { "PreprocessHtml", pyPreprocessHtml, METH_VARARGS, "Preprocesses given HTML as in the GUI" },
   { NULL, NULL, 0, NULL }
 };
 //..............................................................................
@@ -4042,7 +4066,7 @@ bool TMainForm::PopupMenu(wxMenu* menu, const wxPoint& p)  {
 //..............................................................................
 void TMainForm::UpdateInfoBox()  {
   FInfoBox->Clear();
-  if( FXApp->XFile().HasLastLoader() )  {
+  if (FXApp->XFile().HasLastLoader()) {
     FInfoBox->PostText(olxstr("\\-") <<
       TEFile::ExtractFilePath(FXApp->XFile().GetFileName()));
     FInfoBox->PostText(TEFile::ExtractFileName(FXApp->XFile().GetFileName()));
@@ -4065,8 +4089,9 @@ void TMainForm::afterCall(const olxstr &cmd) {
 void TMainForm::OnNonIdle() {
   if (idle_start != 0) {
     idle_start = TETime::msNow() - idle_start;
-    if (idle_start > 10000)
+    if (idle_start > 10000) {
       idle_time += idle_start;
+    }
   }
   idle_start = 0;
 }

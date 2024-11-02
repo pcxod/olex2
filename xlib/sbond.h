@@ -44,6 +44,7 @@ public:
 
   struct Ref : public comparable_operators_full<Ref> {
     TSAtom::Ref a, b;
+    Ref() {}
     Ref(const TSAtom::Ref& _a, const TSAtom::Ref& _b)
       : a(_a), b(_b)
     {}
@@ -61,6 +62,7 @@ public:
     int Compare(const Ref& r) const;
 
     void ToDataItem(TDataItem& item, const class TXApp& app, bool use_id = false) const;
+    bool IsValid(const class TXApp& app) const;
     void FromDataItem(const TDataItem& item, const TXApp& app);
   private:
     int cmp(const TSAtom::Ref& a1, const TSAtom::Ref& b1,
@@ -79,6 +81,11 @@ public:
   bool operator == (const Ref& r) const {
     return (*FA == r.a && *FB == r.b) || (*FA == r.b && *FB == r.a);
   }
+  static Ref GetRef(const TSAtom &a, const TSAtom &b);
+  static Ref GetRef(const TCAtom& a, const TCAtom& b) {
+    return GetRef(a, 0, b, 0);
+  }
+  static Ref GetRef(const TCAtom& a, const smatd* ma, const TCAtom& b, const smatd* mb);
   DefPropP(short, Order)
     /* returns MOL file compatible bond order:
     1 = Single, 2 = Double, 3 = Triple, 4 = Aromatic, 0 - undefined

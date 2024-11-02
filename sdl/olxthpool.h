@@ -41,6 +41,7 @@ public:
   void Suspend();
   // has no effect on running thread
   void Resume();
+  olx_object_ptr<TExceptionBase> exception;
 };
 
 // a singleton class

@@ -72,8 +72,10 @@ void TXyz::LoadFromStrings(const TStrList &Strings) {
 //..............................................................................
 bool TXyz::Adopt(TXFile &XF, int flags) {
   Clear();
-  Title = XF.LastLoader()->GetTitle();
-  GetRM().SetHKLSource(XF.LastLoader()->GetRM().GetHKLSource());
+  if (XF.HasLastLoader()) {
+    Title = XF.LastLoader()->GetTitle();
+    GetRM().SetHKLSource(XF.LastLoader()->GetRM().GetHKLSource());
+  }
   const ASObjectProvider& objects = XF.GetLattice().GetObjects();
   for (size_t i=0; i < objects.atoms.Count(); i++) {
     TSAtom& sa = objects.atoms[i];

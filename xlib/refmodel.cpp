@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -35,18 +35,18 @@ RefinementModel::RefinementModel(TAsymmUnit& au) :
   rDFIX(*this, rltGroup2, "DFIX", rptValue|rptEsd, true),
   rDANG(*this, rltGroup2, "DANG", rptValue|rptEsd, true),
   rSADI(*this, rltGroup2, "SADI", rptEsd, true),
-  rCHIV(*this, rltAtoms, "CHIV", rptValue|rptEsd, true),
-  rFLAT(*this, rltGroup, "FLAT", rptEsd, true),
-  rDELU(*this, rltAtoms, "DELU", rptEsd|rptEsd1, false),
-  rSIMU(*this, rltAtoms, "SIMU", rptEsd|rptEsd1|rptValue1, false),
-  rISOR(*this, rltAtoms, "ISOR", rptEsd, false),
-  rEADP(*this, rltAtoms, "EADP", rptNone, true),
+  rCHIV(*this, rltAtoms1N, "CHIV", rptValue|rptEsd, true),
+  rFLAT(*this, rltAtoms4N, "FLAT", rptEsd, true),
+  rDELU(*this, rltAtoms2N, "DELU", rptEsd|rptEsd1, false),
+  rSIMU(*this, rltAtoms2N, "SIMU", rptEsd|rptEsd1|rptValue1, false),
+  rISOR(*this, rltAtoms1N, "ISOR", rptEsd, false),
+  rEADP(*this, rltAtoms2N, "EADP", rptNone, true),
   rAngle(*this, rltGroup3, "olex2.restraint.angle", rptValue|rptEsd, true),
   rDihedralAngle(*this, rltGroup4, "olex2.restraint.dihedral", rptValue|rptEsd, true),
-  rFixedUeq(*this, rltAtoms, "olex2.restraint.adp_u_eq", rptValue|rptEsd, false),
-  rSimilarUeq(*this, rltAtoms, "olex2.restraint.adp_u_eq_similar", rptEsd, false),
-  rSimilarAdpVolume(*this, rltAtoms, "olex2.restraint.adp_volume_similar", rptEsd, false),
-  rRIGU(*this, rltAtoms, "RIGU", rptEsd|rptEsd1, false),
+  rFixedUeq(*this, rltAtoms1N, "olex2.restraint.adp_u_eq", rptValue|rptEsd, false),
+  rSimilarUeq(*this, rltAtoms2N, "olex2.restraint.adp_u_eq_similar", rptEsd, false),
+  rSimilarAdpVolume(*this, rltAtoms2N, "olex2.restraint.adp_volume_similar", rptEsd, false),
+  rRIGU(*this, rltAtoms2N, "RIGU", rptEsd|rptEsd1, false),
   ExyzGroups(*this),
   AfixGroups(*this),
   rSAME(*this),
@@ -1059,8 +1059,13 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
           }
         }
         Omits.Pack();
+        size_t tmp[] = { _HklStat.OmittedByUser, _HklStat.OmittedReflections };
+        // Filtering above already have removed them!
+        vec3i_list dummy_omits;
         _HklStat = RefMerger::DryMerge<RefMerger::ShelxMerger>(
-          sp, refs, Omits, mergeFP, 2);
+          sp, refs, dummy_omits, mergeFP, 2);
+        _HklStat.OmittedByUser = tmp[0];
+        _HklStat.OmittedReflections = tmp[1];
       }
       _HklStat.HKLF = HKLF;
       _HklStat.TWST = TWST;
@@ -1157,8 +1162,13 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out,
     }
     bool add = true;
     for (size_t j = start; j <= i; j++) {
-      if (all_refs[j].IsOmitted() || rsf.IsOmitted(all_refs[j].GetHkl())) {
+      if (all_refs[j].IsOmitted()) {
         stats.OmittedReflections++;
+        add = false;
+        break;
+      }
+      if (rsf.IsOmitted(all_refs[j].GetHkl())) {
+        stats.OmittedByUser++;
         add = false;
         break;
       }
@@ -1763,6 +1773,200 @@ const_strlist RefinementModel::Describe() {
   return lst;
 }
 //.............................................................................
+size_t RefinementModel::MergeSADI() {
+  typedef TTypeList<TSBond::Ref> list_t;
+  typedef TTypeList<list_t> lists_t;
+  olx_pdict<double, lists_t> sets;
+  olx_pdict<uint32_t, smatd> mats;
+  TTypeList<TTypeList<TSBond::Ref> > to_merge;
+  for (size_t i = 0; i < rSADI.Count(); i++) {
+    list_t& d = sets.Add(rSADI[i].GetEsd()).AddNew();
+    TAtomRefList x = rSADI[i].GetAtoms().ExpandList(*this, 2);
+    for (size_t ri = 0; ri < x.Count(); ri += 2) {
+      if (x[ri].GetMatrix() != 0) {
+        mats(x[ri].GetMatrix()->GetId(), *x[ri].GetMatrix());
+      }
+      if (x[ri+1].GetMatrix() != 0) {
+        mats(x[ri+1].GetMatrix()->GetId(), *x[ri+1].GetMatrix());
+      }
+      d.AddCopy(TSBond::GetRef(
+        x[ri].GetAtom(), x[ri].GetMatrix(),
+        x[ri + 1].GetAtom(), x[ri + 1].GetMatrix()));
+    }
+  }
+  rSADI.Clear();
+  for (size_t i = 0; i < sets.Count(); i++) {
+    lists_t res = ListJoiner::Join(sets.GetValue(i), 2, TSBond::Ref());
+    for (size_t j = 0; j < res.Count(); j++) {
+      TSimpleRestraint &r = rSADI.AddNew();
+      r.SetEsd(sets.GetKey(i));
+      for (size_t k = 0; k < res[j].Count(); k++) {
+        TSBond::Ref& ref = res[j][k];
+        TCAtom& ca = aunit.GetAtom(ref.a.atom_id),
+          &cb = aunit.GetAtom(ref.b.atom_id);
+        r.AddAtomPair(ca, ref.a.matrix_id == ~0 ? 0 : &mats[ref.a.matrix_id],
+          cb, ref.b.matrix_id == ~0 ? 0 : &mats[ref.b.matrix_id]);
+      }
+    }
+  }
+  return 0;
+}
+//.............................................................................
+const_strlist RefinementModel::AnalyseModel() const {
+  TStrList out;
+  olxset<TSBond::Ref, TComparableComparator> sadi_dist_set,
+    dfixi_dist_set,
+    sadi_duplicates,
+    dfix_duplicates;
+  for (size_t i = 0; i < rSAME.Count(); i++) {
+    if (rSAME[i].IsReference()) {
+      TTypeList<olx_pair_t<size_t, size_t> > x = rSAME[i].GetRestrainedDistances();
+      sadi_dist_set.SetCapacity(sadi_dist_set.Count() + x.Count());
+      for (size_t di = 0; di < x.Count(); di++) {
+        TSBond::Ref r = TSBond::GetRef(aunit.GetAtom(x[di].a), aunit.GetAtom(x[di].b));
+        if (!sadi_dist_set.Add(r)) {
+          sadi_duplicates.Add(r);
+        }
+      }
+    }
+  }
+  for (size_t i = 0; i < rSADI.Count(); i++) {
+    TAtomRefList x = rSADI[i].GetAtoms().ExpandList(*this, 2);
+    for (size_t ri = 0; ri < x.Count(); ri += 2) {
+      TSBond::Ref r = TSBond::GetRef(
+        x[ri].GetAtom(), x[ri].GetMatrix(),
+        x[ri+1].GetAtom(), x[ri+1].GetMatrix());
+      if (!sadi_dist_set.Add(r)) {
+        sadi_duplicates.Add(r);
+      }
+    }
+  }
+
+  for (int restraint_id = 0; restraint_id < 2; restraint_id++) {
+    const TSRestraintList& rl = restraint_id == 0 ? rDFIX : rDANG;
+    for (size_t i = 0; i < rl.Count(); i++) {
+      TAtomRefList x = rl[i].GetAtoms().ExpandList(*this, 2);
+      for (size_t ri = 0; ri < x.Count(); ri += 2) {
+        TSBond::Ref r = TSBond::GetRef(x[ri].GetAtom(), x[ri + 1].GetAtom());
+        if (!dfixi_dist_set.Add(r)) {
+          dfix_duplicates.Add(r);
+        }
+      }
+    }
+  }
+  // SADI 'duplicates' should be merged automatically
+  if (!sadi_duplicates.IsEmpty() && false) {
+    olxstr& l = out.Add("SADI duplicates (") << sadi_duplicates.Count() << "): ";
+    for (size_t i = 0; i < sadi_duplicates.Count(); i++) {
+      l << aunit.GetAtom(sadi_duplicates[i].a.atom_id).GetResiLabel() << '-'
+        << aunit.GetAtom(sadi_duplicates[i].b.atom_id).GetResiLabel() << ", ";
+    }
+    l.SetLength(l.Length() - 2);
+  }
+  if (!dfix_duplicates.IsEmpty()) {
+    olxstr& l = out.Add("DFIX duplicates (") << dfix_duplicates.Count() << "): ";
+    for (size_t i = 0; i < dfix_duplicates.Count(); i++) {
+      l << aunit.GetAtom(dfix_duplicates[i].a.atom_id).GetResiLabel() << '-'
+        << aunit.GetAtom(dfix_duplicates[i].b.atom_id).GetResiLabel() << ", ";
+    }
+    l.SetLength(l.Length() - 2);
+  }
+  {
+    TPtrList<const TSBond::Ref> all_dist, constrained;
+    all_dist.AddAll(sadi_dist_set).AddAll(dfixi_dist_set);
+    for (size_t i = 0; i < all_dist.Count(); i++) {
+      const TCAtom &a = aunit.GetAtom(all_dist[i]->a.atom_id);
+      const TCAtom& b = aunit.GetAtom(all_dist[i]->b.atom_id);
+      if (a.GetAfix() != 0 || b.GetAfix() != 0) {
+        constrained.Add(all_dist[i]);
+      }
+    }
+    if (!constrained.IsEmpty()) {
+      olxstr& l = out.Add("Restraints on constrained atoms (") << constrained.Count() << "): ";
+      for (size_t i = 0; i < constrained.Count(); i++) {
+        l << aunit.GetAtom(constrained[i]->a.atom_id).GetResiLabel() << '-'
+          << aunit.GetAtom(constrained[i]->b.atom_id).GetResiLabel() << ", ";
+      }
+      l.SetLength(l.Length() - 2);
+    }
+  }
+  // find AFIX on fixed atoms
+  {
+    TPtrList<const TCAtom> atoms1, atoms2;
+    for (size_t i = 0; i < AfixGroups.Count(); i++) {
+      const TCAtom& a = AfixGroups[i].GetPivot();
+      if (a.IsDeleted()) {
+        continue;
+      }
+      // check pivot
+      {
+        if (a.IsPositionFixed()) {
+          atoms1 << a;
+        }
+      }
+      // check dependent
+      for (size_t j = 0; j < AfixGroups[i].Count(); j++) {
+        const TCAtom& aa = AfixGroups[i][j];
+        if (aa.IsDeleted()) {
+          continue;
+        }
+        if (aa.IsPositionFixed(true)) {
+          atoms2 << aa;
+        }
+      }
+    }
+    if (!atoms1.IsEmpty()) {
+      out.Add("AFIX on fixed atom(s): ") << olxstr(", ")
+        .Join(atoms1, FunctionAccessor::MakeConst(&TCAtom::GetResiLabel));
+    }
+    if (!atoms2.IsEmpty()) {
+      out.Add("Fixed coordinates in AFIX atom(s): ") << olxstr(", ")
+        .Join(atoms2, FunctionAccessor::MakeConst(&TCAtom::GetResiLabel));
+    }
+  }
+  // analyse FLAT
+  {
+    TPtrList<const TCAtom> atoms;
+    for (size_t i = 0; i < rFLAT.Count(); i++) {
+      TAtomRefList x = rFLAT[i].GetAtoms().ExpandList(*this);
+      for (size_t ri = 0; ri < x.Count(); ri ++) {
+        const TCAtom& a = x[ri].GetAtom();
+        if (a.GetAfix() != 0 || a.IsPositionFixed(true)) {
+          atoms << a;
+        }
+      }
+    }
+    if (!atoms.IsEmpty()) {
+      out.Add("FLAT on AFIX/fixed atom(s): ") << olxstr(", ")
+        .Join(atoms, FunctionAccessor::MakeConst(&TCAtom::GetResiLabel));
+    }
+  }
+  // analyse ADP restraints and EADP
+  {
+    olxset<const TCAtom, TPointerComparator> atoms;
+    TPtrList<TSimpleRestraint> rests;
+    rests << rSIMU << rDELU << rRIGU;
+    for (size_t ri = 0; ri < rests.Count(); ri++) {
+      for (size_t i = 0; i < rests.Count(); i++) {
+        TAtomRefList x = rests[ri]->GetAtoms().ExpandList(*this);
+        for (size_t ri = 0; ri < x.Count(); ri++) {
+          const TCAtom& a = x[ri].GetAtom();
+          if (a.GetAfix() == 2 || a.IsADPFixed(true)) {
+            atoms << a;
+          }
+        }
+      }
+      //rEADP
+    }
+    if (!atoms.IsEmpty()) {
+      out.Add("ADP restraints on EADP/AFIX/fixed ADP atom(s): ") << olxstr(", ")
+        .Join(atoms, FunctionAccessor::MakeConst(&TCAtom::GetResiLabel));
+    }
+  }
+
+  return out;
+}
+//.............................................................................
 void RefinementModel::ProcessFrags() {
   // generate missing atoms for the AFIX 59, 66
   olx_pdict<int, TPtrList<TAfixGroup> > a_groups;
@@ -2040,10 +2244,35 @@ PyObject* RefinementModel::PyExport(bool export_conn) {
   PythonExt::SetDictItem(main, "exptl", expl.PyExport());
   PythonExt::SetDictItem(main, "afix", AfixGroups.PyExport(atoms));
   PythonExt::SetDictItem(main, "exyz", ExyzGroups.PyExport(atoms));
-  PythonExt::SetDictItem(main, "same", rSAME.PyExport(atoms, equivs));
+  PyObject* sadi = 0;
   for (size_t i = 0; i < rcList1.Count(); i++) {
-    PythonExt::SetDictItem(main, rcList1[i]->GetIdName().ToLowerCase(),
-      rcList1[i]->PyExport(atoms, equivs));
+    olxstr tuple_name = rcList1[i]->GetIdName().ToLowerCase();
+    PyObject* tuple = rcList1[i]->PyExport(atoms, equivs);
+    PythonExt::SetDictItem(main, tuple_name, tuple);
+    if (tuple_name == "sadi") {
+      sadi = tuple;
+    }
+  }
+  if (sadi != 0) {
+    TPtrList<PyObject> sadis = rSAME.PyExportAsSADI(atoms, equivs);
+    if (!sadis.IsEmpty()) {
+      size_t sadi_sz = PyTuple_Size(sadi),
+        new_sz = sadi_sz + sadis.Count();
+      PyObject* new_sadi = PyTuple_New(new_sz);
+      for (size_t i = 0; i < sadi_sz; i++) {
+        PyObject* si = PyTuple_GetItem(sadi, i);
+        Py_IncRef(si);
+        PyTuple_SetItem(new_sadi, i, si);
+      }
+      for (size_t i = 0; i < sadis.Count(); i++) {
+        PyTuple_SetItem(new_sadi, sadi_sz + i, sadis[i]);
+      }
+      PythonExt::SetDictItem(main, "sadi", new_sadi);
+      Py_DecRef(sadi);
+    }
+  }
+  else {
+    PythonExt::SetDictItem(main, "same", rSAME.PyExport(atoms, equivs));
   }
   for (size_t i = 0; i < rcList.Count(); i++) {
     PythonExt::SetDictItem(main, rcList[i]->GetName(), rcList[i]->PyExport());
@@ -2327,10 +2556,12 @@ adirection& RefinementModel::DirectionById(const olxstr &id) const {
 //..............................................................................
 adirection *RefinementModel::AddDirection(const TCAtomGroup &atoms, uint16_t type) {
   olxstr dname;
-  if (type == direction_vector)
+  if (type == direction_vector) {
     dname << 'v';
-  else if (type == direction_normal)
+  }
+  else if (type == direction_normal) {
     dname << 'n';
+  }
   else {
     throw TInvalidArgumentException(__OlxSourceInfo,
       olxstr("direction type: ").quote() << type);
@@ -2458,7 +2689,7 @@ bool RefinementModel::DoShowRestraintDefaults() const {
 olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
   bool write_internals) const
 {
-  TDataItem di(NULL, "root");
+  TDataItem di(0, "root");
   typedef olx_pair_t<const TSRestraintList*, TIns::RCInfo> ResInfo;
   TTypeList<ResInfo> restraints;
   restraints.AddNew(&rAngle, TIns::RCInfo(1, 1, -1, true));
@@ -2476,10 +2707,16 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
       }
     }
   }
-  if (!rl.IsEmpty()) {
+  bool explicit_same = TXApp::DoUseExternalExplicitSAME()
+    || TXApp::DoUseExplicitSAME();
+  if (!rl.IsEmpty() || (explicit_same && rSAME.Count() > 0))
+  {
     TDataItem &ri = di.AddItem("restraints");
     for (size_t i = 0; i < rl.Count(); i++) {
       ri.AddItem("item", rl[i]);
+    }
+    if (explicit_same && rSAME.Count() > 0) {
+      rSAME.ToDataItem_HRF(ri.AddItem("SAME"));
     }
   }
   rl.Clear();
@@ -2548,18 +2785,8 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
         if (aa == 0) {
           aa = &di.AddItem("anharmonics");
         }
-        TDataItem &ai = aa->AddItem(a.GetResiLabel());
-        olxstr_buf tmp;
-        const GramCharlier4 &ap = a.GetEllipsoid()->GetAnharmonicPart();
-        for (size_t ci = 0; ci < ap.C.size(); ci++) {
-          tmp << ' ' << olx_print("%.4le", ap.C[ci]);
-        }
-        ai.AddField("Cijk", olxstr(tmp).SubStringFrom(1));
-        tmp.Clear();
-        for (size_t ci = 0; ci < ap.D.size(); ci++) {
-          tmp << ' ' << olx_print("%.4le", ap.D[ci]);
-        }
-        ai.AddField("Dijkl", olxstr(tmp).SubStringFrom(1));
+        a.GetEllipsoid()->GetAnharmonicPart()->ToDataItem(
+          aa->AddItem(a.GetResiLabel()));
       }
     }
   }
@@ -2600,11 +2827,15 @@ void RefinementModel::ReadInsExtras(const TStrList &items) {
   TDataItem *restraints = di.FindItem("restraints");
   if (restraints != 0) {
     for (size_t i = 0; i < restraints->ItemCount(); i++) {
-      TStrList toks(restraints->GetItemByIndex(i).GetValue(), ' ');
+      TDataItem& item = restraints->GetItemByIndex(i);
+      if (item.GetName() == "SAME") {
+        rSAME.FromDataItem(item);
+        continue;
+      }
+      TStrList toks(item.GetValue(), ' ');
       if (!TIns::ParseRestraint(*this, toks)) {
         TBasicApp::NewLogEntry() << (olxstr(
-          "Invalid Olex2 restraint: ").quote()
-          << restraints->GetItemByIndex(i).GetValue());
+          "Invalid Olex2 restraint: ").quote() << item.GetValue());
       }
     }
   }
@@ -2702,19 +2933,11 @@ void RefinementModel::ReadInsExtras(const TStrList &items) {
           ai.GetName() << " for the anharmonic contribution";
         continue;
       }
-      TStrList c_toks(ai.FindField("Cijk"), " ");
-      TStrList d_toks(ai.FindField("Dijkl"), " ");
-      if (c_toks.Count() != 10 || d_toks.Count() != 15) {
+      olx_object_ptr<GramCharlier> ac = GramCharlier::FromDataItem(ai);
+      if (!ac.ok()) {
         TBasicApp::NewLogEntry(logError) << "Ignoring invalid anharmonic ADP for "
           << ai.GetName();
         continue;
-      }
-      olx_object_ptr<GramCharlier4> ac(new GramCharlier4());
-      for (size_t ci = 0; ci < 10; ci++) {
-        ac->C[ci] = c_toks[ci].ToDouble();
-      }
-      for (size_t ci = 0; ci < 15; ci++) {
-        ac->D[ci] = d_toks[ci].ToDouble();
       }
       a->GetEllipsoid()->SetAnharmonicPart(ac.release());
     }
@@ -2834,7 +3057,7 @@ void RefinementModel::Sort_() {
   rSIMU.SortAtomsByTags();
   rDELU.SortAtomsByTags();
 }
-  //..............................................................................
+//..............................................................................
 TPtrList<const TSRestraintList>::const_list_type
 RefinementModel::GetRestraints() const
 {
@@ -2856,6 +3079,10 @@ TPtrList<TSRestraintList>::const_list_type RefinementModel::GetRestraints() {
 void RefinementModel::SetHKLFString(const olxstr &str) {
   TStrList toks(olxstr(str).Replace('-', " -"), ' ');
   SetHKLF(toks);
+}
+//..............................................................................
+void RefinementModel::SortAtomsOrderOut() {
+  throw TNotImplementedException(__OlxSrcInfo);
 }
 //..............................................................................
 RefinementModel::HklStat& RefinementModel::HklStat::operator = (
@@ -3353,10 +3580,25 @@ void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
   }
   plane::Sort(atoms, TSAtom::CrdAccessor(), center, normal);
   double ra = atoms.Count()*ang;
+  bool forward = true;
+  // check direction
+  {
+    mat3d rm;
+    olx_create_rotation_matrix(rm, normal, cos(ra - ang));
+    mat3d new_elp = rm * atoms[0]->CAtom().GetEllipsoid()->GetMatrix() * rm.GetT();
+    for (size_t i = 0; i < 3; i++) {
+      double dp1 = atoms[0]->CAtom().GetEllipsoid()->GetMatrix()[i].DotProd(normal);
+      double dp2 = new_elp[i].DotProd(normal);
+      if (olx_sign(dp1) != olx_sign(dp2)) {
+        forward = false;
+      }
+    }
+  }
   for (size_t i = 1; i < atoms.Count(); i++) {
+    size_t idx = forward ? i : atoms.Count() - i;
     SharedRotatedADPs.items.Add(
       new rotated_adp_constraint(
-        atoms[0]->CAtom(), atoms[i]->CAtom(), *d, (ra -= ang), false));
+        atoms[0]->CAtom(), atoms[idx]->CAtom(), *d, (ra -= ang), false));
   }
 }
 //..............................................................................
@@ -3531,6 +3773,9 @@ void RefinementModel::LibStoreParam(TStrObjList& Cmds, const TParamList& Opts,
       if (i != 0) {
         di->DeleteItem(i);
       }
+      else {
+        di->DeleteFieldByName(toks.GetLastString());
+      }
     }
     else {
       di->AddField(toks.GetLastString(), Cmds[1]);
@@ -3538,6 +3783,11 @@ void RefinementModel::LibStoreParam(TStrObjList& Cmds, const TParamList& Opts,
   }
 }
 //..............................................................................
+void RefinementModel::LibClearParams(TStrObjList& Cmds, const TParamList& Opts,
+  TMacroData& E)
+{
+  GenericStore.Clear();
+}
 //..............................................................................
 //..............................................................................
 IOlxObject *RefinementModel::VPtr::get_ptr() const {
@@ -3642,6 +3892,12 @@ TLibrary* RefinementModel::ExportLibrary(const olxstr& name) {
       fpTwo,
       "Stores given parameter"
       ));
+  lib->Register(
+    new TMacro<RefinementModel>(thip, &RefinementModel::LibClearParams,
+      "ClearParams", EmptyString(),
+      fpNone,
+      "Clears all stored parameters"
+    ));
   return lib;
 }
 //..............................................................................

@@ -353,8 +353,8 @@ CXConnInfo& ConnInfo::GetConnInfo(const TCAtom& ca) const {
     const AtomConnInfo& aci = AtomInfo.GetValue(ai_ind);
     ci.r = aci.r < 0 ? ca.GetType().r_bonding : aci.r;
     ci.maxBonds = aci.maxBonds;
-    ci.BondsToCreate.AddAll(aci.BondsToCreate);
-    ci.BondsToRemove.AddAll(aci.BondsToRemove);
+    ci.BondsToCreate.AddCopyAll(aci.BondsToCreate);
+    ci.BondsToRemove.AddCopyAll(aci.BondsToRemove);
   }
   // use defaults then
   if (ai_ind == InvalidIndex && ti_ind == InvalidIndex) {
@@ -966,59 +966,70 @@ olxstr CXBondInfo::ToString(const TCAtom & from) const {
 ///////////////////////////////////////////////////////////////////////////////
 void DistanceGenerator::Generate(const TAsymmUnit &au,
   const DistanceGenerator::atom_set_t &atom_set,
-  bool generate_13, bool inclusive)
+  bool generate_13, bool inclusive, const atom_set_t& inclusive_set,
+  bool skip_h, bool skip_afixed)
 {
   for (size_t i = 0; i < atom_set.Count(); i++) {
     TCAtom &a = au.GetAtom(atom_set[i]);
     for (size_t j = 0; j < a.AttachedSiteCount(); j++) {
       TCAtom::Site &s1 = a.GetAttachedSite(j);
-      if (!s1.matrix.IsFirst() || s1.atom->IsDeleted()) {
+      if (!s1.matrix.IsFirst() || s1.atom->IsDeleted() ||
+        (skip_h && s1.atom->GetType().z == 1) ||
+        (skip_afixed && s1.atom->GetAfix() > 0))
+      {
         continue;
       }
-      if (inclusive && !atom_set.Contains(s1.atom->GetId())) {
+      if (inclusive && !inclusive_set.Contains(s1.atom->GetId())) {
+        // check an extra shell, when the connecting atom might be outside of the atom_set
+        if (generate_13) {
+          for (size_t k = 0; k < s1.atom->AttachedSiteCount(); k++) {
+            TCAtom::Site& s2 = s1.atom->GetAttachedSite(k);
+            if (!s2.matrix.IsFirst() || s2.atom->IsDeleted() ||
+              (skip_h && s2.atom->GetType().z == 1) ||
+              (skip_afixed && s2.atom->GetAfix() > 0))
+            {
+              continue;
+            }
+            if (s2.atom->GetId() == a.GetId()) {
+              continue;
+            }
+            if (inclusive && !inclusive_set.Contains(s2.atom->GetId())) {
+              continue;
+            }
+            distances_13.Add(idx_pair_t(a.GetId(), s2.atom->GetId()));
+          }
+        }
         continue;
       }
-      size_t a_idx, b_idx;
-      if (a.GetId() > s1.atom->GetId()) {
-        a_idx = s1.atom->GetId();
-        b_idx = a.GetId();
-      }
-      else {
-        a_idx = a.GetId();
-        b_idx = s1.atom->GetId();
-      }
-      distances_12.Add(idx_pair_t(a_idx, b_idx));
+      distances_12.Add(idx_pair_t(a.GetId(), s1.atom->GetId()));
       if (generate_13) {
-        bool set_atom = inclusive || atom_set.Contains(s1.atom->GetId());
+        bool set_atom_1 = atom_set.Contains(s1.atom->GetId());
         for (size_t k = j + 1; k < a.AttachedSiteCount(); k++) {
           TCAtom::Site &s2 = a.GetAttachedSite(k);
-          if (!s2.matrix.IsFirst() || s2.atom->IsDeleted()) {
+          if (!s2.matrix.IsFirst() || s2.atom->IsDeleted() ||
+            (skip_h && s2.atom->GetType().z == 1) ||
+            (skip_afixed && s2.atom->GetAfix() > 0))
+          {
+            continue;
+          }
+          bool set_atom_2 = atom_set.Contains(s2.atom->GetId());
+          // one of the atoms must be in the atom_set
+          if (!set_atom_1 && !set_atom_2) {
             continue;
           }
           // at least one of the atoms should be in the set if not inclusive
-          if (!atom_set.Contains(s2.atom->GetId())) {
-            if (!set_atom || inclusive) {
-              continue;
-            }
+          if (!set_atom_2 && inclusive && !inclusive_set.Contains(s2.atom->GetId())) {
+            continue;
           }
-          if (s1.atom->GetId() > s2.atom->GetId()) {
-            a_idx = s2.atom->GetId();
-            b_idx = s1.atom->GetId();
-          }
-          else {
-            a_idx = s1.atom->GetId();
-            b_idx = s2.atom->GetId();
-          }
-          distances_13.Add(idx_pair_t(a_idx, b_idx));
+          distances_13.Add(idx_pair_t(s1.atom->GetId(), s2.atom->GetId()));
         }
       }
     }
   }
-
 }
 //........................................................................
 void DistanceGenerator::Generate(const TCAtomPList atoms, bool generate_13,
-  bool inclusive)
+  bool inclusive, bool skip_h, bool skip_afixed)
 {
   if (atoms.IsEmpty()) {
     return;
@@ -1027,16 +1038,17 @@ void DistanceGenerator::Generate(const TCAtomPList atoms, bool generate_13,
   for (size_t i = 0; i < atoms.Count(); i++) {
     a_set.Add(atoms[i]->GetId());
   }
-  Generate(*atoms[0]->GetParent(), a_set, generate_13, inclusive);
+  Generate(*atoms[0]->GetParent(), a_set, generate_13, inclusive,
+    skip_h, skip_afixed);
 }
 //........................................................................
 void DistanceGenerator::GenerateSADI_(
-  const DistanceGenerator::distance_set_t &d, double esd_k,
+  const DistanceGenerator::distance_set_t &d, double esd,
   RefinementModel &rm, const DistanceGenerator::atom_map_1_t &atom_map)
 {
   for (size_t i = 0; i < d.Count(); i++) {
     TSimpleRestraint &sr = rm.rSADI.AddNew();
-    sr.SetEsd(sr.GetEsd() * esd_k);
+    sr.SetEsd(esd);
     sr.AddAtomPair(rm.aunit.GetAtom(d[i].a), 0, rm.aunit.GetAtom(d[i].b), 0);
     sr.AddAtomPair(
       rm.aunit.GetAtom(atom_map.Find(d[i].a, d[i].a)), 0,
@@ -1045,22 +1057,107 @@ void DistanceGenerator::GenerateSADI_(
 }
 //........................................................................
 void DistanceGenerator::GenerateSADI_(
-  const DistanceGenerator::distance_set_t &d, double esd_k,
-  RefinementModel &rm, const DistanceGenerator::atom_map_N_t &atom_map)
+  const DistanceGenerator::distance_set_t &d, double esd,
+  RefinementModel &rm, const DistanceGenerator::atom_map_N_t &atom_map,
+  TStrList *log)
 {
   size_t gc = atom_map.GetValue(0).Count();
   for (size_t i = 0; i < d.Count(); i++) {
     TSimpleRestraint &sr = rm.rSADI.AddNew();
-    sr.SetEsd(sr.GetEsd() * esd_k);
+    sr.SetEsd(esd);
     sr.AddAtomPair(rm.aunit.GetAtom(d[i].a), 0, rm.aunit.GetAtom(d[i].b), 0);
     for (size_t j = 0; j < gc; j++) {
       size_t a_midx = atom_map.IndexOf(d[i].a);
       size_t b_midx = atom_map.IndexOf(d[i].b);
+      if (a_midx == InvalidIndex && b_midx == InvalidIndex) {
+        throw TInvalidArgumentException(__OlxSourceInfo, "atom map");
+      }
       size_t a_idx = a_midx == InvalidIndex ? d[i].a : atom_map.GetValue(a_midx)[j];
       size_t b_idx = b_midx == InvalidIndex ? d[i].b : atom_map.GetValue(b_midx)[j];
+      if (a_idx == b_idx) {
+        continue;
+      }
       sr.AddAtomPair(rm.aunit.GetAtom(a_idx), 0, rm.aunit.GetAtom(b_idx), 0);
     }
+    if (log != 0) {
+      log->Add(sr.ToString());
+    }
   }
+}
+//........................................................................
+TStrList::const_list_type DistanceGenerator::GenerateSADIList_(
+  const DistanceGenerator::distance_set_t& d, double esd,
+  const TAsymmUnit& au, const DistanceGenerator::atom_map_1_t& atom_map)
+{
+  TStrList rv;
+  for (size_t i = 0; i < d.Count(); i++) {
+    rv.Add("SADI").stream(' ') << esd
+      << au.GetAtom(d[i].a).GetResiLabel()
+      << au.GetAtom(d[i].b).GetResiLabel()
+      << au.GetAtom(atom_map.Find(d[i].a, d[i].a)).GetResiLabel()
+      << au.GetAtom(atom_map.Find(d[i].b, d[i].b)).GetResiLabel();
+  }
+  return rv;
+}
+//........................................................................
+TStrList::const_list_type DistanceGenerator::GenerateSADIList_(
+  const DistanceGenerator::distance_set_t& d, double esd,
+  const TAsymmUnit& au, const DistanceGenerator::atom_map_N_t& atom_map)
+{
+  TStrList rv;
+  size_t gc = atom_map.GetValue(0).Count();
+  for (size_t i = 0; i < d.Count(); i++) {
+    olxstr &sadi = rv.Add("SADI ") << esd << ' ' << au.GetAtom(d[i].a).GetResiLabel()
+      << ' ' << au.GetAtom(d[i].b).GetResiLabel();
+    for (size_t j = 0; j < gc; j++) {
+      size_t a_midx = atom_map.IndexOf(d[i].a);
+      size_t b_midx = atom_map.IndexOf(d[i].b);
+      if (a_midx == InvalidIndex && b_midx == InvalidIndex) {
+        throw TInvalidArgumentException(__OlxSourceInfo, "atom map");
+      }
+      size_t a_idx = a_midx == InvalidIndex ? d[i].a : atom_map.GetValue(a_midx)[j];
+      size_t b_idx = b_midx == InvalidIndex ? d[i].b : atom_map.GetValue(b_midx)[j];
+      if (a_idx == b_idx) {
+        continue;
+      }
+      if (a_idx > b_idx) {
+        olx_swap(a_idx, b_idx);
+      }
+      sadi << ' ' << au.GetAtom(a_idx).GetResiLabel()
+        << ' ' << au.GetAtom(b_idx).GetResiLabel();
+    }
+  }
+  return rv;
+}
+//........................................................................
+TTypeList<DistanceGenerator::pair_list_t>::const_list_type
+DistanceGenerator::GeneratePairList(
+  const distance_set_t& d, const TAsymmUnit& au,
+  const atom_map_N_t& atom_map)
+{
+  TTypeList<TTypeList<idx_pair_t> > res;
+  size_t gc = atom_map.GetValue(0).Count();
+  for (size_t i = 0; i < d.Count(); i++) {
+    TTypeList<idx_pair_t>& row = res.AddNew();
+    row.AddNew(d[i]);
+    for (size_t j = 0; j < gc; j++) {
+      size_t a_midx = atom_map.IndexOf(d[i].a);
+      size_t b_midx = atom_map.IndexOf(d[i].b);
+      if (a_midx == InvalidIndex && b_midx == InvalidIndex) {
+        throw TInvalidArgumentException(__OlxSourceInfo, "atom map");
+      }
+      size_t a_idx = a_midx == InvalidIndex ? d[i].a : atom_map.GetValue(a_midx)[j];
+      size_t b_idx = b_midx == InvalidIndex ? d[i].b : atom_map.GetValue(b_midx)[j];
+      if (a_idx == b_idx) {
+        continue;
+      }
+      if (a_idx > b_idx) {
+        olx_swap(a_idx, b_idx);
+      }
+      row.AddNew(a_idx, b_idx, j);
+    }
+  }
+  return res;
 }
 //........................................................................
 void DistanceGenerator::GenerateDFIX(TCAtomPList& atoms_, bool explict,

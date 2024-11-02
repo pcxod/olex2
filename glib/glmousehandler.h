@@ -20,7 +20,7 @@ const uint16_t
   glmlMoveable  = 0x0002,
   glmlRoteable  = 0x0004,
   glmlZoomable  = 0x0008,
-  glmlMove2dz   = 0x0010;  // the translation is devided by current zoom
+  glmlMove2dz   = 0x0010;  // the translation is divided by current zoom
 
 class AGlMouseHandler  {
   // default handler implementation

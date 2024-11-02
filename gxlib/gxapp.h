@@ -68,6 +68,7 @@ class TDBasis;
 class TGraphicsObjects;
 class TXGlLabels;
 class TXLine;
+class TXAngle;
 class TDRing;
 class TXGrowLine;
 class TXGrowPoint;
@@ -91,6 +92,7 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner {
   TTypeListExt<TDRing, AGDrawObject> Rings;
   TXGlLabels *FLabels;
   TTypeListExt<TXLine, AGDrawObject> Lines;
+  TTypeListExt<TXAngle, AGDrawObject> Angles;
   // have to manage memory ourselves - base class is used
   AGDObjList LooseObjects;
   AGDObjList ObjectsToCreate;
@@ -183,6 +185,7 @@ protected:
   TDSphere *FDSphere;
   TAtomLegend *FAtomLegend;
 
+  virtual bool HasGUI_() const { return true; }
   void FragmentVisible(TNetwork *N, bool V);
   bool Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
     const IOlxObject *Data, TActionQueue *);
@@ -353,8 +356,8 @@ public:
   // restores the on-screen rendering
   void FinishDrawBitmap();
   void Resize(int new_w, int new_h) { GlRenderer->Resize(new_w, new_h); }
-  AGDrawObject* SelectObject(int x, int y) const {
-    return GlRenderer->SelectObject(x, y);
+  AGDrawObject* SelectObject(int x, int y, bool picking) const {
+    return GlRenderer->SelectObject(x, y, picking);
   }
   TGlPrimitive *SelectPrimitive(int x, int y) const {
     return GlRenderer->SelectPrimitive(x, y);
@@ -562,7 +565,7 @@ public:
   void CopySelection() const;
   void PasteSelection();
   TUndoData* Name(const olxstr& From, const olxstr& To,
-    bool ClearSelection, bool NameResi = false);
+    bool ClearSelection, bool NameResi = false, bool DoNotSteal=false);
   TUndoData* Name(TXAtom& Atom, const olxstr& Name);
   TUndoData* ChangeSuffix(const TXAtomPList& xatoms, const olxstr& To);
   // makes sure that residues have the same labels as the reference atoms
@@ -596,7 +599,12 @@ public:
 
   TXLine *AddLine(const olxstr& Name, const vec3d& base, const vec3d& edge);
   TXLine* AddLine(const olxstr& Name, const TSAtom& base, const TSAtom& edge);
+  TXAngle* AddAngle(const olxstr& Name, const vec3d& center,
+    const vec3d& from, const vec3d& to);
+  TXAngle* AddAngle(const olxstr& Name, const TSAtom& center,
+    const TSAtom& from, const TSAtom& to);
   void ClearLines() { Lines.Clear(); }
+  void ClearAngles() { Angles.Clear(); }
   size_t LineCount() const { return Lines.Count(); }
   TXLine &GetLine(size_t i) const { return Lines[i]; }
   TXGlLabel *AddLabel(const olxstr& Name, const vec3d& center, const olxstr& T);
@@ -661,6 +669,9 @@ public:
     bool keep_object = false)
   {
     FGlMouse->ResetMouseState(x, y, shift, button, keep_object);
+  }
+  AGDrawObject* GetMouseObject() const {
+    return FGlMouse->GetMouseData().GetObject();
   }
   void EnableSelection(bool v) { FGlMouse->SetSelectionEnabled(v); }
   //..............................................................................

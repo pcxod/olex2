@@ -126,6 +126,7 @@ olxstr TEMacroLib::ProcessEvaluator(
   me.GetStack().Push(e->ToStringBuffer());
   olxstr name = e->evator == 0 ? e->data : e->evator->name;
   size_t bi_ind = GetBuiltins().IndexOf(name);
+  me.SetMacroCall(e->macro_call);
   if (bi_ind != InvalidIndex && e->evator != 0) {
     (*GetBuiltins().GetValue(bi_ind))(e->evator, me, argv);
   }
@@ -168,7 +169,10 @@ olxstr TEMacroLib::ProcessEvaluator(
           if (Options.Contains(global_options->GetName(i))) {
             continue;
           }
-          Options.AddParam(global_options->GetName(i), global_options->GetValue(i));
+          else if (f->GetOptions().HasKey(global_options->GetName(i))) {
+            Options.AddParam(global_options->GetName(i),
+              global_options->GetValue(i));
+          }
         }
       }
       f->Run(Cmds, Options, me);
@@ -276,29 +280,30 @@ void TEMacroLib::Load(const TDataItem& m_root) {
   }
 }
 //.............................................................................
-void TEMacroLib::Init()  {
-  TLibrary &lib = OlexProcessor.GetLibrary();
+void TEMacroLib::Init() {
+  TLibrary& lib = OlexProcessor.GetLibrary();
   lib.Register(
-    new TFunction<TEMacroLib>(this,  &TEMacroLib::funLastError,
-    "LastError", fpNone,
-    "Returns last error"));
+    new TFunction<TEMacroLib>(this, &TEMacroLib::funLastError,
+      "LastError", fpNone,
+      "Returns last error"));
   lib.Register(
-    new TFunction<TEMacroLib>(this,  &TEMacroLib::funLogLevel,
-    "LogLevel", fpNone|fpOne,
-    "Returns/sets log level, default is 'm' - for macro, accepts/returns 'm', "
-    "'mf' or 'f'"));
+    new TFunction<TEMacroLib>(this, &TEMacroLib::funLogLevel,
+      "LogLevel", fpNone | fpOne,
+      "Returns/sets log level, default is 'm' - for macro, accepts/returns 'm', "
+      "'mf' or 'f'"));
   lib.Register(
-    new TFunction<TEMacroLib>(this,  &TEMacroLib::funProcess,
-    "Process", fpOne,
-    "Processes a function passed as the argument and returns the result"));
+    new TFunction<TEMacroLib>(this, &TEMacroLib::funProcess,
+      "Process", fpOne,
+      "Processes a function passed as the argument and returns the result"));
   lib.Register(
-    new TMacro<TEMacroLib>(this,  &TEMacroLib::macAbort, "Abort",
-    EmptyString(), fpNone,
-    "'abort' statement to terminate a macro execution"));
+    new TMacro<TEMacroLib>(this, &TEMacroLib::macAbort, "Abort",
+      "q-quiet, simply terminates macro execution without printing any errors",
+      fpNone,
+      "'abort' statement to terminate a macro execution"));
   lib.Register(
     new TMacro<TEMacroLib>(this, &TEMacroLib::macCallback, "Callback",
-    EmptyString(), (fpAny^fpNone)|fpAny_Options,
-    "Internal use for calling registered callback functions"));
+      EmptyString(), (fpAny ^ fpNone) | fpAny_Options,
+      "Internal use for calling registered callback functions"));
 }
 //.............................................................................
 bool TEMacroLib::ProcessFunction(olxstr& Cmd, TMacroData& E, bool has_owner,
@@ -642,7 +647,12 @@ void TEMacroLib::funLogLevel(const TStrObjList& Params, TMacroData &E) {
 void TEMacroLib::macAbort(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
-  E.ProcessingError(__OlxSrcInfo, "abnormally terminated");
+  if (Options.GetBoolOption('q')) {
+    E.Break();
+  }
+  else {
+    E.ProcessingError(__OlxSrcInfo, "abnormally terminated");
+  }
 }
 //.............................................................................
 void TEMacroLib::funProcess(const TStrObjList& Params, TMacroData &E) {

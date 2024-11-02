@@ -317,7 +317,7 @@ TResidue& TAsymmUnit::NewResidue(const olxstr& RClass, int number, int alias,
   return r;
 }
 //..............................................................................
-ConstPtrList<TResidue> TAsymmUnit::FindResidues(const olxstr& resi) const {
+ConstPtrList<TResidue> TAsymmUnit::FindResidues(const olxstr& resi, size_t max_n) const {
   TPtrList<TResidue> list;
   if (resi.IsEmpty()) {
     list.Add(&MainResidue);
@@ -332,6 +332,9 @@ ConstPtrList<TResidue> TAsymmUnit::FindResidues(const olxstr& resi) const {
         TResidue *r = ResidueRegistry.GetValue(cid).Find(n, 0);
         if (r != 0) {
           list.Add(r);
+          if (list.Count() >= max_n) {
+            return list;
+          }
         }
       }
     }
@@ -340,7 +343,7 @@ ConstPtrList<TResidue> TAsymmUnit::FindResidues(const olxstr& resi) const {
     if (resi == '*') {  //special case
       list.SetCapacity(Residues.Count() + 1);
       list.Add(MainResidue);
-      for (size_t i = 0; i < Residues.Count(); i++) {
+      for (size_t i = 0; i < olx_min(Residues.Count(), max_n); i++) {
         list.Add(Residues[i]);
       }
     }
@@ -348,6 +351,9 @@ ConstPtrList<TResidue> TAsymmUnit::FindResidues(const olxstr& resi) const {
       for (size_t i = 0; i < Residues.Count(); i++) {
         if (Residues[i].GetClassName().Equalsi(resi)) {
           list.Add(Residues[i]);
+          if (list.Count() >= max_n) {
+            return list;
+          }
         }
       }
     }
@@ -642,9 +648,7 @@ void TAsymmUnit::PackEllps() {
     Ellipsoids[i]->SetId(i);
   }
   for (size_t i = 0; i < elps.Count(); i++) {
-    if (elps[i] != 0) {
-      CAtoms[i]->SetEllpId(elps[i]->GetId());
-    }
+    CAtoms[i]->SetEllpId(elps[i] != 0 ? elps[i]->GetId() : InvalidIndex);
   }
 }
 //..............................................................................
@@ -923,6 +927,16 @@ void TAsymmUnit::TLabelChecker::SetLabel(TCAtom &a, const olxstr& label,
     labels.Delete(idx);
   }
   labels.Add(label.ToLowerCase(), a.GetId(), true);
+}
+//..............................................................................
+bool TAsymmUnit::TLabelChecker::Exists(const olxstr& label) const {
+  olxstr lcl = label.ToLowerCase();
+  for (size_t i = 0; i < r_labels.Count(); i++) {
+    if (r_labels.GetValue(i).HasKey(lcl)) {
+      return true;
+    }
+  }
+  return false;
 }
 //..............................................................................
 //..............................................................................
@@ -1330,6 +1344,30 @@ void TAsymmUnit::RearrangeAtoms(const TSizeList &indices) {
   }
 }
 //..............................................................................
+TCAtom* TAsymmUnit::FindCAtom(const Atom3DId& id) const {
+  for (size_t i = 0; i < CAtoms.Count(); i++) {
+    if (CAtoms[i]->Get3DId() == id) {
+      return CAtoms[i];
+    }
+  }
+  return 0;
+}
+//..............................................................................
+TCAtomPList::const_list_type TAsymmUnit::FindCAtoms(
+  const TArrayList<Atom3DId>& ids) const
+{
+  olxdict<Atom3DId, TCAtom*, TComparableComparator> ar(
+    olx_reserve(CAtoms.Count()));
+  for (size_t i = 0; i < CAtoms.Count(); i++) {
+    ar.Add(CAtoms[i]->Get3DId(), CAtoms[i]);
+  }
+  TCAtomPList rv(ids.Count());
+  for (size_t i = 0; i < ids.Count(); i++) {
+    rv[i] = ar.Find(ids[i], 0);
+  }
+  return rv;
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 void TAsymmUnit::LibGetAtomCount(const TStrObjList& Params, TMacroData& E) {
@@ -1463,7 +1501,10 @@ void TAsymmUnit::LibSetAtomCrd(const TStrObjList& Params, TMacroData& E) {
   TCAtom& ca = GetAtom(index);
   for (int i = 0; i < 3; i++) {
     XVarReference* vr = ca.GetVarRef(catom_var_name_X + i);
-    const double val = Params[i + 1].ToDouble();
+    double val = Params[i + 1].ToDouble();
+    if (olx_abs(val) > 10) {
+      val = olx_sign(val)*10;
+    }
     if (vr != 0) {  // should preserve the variable - smtbx
       if (vr->relation_type == relation_AsVar) {
         vr->Parent.SetValue(val / vr->coefficient);
@@ -1593,14 +1634,9 @@ void TAsymmUnit::LibSetAtomU(const TStrObjList& Params, TMacroData& E) {
         V[i] = GetRefMod()->Vars.SetParam(ca, catom_var_name_U11 + i, val);
       }
     }
-    if (ca.GetEllipsoid()->IsAnharmonic() && Params.Count() >= 32) {
-      GramCharlier4 &ac = ca.GetEllipsoid()->GetAnharmonicPart();
-      for (size_t i = 0; i < 10; i++) {
-        ac.C[i] = Params[i + 7].ToDouble();
-      }
-      for (size_t i = 0; i < 15; i++) {
-        ac.D[i] = Params[i + 17].ToDouble();
-      }
+    if (ca.GetEllipsoid()->IsAnharmonic() && Params.Count() >= 17) {
+      GramCharlier &ac = ca.GetEllipsoid()->GetAnharmonicPart();
+      ac.FromStrings(Params.SubListFrom(7));
     }
     ca.GetEllipsoid()->Initialise(V);
     ca.SetUiso(ca.GetEllipsoid()->GetUeq());
@@ -1708,9 +1744,9 @@ void TAsymmUnit::LibNewAtom(const TStrObjList& Params, TMacroData& E) {
   else {
     ca.SetLabel(Params[0]);
   }
-  ca.SetOccu(1. / Lattice->GetUnitCell().GetPositionMultiplicity(crd));
-  GetRefMod()->Vars.SetParam(ca, catom_var_name_Sof,
-    1. / Lattice->GetUnitCell().GetPositionMultiplicity(crd));
+  double occu = 1. / Lattice->GetUnitCell().GetPositionMultiplicity(crd);
+  ca.SetOccu(occu);
+  GetRefMod()->Vars.SetParam(ca, catom_var_name_Sof, occu);
   GetRefMod()->Vars.FixParam(ca, catom_var_name_Sof);
   GetRefMod()->Vars.SetParam(ca, catom_var_name_Uiso, 0.5);
   for (short i = 0; i < 3; i++) {

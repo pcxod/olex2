@@ -1270,6 +1270,14 @@ olxstr TEFile::UnquotePath(const olxstr &p) {
   return rv.Replace("\\\\", '\\');
 }
 //..............................................................................
+olxstr TEFile::JoinPath(const IStrList& l) {
+  TStrList res;
+  for (size_t i = 0; i < l.Count(); i++) {
+    res << OSPath(l[i]).TrimR(OLX_PATH_DEL);
+  }
+  return res.Text(OLX_PATH_DEL);
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 TStrList::const_list_type TEFile::Path::Split(const olxstr& path) {
@@ -1277,22 +1285,33 @@ TStrList::const_list_type TEFile::Path::Split(const olxstr& path) {
   return rv;
 }
 //..............................................................................
-TEFile::Path TEFile::Path::GetParent() {
-  using namespace exparse::parser_util;
-  size_t s_id = path.LastIndexOf(OLX_PATH_DEL);
-  while (s_id != InvalidIndex && s_id > 0 && is_escaped(path, s_id)) {
-    s_id = path.LastIndexOf(OLX_PATH_DEL, s_id);
-  }
+TEFile::Path TEFile::Path::GetParent() const {
+  olxstr p = path;
+  p.TrimR(OLX_PATH_DEL);
+  size_t s_id = p.LastIndexOf(OLX_PATH_DEL);
   if (s_id != InvalidIndex) {
     return TEFile::Path(path.SubStringTo(s_id));
   }
   return EmptyString();
 }
 //..............................................................................
-bool TEFile::Path::ChDir() {
+bool TEFile::Path::ChDir() const {
   if (path.IsEmpty()) {
     return false;
   }
   return TEFile::ChangeDir(path);
+}
+//..............................................................................
+TEFile::Path& TEFile::Path::operator << (const olxstr& t) {
+  if (t.IsEmpty()) {
+    return *this;
+  }
+  if (!path.IsEmpty()) {
+    if (path.GetLast() != OLX_PATH_DEL) {
+      path << OLX_PATH_DEL;
+    }
+  }
+  path << OSPath(t);
+  return *this;
 }
 //..............................................................................

@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -641,8 +641,8 @@ void TAutoDB::ProcessFolder(const olxstr& folder, bool allow_disorder,
   TOnProgress progress;
   progress.SetMax(files.Count());
   for (size_t i = 0; i < Nodes.Count(); i++) {
-    Nodes[i].SetCapacity(Nodes[i].Count() + files.Count() * 100);
-    Nodes[i].SetIncrement(64 * 1024);
+    Nodes[i].SetCapacity(
+      olx_reserve(Nodes[i].Count() + files.Count() * 100, 64 * 1024));
   }
   for (size_t i = 0; i < files.Count(); i++) {
     progress.SetPos(i);
@@ -1290,7 +1290,7 @@ ConstTypeList<TAutoDB::TAnalysisResult> TAutoDB::AnalyseStructure(TLattice& latt
 {
   TTypeList<TAutoDB::TAnalysisResult> res;
   for (size_t i = 0; i < latt.FragmentCount(); i++) {
-    res.AddAll(AnalyseNet(latt.GetFragment(i)));
+    res.AddCopyAll(AnalyseNet(latt.GetFragment(i)));
   }
   return res;
 }

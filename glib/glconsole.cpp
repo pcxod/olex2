@@ -411,7 +411,7 @@ void TGlConsole::PrintText(const olxstr &S, TGlMaterial *M, bool Hyphenate) {
   FTxtPos = FBuffer.Count()-1;
 }
 //..............................................................................
-void TGlConsole::PrintText(const TStrList &SL, TGlMaterial *M, bool Hyphenate)  {
+void TGlConsole::PrintText(const IStrList &SL, TGlMaterial *M, bool Hyphenate)  {
   if( IsSkipPosting() )  {
     //SetSkipPosting(false);
     return;
@@ -424,26 +424,32 @@ void TGlConsole::PrintText(const TStrList &SL, TGlMaterial *M, bool Hyphenate)  
       TStrList Txt;
       Txt.Hyphenate(SL[i], sz, true);
       for( size_t j=0; j < Txt.Count(); j++ )  {
-        TGlMaterial *GlM = NULL;
-        if( M != NULL )  GlM = new TGlMaterial(*M);
+        TGlMaterial *GlM = 0;
+        if (M != 0) {
+          GlM = new TGlMaterial(*M);
+        }
         if( j == 0 && !FBuffer.IsEmpty() && FBuffer.GetLastString().IsEmpty() )  {
           FBuffer.GetLastString() = Txt[j];
           FBuffer.GetLast().Object = GlM;
         }
-        else
+        else {
           FBuffer.Add(Txt[j], GlM);
-        OnPost.Execute(dynamic_cast<IOlxObject*>((AActionHandler*)this), &Txt[j] );
+        }
+        OnPost.Execute(dynamic_cast<IOlxObject*>((AActionHandler*)this), &Txt[j]);
       }
     }
     else  {
-      TGlMaterial *GlM = NULL;
-      if( M != NULL )  GlM = new TGlMaterial(*M);
+      TGlMaterial *GlM = 0;
+      if (M != 0) {
+        GlM = new TGlMaterial(*M);
+      }
       if( !FBuffer.IsEmpty() && FBuffer.GetLastString().IsEmpty() )  {
         FBuffer.GetLastString() = SL[i];
         FBuffer.GetLast().Object = GlM;
       }
-      else
+      else {
         FBuffer.Add(SL[i], GlM);
+      }
       OnPost.Execute(dynamic_cast<IOlxObject*>((AActionHandler*)this), &SL[i]);
     }
   }
