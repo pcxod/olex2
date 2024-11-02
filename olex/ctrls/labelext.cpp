@@ -25,7 +25,7 @@ void TLabel::OnPaint(wxPaintEvent& event) {
   //dc.Clear();
   wxStaticText::OnPaint(event);
 #else
-  event.Skip(false);
+  event.Skip(true);
 #endif
 }
 //..............................................................................
@@ -33,6 +33,6 @@ void TLabel::onEraseBG(wxEraseEvent& event) {
 #ifdef _WIN32
   event.Skip();
 #else
-  event.Skip(false);
+  event.Skip(true);
 #endif
 }

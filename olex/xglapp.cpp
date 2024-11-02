@@ -209,7 +209,10 @@ bool TGlXApp::OnInit() {
     str_glMultisampling = olx_getenv("OLEX2_GL_MULTISAMPLE"),
     str_glDepth = olx_getenv("OLEX2_GL_DEPTH_BITS");
   GLboolean stereo_supported = GL_FALSE;
+// causes segmentation fault!
+#if !defined(__MAC__)
   olx_gl::get(GL_STEREO, &stereo_supported);
+#endif
 #if defined(__WIN32__)
   olxstr str_glDefStereo = stereo_supported ? TrueString() : FalseString(),
     str_glDefMultisampling = TrueString();
