@@ -146,7 +146,8 @@ public:
   static void SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     RefinementModel::ReleasedItems* processed, RefinementModel& rm);
   static void SaveExtras(TStrList& SL, const TCAtomPList* atoms,
-    RefinementModel::ReleasedItems* processed, RefinementModel& rm);
+    RefinementModel::ReleasedItems* processed, RefinementModel& rm,
+    bool hyphenate=true);
 
   void ParseRestraints(RefinementModel& rm, const TStringToList<olxstr,
     TInsList*>& SL, bool warnings = true);

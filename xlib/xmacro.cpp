@@ -199,7 +199,8 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(CifExtract,
     "i-a custom CIF with items to extract, like 'Basedir()/etc/CIF/extract.cif'"
     "; by default [metacif] the 'Basedir()/etc/CIF/customisation.xld'#"
-    "cif_customisation#export_metacif item is used as the extract template",
+    "cif_customisation#export_metacif item is used as the extract template&;"
+    "-force-force to overwrite existing files [false]",
     fpNone|fpOne|fpTwo|psFileLoaded,
     "Extract a list of items from one cif to another. If no argument is given "
     "the command creates, if does not exist, 'StrDir()/FileName().metacif' "
@@ -5667,7 +5668,8 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
   TXApp& xapp = TXApp::GetInstance();
-  bool use_items = Options.Contains('i');
+  bool use_items = Options.Contains('i'),
+    force = Options.GetBoolOption("force");
   olxstr items_file = (use_items ? Options.FindValue("i") : EmptyString());
   olx_object_ptr<TCif> external_cif;
   TCif *cif = 0;
@@ -5711,12 +5713,20 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options,
       dest = TEFile::JoinPath(TStrList()
         << TEFile::ExtractFilePath(xapp.XFile().GetFileName())
         << cif->GetDataName() +".cif_od");
-      if (TEFile::Exists(dest)) {
-        return;
-      }
     }
   }
-  
+  if (TEFile::Exists(dest)) {
+    if (!force) {
+      TBasicApp::NewLogEntry(logInfo) << "CifExtract: skipping extraction of "
+        "the existing file " << (olxstr().quote() << dest);
+      return;
+    }
+    else {
+      TBasicApp::NewLogEntry(logWarning) << "CifExtract: overwriting "
+        << (olxstr().quote() << dest);
+    }
+  }
+
   if (export_metacif || export_ed) {
     TTypeList<Wildcard> to_extract, to_skip;
       olxstr CifCustomisationFN = xapp.GetCifTemplatesDir() +

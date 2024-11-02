@@ -2481,7 +2481,7 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroD
   SL.Add("HKLF ") << Ins.GetRM().GetHKLFStr();
   SL.Add();
   SL.AddAll(Ins.GetFooter().obj());
-  Ins.SaveExtras(SL, 0, 0, Ins.GetRM());
+  Ins.SaveExtras(SL, 0, 0, Ins.GetRM(), false);
   olx_pair_t<bool, bool> res = RunExternalEdit(SL, "ins.txt");
   if (!res.b) {
     TdlgEdit* dlg = new TdlgEdit(this, true);

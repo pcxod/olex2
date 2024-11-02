@@ -131,11 +131,13 @@ public:
   double Esd12, Esd13;
 
   void ToDataItem(TDataItem& item) const;
+  void ToDataItem_HRF(TDataItem& item) const;
 #ifdef _PYTHON
   PyObject* PyExport(PyObject* main, TPtrList<PyObject>& allGroups,
     TPtrList<PyObject>& atoms, TPtrList<PyObject>& equiv);
 #endif
   void FromDataItem(TDataItem& item);
+  void FromDataItem_HRF(TDataItem& item);
   // for releasing/restoring items SetId must be called
   friend class TSameGroupList;
 };
@@ -190,13 +192,18 @@ public:
   void Expand(TStrList *log=0);
 
   void ToDataItem(TDataItem& item) const;
+  // fo INS header - easy to read and update
+  void ToDataItem_HRF(TDataItem& item) const;
 #ifdef _PYTHON
   PyObject* PyExport(TPtrList<PyObject>& atoms, TPtrList<PyObject>& equiv);
   TPtrList<PyObject>::const_list_type PyExportAsSADI(
     TPtrList<PyObject>& atoms, TPtrList<PyObject>& equiv);
 #endif
+  // auto selects which format to use based on 'n' field
   void FromDataItem(TDataItem& item);
-  private:
+private:
+  void FromDataItem_HRF(TDataItem& item);
+  void FromDataItem_(TDataItem& item, size_t n);
   // supergroups first
   static void SortSupergroups(TPtrList<TSameGroup>& groups,
     const olxdict<const TSameGroup*, TAtomRefList, TPointerComparator>& sg_atoms);

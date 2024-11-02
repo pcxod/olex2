@@ -2354,6 +2354,11 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
       if (ClearSelection) {
         SelectAll(false);
       }
+      if (DoNotSteal && lc.Exists(To)) {
+        TBasicApp::NewLogEntry(logWarning)
+          << "Existing label encountered: " << To;
+        return 0;
+      }
       undo = dynamic_cast<TNameUndo *>(Name(*XA, To));
     }
     else {
@@ -2375,7 +2380,7 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
           if (DoNotSteal && lc.Exists(NL)) {
             TBasicApp::NewLogEntry(logWarning)
               << "Existing label encountered: " << NL;
-            return undo.release();
+            return 0;
           }
           const olxstr oldL = XA->GetLabel();
           lc.SetLabel(XA->CAtom(), NL);
@@ -2399,7 +2404,7 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
             if (DoNotSteal && lc.Exists(NL)) {
               TBasicApp::NewLogEntry(logWarning)
                 << "Existing label encountered: " << NL;
-              return undo.release();
+              return 0;
             }
             bool recreate = XA->GetType() != *elm;
             const olxstr oldL = XA->GetLabel();
@@ -2426,7 +2431,7 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
             if (DoNotSteal && lc.Exists(NL)) {
               TBasicApp::NewLogEntry(logWarning)
                 << "Existing label encountered: " << NL;
-              return undo.release();
+              return 0;
             }
             const olxstr oldL = XA->GetLabel();
             lc.SetLabel(XA->CAtom(), NL);
@@ -2473,6 +2478,11 @@ TUndoData* TGXApp::Name(const olxstr &From, const olxstr &To,
                 }
               }
             }
+          }
+          if (DoNotSteal && lc.Exists(NL)) {
+            TBasicApp::NewLogEntry(logWarning)
+              << "Existing label encountered: " << NL;
+            return 0;
           }
           const olxstr oldL = XA->GetLabel();
           lc.SetLabel(XA->CAtom(), NL, false);

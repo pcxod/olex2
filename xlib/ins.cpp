@@ -2789,13 +2789,19 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
 }
 //..............................................................................
 void TIns::SaveExtras(TStrList& SL, const TCAtomPList* atoms,
-  RefinementModel::ReleasedItems* processed, RefinementModel& rm)
+  RefinementModel::ReleasedItems* processed, RefinementModel& rm,
+  bool hyphenate)
 {
   TStrList extras(rm.WriteInsExtras(atoms, false), NewLineSequence());
   if (!extras.IsEmpty()) {
     SL.Add("REM <olex2.extras>");
     for (size_t i = 0; i < extras.Count(); i++) {
-      HyphenateIns("REM ", extras[i], SL);
+      if (hyphenate) {
+        HyphenateIns("REM ", extras[i], SL);
+      }
+      else {
+        SL.Add("REM ") << extras[i];
+      }
     }
     SL.Add("REM </olex2.extras>");
   }

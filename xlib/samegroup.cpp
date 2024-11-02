@@ -80,6 +80,47 @@ void TSameGroup::ToDataItem(TDataItem& item) const {
   }
 }
 //..............................................................................
+void TSameGroup::ToDataItem_HRF(TDataItem& item) const {
+  if (!IsReference()) {
+    item.AddField("esd12", Esd12)
+      .AddField("esd13", Esd13);
+  }
+  item.SetValue(Atoms.GetExpression());
+  if (!Atoms.GetResi().IsEmpty()) {
+    item.SetName(olxstr(item.GetName()) << '_' << Atoms.GetResi());
+  }
+  for (size_t i = 0; i < Dependent.Count(); i++) {
+    if (Dependent[i]->GetTag() >= 0) {
+      Dependent[i]->ToDataItem_HRF(item.AddItem("dep"));
+    }
+  }
+}
+//..............................................................................
+void TSameGroup::FromDataItem_HRF(TDataItem& item) {
+  olxstr resi;
+  size_t ri = item.GetName().IndexOf('_');
+  if (ri != InvalidIndex) {
+    resi = item.GetName().SubStringFrom(ri + 1);
+  }
+  Atoms.Build(item.GetValue(), resi);
+  // reference?
+  if (item.ItemCount() > 0 && ParentGroup == 0) {
+    for (size_t i = 0; i < item.ItemCount(); i++) {
+      Parent.New(this).FromDataItem_HRF(item.GetItemByIndex(i));
+    }
+  }
+  else {
+    olxstr e = item.FindField("esd12");
+    if (!e.IsEmpty()) {
+      Esd12 = e.ToDouble();
+    }
+    e = item.FindField("esd13");
+    if (!e.IsEmpty()) {
+      Esd13 = e.ToDouble();
+    }
+  }
+}
+//..............................................................................
 TSameGroup* TSameGroup::ToExplicit(TTypeList<TSameGroup> *storage) const {
   if (Atoms.IsExplicit()) {
     return 0;
@@ -588,6 +629,33 @@ void TSameGroupList::ToDataItem(TDataItem& item) const {
   item.AddField("n", cnt);
 }
 //..............................................................................
+void TSameGroupList::ToDataItem_HRF(TDataItem& item) const {
+  size_t cnt = 0;
+  Groups.ForEach(ACollectionItem::TagSetter(-1));
+  for (size_t i = 0; i < Groups.Count(); i++) {
+    if (Groups[i].IsValidForSave() && Groups[i].GetTag() == -1) {
+      Groups[i].SetTag(cnt++);
+      for (size_t j = 0; j < Groups[i].DependentCount(); j++) {
+        TSameGroup& dp = Groups[i].GetDependent(j);
+        if (dp.IsValidForSave()) {
+          dp.SetTag(cnt++);
+        }
+      }
+    }
+  }
+  for (size_t i = 0; i < Groups.Count(); i++) {
+    if (Groups[i].GetTag() >= 0 && Groups[i].IsReference()) {
+      Groups[i].ToDataItem_HRF(item.AddItem("ref"));
+    }
+  }
+}
+//..............................................................................
+void TSameGroupList::FromDataItem_HRF(TDataItem& item) {
+  for (size_t i = 0; i < item.ItemCount(); i++) {
+    New().FromDataItem_HRF(item.GetItemByIndex(i));
+  }
+}
+//..............................................................................
 #ifdef _PYTHON
 PyObject* TSameGroupList::PyExport(TPtrList<PyObject>& _atoms,
   TPtrList<PyObject>& equiv)
@@ -684,7 +752,16 @@ TPtrList<PyObject>::const_list_type TSameGroupList::PyExportAsSADI(
 //.............................................................................
 void TSameGroupList::FromDataItem(TDataItem& item) {
   Clear();
-  size_t n = item.GetFieldByName("n").ToSizeT();
+  olxstr n = item.FindField('n');
+  if (n.IsEmpty()) {
+    FromDataItem_HRF(item);
+  }
+  else {
+    FromDataItem_(item, n.ToSizeT());
+  }
+}
+//.............................................................................
+void TSameGroupList::FromDataItem_(TDataItem& item, size_t n) {
   if (n != item.ItemCount()) {
     throw TFunctionFailedException(__OlxSourceInfo,
       "number of groups does not match the number of items");

@@ -2716,7 +2716,7 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
       ri.AddItem("item", rl[i]);
     }
     if (explicit_same && rSAME.Count() > 0) {
-      rSAME.ToDataItem(ri.AddItem("SAME"));
+      rSAME.ToDataItem_HRF(ri.AddItem("SAME"));
     }
   }
   rl.Clear();
