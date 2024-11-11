@@ -45,8 +45,9 @@ void THttpFileSystem::Initialise() {
   volatile olx_scope_cs _cs(TBasicApp::GetCriticalSection());
   if (!Initialised_()) {
     WSADATA WsaData;
-    if (WSAStartup(0x0001, &WsaData) != 0)
+    if (WSAStartup(0x0001, &WsaData) != 0) {
       throw TFunctionFailedException(__OlxSourceInfo, "Uninitialised WinSocks");
+    }
     Initialised_() = true;
     TEGC::AddP(new THttpFileSystem::Finaliser());
   }
@@ -76,7 +77,7 @@ void THttpFileSystem::GetAddress(struct sockaddr* Result)  {
   olxstr HostAdd = Url.HasProxy() ? Url.GetProxy().GetHost() : Url.GetHost();
   // c_str() on unicode is not thread safe!
   Host = gethostbyname(olxcstr(HostAdd).c_str());
-  if (Host != NULL) {
+  if (Host != 0) {
     Address.sin_family  = AF_INET;
     Address.sin_port    = htons((unsigned short)(Url.HasProxy()
       ? Url.GetProxy().GetPort() : Url.GetPort()));
@@ -165,12 +166,16 @@ THttpFileSystem::ResponseInfo THttpFileSystem::ParseResponseInfo(
   const olxcstr& str, const olxcstr& sep, const olxstr& src)
 {
   ResponseInfo rv;
-  if (str.IsEmpty()) return rv;
+  if (str.IsEmpty()) {
+    return rv;
+  }
   const TCStrList header_toks(str, sep);
   rv.status = header_toks[0];
   for (size_t i=1; i < header_toks.Count(); i++) {
     const size_t si = header_toks[i].IndexOf(':');
-    if (si == InvalidIndex)  continue;
+    if (si == InvalidIndex) {
+      continue;
+    }
     rv.headers(header_toks[i].SubStringTo(si),
       header_toks[i].SubStringFrom(si+1).Trim(' '));
   }
@@ -204,13 +209,16 @@ bool THttpFileSystem::IsCrLf(const char* bf, size_t len) {
 size_t THttpFileSystem::GetDataOffset(const char* bf, size_t len, bool crlf) {
   if (crlf) {
     for (size_t i=3; i < len; i++)
-      if (bf[i] == '\n' && bf[i-1] == '\r' && bf[i-2] == '\n' && bf[i-3] == '\r')
+      if (bf[i] == '\n' && bf[i - 1] == '\r' && bf[i - 2] == '\n' && bf[i - 3] == '\r') {
         return i;
+      }
   }
   else {
-    for (size_t i=1; i < len; i++)
-      if (bf[i-1] == '\n' && bf[i] == '\n')
+    for (size_t i = 1; i < len; i++) {
+      if (bf[i - 1] == '\n' && bf[i] == '\n') {
         return i;
+      }
+    }
   }
   return 0;
 }
@@ -286,7 +294,7 @@ olx_object_ptr<IInputStream> THttpFileSystem::_DoOpenFile(const olxstr& Source) 
       if (TotalRead == 0) { // 1. previously restarted from 2
         info = new_info;
       }
-      else if (new_info != info) {  // have to restart...
+      else if (new_info.contentMD5 != info.contentMD5) {  // have to restart...
         TBasicApp::NewLogEntry(logInfo, true) <<
           "Restarted download: info mismatch old={" << '(' <<
           info.contentMD5 << ',' << info.contentLength << "}, new={" <<
@@ -357,42 +365,45 @@ int THttpFileSystem::_read(char* dest, size_t dest_sz) const {
 //..............................................................................
 int THttpFileSystem::_write(const olxcstr& str) {
   int sv = send(Socket, str.c_str(), str.Length(), 0);
-  if (sv <= 0 || (size_t)sv == str.Length())
+  if (sv <= 0 || (size_t)sv == str.Length()) {
     return sv;
+  }
   size_t total_sz = sv;
   while (total_sz < str.Length()) {
     sv = send(Socket, &str.c_str()[total_sz], str.Length()-total_sz, 0);
-    if (sv <= 0)
+    if (sv <= 0) {
       return total_sz;
+    }
     total_sz += sv;
   }
   return total_sz;
 }
 //..............................................................................
 bool THttpFileSystem::_DoesExist(const olxstr& f, bool forced_check) {
-  if (Index != NULL) {
+  if (Index != 0) {
     olxstr fn = TEFile::UnixPath(f);
     if (fn.StartsFrom(GetBase())) {
       return Index->GetRoot().FindByFullName(
-        fn.SubStringFrom(GetBase().Length())) != NULL;
+        fn.SubStringFrom(GetBase().Length())) != 0;
     }
     else
-      return Index->GetRoot().FindByFullName(fn) != NULL;
+      return Index->GetRoot().FindByFullName(fn) != 0;
   }
-  if (!forced_check) return false;
+  if (!forced_check) {
+    return false;
+  }
   try {
     DoConnect();
     const size_t BufferSize = 1024;
-    char* Buffer = new char[BufferSize+1];
+    olx_array_ptr<char> Buffer = new char[BufferSize+1];
     _write(GenerateRequest("HEAD", f));
-    int read = _read(Buffer, BufferSize);
+    int read = _read(&Buffer, BufferSize);
     if (read <= 0) {
-      delete [] Buffer;
       return false;
     }
     TCStrList toks;
     // make sure that \r\n or \n\n are treated properly
-    toks.LoadFromTextArray(Buffer, read, true);
+    toks.LoadFromTextArray(Buffer.release(), read, true);
     return toks[0].EndsWith("200 OK");
   }
   catch(...) { return false; }
