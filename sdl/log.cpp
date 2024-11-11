@@ -11,7 +11,7 @@
 #include "etime.h"
 
 TLog::TLog()
-  : verbose(false),
+  : verbose(false), auto_flush(false),
   disabled(0),
   OnInfo(Actions.New("ONINF")),
   OnWarning(Actions.New("ONWRN")),
@@ -54,6 +54,8 @@ TLog::LogEntry::LogEntry(TLog& _parent, int _evt, bool annotate,
 }
 //..............................................................................
 TLog::LogEntry::~LogEntry() {
+  volatile olx_scope_cs cs_(parent.GetCriticalSection());
+
   if (evt == logVerbose && !parent.IsVerbose()) {
     return;
   }

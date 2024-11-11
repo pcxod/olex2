@@ -14,6 +14,7 @@
 #include "datastream.h"
 #include "actions.h"
 #include "estrlist.h"
+#include "os_util.h"
 // convenience macro
 #define OLX_DISABLE_LOGGING()\
  volatile TLog::Disabler olx_log_disabler = TBasicApp::GetInstance().GetLog().Disable()
@@ -32,7 +33,7 @@ class TLog : public IOlxObject, public IDataOutputStream {
   // stream, to delete at the end
   TArrayList<olx_pair_t<IDataOutputStream*, bool> > Streams;
   TActionQList Actions;
-  bool verbose;
+  bool verbose, auto_flush;
   int disabled;
 protected:
   virtual size_t Write(const void* Data, size_t size);
@@ -59,6 +60,9 @@ public:
 
   bool IsVerbose() const { return verbose; }
   void SetVerbose(bool v) { verbose = v; }
+
+  bool GetAutoFlush() const { return auto_flush; }
+  void SetAutoFlush(bool v) { auto_flush = v; }
   // if own is true, the object will be deleted in the end
   void AddStream(IDataOutputStream* stream, bool own) {
     Streams.Add(olx_pair_t<IDataOutputStream*, bool>(stream, own));
@@ -75,11 +79,17 @@ public:
     for (size_t i = 0; i < Streams.Count(); i++) {
       Streams[i].a->Write(disabled != 0 ? EmptyString() : str);
     }
+    if (auto_flush) {
+      Flush();
+    }
     return *this;
   }
   template <class T>
   TLog& operator << (const TTStrList<T>& lst) {
     Add(lst);
+    if (auto_flush) {
+      Flush();
+    }
     return *this;
   }
   //..............................................................................
@@ -88,6 +98,11 @@ public:
       Streams[i].GetA()->Flush();
     }
   }
+  static olx_critical_section& GetCriticalSection() {
+    static olx_critical_section cs;
+    return cs;
+  }
+
   //..............................................................................
   struct LogEntry {
     TLog& parent;
