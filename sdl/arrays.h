@@ -274,7 +274,7 @@ namespace olx_array {
     }
     AE& operator [] (index_t index) const { return Value(index); }
     AE& Value(index_t index) const {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
       TIndexOutOfRangeException::ValidateRange(
         __POlxSourceInfo, index - MinIndex, 0, Length());
 #endif
@@ -328,7 +328,7 @@ namespace olx_array {
     array_2d<AE> Data;
 
     const AE& Value(index_t x, index_t y) const {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
       TIndexOutOfRangeException::ValidateRange(
         __POlxSourceInfo, x - MinWidth, 0, GetWidth());
       TIndexOutOfRangeException::ValidateRange(
@@ -421,7 +421,7 @@ namespace olx_array {
       array_3d<AE> Data;
 
       const AE& Value(index_t x, index_t y, index_t z) const {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
         TIndexOutOfRangeException::ValidateRange(
           __POlxSourceInfo, x - MinWidth, 0, GetWidth());
         TIndexOutOfRangeException::ValidateRange(
@@ -432,7 +432,7 @@ namespace olx_array {
         return Data[x - MinWidth][y - MinHeight][z - MinDepth];
       }
       AE& Value(index_t x, index_t y, index_t z) {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
         TIndexOutOfRangeException::ValidateRange(
           __POlxSourceInfo, x - MinWidth, 0, GetWidth());
         TIndexOutOfRangeException::ValidateRange(

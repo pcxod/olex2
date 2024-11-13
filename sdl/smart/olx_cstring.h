@@ -205,7 +205,7 @@ public:
   inline const char* u_str() const { return ((SData == 0) ? "" : TTIString<char>::u_str()); }
   inline const char* c_str() const { return u_str(); }
   inline CharW operator[] (size_t i) {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     if (i >= _Length)
       TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, i, 0, _Length);
 #endif
@@ -213,14 +213,14 @@ public:
   }
   // very bizzare compilation errors occur if it is not redefined here
   char operator[] (size_t i) const {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     if (i >= _Length)
       TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, i, 0, _Length);
 #endif
     return SData->Data[_Start + i];
   }
   void Set(size_t i, char v) {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     if (i >= _Length)
       TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, i, 0, _Length);
 #endif

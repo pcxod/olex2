@@ -35,7 +35,7 @@ public:
   inline bool operator [] (size_t index) const  {
     size_t intIndex = index/8;
     size_t bitIndex = (size_t)1 << index%8;
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, intIndex,
       0, FCharCount);
 #endif
@@ -44,7 +44,7 @@ public:
   bool Get(size_t index) const  {
     size_t intIndex = index/8;
     size_t bitIndex = (size_t)1 << index%8;
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, intIndex,
       0, FCharCount);
 #endif
@@ -53,7 +53,7 @@ public:
   inline void Set(size_t index, bool v) {
     size_t intIndex = index / 8;
     size_t bitIndex = (size_t)1 << index % 8;
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, intIndex,
       0, FCharCount);
 #endif
@@ -67,7 +67,7 @@ public:
   inline void SetTrue(size_t index)   {
     size_t intIndex = index/8;
     size_t bitIndex = (size_t)1 << index%8;
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, intIndex,
       0, FCharCount);
 #endif
@@ -76,7 +76,7 @@ public:
   inline void SetFalse(size_t index)  {
     size_t intIndex = index/8;
     size_t bitIndex = (size_t)1 << index%8;
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, intIndex,
       0, FCharCount);
 #endif

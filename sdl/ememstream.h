@@ -47,7 +47,7 @@ public:
   virtual uint64_t GetSize() const {  return GetLength();  }
   virtual uint64_t GetPosition() const {  return Position;  }
   virtual void SetPosition(uint64_t pos)  {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo,
       (size_t)pos, 0, GetLength()+1);
 #endif
@@ -128,7 +128,7 @@ public:
   const uint8_t *GetData() const { return &Data[Position]; }
   uint64_t Remaining() { return Length-Position; }
   virtual void Read(void* to, size_t count)  {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, Position+count, 0, Length+1);
 #endif
     memcpy(to, &Data[Position], count);

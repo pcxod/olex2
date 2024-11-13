@@ -74,7 +74,7 @@ namespace math { struct dmat {
 struct linear_to_sym_base {
   static size_t*get_i_j(size_t i) {
     static size_t a[6][2] = { {0,0}, {0,1}, {0,2}, {1,1}, {1,2}, {2,2} };
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     if (i > 5) {
       throw TIndexOutOfRangeException(__OlxSourceInfo, i, 0, 5);
     }
@@ -98,7 +98,7 @@ template <typename mat_t> struct linear_from_sym {
     for (size_t i=0; i < rc; i++) {
       for (size_t j=i; j < rc; j++, idx++) {
         data(idx) = m_(i,j);
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
         if (olx_cmp_float(m_(i, j), m_(j, i), 1e-8) != 0) {
           throw TInvalidArgumentException(__OlxSourceInfo, "symmetric matrix");
         }

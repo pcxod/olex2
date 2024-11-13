@@ -142,13 +142,13 @@ public:
   size_t Size() const { return Fn; }
   bool IsEmpty() const { return Count() == 0; }
   const FT& operator [](size_t offset) const {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, offset, 0, Fn);
 #endif
     return FData[offset];
   }
   FT& operator [](size_t offset) {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, offset, 0, Fn);
 #endif
     return FData[offset];
@@ -162,7 +162,7 @@ public:
   const FT* GetRawData() const { return FData; }
 
   FT& GetLast() const {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, Fn - 1, 0, Fn);
 #endif
     return FData[Fn - 1];

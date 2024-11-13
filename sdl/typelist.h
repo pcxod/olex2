@@ -270,7 +270,7 @@ public:
   }
   //..............................................................................
   T& operator [] (size_t index) const {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     T*& v = List[index];
     if (v == 0) {
       throw TFunctionFailedException(__OlxSourceInfo,
@@ -283,7 +283,7 @@ public:
   }
   //..............................................................................
   T& GetItem(size_t index) const {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     T*& v = List.GetItem(index);
     if (v == 0) {
       throw TFunctionFailedException(__OlxSourceInfo,
@@ -296,7 +296,7 @@ public:
   }
   //..............................................................................
   T& GetLast() const {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     T*& v = List.GetLast();
     if (v == 0) {
       throw TFunctionFailedException(__OlxSourceInfo,
@@ -387,7 +387,7 @@ public:
   }
   //..............................................................................
   void DeleteRange(size_t from, size_t count) {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from, 0,
       List.Count());
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from + count, 0,
@@ -402,7 +402,7 @@ public:
   }
   //..............................................................................
   ConstTypeListExt<T, DestructCast> SubList(size_t from, size_t count) const {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from, 0,
       List.Count() + 1);
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from + count, 0,
@@ -438,7 +438,7 @@ public:
     // the memory has to be delalocated by calling process (using delete)
   T& Release(size_t index) {
     T* v = List[index];
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     if (v == 0) {
       throw TFunctionFailedException(__OlxSourceInfo,
         "cannot dereference a NULL pointer");

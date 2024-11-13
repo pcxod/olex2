@@ -60,6 +60,13 @@ public:\
 #define GlobalEsdlFunction( fun )     esdl::fun
 #define EsdlObject( obj )     esdl::obj
 
+// sync debugging
+#ifdef _DEBUG
+  #if !defined(OLX_DEBUG)
+    #define OLX_DEBUG
+  #endif
+#endif
+
 #include "defs.h"
 
 #ifdef __WIN32__
@@ -251,7 +258,7 @@ public:
   }
   bool IsEmpty() const { return _Length == 0; }
   T CharAt(size_t i) const {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     if (i >= _Length) {
       TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, i, 0, _Length);
     }
@@ -259,7 +266,7 @@ public:
     return SData->Data[_Start + i];
   }
   T operator[] (size_t i) const {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     if (i >= _Length) {
       TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, i, 0, _Length);
     }

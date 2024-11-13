@@ -225,7 +225,7 @@ public:
   }
   inline const wchar_t* wc_str() const { return u_str(); }
   inline CharW operator[] (size_t i) {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     if (i >= _Length)
       TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, i, 0, _Length);
 #endif
@@ -233,7 +233,7 @@ public:
   }
   // very bizzare compilation errors occur if it is not redefined here
   inline wchar_t operator[] (size_t i) const {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     if (i >= _Length) {
       TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, i, 0, _Length);
     }
@@ -241,7 +241,7 @@ public:
     return SData->Data[_Start + i];
   }
   inline void Set(size_t i, wchar_t v) {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     if (i >= _Length) {
       TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, i, 0, _Length);
     }

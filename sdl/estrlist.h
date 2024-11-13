@@ -297,7 +297,7 @@ public:
     Strings.Delete(i);
   }
   void DeleteRange(size_t from, size_t count) {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(
       __POlxSourceInfo, from, 0, Strings.Count());
     TIndexOutOfRangeException::ValidateRange(
@@ -310,7 +310,7 @@ public:
   }
 
   TTStrList& SubList(size_t from, size_t count, TTStrList& SL) const {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(
       __POlxSourceInfo, from, 0, Strings.Count() + 1);
     TIndexOutOfRangeException::ValidateRange(
