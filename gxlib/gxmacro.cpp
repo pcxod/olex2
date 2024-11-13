@@ -714,7 +714,7 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
   }
   bool changeSuffix = Options.Contains('s');
   bool nameResi = Options.GetBoolOption('r', false, true);
-  bool doNotSteal = Options.GetBoolOption("ns", true, true);
+  bool doNotSteal = Options.GetBoolOption("ns", true, false);
   if (changeSuffix) {
     TXAtomPList xatoms = app.FindXAtoms(Cmds, true, !Options.GetBoolOption("cs"));
     if (!xatoms.IsEmpty()) {
