@@ -224,9 +224,10 @@ public:
       if (iv >= 20 && pr > 0) {
         iv = olx_round((double)iv / 10);
         pr--;
+        po /= 10;
       }
       if (pr != 0) {
-        strv = olxstr::FormatFloat(pr, FV);
+        strv = olxstr::FormatFloat(pr, olx_round(FV*po)/po);
         stre = iv;
       }
       else {

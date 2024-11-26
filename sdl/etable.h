@@ -21,8 +21,13 @@ template <class T> class TTTable : public IOlxObject {
 public:
   TTTable() {}
   TTTable(const TTTable& t)
-    : Rows(t.Rows), ColNames(t.ColNames), RowNames(t.RowNames) {}
-  TTTable(size_t RowCnt, size_t ColCnt) { Resize(RowCnt, ColCnt); }
+    : Rows(t.Rows), ColNames(t.ColNames), RowNames(t.RowNames)
+  {}
+  TTTable(size_t RowCnt, size_t ColCnt)
+  : Rows(olx_reserve(RowCnt))
+  {
+    Resize(RowCnt, ColCnt);
+  }
 
   virtual ~TTTable() { Clear(); }
 
@@ -36,8 +41,9 @@ public:
     Resize(Table.RowCount(), Table.ColCount());
     ColNames.Assign(Table.GetColNames());
     RowNames.Assign(Table.GetRowNames());
-    for (size_t i = 0; i < RowCount(); i++)
+    for (size_t i = 0; i < RowCount(); i++) {
       Rows[i].Assign(Table[i]);
+    }
     return *this;
   }
   TTTable& operator = (const TTTable& Table) { return Assign(Table); }
@@ -80,8 +86,9 @@ public:
     if (ColCnt != ColNames.Count()) {
       ColNames.SetCount(ColCnt);
     }
-    for (size_t i = 0; i < Rows.Count(); i++)
+    for (size_t i = 0; i < Rows.Count(); i++) {
       Rows[i].SetCount(ColCnt);
+    }
   }
 
   void SetColCount(size_t NCC) { Resize(RowCount(), NCC); }
@@ -92,29 +99,33 @@ public:
     RowNames.SetCapacity(row_cap);
   }
   void InsertCol(size_t index, const olxstr& Caption = EmptyString()) {
-    for (size_t i = 0; i < RowCount(); i++)
+    for (size_t i = 0; i < RowCount(); i++) {
       Rows[i].Insert(index);
+    }
     ColNames.Insert(index, Caption);
   }
 
   T& InsertRow(size_t index, const olxstr& Caption = EmptyString()) {
-    T& SL = Rows.InsertNew(index);
-    for (size_t i = 0; i < ColNames.Count(); i++)
+    T& SL = Rows.Insert(index, new T(olx_reserve(ColNames.Count())));
+    for (size_t i = 0; i < ColNames.Count(); i++) {
       SL.Add();
+    }
     RowNames.Insert(index, Caption);
     return SL;
   }
 
   void AddCol(const olxstr& Caption = EmptyString()) {
-    for (size_t i = 0; i < RowCount(); i++)
+    for (size_t i = 0; i < RowCount(); i++) {
       Rows[i].Add();
+    }
     ColNames.Add(Caption);
   }
 
   T& AddRow(const olxstr& Caption = EmptyString()) {
-    T& SL = Rows.AddNew();
-    for (size_t i = 0; i < ColNames.Count(); i++)
+    T& SL = Rows.Add(new T(olx_reserve(ColNames.Count())));
+    for (size_t i = 0; i < ColNames.Count(); i++) {
       SL.Add();
+    }
     RowNames.Add(Caption);
     return SL;
   }
@@ -126,8 +137,9 @@ public:
 
   void DelCol(size_t index) {
     ColNames.Delete(index);
-    for (size_t i = 0; i < RowCount(); i++)
+    for (size_t i = 0; i < RowCount(); i++) {
       Rows[i].Delete(index);
+    }
   }
 
 
@@ -152,10 +164,10 @@ public:
   }
   // finds a column in the row
   bool HasRow(const olxstr& What, size_t row) const {
-    return Rows[row].IndexOf(What) != InvalidIndex;
+    return Rows[row].Contains(What);
   }
 
-  TStrList CreateHTMLList(const olxstr& Title,
+  TStrList::const_list_type CreateHTMLList(const olxstr& Title,
     bool colNames, bool rowNames,
     bool Format = true) const
   {
@@ -191,7 +203,7 @@ public:
     return L;
   }
 
-  const_strlist CreateHTMLList(const olxstr &Title,
+  TStrList::const_list_type CreateHTMLList(const olxstr &Title,
     const olxstr& footer,
     bool colNames, bool rowNames,
     const olxstr& titlePAttr,
@@ -209,6 +221,7 @@ public:
       footerPAttr, tabAttr, rowAttr, thAttr, clAttr, Format, colCount,
       colSepAttr);
   }
+
   TStrList& CreateHTMLList(TStrList &L, const olxstr &Title,
     const olxstr& footer,
     bool colNames, bool rowNames,
@@ -286,12 +299,13 @@ public:
     return L;
   }
 
-  const_strlist CreateTXTList(const olxstr &Title, bool colNames, bool rowNames,
-    const olxstr& Sep) const
+  TStrList::const_list_type CreateTXTList(const olxstr &Title, bool colNames,
+    bool rowNames, const olxstr& Sep) const
   {
     TStrList L;
     return CreateTXTList(L, Title, colNames, rowNames, Sep);
   }
+
   TStrList& CreateTXTList(TStrList &L, const olxstr &Title, bool colNames,
     bool rowNames, const olxstr& Sep) const
   {
@@ -367,7 +381,7 @@ public:
   void SortCols(int row) {
     throw TNotImplementedException(__OlxSourceInfo);
   }
-
+  typedef T row_t;
 };
 
   typedef TTTable<TStrList> TTable;

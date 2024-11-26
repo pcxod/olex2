@@ -521,6 +521,9 @@ public:
   void SetXGrowLinesVisible(bool v);
   bool GetXGrowLinesVisible() const { return FXGrowLinesVisible; }
   void LabelGrowBonds();
+  const TTypeListExt<TXGrowLine, AGDrawObject>& GetGrowLines() const {
+    return XGrowLines;
+  }
   short GetGrowMode() const { return FGrowMode; }
   void SetGrowMode(short v, const IStrList& atoms);
   //

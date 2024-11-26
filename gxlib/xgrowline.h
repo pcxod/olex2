@@ -14,43 +14,45 @@
 #include "satom.h"
 BeginGxlNamespace()
 
-class TXGrowLine : public TXBond  {
+class TXGrowLine : public TXBond {
   TXAtom& _XAtom;
   TCAtom& _CAtom;
   smatd Transform;
   vec3d FEdge;
 protected:
-  virtual bool IsMaskSaveable() const {  return true;  }
-  virtual bool IsStyleSaveable() const {  return true;  }
-  virtual bool IsRadiusSaveable() const {  return true;  }
+  virtual bool IsMaskSaveable() const { return true; }
+  virtual bool IsStyleSaveable() const { return true; }
+  virtual bool IsRadiusSaveable() const { return true; }
 public:
   TXGrowLine(TGlRenderer& Render, const olxstr& collectionName, TXAtom& A,
     TCAtom& CA, const smatd& transform);
-  void Create(const olxstr& cName=EmptyString());
+  void Create(const olxstr& cName = EmptyString());
 
-  bool GetDimensions(vec3d &Max, vec3d &Min) {  return false; }
+  bool GetDimensions(vec3d& Max, vec3d& Min) { return false; }
 
-  bool OnMouseDown(const IOlxObject *Sender, const TMouseData& Data)  {
+  bool OnMouseDown(const IOlxObject* Sender, const TMouseData& Data) {
     return true;
   }
-  bool OnMouseUp(const IOlxObject *Sender, const TMouseData& Data)  {
+  bool OnMouseUp(const IOlxObject* Sender, const TMouseData& Data) {
     return false;
   }
-  bool OnMouseMove(const IOlxObject *Sender, const TMouseData& Data)  {
+  bool OnMouseMove(const IOlxObject* Sender, const TMouseData& Data) {
     return false;
   }
 
   bool Orient(TGlPrimitive& P);
   void Radius(float V);
-  double Radius()  {  return Params()[4]; }
-  void Length(float V);
-  double Length()  {  return Params()[3]; }
+  double Radius() const { return Params()[4]; }
+  void SetLength(float V);
+  double Length() const { return Params()[3]; }
 
-  TXAtom& XAtom() const {  return _XAtom;  }
-  TCAtom& CAtom() const {  return _CAtom;  }
-  const smatd& GetTransform() const {  return Transform;  }
-  const vec3d &GetToCrd() const {  return FEdge;  }
-  const vec3d &GetFromCrd() const;
+  TXAtom& XAtom() const { return _XAtom; }
+  TCAtom& CAtom() const { return _CAtom; }
+  const smatd& GetTransform() const { return Transform; }
+  const vec3d& GetToCrd() const { return FEdge; }
+  const vec3d& GetFromCrd() const;
+
+  TIString ToString() const;
 };
 
 EndGxlNamespace()

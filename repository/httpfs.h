@@ -15,11 +15,19 @@
   #include <netinet/in.h>
   #include <netdb.h>
   #include <unistd.h>
+#else
+  #include <WinInet.h>
+  #pragma comment (lib, "Wininet.lib")
 #endif
 #include "filesystem.h"
 #include "url.h"
 #include "efile.h"
 #include "edict.h"
+#ifdef _OPENSSL
+  #include <openssl/bio.h>
+  #include <openssl/ssl.h>
+  #include <openssl/err.h>
+#endif
 
 /* POSIX HTTP file fetching utility,
 */
@@ -28,36 +36,31 @@ const uint16_t  // extra request headers
   httpHeaderESession = 0x0001,
   httpHeaderPlatform = 0x0002;
 
-class THttpFileSystem : public AFileSystem {
-  bool Connected;
-  TUrl Url;
+class AnHttpFileSystem : public AFileSystem {
+private:
   static olxcstr& SessionInfo_() {
     static olxcstr s;
     return s;
   }
   uint16_t ExtraHeaders;
-#ifdef __WIN32__
-  static bool& Initialised_() {
-    static bool i;
-    return i;
-  }
-#endif
+  bool Connected;
 protected:
-#ifdef __WIN32__
-  SOCKET Socket;
-#else
-  int Socket;
-#endif
-  // intitialise/finalise functionality
-  static void Initialise();
-  // should not be called directly, look below
-  static void Finalise();
-  class Finaliser : public IOlxObject {
-  public:
-    ~Finaliser() { THttpFileSystem::Finalise(); }
-  };
+  TUrl Url;
+  virtual bool Connect() {
+    return (Connected = true);
+  }
+  virtual void Disconnect() {
+    Connected = false;
+  }
+  virtual bool _DoDelFile(const olxstr& f) { return false; }
+  virtual bool _DoDelDir(const olxstr& f) { return false; }
+  virtual bool _DoNewDir(const olxstr& f) { return false; }
+  virtual bool _DoAdoptFile(const TFSItem& Source) { return false; }
+  virtual bool _DoAdoptStream(IInputStream& file, const olxstr& name) {
+    return false;
+  }
+  virtual bool _DoesExist(const olxstr& df, bool);
 
-  void DoConnect();
   typedef olxdict<olxcstr, olxcstr, olxstrComparator<false> > HeadersDict;
   struct ResponseInfo {
     HeadersDict headers;
@@ -87,29 +90,20 @@ protected:
       : file(_file), digest(_digest), truncated(_truncated)
     {}
   };
-  ResponseInfo ParseResponseInfo(const olxcstr& str, const olxcstr& sep,
+  virtual ResponseInfo ParseResponseInfo(const olxcstr& str, const olxcstr& sep,
     const olxstr& src);
   /* if position is valid and not 0 it is appended to the file name like
   + ('#'+pos)
   */
-  olxcstr GenerateRequest(const olxcstr& cmd, const olxcstr& file_name,
-    uint64_t position = 0);
-  bool IsConnected() const { return Connected; }
-  const TUrl& GetUrl() const { return Url; }
-  /* if false returned, the procedure is terminated, true means the the
-  connection was re-established
-  */
-  virtual bool _OnReadFailed(const ResponseInfo& info,
-    uint64_t position)
+  static olxcstr GenerateRequest(const TUrl& Url, uint16_t ExtraHeaders,
+    const olxcstr& cmd, const olxstr& file_name, uint64_t position = 0);
+  olxcstr GenerateRequest(const olxcstr& cmd, const olxstr& file_name,
+    uint64_t position = 0)
   {
-    return false;
+    return GenerateRequest(Url, ExtraHeaders, cmd, file_name, position);
   }
-  /* version 1.0 of CDS returns Content-MD5, however the MD5 checks are done in
-  the OSFS, when a foreign item is adopted
-  */
-  virtual bool _DoValidate(const ResponseInfo& info, TEFile& data) const {
-    return data.Length() == info.contentLength;
-  }
+  size_t GetDataOffset(const char* bf, size_t len) const;
+
   /* does the file allocation, always new or 'truncated'. the truncated is
   false for the first time file allocation and true if the download restarts
   due to the file changed
@@ -127,23 +121,69 @@ protected:
     file.truncated = true;
     return file;
   }
-  static bool IsCrLf(const char* bf, size_t len);
-  static size_t GetDataOffset(const char* bf, size_t len, bool crlf);
+  /* version 1.0 of CDS returns Content-MD5, however the MD5 checks are done in
+  the OSFS, when a foreign item is adopted
+  */
+  virtual bool _DoValidate(const ResponseInfo& info, TEFile& data) const {
+    return data.Length() == info.contentLength;
+  }
+  /* if false returned, the procedure is terminated, true means the the
+  connection was re-established
+  */
+  virtual bool _OnReadFailed(const ResponseInfo& info,
+    uint64_t position)
+  {
+    return false;
+  }
+  virtual olx_object_ptr<IInputStream> _DoOpenFile(const olxstr& src);
+  virtual int http_read(char* dest, size_t dest_sz) const = 0;
+  virtual int http_write(const olxcstr& str) = 0;
+public:
+  AnHttpFileSystem()
+    : ExtraHeaders(0),
+    Connected(false)
+  {}
+
+  DefPropP(uint16_t, ExtraHeaders);
+  const TUrl& GetUrl() const { return Url; }
+  void SetUrl(const TUrl& url);
+  bool IsConnected() const { return Connected; }
+
+  // intialises if empty
+  static const olxcstr& GetSessionInfo();
+  static void SetSessionInfo(const olxcstr& si) {
+    SessionInfo_() = si;
+  }
+};
+
+class THttpFileSystem : public AnHttpFileSystem {
+#ifdef __WIN32__
+  static bool& Initialised_() {
+    static bool i = false;
+    return i;
+  }
+#endif
+protected:
+#ifdef __WIN32__
+  SOCKET Socket;
+#else
+  int Socket;
+#endif
+  // intitialise/finalise functionality
+  static void Initialise();
+  // should not be called directly, look below
+  static void Finalise();
+  class Finaliser : public IOlxObject {
+  public:
+    ~Finaliser() { THttpFileSystem::Finalise(); }
+  };
+
   // reads as many bytes as available within [0..dest_sz)
-  int _read(char* dest, size_t dest_sz) const;
-  int _write(const olxcstr& str);
+  int http_read(char* dest, size_t dest_sz) const;
+  int http_write(const olxcstr& str);
   void GetAddress(struct sockaddr* Result);
   bool Connect();
   void Disconnect();
-  virtual bool _DoDelFile(const olxstr& f) { return false; }
-  virtual bool _DoDelDir(const olxstr& f) { return false; }
-  virtual bool _DoNewDir(const olxstr& f) { return false; }
-  virtual bool _DoAdoptFile(const TFSItem& Source) { return false; }
-  virtual bool _DoesExist(const olxstr& df, bool);
-  virtual olx_object_ptr<IInputStream> _DoOpenFile(const olxstr& src);
-  virtual bool _DoAdoptStream(IInputStream& file, const olxstr& name) {
-    return false;
-  }
   void Init();
 public:
   THttpFileSystem() { Init(); }
@@ -158,14 +198,76 @@ public:
   olx_object_ptr<TEFile> OpenFileAsFile(const olxstr& Source) {
     return (TEFile*)OpenFile(Source).release();
   }
-  void SetUrl(const TUrl& url);
-  DefPropP(uint16_t, ExtraHeaders)
-    static const olxcstr& GetSessionInfo() {
-    return SessionInfo_();
-  }
-  static void SetSessionInfo(const olxcstr& si) {
-    SessionInfo_() = si;
-  }
 };
 
+#ifdef __WIN32__
+// a simple WinINet based implementation
+class TWinHttpFileSystem : public AFileSystem {
+  TUrl Url;
+  uint16_t ExtraHeaders;
+  struct INET_CLOSE {
+    HINTERNET handle;
+    INET_CLOSE(HINTERNET handle)
+      : handle(handle)
+    {}
+    ~INET_CLOSE() {
+      if (handle != 0) {
+        InternetCloseHandle(handle);
+      }
+    }
+  };
+protected:
+  const TUrl& GetUrl() const { return Url; }
+  /* if false returned, the procedure is terminated, true means the the
+  connection was re-established
+  */
+  virtual bool _DoDelFile(const olxstr& f) { return false; }
+  virtual bool _DoDelDir(const olxstr& f) { return false; }
+  virtual bool _DoNewDir(const olxstr& f) { return false; }
+  virtual bool _DoAdoptFile(const TFSItem& Source) { return false; }
+  virtual bool _DoesExist(const olxstr& df, bool);
+  virtual olx_object_ptr<IInputStream> _DoOpenFile(const olxstr& src);
+  virtual bool _DoAdoptStream(IInputStream& file, const olxstr& name) {
+    return false;
+  }
+  void Init();
+  void SetUrl(const TUrl& url);
+public:
+  TWinHttpFileSystem() { Init(); }
+  TWinHttpFileSystem(const TUrl& url) {
+    Init();
+    SetUrl(url);
+  }
+  ~TWinHttpFileSystem();
+  /* returns temporary file, which gets deleted when object is deleted, use
+  SetTemporary to change it
+  */
+  olx_object_ptr<TEFile> OpenFileAsFile(const olxstr& Source) {
+    return (TEFile*)OpenFile(Source).release();
+  }
+  DefPropP(uint16_t, ExtraHeaders);
+};
+#endif // __WIN32__
+
+#ifdef _OPENSSL
+class TSSLHttpFileSystem : public AnHttpFileSystem {
+private:
+  SSL_CTX* ctx;
+  SSL* ssl;
+  void cleanup();
+protected:
+  virtual bool Connect();
+  virtual void Disconnect();
+  virtual int http_read(char* dest, size_t dest_sz) const;
+  virtual int http_write(const olxcstr& str);
+  void Init();
+public:
+  TSSLHttpFileSystem() { Init(); }
+  TSSLHttpFileSystem(const TUrl& url) {
+    Init();
+    SetUrl(url);
+  }
+  ~TSSLHttpFileSystem();
+};
+#endif //_OPENSSL
 #endif
