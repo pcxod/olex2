@@ -216,7 +216,7 @@ template <typename T>
   }
 
   const TDirectionalList& Read(T* Data, size_t from, size_t length) const {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from, 0, Length+1);
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from+length, 0, Length+1);
 #endif

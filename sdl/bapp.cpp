@@ -516,6 +516,15 @@ void BAPP_Verbose(const TStrObjList& Params, TMacroData& E) {
   }
 }
 //..............................................................................
+void BAPP_AutoFlush(const TStrObjList& Params, TMacroData& E) {
+  if (Params.IsEmpty()) {
+    E.SetRetVal(TBasicApp::GetLog().GetAutoFlush());
+  }
+  else {
+    TBasicApp::GetLog().SetAutoFlush(Params[0].ToBool());
+  }
+}
+//..............................................................................
 void BAPP_LogFileName(const TStrObjList& Params, TMacroData &E)  {
   TEFile *f = TBasicApp::GetInstance().GetLogFile();
   E.SetRetVal(f == 0 ? EmptyString() : f->GetName());
@@ -664,6 +673,9 @@ TLibrary* TBasicApp::ExportLibrary(const olxstr& lib_name)  {
   lib->Register(new TStaticFunction(BAPP_Verbose,
     "Verbose", fpNone | fpOne,
     "Sets/Returns if the verbose messages to be logged or discared"));
+  lib->Register(new TStaticFunction(BAPP_AutoFlush,
+    "AutoFlushLog", fpNone | fpOne,
+    "Sets/Returns Log's auto flushing status"));
   lib->Register(new TStaticFunction(BAPP_LogFileName,
     "GetLogName", fpNone,
     "Returns current log file name"));

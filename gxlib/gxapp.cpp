@@ -1202,7 +1202,7 @@ olxstr TGXApp::GetObjectInfoAt(int x, int y) const {
           TEValueD(occu, ca.GetOccuEsd()).ToString() << ')';
       }
 
-      if (ca.GetVarRef(catom_var_name_Sof) != NULL) {
+      if (ca.GetVarRef(catom_var_name_Sof) != 0) {
         if (ca.GetVarRef(catom_var_name_Sof)->relation_type == relation_None) {
           rv << ", fixed";
         }
@@ -1223,21 +1223,24 @@ olxstr TGXApp::GetObjectInfoAt(int x, int y) const {
         rv << ", free";
     }
     {
-      if (ca.GetEllipsoid() == NULL) {
+      if (ca.GetEllipsoid() == 0) {
         rv << "\nUiso: ";
-        if (ca.GetVarRef(catom_var_name_Uiso) != NULL &&
+        if (ca.GetVarRef(catom_var_name_Uiso) != 0 &&
           ca.GetVarRef(catom_var_name_Uiso)->relation_type == relation_None &&
-          ca.GetUisoOwner() == NULL)
+          ca.GetUisoOwner() == 0)
         {
           rv << olxstr::FormatFloat(3, ca.GetUiso()) << ", fixed";
         }
-        else if (ca.GetUisoOwner() != NULL)
+        else if (ca.GetUisoOwner() != 0) {
           rv << olxstr::FormatFloat(3, ca.GetUiso()) << ", riding";
-        else
+        }
+        else {
           rv << TEValueD(ca.GetUiso(), ca.GetUisoEsd()).ToString() << ", free";
+        }
       }
-      else
+      else {
         rv << "\nUeq: " << olxstr::FormatFloat(3, ca.GetEllipsoid()->GetUeq());
+      }
     }
     if (ca.GetAfix() != 0) {
       rv << "\nAFIX: " << ca.GetAfix();
@@ -1283,10 +1286,7 @@ olxstr TGXApp::GetObjectInfoAt(int x, int y) const {
     rv = olxstr::FormatFloat(3, ((TXLine*)G)->GetLength());
   }
   else if (G->Is<TXGrowLine>()) {
-    rv = ((TXGrowLine*)G)->XAtom().GetLabel();
-    rv << '-' << ((TXGrowLine*)G)->CAtom().GetLabel() << ": "
-      << olxstr::FormatFloat(3, ((TXGrowLine*)G)->Length()) << '('
-      << TSymmParser::MatrixToSymmEx(((TXGrowLine*)G)->GetTransform()) << ')';
+    rv = ((TXGrowLine*)G)->ToString();
   }
   else if (G->Is<TXGrowPoint>()) {
     rv = TSymmParser::MatrixToSymmEx(((TXGrowPoint*)G)->GetTransform());

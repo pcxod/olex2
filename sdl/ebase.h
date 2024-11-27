@@ -60,6 +60,13 @@ public:\
 #define GlobalEsdlFunction( fun )     esdl::fun
 #define EsdlObject( obj )     esdl::obj
 
+// sync debugging
+#ifdef _DEBUG
+  #if !defined(OLX_DEBUG)
+    #define OLX_DEBUG
+  #endif
+#endif
+
 #include "defs.h"
 
 #ifdef __WIN32__
@@ -143,7 +150,7 @@ template <typename A, typename B>
 bool olx_type_check(const A &a, const B &b) {
   return typeid(a) == typeid(b);
 }
-
+class TExceptionBase;
 // string base
 template <class T> class TTIString {
 public:
@@ -250,22 +257,8 @@ public:
     return &SData->Data[_Start];
   }
   bool IsEmpty() const { return _Length == 0; }
-  T CharAt(size_t i) const {
-#ifdef _DEBUG
-    if (i >= _Length) {
-      TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, i, 0, _Length);
-    }
-#endif
-    return SData->Data[_Start + i];
-  }
-  T operator[] (size_t i) const {
-#ifdef _DEBUG
-    if (i >= _Length) {
-      TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, i, 0, _Length);
-    }
-#endif
-    return SData->Data[_Start + i];
-  }
+  T CharAt(size_t i) const;
+  T operator[] (size_t i) const;
   void Assign(const TTIString& v) {
     if (SData != 0 && --SData->RefCnt == 0) {
       delete SData;
@@ -432,6 +425,23 @@ public:
   // returns recasted this, or throws exception if dynamic_cast fails
   const class TBasicException* GetException() const;
 };
+
+template <class T> T TTIString<T>::CharAt(size_t i) const {
+#ifdef OLX_DEBUG
+  if (i >= _Length) {
+    TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, i, 0, _Length);
+  }
+#endif
+  return SData->Data[_Start + i];
+}
+template <class T> T TTIString<T>::operator[] (size_t i) const {
+#ifdef OLX_DEBUG
+  if (i >= _Length) {
+    TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, i, 0, _Length);
+  }
+#endif
+  return SData->Data[_Start + i];
+}
 
 #include "olxpptr.h"
 #include "olxalg.h"

@@ -150,28 +150,28 @@ public:
   }
 
   inline const T& Get(size_t ind ) const {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, ind, 0, Size);
 #endif
     return _Data[ind];
   }
 
   inline void Set(size_t ind, T& val) {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, ind, 0, Size);
 #endif
     _Data[ind] = val;
   }
 
   inline T& Item(size_t ind) {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, ind, 0, Size);
 #endif
     return _Data[ind];
   }
 
   inline T& operator [](size_t ind) {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, ind, 0, Size);
 #endif
     return _Data[ind];

@@ -14,15 +14,16 @@
 bool TSocketFS::_OnReadFailed(const THttpFileSystem::ResponseInfo& info,
   uint64_t position)
 {
-  if (!info.headers.Find("Server", CEmptyString()).Equals("Olex2-CDS"))
+  if (!info.headers.Find("Server", CEmptyString()).Equals("Olex2-CDS")) {
     return false;
+  }
   while (--attempts >= 0) {
     try {
       TBasicApp::NewLogEntry(logInfo, true) << "Connection broken at position "
         << position << ", reconnecting to the server";
-      DoConnect();  // reconnect
+      Connect();  // reconnect
       const olxcstr rq = GenerateRequest("GET", info.source, position);
-      return (size_t)_write(rq) == rq.Length();
+      return (size_t)http_write(rq) == rq.Length();
     }
     catch(...) {
       olx_sleep(1000);
@@ -68,8 +69,9 @@ THttpFileSystem::AllocationInfo TSocketFS::_DoAllocateFile(const olxstr& src) {
         fi = GetIndex()->GetRoot().FindByFullName(
           src_fn.SubStringFrom(GetBase().Length()));
       }
-      else
+      else {
         fi = GetIndex()->GetRoot().FindByFullName(src_fn);
+      }
       if (fi != 0) {
         const TSettingsFile sf(ifn);
         if (sf["MD5"] == fi->GetDigest()) {
@@ -90,6 +92,7 @@ THttpFileSystem::AllocationInfo& TSocketFS::_DoTruncateFile(AllocationInfo& file
     throw TInvalidArgumentException(__OlxSourceInfo, "file");
   }
   const olxstr fn = file.file->GetName();
+  file.file->Close();
   const olxstr ifn = olxstr(fn) << ".info";
   if (TEFile::Exists(ifn)) {
     TEFile::DelFile(ifn);

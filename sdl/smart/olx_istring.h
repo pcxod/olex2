@@ -343,7 +343,7 @@ public:
   }
   //...........................................................................
   TTSString SubString(size_t from, size_t count) const {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     if (from > T::_Length) {
       TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, from, 0,
         T::_Length);
@@ -359,7 +359,7 @@ public:
     return SubString(from, T::_Length-from-indexFromEnd);
   }
   TTSString SubStringTo(size_t to, size_t indexFromStart=0) const {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     if (to > T::_Length) {
       TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, to, 0,
         T::_Length);
@@ -1435,7 +1435,7 @@ public:
   //...........................................................................
   TTSString& Delete(size_t from, size_t count) {
     const size_t dv = from + count;
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     if (from >= T::_Length) {
       TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, from, 0,
         T::_Length);
@@ -1625,7 +1625,7 @@ public:
   }
   //...........................................................................
   TTSString& Insert(const TTSString& wht, size_t whr, size_t amount = 1) {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     if (whr > T::_Length) {
       TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, whr, 0,
         T::_Length);
@@ -1638,7 +1638,7 @@ public:
   }
   //...........................................................................
   TTSString& Insert(const TC* wht, size_t whr, size_t amount = 1) {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     if (whr > T::_Length) {
       TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, whr, 0,
         T::_Length);
@@ -1651,7 +1651,7 @@ public:
   }
   //...........................................................................
   TTSString& Insert(TC wht, size_t whr, size_t amount = 1) {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     if (whr > T::_Length) {
       TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, whr, 0,
         T::_Length);
@@ -2380,7 +2380,7 @@ public:
     if (start == end) {
       return EmptyString();
     }
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     if (start >= l.Count()) {
       TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, start, 0, l.Count());
     }

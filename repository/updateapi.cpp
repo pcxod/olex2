@@ -435,7 +435,7 @@ olx_object_ptr<AFileSystem> UpdateAPI::FSFromString(const olxstr& _repo,
     return 0;
   }
   try {
-    AFileSystem *FS;
+    AFileSystem *FS = 0;
     olxstr repo = _repo;
     if (TEFile::Exists(repo)) {
       if (TEFile::ExtractFileExt(repo).Equalsi("zip")) {
@@ -466,6 +466,23 @@ olx_object_ptr<AFileSystem> UpdateAPI::FSFromString(const olxstr& _repo,
         }
         FS = _fs;
       }
+      else if (url.GetProtocol() == "https") {
+#ifdef __WIN32__
+        TWinHttpFileSystem* _fs = new TWinHttpFileSystem(url);
+#else
+        TSSLHttpFileSystem* _fs = new TSSLHttpFileSystem(url);
+#endif
+        _fs->SetExtraHeaders(httpHeaderPlatform);
+        olxstr tfn = TBasicApp::GetSharedDir() + "app.token";
+        if (TEFile::Exists(tfn)) {
+          TCStrList sl = TEFile::ReadCLines(tfn);
+          if (sl.Count() == 1) {
+            THttpFileSystem::SetSessionInfo(sl[0]);
+            _fs->SetExtraHeaders(httpHeaderPlatform | httpHeaderESession);
+          }
+        }
+        FS = _fs;
+    }
 #ifdef __WXWIDGETS__
       else if (url.GetProtocol() == "ftp") {
         FS = new TwxFtpFileSystem(url);
@@ -598,7 +615,7 @@ void UpdateAPI::GetAvailableRepositories(TStrList& res) const {
   if (TEFile::Exists(inst_zip_fn)) {
     res.Add(inst_zip_fn);
   }
-  olx_object_ptr < AFileSystem> fs = FindActiveRepositoryFS(&repo_name, GetTagsFileName());
+  olx_object_ptr <AFileSystem> fs = FindActiveRepositoryFS(&repo_name, GetTagsFileName());
   if (fs == 0) {
     return;
   }
@@ -674,6 +691,7 @@ olxstr UpdateAPI::AddTagPart(const olxstr& path, bool Update) const {
 const TStrList& UpdateAPI::GetDefaultRepositories() {
   static TStrList rv;
   if (rv.IsEmpty()) {
+    rv.Add("https://secure.olex2.org/olex2-distro/");
     rv.Add("http://www.olex2.org/olex2-distro/");
     rv.Add("http://www2.olex2.org/olex2-distro/");
   }

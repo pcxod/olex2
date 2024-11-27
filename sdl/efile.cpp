@@ -134,7 +134,12 @@ TEFile::TEFile(const olxstr& F, short Attribs) {
 }
 //..............................................................................
 TEFile::~TEFile() {
-  Close();
+  try {
+    Close();
+  }
+  catch (const TExceptionBase& e) {
+    TBasicApp::NewLogEntry(logException) << e;
+  }
 }
 //..............................................................................
 bool TEFile::Open(const olxstr& F, const olxstr& Attribs) {
@@ -157,7 +162,7 @@ bool TEFile::Close() {
     }
     FHandle = 0;
     if (Temporary) {
-      if (!DelFile(FName)) {
+      if (Exists(FName) && !DelFile(FName)) {
         throw TFileException(__OlxSourceInfo, FName, "could not remove temporary file");
       }
     }

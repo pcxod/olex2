@@ -10,6 +10,7 @@
 #include "xgrowline.h"
 #include "gpcollection.h"
 #include "asymmunit.h"
+#include "symmparser.h"
 #include "xatom.h"
 
 TXGrowLine::TXGrowLine(TGlRenderer& r, const olxstr& collectionName, TXAtom& A,
@@ -79,7 +80,7 @@ void TXGrowLine::Radius(float V)  {
   Params()[4] = V;
 }
 //..............................................................................
-void TXGrowLine::Length(float V)  {
+void TXGrowLine::SetLength(float V)  {
   Params()[3] = V;
 }
 //..............................................................................
@@ -87,3 +88,10 @@ const vec3d &TXGrowLine::GetFromCrd() const {
   return _XAtom.crd();
 }
 //..............................................................................
+TIString TXGrowLine::ToString() const {
+  olxstr rv = _XAtom.GetLabel();
+  rv << '-' << _CAtom.GetLabel() << ": "
+    << olxstr::FormatFloat(3, Length()) << '('
+    << TSymmParser::MatrixToSymmEx(GetTransform()) << ')';
+  return rv;
+}

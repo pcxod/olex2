@@ -34,7 +34,7 @@ public:
   }
   // any vector
   template <class AV> static TVector3 FromAny(const AV& v) {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     if (v.Count() != 3) {
       throw TInvalidArgumentException(__OlxSourceInfo, "vector");
     }
@@ -550,7 +550,7 @@ public:
   }
   // any matrix
   template <class AM> static TMatrix33 FromAny(const AM& v) {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     if (v.ColCount() != 3 || v.RowCount() != 3) {
       throw TInvalidArgumentException(__OlxSourceInfo, "matrix");
     }
@@ -579,7 +579,7 @@ public:
   static size_t RowCount() { return 3; }
   static bool IsEmpty() { return false; }
   static void Resize(size_t w, size_t h) {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     if (w != 3 || h != 3) {
       throw TInvalidArgumentException(__OlxSourceInfo, "size");
     }
@@ -724,7 +724,7 @@ public:
   }
   template <class AM>
   TMatrix33<FT>& operator = (const AM& v) {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     if (v.ColCount() != 3 || v.RowCount() != 3) {
       throw TInvalidArgumentException(__OlxSourceInfo, "matrix");
     }

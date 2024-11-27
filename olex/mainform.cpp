@@ -612,7 +612,7 @@ void TMainForm::XApp(Olex2App *XA)  {
     "v-[grow] use user provided delta for connectivity analysis, default 2A; "
     "[fit] variable index&;"
     "shells-[grow] grow atom shells vs fragments&;"
-    "l-[name] lock atom types after naming&;"
+    "l-[name] lock atom types after naming;[grow] list contacts&;"
     "e-a macro to run on mode exit&;"
     "d-[hfix] distance&;"
     ,

@@ -276,7 +276,7 @@ public:
   }
   //..............................................................................
   T*& Set(size_t i, T* pObj) {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, i, 0, FCount);
 #endif
     return (Items[i] = pObj);
@@ -299,7 +299,7 @@ public:
   }
   //..............................................................................
   T*& Insert(size_t index, T* pObj = 0) {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(
       __POlxSourceInfo, index, 0, FCount + 1);
 #endif
@@ -315,7 +315,7 @@ public:
   }
   //..............................................................................
   TPtrList& Insert(size_t index, const TPtrList& list) {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(
       __POlxSourceInfo, index, 0, FCount + 1);
 #endif
@@ -328,7 +328,7 @@ public:
   }
   //..............................................................................
   template <class List> TPtrList& Insert(size_t index, const List& list) {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(
       __POlxSourceInfo, index, 0, FCount + 1);
 #endif
@@ -343,7 +343,7 @@ public:
   }
   //..............................................................................
   TPtrList& Insert(size_t index, size_t cnt) {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(
       __POlxSourceInfo, index, 0, FCount + 1);
 #endif
@@ -354,7 +354,7 @@ public:
   }
   //..............................................................................
   void NullItem(size_t index) const {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(
       __POlxSourceInfo, index, 0, FCount);
 #endif
@@ -362,21 +362,21 @@ public:
   }
   //..............................................................................
   T*& operator [] (size_t index) const {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount);
 #endif
     return Items[index];
   }
   //..............................................................................
   T*& GetItem(size_t index) const {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, index, 0, FCount);
 #endif
     return Items[index];
   }
   //..............................................................................
   T*& GetLast() const {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(
       __POlxSourceInfo, FCount - 1, 0, FCount);
 #endif
@@ -404,7 +404,7 @@ public:
   }
   //..............................................................................
   void Delete(size_t index) {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(
       __POlxSourceInfo, index, 0, FCount);
 #endif
@@ -415,7 +415,7 @@ public:
   }
   //..............................................................................
   void DeleteRange(size_t from, size_t count) {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(
       __POlxSourceInfo, from, 0, FCount);
     TIndexOutOfRangeException::ValidateRange(
@@ -429,7 +429,7 @@ public:
   }
   //..............................................................................
   ConstPtrList<T> SubList(size_t from, size_t count) const {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(
       __POlxSourceInfo, from, 0, Count() + 1);
     TIndexOutOfRangeException::ValidateRange(
@@ -522,7 +522,7 @@ public:
   }
   //..............................................................................
   void Swap(size_t i, size_t j) {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, i, 0, FCount);
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, j, 0, FCount);
 #endif
@@ -532,7 +532,7 @@ public:
   }
   //..............................................................................
   void Move(size_t from, size_t to) {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, from, 0, FCount);
     TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, to, 0, FCount);
 #endif
@@ -663,7 +663,7 @@ public:
     // allocate the list of NULLs
     T** ni = olx_malloc<T*>(cap.capacity = FCount);
     for (size_t i = 0; i < FCount; i++) {
-#ifdef _DEBUG
+#ifdef OLX_DEBUG
       TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo,
         indices[i], 0, FCount);
 #endif

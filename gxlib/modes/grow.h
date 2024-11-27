@@ -70,6 +70,30 @@ public:
     gxapp.SetGrowMode(mode, Cmds);
     gxapp.SetXGrowLinesVisible(true);
     gxapp.SetZoomAfterModelBuilt(false);
+    if (Options.GetBoolOption('l')) {
+      TPtrList<TXGrowLine> gl = gxapp.GetGrowLines();
+      QuickSorter::Sort(gl,
+        ComplexComparator::Make(
+          FunctionAccessor::MakeConst(&TXGrowLine::Length),
+          TPrimitiveComparator()));
+      TTable tab(gl.Count(), 4);
+      tab.ColName(0) = "From";
+      tab.ColName(1) = "To";
+      tab.ColName(2) = "Symm";
+      tab.ColName(3) = "D";
+      for (size_t i = 0; i < gl.Count(); i++) {
+        tab[i][0] = gl[i]->XAtom().CAtom().GetResiLabel();
+        tab[i][1] = gl[i]->CAtom().GetResiLabel();
+        if (gl[i]->GetTransform().IsFirst()) {
+          tab[i][2] = 'I';
+        }
+        else {
+          tab[i][2] = TSymmParser::MatrixToSymmEx(gl[i]->GetTransform());
+        }
+        tab[i][3] = olxstr::FormatFloat(3, gl[i]->Length());
+      }
+      TBasicApp::NewLogEntry() << tab.CreateTXTList("Contacts", true, false, "  ");
+    }
     return true;
   }
   void Finalise_() {

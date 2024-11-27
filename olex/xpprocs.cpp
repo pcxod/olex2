@@ -1159,12 +1159,12 @@ void TMainForm::macHelp(TStrObjList& Cmds, const TParamList& Options,
   if (Cmds.IsEmpty()) {
     if (!Options.Count()) {
       size_t period = 6;
-      olxstr Tmp;
       for (size_t i = 0; i <= FHelpItem->ItemCount(); i += period) {
-        Tmp.SetLength(0);
+        olxstr Tmp;
         for (size_t j = 0; j < period; j++) {
-          if ((i + j) >= FHelpItem->ItemCount())
+          if ((i + j) >= FHelpItem->ItemCount()) {
             break;
+          }
           Tmp << FHelpItem->GetItemByIndex(i + j).GetName();
           Tmp.RightPadding((j + 1) * 10, ' ', true);
         }
@@ -1173,11 +1173,10 @@ void TMainForm::macHelp(TStrObjList& Cmds, const TParamList& Options,
       return;
     }
     else {
-      if (Options.GetName(0)[0] == 'c') {  // show categories
+      if (Options.GetBoolOption('c')) {  // show categories
         TStrList Cats;
-        TDataItem* Cat;
         for (size_t i = 0; i < FHelpItem->ItemCount(); i++) {
-          Cat = FHelpItem->GetItemByIndex(i).FindItemi("category");
+          TDataItem* Cat = FHelpItem->GetItemByIndex(i).FindItemi("category");
           if (Cat == 0) {
             continue;
           }
@@ -1202,6 +1201,28 @@ void TMainForm::macHelp(TStrObjList& Cmds, const TParamList& Options,
   }
   else {
     if (Options.IsEmpty()) {
+      bool has_help_entry = false;
+      for (size_t i = 0; i < FHelpItem->ItemCount(); i++) {
+        const TDataItem &di = FHelpItem->GetItemByIndex(i);
+        if (di.GetName().Equalsi(Cmds[0])) {
+          FGlConsole->PrintText("Help file entry");
+          FGlConsole->PrintText((olxstr(" Description: ") <<
+            di.FindField("help", EmptyString())).Replace('\t', "  "));
+          if (di.FieldCount() > 1) {
+            FGlConsole->PrintText(" Options: ");
+            for (size_t j = 0; j < di.FieldCount(); j++) {
+              if (di.GetFieldName(j).Equalsi("help")) {
+                continue;
+              }
+              FGlConsole->PrintText(olxstr("   ") << di.GetFieldByIndex(j));
+            }
+            has_help_entry = true;
+          }
+        }
+      }
+      if (has_help_entry) {
+        FGlConsole->PrintText(EmptyString());
+      }
       PostCmdHelp(Cmds[0], true);
     }
     else {
@@ -1470,6 +1491,28 @@ void TMainForm::macSave(TStrObjList &Cmds, const TParamList &Options,
         encoding::base85::encode((const uint8_t*)ids.GetData(),
           ids.Count() * sizeof(uint64_t)));
     df.SaveToXLFile(Tmp);
+  }
+  else if (Tmp == "help") {
+    TBasicFunctionPList funcs, macros;
+    GetLibrary().ListAllFunctions(funcs);
+    GetLibrary().ListAllMacros(macros);
+    TStrList out;
+    for (size_t i = 0; i < funcs.Count(); i++) {
+      out.Add("name: ") << funcs[i]->GetQualifiedName();
+      out.Add("signature: ") << funcs[i]->GetSignature();
+      out.Add("description: ") << funcs[i]->GetDescription();
+    }
+    for (size_t i = 0; i < macros.Count(); i++) {
+      out.Add("name: ") << macros[i]->GetQualifiedName();
+      out.Add(" signature: ") << macros[i]->GetSignature();
+      out.Add(" description: ") << macros[i]->GetDescription();
+      for (size_t j = 0; j < macros[i]->GetOptions().Count(); j++) {
+        out.Add(" option: ") << macros[i]->GetOptions().GetKey(j)
+          << '-' << macros[i]->GetOptions().GetValue(j);
+      }
+    }
+    olxstr fn = TEFile::JoinPath(TStrList() << TBasicApp::GetInstanceDir() << "help.txt");
+    TEFile::WriteLines(fn, out);
   }
 }
 //..............................................................................

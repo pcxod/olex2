@@ -159,7 +159,9 @@ void GXLibMacros::Export(TLibrary& lib) {
     "type-type of labels to make - subscript, brackets, default&;"
     "symm-symmetry dependent tag type {[$], #, X, full}&;"
     "resi-add residue number(#) or name (n) like -resi=_# or -resi=@n&;"
-    "a-aligns labels trying to avoid overlapping&;",
+    "a-aligns labels trying to avoid overlapping&;"
+    "gbond-puts label to 'grow' bonds&;"
+    ,
     fpAny,
     "Creates moveable labels for provided atoms/bonds/angles (selection)");
   gxlib_InitMacro(ShowH,
@@ -714,7 +716,7 @@ void GXLibMacros::macName(TStrObjList &Cmds, const TParamList &Options,
   }
   bool changeSuffix = Options.Contains('s');
   bool nameResi = Options.GetBoolOption('r', false, true);
-  bool doNotSteal = Options.GetBoolOption("ns", true, true);
+  bool doNotSteal = Options.GetBoolOption("ns", true, false);
   if (changeSuffix) {
     TXAtomPList xatoms = app.FindXAtoms(Cmds, true, !Options.GetBoolOption("cs"));
     if (!xatoms.IsEmpty()) {
@@ -2173,6 +2175,7 @@ void GXLibMacros::macMpln(TStrObjList & Cmds, const TParamList & Options,
         tab.CreateTXTList(olxstr("Atom-to-plane distances for ") << planeName,
         true, false, " | ");
       TBasicApp::NewLogEntry() << "Plane equation: " << plane->StrRepr();
+      TBasicApp::NewLogEntry() << "Plane centroid: " << plane->GetCenter().ToString();
       TBasicApp::NewLogEntry() << "HKL direction: " <<
         plane->GetCrystallographicDirection().ToString();
       if (weightExtent != 0) {
