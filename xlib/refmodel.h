@@ -270,7 +270,7 @@ public:
   void ClearOmit() { OMIT_set = false; }
   const vec3i_list& GetOmits() const {  return Omits;  }
   void AddOMIT(const TStrList& omit);
-  void DelOMIT(const TStrList& omit);
+  void DelOMIT(const TStrList& omit, bool all);
   const AtomRefList &OmittedAtoms() const { return Omitted; }
   olxstr GetOMITStr() const {
     return olxstr(OMIT_s) << ' ' << OMIT_2t;

@@ -803,9 +803,23 @@ void RefinementModel::AddOMIT(const TStrList& omit) {
   }
 }
 //.............................................................................
-void RefinementModel::DelOMIT(const TStrList& omit) {
+void RefinementModel::DelOMIT(const TStrList& omit, bool all) {
   if (omit.Count() == 3) {
-    Omits.Remove(vec3i(omit[0].ToInt(), omit[1].ToInt(), omit[2].ToInt()));
+    vec3i h(vec3i(omit[0].ToInt(), omit[1].ToInt(), omit[2].ToInt()));
+    if (all) {
+      TUnitCell::SymmSpace sp =
+        aunit.GetLattice().GetUnitCell().GetSymmSpace();
+      SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
+      info_ex.centrosymmetric = sp.IsCentrosymmetric();
+      h = TReflection::Standardise(h, info_ex);
+      for (size_t i = 0; i < Omits.Count(); i++) {
+        if (h == TReflection::Standardise(Omits[i], info_ex)) {
+          Omits.NullItem(i);
+        }
+      }
+      Omits.Pack();
+    }
+    Omits.Remove(h);
   }
 }
 //.............................................................................

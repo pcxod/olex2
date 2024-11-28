@@ -407,7 +407,8 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(CalcMass, EmptyString(), fpNone|fpOne,
     "Calculates Mass spectrum of current structure or for provided formula");
   xlib_InitMacro(Omit,
-    "u-puts the omitted reflection back (only for OMIT lines)",
+    "u-puts the omitted reflection back (only for OMIT lines)&;"
+    "a-in conjunction removes OMIT for all equivalent reflections",
     fpOne|fpTwo|fpThree|psCheckFileTypeIns,
     "Removes any particular reflection from the refinement list. If a single "
     "number is provided, all reflections with delta(F^2)/esd greater than "
@@ -7200,7 +7201,7 @@ void XLibMacros::macOmit(TStrObjList &Cmds, const TParamList &Options,
   if (!processed) {
     if (Options.GetBoolOption('u')) {
       if (Cmds.Count() == 3) {
-        rm.DelOMIT(Cmds);
+        rm.DelOMIT(Cmds, Options.GetBoolOption('a'));
       }
       else {
         Error.ProcessingError(__OlxSrcInfo, "3 integers are expected");
