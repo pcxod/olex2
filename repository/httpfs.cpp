@@ -259,9 +259,7 @@ bool AnHttpFileSystem::_DoesExist(const olxstr& f, bool forced_check) {
 //..............................................................................
 //..............................................................................
 THttpFileSystem::~THttpFileSystem() {
-  if (this->IsConnected()) {
-    Disconnect();
-  }
+  Disconnect();
 }
 //..............................................................................
 void THttpFileSystem::Init() {
@@ -615,6 +613,7 @@ static BIO* create_socket_bio(const char* hostname, const char* port,
 }
 //..............................................................................
 TSSLHttpFileSystem::~TSSLHttpFileSystem() {
+  Disconnect();
 }
 //..............................................................................
 void TSSLHttpFileSystem::Init() {
