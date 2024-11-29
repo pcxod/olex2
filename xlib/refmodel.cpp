@@ -803,9 +803,23 @@ void RefinementModel::AddOMIT(const TStrList& omit) {
   }
 }
 //.............................................................................
-void RefinementModel::DelOMIT(const TStrList& omit) {
+void RefinementModel::DelOMIT(const TStrList& omit, bool all) {
   if (omit.Count() == 3) {
-    Omits.Remove(vec3i(omit[0].ToInt(), omit[1].ToInt(), omit[2].ToInt()));
+    vec3i h(vec3i(omit[0].ToInt(), omit[1].ToInt(), omit[2].ToInt()));
+    if (all) {
+      TUnitCell::SymmSpace sp =
+        aunit.GetLattice().GetUnitCell().GetSymmSpace();
+      SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
+      info_ex.centrosymmetric = sp.IsCentrosymmetric();
+      h = TReflection::Standardise(h, info_ex);
+      for (size_t i = 0; i < Omits.Count(); i++) {
+        if (h == TReflection::Standardise(Omits[i], info_ex)) {
+          Omits.NullItem(i);
+        }
+      }
+      Omits.Pack();
+    }
+    Omits.Remove(h);
   }
 }
 //.............................................................................
@@ -1045,12 +1059,13 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       info_ex.centrosymmetric = sp.IsCentrosymmetric();
       if (!refs.IsEmpty()) {
         bool mergeFP = (MERG == 4 || MERG == 3 || sp.IsCentrosymmetric());
-        if (HKLF < 5 && MERG != 0) {
-          // standardise OMITs when merging is enabled
-          for (size_t i = 0; i < Omits.Count(); i++) {
-            Omits[i] = TReflection::Standardise(Omits[i], info_ex);
-          }
-        }
+        // leave OMITs as they are!
+        //if (HKLF < 5 && MERG != 0) {
+        //  // standardise OMITs when merging is enabled
+        //  for (size_t i = 0; i < Omits.Count(); i++) {
+        //    Omits[i] = TReflection::Standardise(Omits[i], info_ex);
+        //  }
+        //}
         QuickSorter::Sort(Omits);
         for (size_t i = 1; i < Omits.Count(); i++) {
           size_t j = i - 1;
