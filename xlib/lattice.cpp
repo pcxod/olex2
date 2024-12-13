@@ -1860,6 +1860,12 @@ size_t TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
         AE.GetBase().CAtom().GetPart())
       {
         if (parts.IndexOf(AE.GetCAtom(i).GetPart()) == InvalidIndex) {
+          // check if fixed at 1
+          double a_occu = rm->Vars.GetParam(AE.GetCAtom(i), catom_var_name_Sof);
+          int vi = (int)olx_abs(a_occu / 10);
+          if (vi == 1 && olx_abs(a_occu - 10) == 1) {
+            continue;
+          }
           parts.Add(AE.GetCAtom(i).GetPart());
           occu.Add(rm->Vars.GetParam(AE.GetCAtom(i), catom_var_name_Sof));
         }
