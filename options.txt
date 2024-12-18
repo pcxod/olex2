@@ -1,46 +1,37 @@
-p4p_automate [False] - specifies if the SG/SGE to be executed after loading the P4P/CRS file (used in reap)
-aromatic_rings [False] - specifies if the aromatic rings are to be automatically created
-aromatic_rings_def [C5,C6,NC5,SC4,N2C3,NCNC2] - aromatic ring definitions
-mouse_invert_zoom [False] - specifies if the mouse zooming operation to be inverted
-mouse_click_threshold [2] - specifiec the rectangluar area size where the mouse click is recognised
-hbond_min_angle [120] - the minimal angle fo H-bonds to exist
-preserve_invalid_ins [false] - if invalid instructios are preserved vs being deleted
-q_peak_min_alpha [0] - minimum value for the Q-peak transparence (0-0.75)
-tooltip_occu_chem [True] - tooltip shows chemical occupancy vs crystallographic one
-gl_selection [True] - to use the OpenGl selection implementation. If False - a more limited
- but working more precise with some drivers implementation is used. It however does not allow
- the selection of objets which use textures (unless treated specifically) or colours..
-gl_multisample [True] - enables smoothing of the rendering, though reduces the prformace it
- produces better quality picture
-gl_stereo [True] - enables stereo buffers. Note that if this option is enabled and your graphics
- card does not support stereo buffers, gl_multisample option will be turmed off be default at
- first Olex2 run. However, on exit, Olex2 will check this and will disable this option so that
- multisampling will work
-preserve_restraint_defaults [false] - if set, the default restraint values/weights are shown in
- the ins file. This option has no effect when DEFS instruction is set.
-preserve_fvars - preserves the even if they are refered only once
-safe_afix [True] - checks AFIXes are correct after atom naming, deleting and HAdd itself
-confirm_on_close [False] - asks a confirmation question before closing the application
-profile [False] - switches application profiling on/off
-interactions_from [H] - sets a list of atoms for which to display short contacts
-interactions_to [N,O,F,Cl,S,Br,Se,I] - sets a list of atoms for which to display short contacts
-absolute_hkl_path [false] - saves absolute path in the INS file
-group_restraints [false] - groups restraints by involved atoms
-stack_restraints [true] - add new restraints to the bottom of the restraint list
-use_hkl_cell [true] - if HKL file has CELL instruction - Olex2 overrdes current file CELL with the
-  parameters
-path [] - extensions to the system PATH (prepended)
-max_label_length [4] - new Shelxl will support longer labels in the INS file
-locale.ctype [] - default locale. Yo may need to use en_US.utf8 for Linux/Mac
-cif.use_md5 [false] - embedd MD5 checksums for HKL/FAB/RES into the CIF
-rename_parts [true] - disallow identical labels within different parts
-model.center_on_reload [true] - re-centres the model on the file re-read (like after the refinement)
-model.center_on_update [true] - re-centres the model when it is updated (like atoms split)
-external_editor [] - you can set notepad++ as an Editor for EditAtom, use like 
+p4p_automate [false]	specifies if the SG/SGE to be executed after loading the P4P/CRS file (used in reap)
+aromatic_rings [false]	specifies if the aromatic rings are to be automatically created
+aromatic_rings_def [C5,C6,NC5,SC4,N2C3,NCNC2]	aromatic ring definitions
+mouse_invert_zoom [false]	specifies if the mouse zooming operation to be inverted
+mouse_click_threshold [2]	specifies the rectangular area size where the mouse click is recognised
+hbond_min_angle [120]	the minimal angle for H-bonds to exist
+preserve_invalid_ins [false]	if invalid instructions are preserved vs being deleted
+q_peak_min_alpha [0]	minimum value for the Q-peak transparency (0-0.75)
+tooltip_occu_chem [true]	tooltip shows chemical occupancy vs crystallographic one
+gl_selection [true]	to use the OpenGl selection implementation. If False - a more limited but working more precise with some drivers implementation is used. It however does not allow the selection of objects which use textures (unless treated specifically) or colours.
+gl_multisample [true]	enables smoothing of the rendering, though reducing the performance it produces better quality picture
+gl_stereo [true]	enables stereo buffers. Note that if this option is enabled and your graphics card does not support stereo buffers, gl_multisample option will be turned off by default at first Olex2 run. However, on exit, Olex2 will check this and will disable this option so that multisampling will work
+preserve_restraint_defaults [false]	if set, the default restraint values/weights are shown in the ins file. This option has no effect when DEFS instruction is set
+preserve_fvars	preserves the even if they are referred only once
+safe_afix [True]	checks AFIXes are correct after atom naming, deleting and HAdd
+confirm_on_close [True]	asks a confirmation question before closing the application
+profile [False]	switches application profiling on/off
+interactions_from [H]	sets a list of atoms for which to display short contacts
+interactions_to [N,O,F,Cl,S,Br,Se,I]	sets a list of atoms for which to display short contacts
+absolute_hkl_path [false]	saves absolute path in the INS file
+group_restraints [false]	groups restraints by involved atoms
+stack_restraints [true]	add new restraints to the bottom of the restraint list
+use_hkl_cell [true]	if HKL file has CELL instruction - Olex2 overrides current file CELL with parameters from the HKL
+path []	extensions to the system PATH (prepended)
+max_label_length [4]	new ShelXl will support longer labels in the INS file
+locale.ctype []	default locale. You may need to use en_US.utf8 for Linux/Mac
+cif.use_md5 [false]	embeds MD5 checksums for HKL/FAB/RES into the CIF
+rename_parts [true]	disallow identical labels within different parts
+model.center_on_reload [true]	re-centres the model on the file re-read (like after the refinement)
+model.center_on_update [true]	re-centres the model when it is updated (like atoms split)
+external_editor []	you can set notepad++ as an Editor for EditAtom, use like 
  "c:\p..f\notepad++.exe" -multiInst
   Use %f as a file name placeholder if order of arguments matters.
-external_explicit_same [false] - writes olex2.same file vs SAME embedded into the atom list. This
- gives more flexibility as it does not enforce atom order in the reference SAME groups
-explicit_same [false] - writes expands SAME just before the INS END rather than to an external file.
- As above, this gives more flexibility as it does not enforce atom order in the reference SAME groups
-exyz_separation [0.5] - separation for EXYZ atoms in special rendering mode
+external_explicit_same [false]	writes olex2.same file vs SAME embedded into the atom list. This gives more flexibility as it does not enforce atom order in the reference SAME groups
+explicit_same [false]	writes expands SAME just before the INS END rather than to an external file.
+As above, this gives more flexibility as it does not enforce atom order in the reference SAME groups
+exyz_separation [0.5]	separation for EXYZ atoms in special rendering mode

@@ -55,6 +55,30 @@ void AdjustSize(wxWindow &w, bool height=true, bool width=false) {
   }
 }
 
+// helper functions
+olxstr ExpandMacroShortcuts(const olxstr& s, const olxstr_dict<olxstr>& map) {
+  olxstr rv = s;
+  for (size_t i = 0; i < map.Count(); i++) {
+    rv.Replace(map.GetKey(i), map.GetValue(i));
+  }
+  return rv;
+}
+
+bool ParseColor(const olxstr& SrcInfo,
+  const wxHtmlTag &tag, const olxstr& name, const olxstr_dict<olxstr> &macro_map,
+  wxColor &dest)
+{
+  if (tag.HasParam(name.u_str())) {
+    olxstr str_cl = ExpandMacroShortcuts(tag.GetParam(name.u_str()), macro_map);
+    olex2::IOlex2Processor::GetInstance()->processFunction(str_cl, SrcInfo, false);
+    if (!str_cl.IsEmpty()) {
+      dest = wxColor(str_cl.u_str());
+      return dest.IsOk();
+    }
+  }
+  return false;
+}
+
 // helper tag
 TAG_HANDLER_BEGIN(SWITCHINFOS, "SWITCHINFOS")
 TAG_HANDLER_PROC(tag)  {
@@ -80,7 +104,7 @@ TAG_HANDLER_END(SWITCHINFOE)
 TAG_HANDLER_BEGIN(RECT, "ZRECT")
 TAG_HANDLER_PROC(tag)  {
   if( tag.HasParam(wxT("COORDS")) )  {
-    if( m_WParser->GetContainer()->GetLastChild() != NULL &&
+    if( m_WParser->GetContainer()->GetLastChild() != 0 &&
       olx_type<THtmlImageCell>::check(*m_WParser->GetContainer()->GetLastChild()) )
     {
       THtmlImageCell* ic =
@@ -105,7 +129,7 @@ TAG_HANDLER_END(RECT)
 TAG_HANDLER_BEGIN(CIRCLE, "ZCIRCLE")
 TAG_HANDLER_PROC(tag)  {
   if( tag.HasParam(wxT("COORDS")) )  {
-    if( m_WParser->GetContainer()->GetLastChild() != NULL &&
+    if( m_WParser->GetContainer()->GetLastChild() != 0 &&
       olx_type<THtmlImageCell>::check(*m_WParser->GetContainer()->GetLastChild()) )
     {
       THtmlImageCell* ic =
@@ -225,13 +249,6 @@ TAG_HANDLER_PROC(tag) {
   return false;
 }
 TAG_HANDLER_END(IMAGE)
-// helpe function
-olxstr ExpandMacroShortcuts(const olxstr &s, const olxstr_dict<olxstr> &map) {
-  olxstr rv = s;
-  for (size_t i=0; i < map.Count(); i++)
-    rv.Replace(map.GetKey(i), map.GetValue(i));
-  return rv;
-}
 // input tag
 TAG_HANDLER_BEGIN(INPUT, "INPUT")
 TAG_HANDLER_PROC(tag) {
@@ -247,8 +264,8 @@ TAG_HANDLER_PROC(tag) {
     fl=0,
     ax=100, ay=20;
   bool width_set = false, height_set = false;
-  AOlxCtrl* CreatedObject = NULL;
-  wxWindow* CreatedWindow = NULL;
+  AOlxCtrl* CreatedObject = 0;
+  wxWindow* CreatedWindow = 0;
   olxstr_dict<olxstr> macro_map;
   // init the shortcuts
   {
@@ -338,7 +355,7 @@ TAG_HANDLER_PROC(tag) {
   }
   Label = tag.GetParam(wxT("LABEL"));
 
-  wxHtmlLinkInfo* LinkInfo = NULL;
+  wxHtmlLinkInfo* LinkInfo = 0;
   if (!Label.IsEmpty()) {
     if (Label.StartsFromi("href=")) {
       Label = Label.SubStringFrom(5);
@@ -453,7 +470,7 @@ TAG_HANDLER_PROC(tag) {
         new wxHtmlContainerCell(m_WParser->GetContainer());
       THtml::WordCell* wc =
         new THtml::WordCell(Label.u_str(), *m_WParser->GetDC());
-      if (LinkInfo != NULL) {
+      if (LinkInfo != 0) {
         wc->SetLink(*LinkInfo);
       }
       wc->SetDescent(0);
@@ -486,7 +503,7 @@ TAG_HANDLER_PROC(tag) {
         new wxHtmlContainerCell(m_WParser->GetContainer());
       THtml::WordCell* wc =
         new THtml::WordCell(Label.u_str(), *m_WParser->GetDC());
-      if (LinkInfo != NULL) {
+      if (LinkInfo != 0) {
         wc->SetLink(*LinkInfo);
       }
       wc->SetDescent(0);
@@ -706,7 +723,7 @@ TAG_HANDLER_PROC(tag) {
           new wxHtmlContainerCell(m_WParser->GetContainer());
         THtml::WordCell* wc =
           new THtml::WordCell(Label.u_str(), *m_WParser->GetDC());
-        if (LinkInfo != NULL) {
+        if (LinkInfo != 0) {
           wc->SetLink(*LinkInfo);
         }
         wc->SetDescent(0);
@@ -877,7 +894,7 @@ TAG_HANDLER_PROC(tag) {
           new wxHtmlContainerCell(m_WParser->GetContainer());
         THtml::WordCell* wc =
           new THtml::WordCell(Label.u_str(), *m_WParser->GetDC());
-        if (LinkInfo != NULL) {
+        if (LinkInfo != 0) {
           wc->SetLink(*LinkInfo);
         }
         wc->SetDescent(0);
@@ -1128,18 +1145,7 @@ TAG_HANDLER_PROC(tag) {
     delete LinkInfo;
   }
   if (ObjectName.IsEmpty()) {}  // create random name?
-  if (CreatedWindow != 0) {  // set default colors
-    CreatedWindow->Hide();
-    //m_WParser->GetContainer()->
-    if (m_WParser->GetActualColor().IsOk()) {
-      CreatedWindow->SetForegroundColour(m_WParser->GetActualColor());
-    }
-    if (m_WParser->GetContainer()->GetBackgroundColour().IsOk()) {
-      CreatedWindow->SetBackgroundColour(
-        m_WParser->GetContainer()->GetBackgroundColour());
-    }
-    CreatedWindow->Enable(!GetBoolAttribute(tag, "DISABLED"));
-  }
+  // important to update object registry before colours are evaluated...
   if (CreatedObject != 0) {
     bool manage = GetBoolAttribute(tag, "MANAGE");
     if (html->AddControl(
@@ -1148,30 +1154,29 @@ TAG_HANDLER_PROC(tag) {
       TBasicApp::NewLogEntry(logInfo) << "HTML: control has been replaced: \'" <<
         ObjectName << '\'';
     }
+    //mot sure what this is doing? something with Mac?
     if (CreatedWindow != 0 && !ObjectName.IsEmpty()) {
       CreatedWindow->Hide();
-      olxstr bgc, fgc;
-      if (tag.HasParam(wxT("BGCOLOR"))) {
-        bgc = ExpandMacroShortcuts(tag.GetParam(wxT("BGCOLOR")), macro_map);
-        op->processFunction(bgc, SrcInfo, false);
-      }
-      if (tag.HasParam(wxT("FGCOLOR"))) {
-        fgc = ExpandMacroShortcuts(tag.GetParam(wxT("FGCOLOR")), macro_map);
-        op->processFunction(fgc, SrcInfo, false);
-      }
-      if (!bgc.IsEmpty()) {
-        wxColor cl = wxColor(bgc.u_str());
-        if (cl.IsOk()) {
-          CreatedWindow->SetBackgroundColour(cl);
-        }
-      }
-      if (!fgc.IsEmpty()) {
-        wxColor cl = wxColor(fgc.u_str());
-        if (cl.IsOk()) {
-          CreatedWindow->SetForegroundColour(cl);
-        }
-      }
     }
+  }
+  if (CreatedWindow != 0) {  // set default colors
+    CreatedWindow->Hide();
+    wxColor cl;
+    if (ParseColor(SrcInfo, tag, "FGCOLOR", macro_map, cl)) {
+      CreatedWindow->SetForegroundColour(cl);
+    }
+    else if (m_WParser->GetActualColor().IsOk()) {
+      CreatedWindow->SetForegroundColour(m_WParser->GetActualColor());
+    }
+
+    if (ParseColor(SrcInfo, tag, "BGCOLOR", macro_map, cl)) {
+      CreatedWindow->SetBackgroundColour(cl);
+    }
+    else if (m_WParser->GetContainer()->GetBackgroundColour().IsOk()) {
+      CreatedWindow->SetBackgroundColour(
+        m_WParser->GetContainer()->GetBackgroundColour());
+    }
+    CreatedWindow->Enable(!GetBoolAttribute(tag, "DISABLED"));
   }
   return false;
 }

@@ -1860,6 +1860,12 @@ size_t TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
         AE.GetBase().CAtom().GetPart())
       {
         if (parts.IndexOf(AE.GetCAtom(i).GetPart()) == InvalidIndex) {
+          // check if fixed at 1
+          double a_occu = rm->Vars.GetParam(AE.GetCAtom(i), catom_var_name_Sof);
+          int vi = (int)olx_abs(a_occu / 10);
+          if (vi == 1 && olx_abs(a_occu - 10) == 1) {
+            continue;
+          }
           parts.Add(AE.GetCAtom(i).GetPart());
           occu.Add(rm->Vars.GetParam(AE.GetCAtom(i), catom_var_name_Sof));
         }
@@ -1880,24 +1886,27 @@ size_t TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
         }
       }
       else if (parts[0] > 0) { // special case with just a single part
-        count += _AnalyseAtomHAdd(cg, atom, ProcessingAtoms, dry_run, 0,
-          &gen_atoms.AddNew());
-        TCAtomPList& gen = gen_atoms.GetLast();
         /* if occu is fixed, it is > 5, then we 'invert' the variable like
         21 -> -21, otherwise, just set a value of 1-occu
         */
         int vi = (int)olx_abs(occu[0] / 10);
-        double soccu;;
+        double soccu;
         if (vi < 2) {
           soccu = (vi == 0 ? 1 : 11) - olx_abs(occu[0] - vi * 10);
         }
         else {
           soccu = -occu[0];
         }
-        int spart = (parts[0] == 2 ? 1 : olx_abs(parts[0]) + 1);
-        for (size_t j = 0; j < gen.Count(); j++) {
-          gen[j]->SetPart(spart);
-          rm->Vars.SetParam(*gen[j], catom_var_name_Sof, soccu);
+        // do not generate 0-occupancy atoms
+        if (soccu != 0 && soccu != 10) {
+          count += _AnalyseAtomHAdd(cg, atom, ProcessingAtoms, dry_run, 0,
+            &gen_atoms.AddNew());
+          TCAtomPList& gen = gen_atoms.GetLast();
+          int spart = (parts[0] == 2 ? 1 : olx_abs(parts[0]) + 1);
+          for (size_t j = 0; j < gen.Count(); j++) {
+            gen[j]->SetPart(spart);
+            rm->Vars.SetParam(*gen[j], catom_var_name_Sof, soccu);
+          }
         }
       }
       cg.AnalyseMultipart(AE, gen_atoms);
