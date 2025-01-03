@@ -2921,9 +2921,7 @@ void TLattice::LoadPlanes_(const TDataItem& item, bool rebuild_defs) {
 }
 //..............................................................................
 void TLattice::SetGrowInfo(GrowInfo* grow_info) {
-  if (_GrowInfo != 0) {
-    delete _GrowInfo;
-  }
+  olx_del_obj(_GrowInfo);
   _GrowInfo = grow_info;
 }
 //..............................................................................
@@ -2949,6 +2947,7 @@ TLattice::GrowInfo* TLattice::GetGrowInfo() const {
 //..............................................................................
 bool TLattice::ApplyGrowInfo() {
   const TUnitCell& uc = GetUnitCell();
+  TAsymmUnit& au = GetAsymmUnit();
   if (_GrowInfo == 0 || !Objects.atoms.IsEmpty() || !Matrices.IsEmpty() ||
     uc.MatrixCount() != _GrowInfo->unc_matrix_count)
   {
@@ -2958,9 +2957,8 @@ bool TLattice::ApplyGrowInfo() {
     }
     return false;
   }
-  TAsymmUnit& au = GetAsymmUnit();
   ClearMatrices();
-  olx_pdict< uint32_t, size_t> mmap;
+  olx_pdict<uint32_t, size_t> mmap;
   size_t cnt = olx_sum(_GrowInfo->info,
     FunctionAccessor::MakeConst(
       (size_t (TUIntList::*)() const) &TUIntList::Count)); // GCC!!!
@@ -2971,7 +2969,9 @@ bool TLattice::ApplyGrowInfo() {
     if (ca.IsDeleted()) {
       continue;
     }
-    const TArrayList<uint32_t>& mi = _GrowInfo->info[i];
+    // number of Q-peaks might grow - use the last matrices to grow new peaks
+    const TArrayList<uint32_t>& mi = _GrowInfo->info[
+      i >= _GrowInfo->info.Count() ? (_GrowInfo->info.Count()-1) : i];
     for (size_t j = 0; j < mi.Count(); j++) {
       smatd m = smatd::FromId(mi[j], uc.GetMatrix(smatd::GetContainerId(mi[j])));
       size_t idx = mmap.Find(mi[j], InvalidIndex);

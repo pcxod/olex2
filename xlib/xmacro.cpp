@@ -2731,40 +2731,34 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options,
 void XLibMacros::macFuse(TStrObjList &Cmds, const TParamList &Options, TMacroData &E) {
   if (Cmds.Count() == 1 && Cmds[0].IsNumber()) {
     const double th = Cmds[0].ToDouble();
-    TLattice& latt = TXApp::GetInstance().XFile().GetLattice();
-    ASObjectProvider& objects = latt.GetObjects();
-    for (size_t i = 0; i < objects.atoms.Count(); i++) {
-      TSAtom& sa = objects.atoms[i];
-      if (sa.IsDeleted()) {
+    TXFile& xf = TXApp::GetInstance().XFile();
+    TAsymmUnit& au = xf.GetAsymmUnit();
+    TUnitCell& uc = xf.GetUnitCell();
+    TTypeList<olx_pair_t<const TCAtom*, vec3d> > res;
+    for (size_t i = 0; i < au.AtomCount(); i++) {
+      TCAtom& a1 = au.GetAtom(i);
+      if (a1.IsDeleted()) {
         continue;
       }
-      if (sa.BondCount() == 0) {
+      uc.FindInRangeAC(a1.ccrd(), 0, th, res);
+      if (res.Count() == 1) {
         continue;
       }
-      sa.SortBondsByLengthAsc();
-      vec3d cnt(sa.crd());
+      vec3d cnt_sum(a1.ccrd());
       size_t ac = 1;
-      for (size_t j = 0; j < sa.BondCount(); j++) {
-        if (sa.Bond(j).Length() < th) {
-          TSAtom& asa = sa.Bond(j).Another(sa);
-          if (asa.GetType() != sa.GetType()) {
-            continue;
-          }
-          ac++;
-          cnt += asa.crd();
-          asa.CAtom().SetDeleted(true);
-          asa.SetDeleted(true);
+      for (size_t j = 0; j < res.Count(); j++) {
+        if (res[j].a->GetId() == a1.GetId() || res[j].a->GetType() != a1.GetType()) {
+          continue;
         }
-        else {
-          break;
-        }
+        TCAtom& a2 = au.GetAtom(res[j].a->GetId());
+        cnt_sum += a2.ccrd();
+        a2.SetDeleted(true);
       }
       if (ac > 1) {
-        cnt /= ac;
-        sa.CAtom().ccrd() = latt.GetAsymmUnit().CartesianToCell(cnt);
+        a1.ccrd() = cnt_sum / ac;
       }
     }
-    TXApp::GetInstance().XFile().GetLattice().Uniq();
+    xf.GetLattice().Uniq();
   }
   else {
     TXApp::GetInstance().XFile().GetLattice().Uniq();
