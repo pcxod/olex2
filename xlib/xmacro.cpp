@@ -3063,10 +3063,22 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg,
     if (!hkl_fn.IsEmpty()) {
       THklFile hklf;
       hklf.LoadFromFile(hkl_fn, false);
-      for (size_t i = 0; i < hklf.RefCount(); i++)
-        hklf[i].SetHkl((tm_t * vec3d(hklf[i].GetHkl())).Round<int>());
-      hklf.SaveToFile(resHKL_FN);
+      TRefList new_refs(olx_reserve(hklf.RefCount()));
+      for (size_t i = 0; i < hklf.RefCount(); i++) {
+        vec3d h_d = tm_t * vec3d(hklf[i].GetHkl()),
+          h_i = h_d.Round<int>();
+        if (h_d.DistanceTo(h_i) > 1e-3) {
+          continue;
+        }
+        new_refs.Add(new TReflection(h_i, hklf[i].GetI(), hklf[i].GetS()));
+      }
+      THklFile::SaveToFile(resHKL_FN, new_refs);
       xapp.XFile().GetRM().SetHKLSource(resHKL_FN);
+      xapp.XFile().LastLoader()->GetRM().SetHKLSource(resHKL_FN);
+      if (new_refs.Count() != hklf.RefCount()) {
+        TBasicApp::NewLogEntry(logWarning) << (hklf.RefCount()-new_refs.Count()) <<
+          " non-integral indices have been skipped";
+      }
       save = true;
     }
     else {
