@@ -2972,15 +2972,22 @@ bool TLattice::ApplyGrowInfo() {
     // number of Q-peaks might grow - use the last matrices to grow new peaks
     const TArrayList<uint32_t>& mi = _GrowInfo->info[
       i >= _GrowInfo->info.Count() ? (_GrowInfo->info.Count()-1) : i];
-    for (size_t j = 0; j < mi.Count(); j++) {
-      smatd m = smatd::FromId(mi[j], uc.GetMatrix(smatd::GetContainerId(mi[j])));
-      size_t idx = mmap.Find(mi[j], InvalidIndex);
-      if (idx == InvalidIndex) {
-        Matrices.Add(new smatd(m));
-        idx = Matrices.Count() - 1;
-        mmap.Add(mi[j], idx);
+    if (mi.IsEmpty()) { // new atom? generate in the AU
+      if (!Matrices.IsEmpty()) {
+        GenerateAtom(ca, *Matrices[0]);
       }
-      GenerateAtom(ca, *Matrices[idx]);
+    }
+    else {
+      for (size_t j = 0; j < mi.Count(); j++) {
+        smatd m = smatd::FromId(mi[j], uc.GetMatrix(smatd::GetContainerId(mi[j])));
+        size_t idx = mmap.Find(mi[j], InvalidIndex);
+        if (idx == InvalidIndex) {
+          Matrices.Add(new smatd(m));
+          idx = Matrices.Count() - 1;
+          mmap.Add(mi[j], idx);
+        }
+        GenerateAtom(ca, *Matrices[idx]);
+      }
     }
   }
   delete _GrowInfo;
