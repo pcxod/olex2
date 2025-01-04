@@ -6060,15 +6060,28 @@ void TGXApp::_UpdateGroupIds()  {
   }
 }
 //..............................................................................
-void TGXApp::SelectAll(bool Select)  {
-  if( !Select )  {
-    if( !SelectionCopy[0].IsEmpty() )  {
+void TGXApp::SelectAll(bool Select) {
+  if (!Select) {
+    if (!SelectionCopy[0].IsEmpty()) {
       SelectionCopy[1] = SelectionCopy[0];
       SelectionCopy[0].Clear();
     }
-    else  {
+    else {
       SelectionCopy[1].Clear();
       StoreGroup(GetSelection(), SelectionCopy[1]);
+    }
+  }
+  // if nothing selected, select an atom as otherwise labels might get selected
+  if (Select) {
+    if (GetRenderer().GetSelection().IsEmpty()) {
+      AtomIterator ai(*this);
+      while (ai.HasNext()) {
+        TXAtom& xa = ai.Next();
+        if (xa.IsVisible()) {
+          GetRenderer().Select(xa);
+          break;
+        }
+      }
     }
   }
   GetRenderer().SelectAll(Select);
