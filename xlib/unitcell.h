@@ -563,6 +563,7 @@ protected:
     }
   };
 public:
+  void LibVolume(const TStrObjList& Params, TMacroData& E);
   void LibVolumeEx(const TStrObjList& Params, TMacroData& E);
   void LibCellEx(const TStrObjList& Params, TMacroData& E);
   void LibMatrixCount(const TStrObjList& Params, TMacroData& E);

@@ -1387,6 +1387,10 @@ void TUnitCell::LibVolumeEx(const TStrObjList& Params, TMacroData& E)  {
   E.SetRetVal(CalcVolumeEx().ToString());
 }
 //..............................................................................
+void TUnitCell::LibVolume(const TStrObjList& Params, TMacroData& E) {
+  E.SetRetVal(CalcVolume());
+}
+//..............................................................................
 void TUnitCell::LibCellEx(const TStrObjList& Params, TMacroData& E) {
   const TAsymmUnit& au = Lattice->GetAsymmUnit();
   if (Params[0].Equalsi('a')) {
@@ -1434,6 +1438,10 @@ void TUnitCell::LibClosest(const TStrObjList& Params, TMacroData& E) {
 TLibrary* TUnitCell::ExportLibrary(const olxstr& name)  {
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("uc") : name);
   olx_vptr<TUnitCell> thip(new VPtr);
+  lib->Register(
+    new TFunction<TUnitCell>(thip, &TUnitCell::LibVolume, "Volume",
+      fpNone,
+      "Returns unit cell volume"));
   lib->Register(
     new TFunction<TUnitCell>(thip, &TUnitCell::LibVolumeEx, "VolumeEx",
       fpNone,

@@ -1929,7 +1929,7 @@ TLibrary* TAsymmUnit::ExportLibrary(const olxstr& name)  {
     &TAsymmUnit::LibGetCell, "GetCell", fpNone|fpOne,
     "Returns six comma separated values for a, b, c and alpha, beta, gamma"));
   lib->Register(new TFunction<TAsymmUnit>(thip,
-    &TAsymmUnit::LibGetVolume, "GetVolume", fpNone,
+    &TAsymmUnit::LibGetVolume, "GetAUVolume", fpNone,
     "Returns volume of the unit cell divided by the number of symmetry "
     "elements"));
   lib->Register(new TFunction<TAsymmUnit>(thip,

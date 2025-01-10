@@ -1310,26 +1310,30 @@ void TMainForm::StartupInit() {
   wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
   TGlMaterial glm("2049;0.698,0.698,0.698,1.000");
   AGlScene& gls = FXApp->GetRenderer().GetScene();
-  gls.CreateFont("Default", Font.GetNativeFontInfoDesc()).SetMaterial(glm);
-  gls.CreateFont("Help", Font.GetNativeFontInfoDesc()).SetMaterial(glm);
-  gls.CreateFont("Notes", Font.GetNativeFontInfoDesc()).SetMaterial(glm);
-  gls.CreateFont("Labels", Font.GetNativeFontInfoDesc()).SetMaterial(glm);
+  TGlFont &fnt_def = gls.CreateFont("Default", Font.GetNativeFontInfoDesc());
+  FHelpWindow->SetFontIndex(
+    gls.CreateFont("Help", Font.GetNativeFontInfoDesc()).GetId());
+  FInfoBox->SetFontIndex(
+    gls.CreateFont("Notes", Font.GetNativeFontInfoDesc()).GetId());
+  TGlFont& fnt_lb = gls.CreateFont("Labels", Font.GetNativeFontInfoDesc());
   gls.RegisterFontForType<TXAtom>(
-    gls.CreateFont("AtomLabels", Font.GetNativeFontInfoDesc())).SetMaterial(glm);
+    gls.CreateFont("AtomLabels", Font.GetNativeFontInfoDesc()));
   gls.RegisterFontForType<TXBond>(
-    gls.CreateFont("BondLabels", Font.GetNativeFontInfoDesc())).SetMaterial(glm);
+    gls.CreateFont("BondLabels", Font.GetNativeFontInfoDesc()));
   gls.RegisterFontForType<TXAngle>(
-    gls.CreateFont("AngleLabels", Font.GetNativeFontInfoDesc())).SetMaterial(glm);
-  gls.CreateFont("Tooltip", Font.GetNativeFontInfoDesc()).SetMaterial(glm);
-  gls.RegisterFontForType<TDBasis>(gls._GetFont(4));
-  gls.RegisterFontForType<TDUnitCell>(gls._GetFont(4));
-  gls.RegisterFontForType<TXGlLabels>(gls._GetFont(3));
-  gls.RegisterFontForType<TGlConsole>(gls._GetFont(0));
-  gls.RegisterFontForType<TGlCursor>(gls._GetFont(0));
+    gls.CreateFont("AngleLabels", Font.GetNativeFontInfoDesc()));
+  GlTooltip->SetFontIndex(
+    gls.CreateFont("Tooltip", Font.GetNativeFontInfoDesc()).GetId());
+  gls.RegisterFontForType<TDBasis>(fnt_lb);
+  gls.RegisterFontForType<TDUnitCell>(fnt_lb);
+  gls.RegisterFontForType<TXGlLabels>(fnt_lb);
+  gls.RegisterFontForType<TGlConsole>(fnt_def);
+  gls.RegisterFontForType<TGlCursor>(fnt_def);
 
-  FHelpWindow->SetFontIndex(1);
-  FInfoBox->SetFontIndex(2);
-  GlTooltip->SetFontIndex(6);
+  for (size_t i = 0; i < gls.FontCount(); i++) {
+    gls._GetFont(i).SetMaterial(glm);
+  }
+  
 
   olxstr T(FXApp->GetConfigDir());
   T << FLastSettingsFile;

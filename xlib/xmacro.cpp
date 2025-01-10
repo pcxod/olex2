@@ -852,7 +852,7 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitFunc(Ins, fpOne|psCheckFileTypeIns,
     "Returns instruction value (all data after the instruction). In case the "
     "instruction does not exist it return 'n/a' string");
-  xlib_InitFunc(SG, fpNone|fpOne,
+  xlib_InitFunc(SG, fpNone|fpOne|psFileLoaded,
     "Returns space group of currently loaded file. Also takes a string "
     "template, where %# is replaced with SG number, %n - short name, %N - full"
     " name, %h - html representation of the short name, %H - same as %h for "
@@ -2731,40 +2731,36 @@ void XLibMacros::macFile(TStrObjList &Cmds, const TParamList &Options,
 void XLibMacros::macFuse(TStrObjList &Cmds, const TParamList &Options, TMacroData &E) {
   if (Cmds.Count() == 1 && Cmds[0].IsNumber()) {
     const double th = Cmds[0].ToDouble();
-    TLattice& latt = TXApp::GetInstance().XFile().GetLattice();
-    ASObjectProvider& objects = latt.GetObjects();
-    for (size_t i = 0; i < objects.atoms.Count(); i++) {
-      TSAtom& sa = objects.atoms[i];
-      if (sa.IsDeleted()) {
+    TXFile& xf = TXApp::GetInstance().XFile();
+    TAsymmUnit& au = xf.GetAsymmUnit();
+    TUnitCell& uc = xf.GetUnitCell();
+    TTypeList<olx_pair_t<const TCAtom*, vec3d> > res;
+    for (size_t i = 0; i < au.AtomCount(); i++) {
+      TCAtom& a1 = au.GetAtom(i);
+      if (a1.IsDeleted()) {
         continue;
       }
-      if (sa.BondCount() == 0) {
+      uc.FindInRangeAC(a1.ccrd(), 0, th, res);
+      if (res.Count() == 1) {
         continue;
       }
-      sa.SortBondsByLengthAsc();
-      vec3d cnt(sa.crd());
+      vec3d cnt_sum(a1.ccrd());
       size_t ac = 1;
-      for (size_t j = 0; j < sa.BondCount(); j++) {
-        if (sa.Bond(j).Length() < th) {
-          TSAtom& asa = sa.Bond(j).Another(sa);
-          if (asa.GetType() != sa.GetType()) {
-            continue;
-          }
-          ac++;
-          cnt += asa.crd();
-          asa.CAtom().SetDeleted(true);
-          asa.SetDeleted(true);
+      for (size_t j = 0; j < res.Count(); j++) {
+        TCAtom& a2 = au.GetAtom(res[j].a->GetId());
+        if (a2.GetId() == a1.GetId() || a2.GetType() != a1.GetType() ||
+          !TNetwork::IsBondAllowed(a1, a2))
+        {
+          continue;
         }
-        else {
-          break;
-        }
+        cnt_sum += a2.ccrd();
+        a2.SetDeleted(true);
       }
       if (ac > 1) {
-        cnt /= ac;
-        sa.CAtom().ccrd() = latt.GetAsymmUnit().CartesianToCell(cnt);
+        a1.ccrd() = cnt_sum / ac;
       }
     }
-    TXApp::GetInstance().XFile().GetLattice().Uniq();
+    xf.GetLattice().Uniq();
   }
   else {
     TXApp::GetInstance().XFile().GetLattice().Uniq();
@@ -3069,10 +3065,22 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg,
     if (!hkl_fn.IsEmpty()) {
       THklFile hklf;
       hklf.LoadFromFile(hkl_fn, false);
-      for (size_t i = 0; i < hklf.RefCount(); i++)
-        hklf[i].SetHkl((tm_t * vec3d(hklf[i].GetHkl())).Round<int>());
-      hklf.SaveToFile(resHKL_FN);
+      TRefList new_refs(olx_reserve(hklf.RefCount()));
+      for (size_t i = 0; i < hklf.RefCount(); i++) {
+        vec3d h_d = tm_t * vec3d(hklf[i].GetHkl()),
+          h_i = h_d.Round<int>();
+        if (h_d.DistanceTo(h_i) > 1e-3) {
+          continue;
+        }
+        new_refs.Add(new TReflection(h_i, hklf[i].GetI(), hklf[i].GetS()));
+      }
+      THklFile::SaveToFile(resHKL_FN, new_refs);
       xapp.XFile().GetRM().SetHKLSource(resHKL_FN);
+      xapp.XFile().LastLoader()->GetRM().SetHKLSource(resHKL_FN);
+      if (new_refs.Count() != hklf.RefCount()) {
+        TBasicApp::NewLogEntry(logWarning) << (hklf.RefCount()-new_refs.Count()) <<
+          " non-integral indices have been skipped";
+      }
       save = true;
     }
     else {
@@ -3120,6 +3128,17 @@ olxstr XLibMacros_macSGS_SgInfo(const olxstr& caxis)  {
     }
   }
 }
+void XLibMacros_macSGS_finalise() {
+  if (TBasicApp::HasGUI()) {
+    olex2::IOlex2Processor* op = olex2::IOlex2Processor::GetInstance();
+    TActionQueueLock __queuelock(TBasicApp::GetInstance().FindActionQueue(olxappevent_GL_DRAW));
+    op->processMacro("fuse 0.5");
+    op->processMacro("compaq");
+    op->processMacro("spy.make_HOS(True)");
+    op->processMacro("spy.run_skin sNumTitle");
+    op->processMacro("html.update");
+  }
+}
 void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
@@ -3156,6 +3175,7 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options,
       au.InitMatrices();
       xapp.XFile().LastLoaderChanged();
     }
+    XLibMacros_macSGS_finalise();
     return;
   }
   TSpaceGroup* sg_ = Cmds.Count() == 1 ? &xapp.XFile().GetLastLoaderSG() :
@@ -3194,14 +3214,16 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options,
   mat3d tm;
   if( sg_set.GetTrasformation(n_ai, tm) )  {
     TSpaceGroup* new_sg = XLibMacros_macSGS_FindSG(sgs, n_ai.GetAxis());
-    if( new_sg == NULL && n_ai.GetAxis() == "abc" )
+    if (new_sg == 0 && n_ai.GetAxis() == "abc") {
       new_sg = XLibMacros_macSGS_FindSG(sgs, EmptyString());
-    if( new_sg == NULL )  {
+    }
+    if( new_sg == 0)  {
       E.ProcessingError(__OlxSrcInfo,
         "Could not locate space group for given settings");
       return;
     }
     ChangeCell(tm, *new_sg, hkl_fn);
+    XLibMacros_macSGS_finalise();
   }
   else  {
     E.ProcessingError(__OlxSrcInfo,
@@ -4382,55 +4404,46 @@ olxstr XLibMacros_funSGNameToHtmlX(const olxstr& name) {
   return res;
 }
 void XLibMacros::funSG(const TStrObjList &Cmds, TMacroData &E) {
-  TSpaceGroup* sg = NULL;
-  try {
-    if (TXApp::GetInstance().XFile().HasLastLoader()) {
-      sg = &TXApp::GetInstance().XFile().GetLastLoaderSG();
+  const TSpaceGroup& sg = TXApp::GetInstance().XFile().GetLastLoaderSG();
+  olxstr Tmp;
+  if (Cmds.IsEmpty()) {
+    Tmp = sg.GetName();
+    if (!sg.GetFullName().IsEmpty()) {
+      Tmp << " (" << sg.GetFullName() << ')';
     }
-  }
-  catch(...)  {}
-  if (sg != NULL) {
-    olxstr Tmp;
-    if (Cmds.IsEmpty()) {
-      Tmp = sg->GetName();
-      if (!sg->GetFullName().IsEmpty()) {
-        Tmp << " (" << sg->GetFullName() << ')';
-      }
-      Tmp << " #" << sg->GetNumber();
-    }
-    else {
-      Tmp = Cmds[0];
-      Tmp.Replace("%#", olxstr(sg->GetNumber())).\
-        Replace("%n", sg->GetName()).\
-        Replace("%N", sg->GetFullName()).\
-        Replace("%HS", sg->GetHallSymbol()).\
-        Replace("%s", sg->GetBravaisLattice().GetName());
-        Tmp.Replace("%H", XLibMacros_funSGNameToHtmlX(sg->GetFullName()));
-        if (sg->GetName() == olxstr::DeleteChars(sg->GetFullName(), ' '))
-          Tmp.Replace("%h", XLibMacros_funSGNameToHtmlX(sg->GetFullName()));
-        else
-          Tmp.Replace("%h", XLibMacros_funSGNameToHtml(sg->GetName()));
-        Tmp.Replace("%c", (sg->IsCentrosymmetric() ? TrueString() : FalseString()));
-    }
-    E.SetRetVal(Tmp);
+    Tmp << " #" << sg.GetNumber();
   }
   else {
-    E.SetRetVal(NAString());
-    return;
+    Tmp = Cmds[0];
+    Tmp.Replace("%#", olxstr(sg.GetNumber())).\
+      Replace("%n", sg.GetName()).\
+      Replace("%N", sg.GetFullName()).\
+      Replace("%HS", sg.GetHallSymbol()).\
+      Replace("%s", sg.GetBravaisLattice().GetName());
+      Tmp.Replace("%H", XLibMacros_funSGNameToHtmlX(sg.GetFullName()));
+      if (sg.GetName() == olxstr::DeleteChars(sg.GetFullName(), ' ')) {
+        Tmp.Replace("%h", XLibMacros_funSGNameToHtmlX(sg.GetFullName()));
+      }
+      else {
+        Tmp.Replace("%h", XLibMacros_funSGNameToHtml(sg.GetName()));
+      }
+      Tmp.Replace("%c", (sg.IsCentrosymmetric() ? TrueString() : FalseString()));
   }
+  E.SetRetVal(Tmp);
 }
 //.............................................................................
-void XLibMacros::funSGS(const TStrObjList &Cmds, TMacroData &E) {
+void XLibMacros::funSGS(const TStrObjList& Cmds, TMacroData& E) {
   TXApp& xapp = TXApp::GetInstance();
   TSpaceGroup& sg = xapp.XFile().GetLastLoaderSG();
-  const olxstr& axis =  sg.GetAxis();
-  if( axis.IsEmpty() )
+  const olxstr& axis = sg.GetAxis();
+  if (axis.IsEmpty()) {
     E.SetRetVal<olxstr>("standard");
-  else  {
-    if( axis.Length() == 2 )  {  // axis + cell choice
+  }
+  else {
+    if (axis.Length() == 2) {  // axis + cell choice
       E.SetRetVal(olxstr(axis.CharAt(0)) << ": cell choice " << axis.CharAt(1));
     }
-    else  {
+    else {
       E.SetRetVal(olxstr("axis: ") << axis);
     }
   }
