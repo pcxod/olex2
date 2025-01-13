@@ -3726,7 +3726,7 @@ void TMainForm::UseGlTooltip(bool v) {
   if (v == _UseGlTooltip) {
     return;
   }
-  TStateRegistry::GetInstance().SetState(stateGlTooltips, v, EmptyString(), v);
+  TStateRegistry::GetInstance().SetState(stateGlTooltips, v, EmptyString(), true);
   _UseGlTooltip = v;
   if (v) {
     FGlCanvas->SetToolTip(wxT(""));
