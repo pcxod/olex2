@@ -420,7 +420,7 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
     }
     OnFileLoad.Exit(this, Loader);
   }
-  TSpaceGroup &sg = TSymmLib::GetInstance().FindSG(Loader->GetAsymmUnit());;
+  TSpaceGroup &sg = TSymmLib::GetInstance().FindSG(Loader->GetAsymmUnit());
   if (FSG != &sg) {
     GetRM().ResetHklStats();
     FSG = &sg;

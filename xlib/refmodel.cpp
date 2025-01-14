@@ -164,6 +164,7 @@ void RefinementModel::Clear(uint32_t clear_mask) {
   if ((clear_mask & rm_clear_BadRefs) != 0) {
     BadReflections.Clear();
   }
+  _Reflections.Clear();
 }
 //.............................................................................
 void RefinementModel::ClearVarRefs() {
