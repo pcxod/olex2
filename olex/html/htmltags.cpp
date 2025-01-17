@@ -991,11 +991,13 @@ TAG_HANDLER_PROC(tag) {
     CreatedWindow = Tree;
     Tree->WI.SetWidth(ax);
     Tree->WI.SetHeight(ay);
-    wxMenu* menu = new wxMenu;
-    menu->Append(1000, wxT("Expand all"));
-    menu->Append(1001, wxT("Collapse all"));
-    Tree->SetPopup(menu);
     Tree->SetData(Data);
+    if (tag.HasParam(wxT("MENU"))) {
+      Tree->SetContextMenu(TTreeView::CreateContextMenu(tag.GetParam(wxT("MENU"))));
+    }
+    else {
+      Tree->SetContextMenu(TTreeView::CreateDefaultContextMenu());
+    }
     if (tag.HasParam(wxT("ONSELECT"))) {
       Tree->OnSelect.data =
         ExpandMacroShortcuts(tag.GetParam(wxT("ONSELECT")), macro_map);
