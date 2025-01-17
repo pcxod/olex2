@@ -44,8 +44,8 @@ void TTreeView::SelectionEvent(wxTreeEvent& event) {
 //..............................................................................
 void TTreeView::ItemEditEvent(wxTreeEvent& event) {
   event.Skip();
-  olxstr d = olxstr(OnSelect.data).Replace("~label~", event.GetLabel());
-  OnSelect.Execute(this, &d);
+  olxstr d = olxstr(OnEdit.data).Replace("~label~", event.GetLabel());
+  OnEdit.Execute(this, &d);
 }
 //..............................................................................
 void TTreeView::ShowContextMenu(wxCommandEvent& event) {
