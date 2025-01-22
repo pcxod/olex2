@@ -597,6 +597,9 @@ Friedel opposites of components 1 ... m
   // feeds on .options - instance static
   bool DoShowRestraintDefaults() const;
   void SortAtomsOrderOut();
+  const TDataItem& GetGenericStore() const {
+    return GenericStore;
+  }
   void LibHasOccu(const TStrObjList& Params, TMacroData& E);
   void LibOSF(const TStrObjList& Params, TMacroData& E);
   void LibBASF(const TStrObjList& Params, TMacroData& E);

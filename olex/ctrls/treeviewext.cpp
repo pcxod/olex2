@@ -10,19 +10,16 @@
 #include "treeviewext.h"
 #include "frameext.h"
 #include "bapp.h"
+#include "integration.h"
+#include "menuext.h"
 
 using namespace ctrl_ext;
 
-enum  {
-  ID_ExpandAll = 1000,
-  ID_CollapseAll
-};
 //..............................................................................
 TTreeView::TTreeView(wxWindow* Parent, wxWindowID id,
 const wxPoint& pos, const wxSize& size, long flags)
 : wxTreeCtrl(Parent, id, pos, size, flags),
   AOlxCtrl(this),
-  Popup(NULL),
   OnSelect(AOlxCtrl::ActionQueue::New(Actions, evt_on_select_id)),
   OnDblClick(AOlxCtrl::ActionQueue::New(Actions, evt_on_dbl_click_id)),
   OnEdit(AOlxCtrl::ActionQueue::New(Actions, evt_change_id))
@@ -30,10 +27,10 @@ const wxPoint& pos, const wxSize& size, long flags)
   Bind(wxEVT_TREE_ITEM_ACTIVATED, &TTreeView::ItemActivateEvent, this);
   Bind(wxEVT_TREE_SEL_CHANGED, &TTreeView::SelectionEvent, this);
   Bind(wxEVT_TREE_END_LABEL_EDIT, &TTreeView::ItemEditEvent, this);
+  Bind(wxEVT_TREE_ITEM_MENU, &TTreeView::ShowContextMenu, this);
+
   Bind(wxEVT_LEFT_UP, &TTreeView::OnMouseUp, this);
   Bind(wxEVT_RIGHT_UP, &TTreeView::OnMouseUp, this);
-  Bind(wxEVT_MENU, &TTreeView::OnContextMenu, this, ID_ExpandAll);
-  Bind(wxEVT_MENU, &TTreeView::OnContextMenu, this, ID_CollapseAll);
 }
 //..............................................................................
 void TTreeView::ItemActivateEvent(wxTreeEvent& event) {
@@ -48,8 +45,21 @@ void TTreeView::SelectionEvent(wxTreeEvent& event) {
 //..............................................................................
 void TTreeView::ItemEditEvent(wxTreeEvent& event) {
   event.Skip();
-  olxstr d = olxstr(OnSelect.data).Replace("~label~", event.GetLabel());
-  OnSelect.Execute(this, &d);
+  olxstr d = olxstr(OnEdit.data).Replace("~label~", event.GetLabel());
+  OnEdit.Execute(this, &d);
+}
+//..............................................................................
+void TTreeView::ShowContextMenu(wxCommandEvent& event) {
+  if (contextMenu.ok()) {
+    wxTreeEvent* te = dynamic_cast<wxTreeEvent*>(&event);
+    if (te != 0) {
+      wxTreeItemId ti = te->GetItem();
+      if (ti.IsOk()) {
+        SelectItem(ti, true);
+      }
+      PopupMenu(&contextMenu);
+    }
+  }
 }
 //..............................................................................
 size_t TTreeView::ReadStrings(size_t& index, const wxTreeItemId* thisCaller,
@@ -98,20 +108,32 @@ bool TTreeView::LoadFromStrings(const TStrList &strings)  {
 //..............................................................................
 void TTreeView::OnMouseUp(wxMouseEvent& me)  {
   me.Skip();
-  if (Popup == 0) {
-    return;
-  }
-  if (me.ButtonUp(wxMOUSE_BTN_RIGHT)) {
-    PopupMenu(Popup);
-  }
 }
 //..............................................................................
-void TTreeView::OnContextMenu(wxCommandEvent& evt) {
-  if (evt.GetId() == ID_ExpandAll) {
+void TTreeView::OnItemContextMenu(wxCommandEvent& evt) {
+  if (evt.GetId() == ID_TREE_ExpandAll) {
     ExpandAllChildren(GetSelection());
   }
-  else if (evt.GetId() == ID_CollapseAll) {
+  else if (evt.GetId() == ID_TREE_CollapseAll) {
     CollapseAllChildren(GetSelection());
+  }
+  else if (contextMenu.ok()) {
+    const TMenu::MenuData* md = dynamic_cast<TMenu::MenuData*>(
+      contextMenu->GetClientObject());
+    if (md != 0) {
+      olxstr cmd = md->macros.Find(evt.GetId(), EmptyString());
+      if (!cmd.IsEmpty()) {
+        wxTreeItemId  x = GetSelection();
+        if (x.IsOk()) {
+          wxTreeItemData* td = this->GetItemData(x);
+          TTreeNodeData* olx_td = dynamic_cast<TTreeNodeData*>(td);
+          if (olx_td != 0 && olx_td->GetData() != 0) {
+            TBasicApp::NewLogEntry() << olx_td->GetData()->ToString();
+          }
+        }
+        olex2::IOlex2Processor::GetInstance()->processMacro(cmd);
+      }
+    }
   }
 }
 //..............................................................................
@@ -271,5 +293,33 @@ void TTreeView::SelectByData(const olxstr& data) {
     SelectItem(item);
     OnSelect.SetEnabled(true);
   }
+}
+//..............................................................................
+void TTreeView::SetContextMenu(wxMenu* menu) {
+  contextMenu = menu;
+  if (menu != 0) {
+    wxMenuItemList& items = menu->GetMenuItems();
+    for (size_t i = 0; i < items.size(); i++) {
+      Bind(wxEVT_MENU, &TTreeView::OnItemContextMenu, this, items[i]->GetId());
+    }
+  }
+}
+//..............................................................................
+//..............................................................................
+//..............................................................................
+wxMenu* TTreeView::CreateDefaultContextMenu() {
+  wxMenu* menu = new wxMenu;
+  menu->Append(ID_TREE_ExpandAll, wxT("Expand all"));
+  menu->Append(ID_TREE_CollapseAll, wxT("Collapse all"));
+  return menu;
+}
+//..............................................................................
+wxMenu* TTreeView::CreateContextMenu(const olxstr& def) {
+  TStrList items(def, ';');
+  if (items.IsEmpty()) {
+    return 0;
+  }
+  olx_object_ptr<wxMenu> menu = CreateDefaultContextMenu();
+  return TMenu::CreateMenu(def, ID_TREE_LAST, menu.release());
 }
 //..............................................................................

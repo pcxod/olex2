@@ -326,7 +326,9 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(LstFS, EmptyString(), fpAny,
     "Prints out detailed content of virtual file system. Accepts * based "
     "masks");
-  xlib_InitMacro(SGS, EmptyString(), (fpAny^fpNone)|psFileLoaded,
+  xlib_InitMacro(SGS,
+    "f-finalise the procedure with compaq/fuse etc [true]",
+    (fpAny^fpNone)|psFileLoaded,
     "Changes current space group settings using provided cell setting (if "
     "applicable) and axis, or 9 transformation matrix elements and the space "
     "group symbol. If the transformed HKL file is required, it should be "
@@ -3128,8 +3130,8 @@ olxstr XLibMacros_macSGS_SgInfo(const olxstr& caxis)  {
     }
   }
 }
-void XLibMacros_macSGS_finalise() {
-  if (TBasicApp::HasGUI()) {
+void XLibMacros_macSGS_finalise(bool run) {
+  if (run && TBasicApp::HasGUI()) {
     olex2::IOlex2Processor* op = olex2::IOlex2Processor::GetInstance();
     TActionQueueLock __queuelock(TBasicApp::GetInstance().FindActionQueue(olxappevent_GL_DRAW));
     op->processMacro("fuse 0.5");
@@ -3144,8 +3146,13 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options,
 {
   TXApp& xapp = TXApp::GetInstance();
   olxstr hkl_fn;
+  bool finalise = Options.GetBoolOption('f', false, true);
+
   if (Cmds.Count() > 1 && Cmds.GetLastString().EndsWithi(".hkl")) {
     hkl_fn = Cmds.GetLastString();
+    if (!TEFile::IsAbsolutePath(hkl_fn)) {
+      hkl_fn = TEFile::AddPathDelimeter(TEFile::CurrentDir()) << hkl_fn;
+    }
     Cmds.Delete(Cmds.Count()-1);
   }
   if (Cmds.Count() == 10) {  // transformation provided?
@@ -3175,7 +3182,7 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options,
       au.InitMatrices();
       xapp.XFile().LastLoaderChanged();
     }
-    XLibMacros_macSGS_finalise();
+    XLibMacros_macSGS_finalise(finalise);
     return;
   }
   TSpaceGroup* sg_ = Cmds.Count() == 1 ? &xapp.XFile().GetLastLoaderSG() :
@@ -3223,7 +3230,7 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options,
       return;
     }
     ChangeCell(tm, *new_sg, hkl_fn);
-    XLibMacros_macSGS_finalise();
+    XLibMacros_macSGS_finalise(finalise);
   }
   else  {
     E.ProcessingError(__OlxSrcInfo,

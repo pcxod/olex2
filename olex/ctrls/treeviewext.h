@@ -16,6 +16,11 @@
 #include "wx/generic/treectlg.h"
 
 namespace ctrl_ext  {
+  enum {
+    ID_TREE_ExpandAll = 1000,
+    ID_TREE_CollapseAll,
+    ID_TREE_LAST, // custom menu ids start here
+  };
 
   class TTreeNodeData : public wxTreeItemData, public IOlxObject {
     IOlxObject* Data;
@@ -31,12 +36,13 @@ namespace ctrl_ext  {
     void SelectionEvent(wxTreeEvent& event);
     void ItemActivateEvent(wxTreeEvent& event);
     void ItemEditEvent(wxTreeEvent& event);
+    void ShowContextMenu(wxCommandEvent& event);
+    void OnItemContextMenu(wxCommandEvent& event);
     void OnMouseUp(wxMouseEvent& event);
-    void OnContextMenu(wxCommandEvent& event);
     size_t ReadStrings(size_t& index, const wxTreeItemId* thisCaller,
       const TStrList& strings);
     void ClearData();
-    wxMenu* Popup;
+    olx_object_ptr<wxMenu> contextMenu;
     // returns index of the selected item...
     size_t _SaveState(TEBitArray& res, const wxTreeItemId& item,
       size_t& counter) const;
@@ -54,11 +60,10 @@ namespace ctrl_ext  {
 
     virtual ~TTreeView()  {
       ClearData();
-      if( Popup != NULL )  delete Popup;
     }
 
-    DefPropC(olxstr, Data)
-    DefPropP(wxMenu*, Popup)
+    DefPropC(olxstr, Data);
+    void SetContextMenu(wxMenu*);
 
     void SelectByLabel(const olxstr& label);
     void SelectByData(const olxstr& data);
@@ -69,6 +74,8 @@ namespace ctrl_ext  {
 
     AOlxCtrl::ActionQueue &OnDblClick, &OnSelect, &OnEdit;
 
+    static wxMenu* CreateDefaultContextMenu();
+    static wxMenu* CreateContextMenu(const olxstr& def);
   };
 }; // end namespace ctrl_ext
 #endif

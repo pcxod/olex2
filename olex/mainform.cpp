@@ -260,7 +260,7 @@ TMainForm::TMainForm(TGlXApp *Parent)
   ActionProgress = UpdateProgress = 0;
   SkipSizing = false;
   Destroying = false;
-#ifdef __WIN32__
+#if defined(__WIN32__) || defined(__linux__)
   _UseGlTooltip = false;  // Linux and Mac set tooltips after have been told to do so...
 #else
   _UseGlTooltip = true;
@@ -3726,7 +3726,7 @@ void TMainForm::UseGlTooltip(bool v) {
   if (v == _UseGlTooltip) {
     return;
   }
-  TStateRegistry::GetInstance().SetState(stateGlTooltips, v, EmptyString(), v);
+  TStateRegistry::GetInstance().SetState(stateGlTooltips, v, EmptyString(), true);
   _UseGlTooltip = v;
   if (v) {
     FGlCanvas->SetToolTip(wxT(""));
