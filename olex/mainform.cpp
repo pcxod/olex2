@@ -260,7 +260,7 @@ TMainForm::TMainForm(TGlXApp *Parent)
   ActionProgress = UpdateProgress = 0;
   SkipSizing = false;
   Destroying = false;
-#ifdef __WIN32__
+#if defined(__WIN32__) || defined(__linux__)
   _UseGlTooltip = false;  // Linux and Mac set tooltips after have been told to do so...
 #else
   _UseGlTooltip = true;

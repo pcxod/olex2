@@ -209,6 +209,9 @@ public:
   TStrList::const_list_type GetFooter();
   // Parses all instructions, exclusing atoms, throws if fails
   void ParseHeader(const TStrList& in);
+  // reads <olex2.extras> block. marks the start of the block and number of lines
+  static TStrList::const_list_type ReadExtras(const TStrList& l,
+    size_t *start=0, size_t *count=0);
   /* parsed out from REMS if refined with Olex2, typically listed like:
   REM R1_all = 0.0509
   REM R1_gt = 0.0380

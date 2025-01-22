@@ -36,8 +36,9 @@ using namespace olex2;
 PyObject* pyVarValue(PyObject* self, PyObject* args) {
   olxstr varName;
   PyObject* defVal = 0;
-  if (!PythonExt::ParseTuple(args, "w|O", &varName, &defVal))
+  if (!PythonExt::ParseTuple(args, "w|O", &varName, &defVal)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w|O");
+  }
   size_t i = TOlxVars::VarIndex(varName);
   if (i == InvalidIndex) {
     if (defVal != 0) {
@@ -56,8 +57,9 @@ PyObject* pyVarValue(PyObject* self, PyObject* args) {
 PyObject* pyVarObject(PyObject* self, PyObject* args) {
   olxstr varName;
   PyObject* defVal = 0;
-  if (!PythonExt::ParseTuple(args, "w|O", &varName, &defVal))
+  if (!PythonExt::ParseTuple(args, "w|O", &varName, &defVal)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w|O");
+  }
   size_t i = TOlxVars::VarIndex(varName);
   if (i == InvalidIndex) {
     if (defVal != 0) {
@@ -213,7 +215,7 @@ PyObject* pyTranslate(PyObject* self, PyObject* args) {
 #endif
 }
 //..............................................................................
-PyObject* pyDescRef(PyObject* self, PyObject* args)  {
+PyObject* pyDescRef(PyObject* self, PyObject* args) {
   TStrList rv = TXApp::GetInstance().XFile().GetRM().Describe();
   return PythonExt::BuildString(rv.Text('\n'));
 }
@@ -622,12 +624,14 @@ PyObject* pyOnPlatonRun(PyObject* self, PyObject* args) {
       return PythonExt::PyFalse();
     }
   }
-  HMENU  hMenu = GetSystemMenu(pwt.hwnd, FALSE);
-  if (hMenu != 0) {
-    EnableMenuItem(hMenu, SC_CLOSE,
-      MF_BYCOMMAND | (MF_DISABLED | MF_GRAYED));
+  if (pwt.hwnd != 0) {
+    HMENU hMenu = GetSystemMenu(pwt.hwnd, FALSE);
+    if (hMenu != 0) {
+      EnableMenuItem(hMenu, SC_CLOSE,
+        MF_BYCOMMAND | (MF_DISABLED | MF_GRAYED));
+      return PythonExt::PyTrue();
+    }
   }
-  return PythonExt::PyTrue();
 #endif
   return PythonExt::PyFalse();
 }
@@ -723,6 +727,28 @@ PyObject* pyGetMask(PyObject* self, PyObject* args) {
   }
 }
 //..............................................................................
+PyObject* pyGetStoredParams(PyObject* self, PyObject* args) {
+  olxstr content;
+  if (!PythonExt::ParseTuple(args, "|w", &content)) {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "|w");
+  }
+  try {
+    if (content.IsEmpty()) {
+      const TDataItem& di = TXApp::GetInstance().XFile().GetRM().GetGenericStore();
+      return PythonExt::ToPython(di);
+    }
+    else {
+      TDataItem di(0, EmptyString());
+      di.LoadFromString(0, content, 0);
+      return PythonExt::ToPython(di);
+    }
+  }
+  catch (const TExceptionBase& e) {
+    TBasicApp::NewLogEntry(logException) << e;
+  }
+  return PythonExt::PyNone();
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 static PyMethodDef CORE_Methods[] = {
@@ -782,6 +808,8 @@ static PyMethodDef CORE_Methods[] = {
   "Returns a list of ([(iii)][(dd)][(i)]) of current reflections" },
   { "GetMask", pyGetMask, METH_VARARGS,
   "Returns a list of ([(iii)][D]) of current mask if in the loaded CIF" },
+  { "GetStoredParams", pyGetStoredParams, METH_VARARGS,
+  "Returns parameters stored in the INS header or in the given XLD block" },
   { NULL, NULL, 0, NULL }
    };
 

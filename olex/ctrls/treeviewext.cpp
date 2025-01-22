@@ -11,6 +11,7 @@
 #include "frameext.h"
 #include "bapp.h"
 #include "integration.h"
+#include "menuext.h"
 
 using namespace ctrl_ext;
 
@@ -50,7 +51,14 @@ void TTreeView::ItemEditEvent(wxTreeEvent& event) {
 //..............................................................................
 void TTreeView::ShowContextMenu(wxCommandEvent& event) {
   if (contextMenu.ok()) {
-    PopupMenu(&contextMenu);
+    wxTreeEvent* te = dynamic_cast<wxTreeEvent*>(&event);
+    if (te != 0) {
+      wxTreeItemId ti = te->GetItem();
+      if (ti.IsOk()) {
+        SelectItem(ti, true);
+      }
+      PopupMenu(&contextMenu);
+    }
   }
 }
 //..............................................................................
@@ -110,10 +118,19 @@ void TTreeView::OnItemContextMenu(wxCommandEvent& evt) {
     CollapseAllChildren(GetSelection());
   }
   else if (contextMenu.ok()) {
-    const MenuData* md = dynamic_cast<MenuData*>(contextMenu->GetClientObject());
+    const TMenu::MenuData* md = dynamic_cast<TMenu::MenuData*>(
+      contextMenu->GetClientObject());
     if (md != 0) {
       olxstr cmd = md->macros.Find(evt.GetId(), EmptyString());
       if (!cmd.IsEmpty()) {
+        wxTreeItemId  x = GetSelection();
+        if (x.IsOk()) {
+          wxTreeItemData* td = this->GetItemData(x);
+          TTreeNodeData* olx_td = dynamic_cast<TTreeNodeData*>(td);
+          if (olx_td != 0 && olx_td->GetData() != 0) {
+            TBasicApp::NewLogEntry() << olx_td->GetData()->ToString();
+          }
+        }
         olex2::IOlex2Processor::GetInstance()->processMacro(cmd);
       }
     }
@@ -298,18 +315,11 @@ wxMenu* TTreeView::CreateDefaultContextMenu() {
 }
 //..............................................................................
 wxMenu* TTreeView::CreateContextMenu(const olxstr& def) {
-  TStrList items(def, "<-");
-  if ((items.Count()%2) != 0) {
-    TBasicApp::NewLogEntry(logError) << "Wrong number of menu items";
+  TStrList items(def, ';');
+  if (items.IsEmpty()) {
     return 0;
   }
   olx_object_ptr<wxMenu> menu = CreateDefaultContextMenu();
-  olx_object_ptr<MenuData> data = new MenuData();
-  for (size_t i = 0; i < items.Count(); i+=2) {
-    wxMenuItem* mi = menu->Append(ID_TREE_LAST + i, items[i].u_str());
-    data->macros(ID_TREE_LAST + i, items[i + 1]);
-  }
-  menu->SetClientObject(data.release());
-  return menu.release();
+  return TMenu::CreateMenu(def, ID_TREE_LAST, menu.release());
 }
 //..............................................................................

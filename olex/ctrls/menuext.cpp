@@ -15,39 +15,67 @@ using namespace ctrl_ext;
 IMPLEMENT_CLASS(TMenu, wxMenu)
 IMPLEMENT_CLASS(TMenuItem, wxMenuItem)
 
-TMenu *TMenu::CopyMenu(const wxMenu &menu)  {
-  TMenu *M = new TMenu;
-  for( unsigned int i=0; i < menu.GetMenuItemCount(); i++ )  {
-    wxMenuItem *mi = menu.FindItemByPosition(i);
-    if( mi->GetSubMenu() != NULL )  {
-      TMenu *nm = CopyMenu(*mi->GetSubMenu());
+TMenu* TMenu::CopyMenu(const wxMenu& menu) {
+  TMenu* M = new TMenu;
+  for (unsigned int i = 0; i < menu.GetMenuItemCount(); i++) {
+    wxMenuItem* mi = menu.FindItemByPosition(i);
+    if (mi->GetSubMenu() != NULL) {
+      TMenu* nm = CopyMenu(*mi->GetSubMenu());
       int miId = mi->GetId();
       wxItemKind miKind = mi->GetKind();
-      const wxString &miText = mi->GetItemLabel();
-      const wxString &miHelpStr = mi->GetHelp();
+      const wxString& miText = mi->GetItemLabel();
+      const wxString& miHelpStr = mi->GetHelp();
       M->Append(miId, miText, nm, miHelpStr);
     }
-    else  {
+    else {
       int miId = mi->GetId();
       wxItemKind miKind = mi->GetKind();
-      const wxString &miText = mi->GetItemLabel();
-      const wxString &miHelpStr = mi->GetHelp();
-      wxMenuItem *nmi = new wxMenuItem(M, miId, miText, miHelpStr, miKind);
+      const wxString& miText = mi->GetItemLabel();
+      const wxString& miHelpStr = mi->GetHelp();
+      wxMenuItem* nmi = new wxMenuItem(M, miId, miText, miHelpStr, miKind);
       M->Append(nmi);
     }
   }
   return M;
 }
 //..............................................................................
-void TMenu::Clear()  {
+void TMenu::Clear() {
   TPtrList<wxMenuItem> menues;
   const size_t count = GetMenuItemCount();
-  menues.SetCapacity(count+1);
-  for( size_t i=0; i < count; i++ )
+  menues.SetCapacity(count + 1);
+  for (size_t i = 0; i < count; i++)
     menues.Add(FindItemByPosition(i));
-  for( size_t i=0; i < count; i++ )
+  for (size_t i = 0; i < count; i++) {
     Destroy(menues[i]);
+  }
 }
+//..............................................................................
+wxMenu* TMenu::CreateMenu(const olxstr& def, int first_id, wxMenu *menu) {
+  TStrList items(def, ';');
+  if (items.IsEmpty()) {
+    return 0;
+  }
+  olx_object_ptr<wxMenu> menu_;
+  if (menu == 0) {
+    menu_ = menu = new wxMenu();
+  }
+  olx_object_ptr<MenuData> data = new MenuData();
+  for (size_t i = 0; i < items.Count(); i++) {
+    if (items[i] == '#') {
+      menu->AppendSeparator();
+    }
+    size_t idx = items[i].IndexOf("<-");
+    if (idx == InvalidIndex) {
+      continue;
+    }
+    wxMenuItem* mi = menu->Append(first_id + i, items[i].SubStringTo(idx).u_str());
+    data->macros(first_id + i, items[i].SubStringFrom(idx + 2));
+  }
+  menu->SetClientObject(data.release());
+  menu_.release(); // if created
+  return menu;
+}
+
 //----------------------------------------------------------------------------//
 // TMenuItem implementation
 //----------------------------------------------------------------------------//

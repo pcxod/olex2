@@ -52,10 +52,6 @@ namespace ctrl_ext  {
       const olxstr& label) const;
     wxTreeItemId _FindByData(const wxTreeItemId& root,
       const olxstr& data) const;
-    class MenuData : public wxClientData {
-    public:
-      olx_pdict<int, olxstr> macros;
-    };
   public:
     TTreeView(wxWindow* Parent, wxWindowID id = -1,
       const wxPoint& pos = wxDefaultPosition,
