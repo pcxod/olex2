@@ -37,7 +37,7 @@ namespace ctrl_ext {
     * if a menu is given - items appended to is, otherwise a new menu is created.
     * Menu's GetClientObject wil return MenuData to access the macros
     */
-    static wxMenu* TMenu::CreateMenu(const olxstr& def,
+    static wxMenu* CreateMenu(const olxstr& def,
       int first_id=0, wxMenu *menu=0);
     DECLARE_CLASS(TMenu);
   };
