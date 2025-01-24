@@ -21,12 +21,12 @@ protected:
   TBasicException(const TBasicException& toReplicate) {
     this->Message = toReplicate.Message;
     this->Location = toReplicate.Location;
-    this->Cause = toReplicate.Cause != NULL
+    this->Cause = toReplicate.Cause != 0
       ? static_cast<TBasicException *>(toReplicate.Cause->Replicate())
-      : NULL;
+      : 0;
   }
 public:
-  TBasicException() : Cause(NULL) {}
+  TBasicException() : Cause(0) {}
 
   TBasicException(const olxstr& location, const TExceptionBase& cause,
     const olxstr& msg=EmptyString())
@@ -42,20 +42,20 @@ public:
   {}
 
   TBasicException(const olxstr& location, const olxstr& Msg)
-    : Message(Msg), Location(location), Cause(NULL)
+    : Message(Msg), Location(location), Cause(0)
   {}
 
   virtual ~TBasicException();
   const olxstr& GetError() const { return Message; }
   const olxstr& GetLocation() const { return Location; }
   TBasicException* GetCause() const { return Cause; }
-  virtual const char* GetNiceName() const { return NULL; }
+  virtual const char* GetNiceName() const { return 0; }
   // traces back to the original cause
   TBasicException* GetSource() const;
   virtual IOlxObject* Replicate() const = 0;
   template <class List> List& GetStackTrace(List& output) const {
     TBasicException const* cause = this;
-    while( cause != NULL )  {
+    while (cause != 0) {
       output.Add(cause->GetFullMessage());
       cause = cause->GetCause();
     }
@@ -83,9 +83,10 @@ public:
   static void ValidateRange(const char* file, const char* function, int line,
     size_t index, size_t min, size_t max)
   {
-    if( index < min || index >= max )
+    if (index < min || index >= max) {
       throw TIndexOutOfRangeException(
-      TExceptionBase::FormatSrc(file, function, line), index, min, max);
+        TExceptionBase::FormatSrc(file, function, line), index, min, max);
+    }
   }
 
   size_t GetIndex() const { return Index; }
@@ -283,6 +284,24 @@ public:
     return new TOutOfMemoryException(*this);
   }
 };
+
+//checks if the index within bounds
+#define OLX_VALIDATE_RANGE(index, min_index, max_index) \
+  if((index) < min_index || (index) >= max_index) \
+    throw TIndexOutOfRangeException(__OlxSourceInfo, index, min_index, max_index);
+
+//checks if the range [index, index+count) within bounds
+#define OLX_VALIDATE_SUBRANGE(index, count, min_index, max_index) \
+  if((index) < min_index || (index) >= max_index) \
+    throw TIndexOutOfRangeException(__OlxSourceInfo, index, min_index, max_index);\
+  if (((index)+count) >= max_index) \
+    throw TIndexOutOfRangeException(__OlxSourceInfo, index+count, min_index, max_index);
+
+#define OLX_VALIDATE_CONTAINER_RANGE(index, container) \
+  OLX_VALIDATE_CONTAINER_RANGE(index, 0, container.Count());
+
+#define OLX_VALIDATE_CONTAINER_SUBRANGE(index, count, container) \
+  OLX_VALIDATE_CONTAINER_SUBRANGE(index, count, 0, container.Count());
 
 EndEsdlNamespace()
 #endif

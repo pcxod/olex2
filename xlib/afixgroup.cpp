@@ -42,22 +42,41 @@ const olxstr TAfixGroup::n_names[] = {
   "as rotating group with stretchable bonds",
   "as free rotating sizeable group",
 };
+//..............................................................................
+TAfixGroup::~TAfixGroup() {
+  for (size_t i = 0; i < Dependent.Count(); i++) {
+    Dependent[i]->SetParentAfixGroup(0);
+  }
+  Dependent.Clear();
+  if (Pivot == 0) {
+    return;
+  }
+  if (HasExcplicitPivot() || IsUnbound()) {
+    Pivot->SetDependentAfixGroup(0);
+  }
+  // might happen at several places
+  else if (Pivot->DependentHfixGroupCount() != 0) {
+    Pivot->RemoveDependentHfixGroup(*this);
+  }
+}
 void TAfixGroup::Clear()  {  Parent.Delete(Id);  }
 //..............................................................................
-void TAfixGroup::Assign(const TAfixGroup& ag)  {
+void TAfixGroup::Assign(const TAfixGroup& ag) {
   D = ag.D;
   Sof = ag.Sof;
   U = ag.U;
   Afix = ag.Afix;
 
   Pivot = Parent.RM.aunit.FindCAtomById(ag.Pivot->GetId());
-  if( Pivot == NULL )
+  if (Pivot == 0) {
     throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
+  }
   SetPivot(*Pivot);
-  for( size_t i=0; i < ag.Dependent.Count(); i++ )  {
+  for (size_t i = 0; i < ag.Dependent.Count(); i++) {
     Dependent.Add(Parent.RM.aunit.FindCAtomById(ag.Dependent[i]->GetId()));
-    if( Dependent.GetLast() == NULL )
+    if (Dependent.GetLast() == 0) {
       throw TFunctionFailedException(__OlxSourceInfo, "asymmetric units mismatch");
+    }
     Dependent.GetLast()->SetParentAfixGroup(this);
   }
 }
@@ -128,12 +147,15 @@ void TAfixGroup::FromDataItem(TDataItem& item) {
 //..............................................................................
 olxstr TAfixGroup::Describe() const {
   const int n = GetN(), m = GetM();
-  if( n >= 9 || m >= 16 )
+  if (n >= 9 || m >= 16) {
     return EmptyString();
-  if( n == 0 )
+  }
+  if (n == 0) {
     return m_names[m];
-  if( m == 0 )
-    return n_names[n].SubStringFrom(n_names[n].FirstIndexOf(' ')+1);
+  }
+  if (m == 0) {
+    return n_names[n].SubStringFrom(n_names[n].FirstIndexOf(' ') + 1);
+  }
   return olxstr(m_names[m]) << " refined " << n_names[n];
 }
 //..............................................................................
@@ -141,13 +163,17 @@ TIString TAfixGroup::ToString() const {
   olxstr rv;
   rv << Pivot->GetLabel() << '(';
   size_t dep_cnt = 0;
-  for( size_t i=0; i < Dependent.Count(); i++ )  {
-    if( Dependent[i]->IsDeleted() )  continue;
+  for (size_t i = 0; i < Dependent.Count(); i++) {
+    if (Dependent[i]->IsDeleted()) {
+      continue;
+    }
     rv << Dependent[i]->GetLabel() << ',';
     dep_cnt++;
   }
-  if (dep_cnt == 0) return Pivot->GetLabel();
-  rv.SetLength(rv.Length()-1);  // remove trailing ','
+  if (dep_cnt == 0) {
+    return Pivot->GetLabel();
+  }
+  rv.SetLength(rv.Length() - 1);  // remove trailing ','
   rv << ')';
   //item.AddField("d", D);
   //item.AddField("u", U);
@@ -155,33 +181,60 @@ TIString TAfixGroup::ToString() const {
 }
 //..............................................................................
 bool TAfixGroup::IsEmpty() const {
-  if( Pivot == NULL || Pivot->IsDeleted() )  return true;
-  size_t dep_cnt = 0;
-  for( size_t i=0; i < Dependent.Count(); i++ )  {
-    if( !Dependent[i]->IsDeleted() )
-      dep_cnt++;
-  }
-  if( IsFixedGroup() && dep_cnt != Dependent.Count() )
+  if (Pivot == 0 || Pivot->IsDeleted()) {
     return true;
-  if (Afix == 1 || Afix == 2) return false;
+  }
+  size_t dep_cnt = 0;
+  for (size_t i = 0; i < Dependent.Count(); i++) {
+    if (!Dependent[i]->IsDeleted()) {
+      dep_cnt++;
+    }
+  }
+  if (IsFixedGroup() && dep_cnt != Dependent.Count()) {
+    return true;
+  }
+  if (Afix == 1 || Afix == 2) {
+    return false;
+  }
   return dep_cnt == 0;
 }
 //..............................................................................
 void TAfixGroup::Sort() {
-  if (IsFittedRing()) return;
+  if (IsFittedRing()) {
+    return;
+  }
   QuickSorter::Sort(Dependent,
     ComplexComparator::Make(
-      FunctionAccessor::MakeConst((index_t (TCAtom::*)() const)&TCAtom::GetTag),
+      FunctionAccessor::MakeConst((index_t(TCAtom::*)() const) & TCAtom::GetTag),
       TPrimitiveComparator())
-    );
+  );
+}
+//..............................................................................
+bool TAfixGroup::IsUsable() const {
+  if (Pivot != 0) {
+    if (Pivot->IsDeleted()) {
+      return false;
+    }
+    if (Pivot->AreAllFixed(catom_var_name_X, 3)) {
+      if (!IsRotating() && !IsSizable()) {
+        return false;
+      }
+    }
+  }
+  for (size_t i = 0; i < Dependent.Count(); i++) {
+    if (!Dependent[i]->IsDeleted() && Dependent[i]->AreAllFixed(catom_var_name_X, 3)) {
+      return false;
+    }
+  }
+  return true;
 }
 //..............................................................................
 //..............................................................................
 //..............................................................................
 void TAfixGroups::ToDataItem(TDataItem& item) {
   int group_id = 0;
-  for( size_t i=0; i < Groups.Count(); i++ )  {
-    if( Groups[i].IsEmpty() )  {
+  for (size_t i = 0; i < Groups.Count(); i++) {
+    if (Groups[i].IsEmpty()) {
       Groups.NullItem(i);
       continue;
     }
@@ -189,14 +242,15 @@ void TAfixGroups::ToDataItem(TDataItem& item) {
   }
   Groups.Pack();
   item.AddField("n", Groups.Count());
-  for( size_t i=0; i < Groups.Count(); i++ )
+  for (size_t i = 0; i < Groups.Count(); i++) {
     Groups[i].ToDataItem(item.AddItem("group"));
+  }
 }
 //..............................................................................
 #ifdef _PYTHON
-PyObject* TAfixGroups::PyExport(TPtrList<PyObject>& atoms)  {
+PyObject* TAfixGroups::PyExport(TPtrList<PyObject>& atoms) {
   int group_id = 0;
-  for (size_t i=0; i < Groups.Count(); i++) {
+  for (size_t i = 0; i < Groups.Count(); i++) {
     if (Groups[i].IsEmpty()) {
       Groups.NullItem(i);
       continue;
@@ -205,9 +259,10 @@ PyObject* TAfixGroups::PyExport(TPtrList<PyObject>& atoms)  {
   }
   Groups.Pack();
 
-  PyObject* main = PyTuple_New( Groups.Count() );
-  for (size_t i=0; i < Groups.Count(); i++)
+  PyObject* main = PyTuple_New(Groups.Count());
+  for (size_t i = 0; i < Groups.Count(); i++) {
     PyTuple_SetItem(main, i, Groups[i].PyExport(atoms));
+  }
   return main;
 }
 #endif
@@ -215,9 +270,10 @@ PyObject* TAfixGroups::PyExport(TPtrList<PyObject>& atoms)  {
 void TAfixGroups::FromDataItem(TDataItem& item) {
   Clear();
   size_t n = item.GetFieldByName("n").ToSizeT();
-  if( n != item.ItemCount() )
+  if (n != item.ItemCount()) {
     throw TFunctionFailedException(__OlxSourceInfo, "number of items mismatch");
-  for( size_t i=0; i < n; i++ )  {
+  }
+  for (size_t i = 0; i < n; i++) {
     Groups.Add(new TAfixGroup(*this)).SetId(i);
     Groups.GetLast().FromDataItem(item.GetItemByIndex(i));
   }
@@ -233,13 +289,13 @@ void TAfixGroups::Release(TAfixGroup& ag)  {
     Groups[i].SetId((uint16_t)i);
 }
 //.............................................................................
-void TAfixGroups::Restore(TAfixGroup& ag)  {
+void TAfixGroups::Restore(TAfixGroup& ag) {
   if (&ag.GetParent() != this) {
     throw TInvalidArgumentException(__OlxSourceInfo,
       "AFIX group parent differs");
   }
   Groups.Add(ag);
-  ag.SetId((uint16_t)(Groups.Count()-1));
+  ag.SetId((uint16_t)(Groups.Count() - 1));
 }
 //.............................................................................
 void TAfixGroups::SortGroupContent() {

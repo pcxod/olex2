@@ -553,15 +553,14 @@ void XLibMacros::Export(TLibrary& lib)  {
     (fpAny^fpNone)|psCheckFileTypeIns,
     "Sets atoms AFIX, special cases are 56,69,66,69,76,79,106,109,116 and "
     "119");
+  xlib_InitMacro(UpdateAfix,
+    EmptyString(),
+    psFileLoaded|(fpAny^fpNone),
+    "Sets AFIX distance according to definition in the given file(s)");
   xlib_InitMacro(RefineHDist,
     EmptyString(),
     (fpNone) | psCheckFileTypeIns,
     "Sets atoms AFIX m3 to m4 and m7 to m8");
-  xlib_InitMacro(NeutronHDist,
-    EmptyString(),
-    (fpNone) | psCheckFileTypeIns,
-    "Sets atoms AFIX m3 and m7 to an increased neutron-like distances"
-    "from Allen and Bruno, Acta Cryst., 2010, B66, 380-386.");
   xlib_InitMacro(Dfix,
     "i-[false] places implicit restraint&;"
     "cs-do not clear selection&;"
@@ -9066,6 +9065,96 @@ void XLibMacros::macAfix(TStrObjList &Cmds, const TParamList &Options,
     }
   }
 }
+//.............................................................................
+void XLibMacros::macUpdateAfix(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& E)
+{
+  TXApp& app = TXApp::GetInstance();
+  RefinementModel& rm = app.XFile().GetRM();
+
+  olx_pdict<uint16_t, double> def;
+  for (size_t i = 0; i < Cmds.Count(); i++) {
+    if (!TEFile::Exists(Cmds[i])) {
+      continue;
+    }
+    TStrList lines = TEFile::ReadLines(Cmds[i]);
+    if (!lines.IsEmpty() && lines[0].StartsFrom('#')) {
+      TBasicApp::NewLogEntry() << lines[0].SubStringFrom(1);
+    }
+    for (size_t i = 1; i < lines.Count(); i++) {
+      olxstr l = lines[i].TrimWhiteChars();
+      if (l.IsEmpty() || l.StartsFrom('#')) {
+        continue;
+      }
+      TStrList toks(l, ' ');
+      if (toks.Count() < 2) {
+        continue;
+      }
+      if (toks.Count() == 2) { // no AFIX_m
+        def.Add(toks[0].ToUInt() << 8 | 0xFF, toks[1].ToDouble(), true);
+      }
+      else {
+        uint16_t z = toks[0].ToUInt() << 8;
+        double d = toks.GetLastString().ToDouble();
+        for (size_t mc = 0; mc < toks.Count() - 2; mc++) {
+          def.Add(z | toks[mc+1].ToUInt(), d, true);
+        }
+      }
+    }
+  }
+  if (def.IsEmpty()) {
+    TBasicApp::NewLogEntry(logInfo) << "UpdateAfix: nothing to do!";
+    return;
+  }
+
+  TSAtomPList Atoms = app.FindSAtoms(TStrList(), true, !Options.GetBoolOption("cs"));
+  olxset<TAfixGroup*, TPointerComparator> groups;
+  for (size_t ai = 0; ai < Atoms.Count(); ai++) {
+    TAfixGroup* ag = Atoms[ai]->CAtom().GetParentAfixGroup();
+    if (ag != 0) {
+      groups.Add(ag);
+    }
+  }
+  TAsymmUnit& au = app.XFile().GetAsymmUnit();
+  au.GetAtoms().ForEach(ACollectionItem::TagSetter(0));
+
+  for (size_t group = 0; group < groups.Count(); group++) {
+    TAfixGroup& ag = *groups.Get(group);
+    int n = rm.AfixGroups[group].GetN();
+    if (n != 3 && n != 7) {
+      continue;
+    }
+    TCAtom& pivot = ag.GetPivot();
+    int m = rm.AfixGroups[group].GetM();
+    double d = def.Find(pivot.GetType().z << 8 | m, -1);
+    if (d < 0) { // fall back to no AFIX_m
+      d = def.Find(pivot.GetType().z << 8 | 0xFF, -1);
+    }
+    if (d < 0) {
+      continue;
+    }
+    ag.SetD(d);
+    vec3d pc = au.Orthogonalise(pivot.ccrd());
+    for (size_t ai = 0; ai < ag.Count(); ai++) {
+      vec3d v = au.Orthogonalise(ag[ai].ccrd()) - pc;
+      v.NormaliseTo(d);
+      ag[ai].ccrd() = au.Fractionalise(pc + v);
+      ag[ai].SetTag(1); // mark as modified
+    }
+  }
+
+  TLattice& latt = app.XFile().GetLattice();
+  for (size_t i = 0; i < latt.GetObjects().atoms.Count(); i++) {
+    TSAtom& a = latt.GetObjects().atoms[i];
+    if (a.CAtom().GetTag() != 1) {
+      continue;
+    }
+    a.ccrd() = a.GetMatrix() * a.CAtom().ccrd();
+    a.crd() = au.Orthogonalise(a.ccrd());
+  }
+  latt.UpdateConnectivity();
+}
+//.............................................................................
 void XLibMacros::macRefineHDist(TStrObjList& Cmds, const TParamList& Options,
     TMacroData& E)
 {
@@ -9096,102 +9185,6 @@ void XLibMacros::macRefineHDist(TStrObjList& Cmds, const TParamList& Options,
     int new_afix = m * 10 + n + 1;
     rm.AfixGroups[group].SetAfix(new_afix);
   }
-}
-void XLibMacros::macNeutronHDist(TStrObjList& Cmds, const TParamList& Options,
-    TMacroData& E)
-{
-  TXApp& app = TXApp::GetInstance();
-  TSAtomPList Atoms = app.FindSAtoms(Cmds, true, !Options.GetBoolOption("cs"));
-  olxset<TAfixGroup*, TPointerComparator> groups;
-  olx_pset<int> to_modify;
-  int to_modify_arr[] = {1, 2, 3, 12, 13, 4, 9, 16, 8, 14};
-  to_modify.AddAll(
-    olx_as_list(&to_modify_arr[0], sizeof(to_modify_arr) / sizeof(to_modify_arr[0])));
-  TAsymmUnit& au = app.XFile().GetAsymmUnit();
-  au.GetAtoms().ForEach(ACollectionItem::TagSetter(0));
-
-  for (size_t ai = 0; ai < Atoms.Count(); ai++) {
-    TAfixGroup* ag = Atoms[ai]->CAtom().GetParentAfixGroup();
-    if (ag != 0) {
-      groups.Add(ag);
-    }
-  }
-  for (size_t gi = 0; gi < groups.Count(); gi++) {
-    TAfixGroup& ag = *groups[gi];
-    int n = ag.GetN();
-    if (n != 3 && n != 7) {
-      continue;
-    }
-    int m = ag.GetM();
-    if (!to_modify.Contains(m)) {
-      continue;
-    }
-    double d = 1.1;
-    const int charge = ag.GetPivot().GetType().z;
-    if (charge == 5)
-      //BH (terminal)
-      d = 1.185;
-    else if (charge == 6) {
-      if (m == 1)
-        //Z3-Csp3-H
-        d = 1.083;
-      else if(m == 2)
-        //Z2-Csp3-H2
-        d = 1.091;
-      else if(m == 3 || m == 12 || m == 13)
-        //Z-Csp3-H3
-        d = 1.077;
-      else if (m == 4)
-        //aromatic carbon
-        d = 1.083;
-      else if (m == 9)
-        //ending CH2
-        d = 1.082;
-      else if(m == 16)
-        //C-Csp1-H
-        d = 1.042;
-    }
-    else if (charge == 8) {
-      if (m == 8 || m == 14)
-        // Z-OH
-        d = 0.983;
-    }
-    else if (charge == 7) {
-      if (m == 4)
-        //Z2-NH
-        d = 1.027;
-      if (m == 9)
-        //C(ar)-NH2
-        d = 1.011;
-      if (m == 13)
-        //N+-H
-        d = 1.036;
-    }
-    else if (charge == 16)
-      //SH
-      d = 1.338;
-    else if (charge == 14)
-      //SiH
-      d = 1.506;
-    ag.SetD(d);
-    vec3d pc = au.Orthogonalise(ag.GetPivot().ccrd());
-    for (size_t ai = 0; ai < ag.Count(); ai++) {
-      vec3d v = au.Orthogonalise(ag[ai].ccrd()) - pc;
-      v.NormaliseTo(d);
-      ag[ai].ccrd() = au.Fractionalise(pc + v);
-      ag[ai].SetTag(1); // mark as modified
-    }
-  }
-  TLattice& latt = app.XFile().GetLattice();
-  for (size_t i = 0; i < latt.GetObjects().atoms.Count(); i++) {
-    TSAtom& a = latt.GetObjects().atoms[i];
-    if (a.CAtom().GetTag() != 1) {
-      continue;
-    }
-    a.ccrd() = a.GetMatrix() * a.CAtom().ccrd();
-    a.crd() = au.Orthogonalise(a.ccrd());
-  }
-  latt.UpdateConnectivity();
 }
 //.............................................................................
 bool XLibMacros::ParseResParam(TStrObjList& Cmds, double& esd, double* len,

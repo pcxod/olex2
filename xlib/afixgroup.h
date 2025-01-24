@@ -23,33 +23,28 @@ class TAfixGroup : public ACollectionItem {
   static const olxstr n_names[], m_names[];
 public:
   TAfixGroup(TAfixGroups& parent)
-    : Parent(parent), D(0), Sof(0), U(0) {}
+    : Parent(parent), D(0), Sof(0), U(0)
+  {}
   TAfixGroup(TAfixGroups& parent, size_t id, TCAtom* pivot,
     int afix, double d = 0, double sof = 0, double u = 0)
     : Parent(parent), Id(id), Pivot(pivot), D(d), Sof(sof), U(u), Afix(afix)
   {
-    if( pivot != NULL )  {
-      if( HasExcplicitPivot() || IsUnbound() )
+    if (pivot != 0) {
+      if (HasExcplicitPivot() || IsUnbound()) {
         pivot->SetDependentAfixGroup(this);
-      else
+      }
+      else {
         pivot->AddDependentHfixGroup(*this);
+      }
     }
   }
-  TAfixGroup(TAfixGroups& parent, const TAfixGroup& ag) : Parent(parent) {
+  TAfixGroup(TAfixGroups& parent, const TAfixGroup& ag)
+    : Parent(parent)
+  {
     Assign(ag);
   }
   // note that Clear just removes the item from the parent list, calling this
-  ~TAfixGroup()  {
-    for( size_t i=0; i < Dependent.Count(); i++ )
-      Dependent[i]->SetParentAfixGroup(NULL);
-    Dependent.Clear();
-    if( Pivot == NULL )  return;
-    if( HasExcplicitPivot() || IsUnbound() )
-      Pivot->SetDependentAfixGroup(NULL);
-    // might happen at several places
-    else if( Pivot->DependentHfixGroupCount() != 0 )
-      Pivot->RemoveDependentHfixGroup(*this);
-  }
+  ~TAfixGroup();
   const TAfixGroups &GetParent() const { return Parent; }
   TAfixGroups &GetParent() { return Parent; }
   DefPropP(double, D)
@@ -57,15 +52,27 @@ public:
   DefPropP(double, U)
   DefPropP(size_t, Id)
   void Assign(const TAfixGroup& ag);
-  TCAtom& GetPivot() {  return *Pivot;  }
+  TCAtom& GetPivot() {  
+    if (Pivot == 0) {
+      throw TFunctionFailedException(__OlxSourceInfo, "null pivot");
+    }
+    return *Pivot;
+  }
   void SetPivot(TCAtom& ca)  {
     Pivot = &ca;
-    if( HasExcplicitPivot() || IsUnbound() )
+    if (HasExcplicitPivot() || IsUnbound()) {
       Pivot->SetDependentAfixGroup(this);
-    else
+    }
+    else {
       Pivot->AddDependentHfixGroup(*this);
+    }
   }
-  const TCAtom& GetPivot() const {  return *Pivot;  }
+  const TCAtom& GetPivot() const {
+    if (Pivot == 0) {
+      throw TFunctionFailedException(__OlxSourceInfo, "null pivot");
+    }
+    return *Pivot;
+  }
   int GetM() const {  return GetM(Afix);  }
   int GetN() const {  return GetN(Afix);  }
   bool IsSizable() const {  return IsSizable(Afix);  }
@@ -145,25 +152,28 @@ public:
   }
   TCAtom& AddDependent(TCAtom& a) {
     Dependent.Add(&a);
-    if (a.GetParentAfixGroup() != NULL)
+    if (a.GetParentAfixGroup() != 0)
       a.GetParentAfixGroup()->RemoveDependent(a);
     a.SetParentAfixGroup(this);
     return a;
   }
   TCAtom& RemoveDependent(TCAtom& a)  {
     Dependent.Remove(&a);
-    a.SetParentAfixGroup(NULL);
+    a.SetParentAfixGroup(0);
     return a;
   }
   int GetAfix() const {  return Afix;  }
   void SetAfix(int a)  {
-    if( a == 0 )
+    if (a == 0) {
       Clear();
+    }
     Afix = a;
   }
   void Clear();
   void Sort();
   bool IsEmpty() const;
+  // checks if this can be used in the refinement - e.g. not al atoms are fixed
+  bool IsUsable() const;
   size_t Count() const {  return Dependent.Count();  }
   TCAtom& operator [] (size_t i) const {  return *Dependent[i];  }
   // describes current group (just the AFIX)
@@ -183,8 +193,8 @@ class TAfixGroups {
 public:
   class RefinementModel& RM;
   TAfixGroups(RefinementModel& parent) : RM(parent) {}
-  TAfixGroup& New(TCAtom* pivot, int Afix, double d = 0, double sof = 0,
-    double u = 0 )
+  TAfixGroup& New(TCAtom* pivot, int Afix, double d=0, double sof=0,
+    double u = 0)
   {
     return Groups.Add(
       new TAfixGroup(*this, Groups.Count(), pivot, Afix, d, sof, u));
@@ -195,8 +205,9 @@ public:
   void Clear() {  Groups.Clear();  }
   void Delete(size_t i)  {
     Groups.Delete(i);
-    for (size_t j=i; j < Groups.Count(); j++)
+    for (size_t j = i; j < Groups.Count(); j++) {
       Groups[j].SetId(j);
+    }
   }
   void Assign(const TAfixGroups& ags) {
     Clear();
@@ -209,8 +220,9 @@ public:
   }
   void ValidateAll() {
     for (size_t i = 0; i < Groups.Count(); i++) {
-      if (Groups[i].IsEmpty())
+      if (Groups[i].IsEmpty()) {
         Groups.NullItem(i);
+      }
     }
     Groups.Pack();
     for (size_t i = 0; i < Groups.Count(); i++) {

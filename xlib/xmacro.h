@@ -129,8 +129,8 @@ public:
   static DefMacro(Fvar)
   static DefMacro(Sump)
   static DefMacro(Afix)
+  static DefMacro(UpdateAfix)
   static DefMacro(RefineHDist)
-  static DefMacro(NeutronHDist)
   static DefMacro(Part)
   static DefMacro(Spec)
 
