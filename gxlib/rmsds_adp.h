@@ -14,6 +14,9 @@
 #include "glutil.h"
 BeginGxlNamespace()
 
+/* R/MSD reference
+* W. HUMMEL, A. RASELLI AND H.-B. BURGI. Acta Cryst. (1990). B46, 683-692
+*/
 class TRMDSADP : public AGDrawObject {
 public:
   enum {

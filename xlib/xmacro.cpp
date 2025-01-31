@@ -162,7 +162,10 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(Flush, EmptyString(), fpNone|fpOne, "Flushes log streams");
 //_____________________________________________________________________________
   xlib_InitMacro(EXYZ,
-    "eadp-does not set the equivalent ADP constraint for the shared site",
+    "eadp-does not set the equivalent ADP constraint for the shared site&;"
+    "p-starting part to assign&;"
+    "a-just add, do not link ocupancies or set parts when more that 1 atom is given"
+    ,
     fpAny|psCheckFileTypeIns,
     "Adds a new element to the given/selected site. Takes one selected atom "
     "and element types as any subsequent argument. Alternatively can take a "
@@ -1846,6 +1849,8 @@ void XLibMacros::macHtab(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
+  lat.UpdateConnectivityInfo();
+
   if (Options.GetBoolOption('g') && !transforms.IsEmpty()) {
     TLattice& xlatt = TXApp::GetInstance().XFile().GetLattice();
     const TUnitCell& uc = xlatt.GetUnitCell();
@@ -3703,8 +3708,9 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
       return;
     }
     for (size_t i=0; i < atoms.Count(); i++) {
-      if (atoms[i]->CAtom().GetExyzGroup() != NULL)
+      if (atoms[i]->CAtom().GetExyzGroup() != 0) {
         atoms[i]->CAtom().GetExyzGroup()->Clear();
+      }
       groups.Add(rm.ExyzGroups.New())->Add(atoms[i]->CAtom());
       for (size_t j=0; j < elements.Count(); j++) {
         TCAtom& ca = au.NewAtom();
@@ -3728,42 +3734,44 @@ void XLibMacros::macEXYZ(TStrObjList &Cmds, const TParamList &Options,
       break;
     }
   }
-  if (groups_equal && group0_sz > 1) {
-    if (group0_sz == 2) {
-      XVar& vr = rm.Vars.NewVar();
-      for (size_t i=0; i < groups.Count(); i++) {
-        double k = 1.0 / (*groups[i])[0].GetDegeneracy();
+  if (!Options.GetBoolOption('a')) {
+    if (groups_equal && group0_sz > 1) {
+      if (group0_sz == 2) {
+        XVar& vr = rm.Vars.NewVar();
+        for (size_t i = 0; i < groups.Count(); i++) {
+          double k = 1.0 / (*groups[i])[0].GetDegeneracy();
           rm.Vars.AddVarRef(vr,
-          (*groups[i])[0], catom_var_name_Sof, relation_AsVar, k);
-        rm.Vars.AddVarRef(vr,
-          (*groups[i])[1], catom_var_name_Sof, relation_AsOneMinusVar, k);
+            (*groups[i])[0], catom_var_name_Sof, relation_AsVar, k);
+          rm.Vars.AddVarRef(vr,
+            (*groups[i])[1], catom_var_name_Sof, relation_AsOneMinusVar, k);
+        }
       }
-    }
-    else {
-      XLEQ &leq = rm.Vars.NewEquation();
-      for (size_t i=0; i < group0_sz; i++) {
-        XVar& vr = rm.Vars.NewVar(1./group0_sz);
-        leq.AddMember(vr);
-        for (size_t j=0; j < groups.Count(); j++) {
-          rm.Vars.AddVarRef(vr,
-            (*groups[j])[i], catom_var_name_Sof, relation_AsVar,
-            1.0/ (*groups[j])[i].GetDegeneracy());
+      else {
+        XLEQ& leq = rm.Vars.NewEquation();
+        for (size_t i = 0; i < group0_sz; i++) {
+          XVar& vr = rm.Vars.NewVar(1. / group0_sz);
+          leq.AddMember(vr);
+          for (size_t j = 0; j < groups.Count(); j++) {
+            rm.Vars.AddVarRef(vr,
+              (*groups[j])[i], catom_var_name_Sof, relation_AsVar,
+              1.0 / (*groups[j])[i].GetDegeneracy());
+          }
+        }
+      }
+      if (set_eadp) {
+        for (size_t i = 0; i < groups.Count(); i++) {
+          TSimpleRestraint& sr = rm.rEADP.AddNew();
+          for (size_t j = 0; j < groups[i]->Count(); j++) {
+            sr.AddAtom((*groups[i])[j], 0);
+          }
         }
       }
     }
-    if (set_eadp) {
-      for (size_t i=0; i < groups.Count(); i++) {
-        TSimpleRestraint& sr = rm.rEADP.AddNew();
-        for (size_t j = 0; j < groups[i]->Count(); j++) {
-          sr.AddAtom((*groups[i])[j], 0);
-        }
+    const int part = Options.FindValue('p', au.GetNextPart()).ToInt();
+    for (size_t i = 0; i < groups.Count(); i++) {
+      for (size_t j = 0; j < groups[i]->Count(); j++) {
+        (*groups[i])[j].SetPart((int8_t)(part + j));
       }
-    }
-  }
-  const int part = au.GetNextPart();
-  for (size_t i=0; i < groups.Count(); i++) {
-    for (size_t j = 0; j < groups[i]->Count(); j++) {
-      (*groups[i])[j].SetPart((int8_t)(part + j));
     }
   }
   // force the split atom to become isotropic
