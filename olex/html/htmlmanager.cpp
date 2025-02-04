@@ -1297,6 +1297,7 @@ void THtmlManager::funSnippet(const TStrObjList &Params,
       values.Add(pn, vl);
     }
   }
+  THtml::CyclicReduce(values);
   for (size_t i=data_start; i < lines.Count(); i++) {
     bool remove=false;
     int replaces=0;
@@ -1321,8 +1322,9 @@ void THtmlManager::funSnippet(const TStrObjList &Params,
           replaces++;
           remove = false;
         }
-        if (replaces == 0)
+        if (replaces == 0) {
           remove = true;
+        }
       }
     }
     if (remove) {

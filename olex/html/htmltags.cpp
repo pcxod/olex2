@@ -1247,7 +1247,7 @@ TAG_HANDLER_PROC(tag) {
       st = i + 1;
     }
   }
-
+  THtml::CyclicReduce(values);
   for (size_t i = data_start; i < lines.Count(); i++) {
     bool remove = false;
     int replaces = 0;
@@ -1272,8 +1272,9 @@ TAG_HANDLER_PROC(tag) {
           replaces++;
           remove = false;
         }
-        if (replaces == 0)
+        if (replaces == 0) {
           remove = true;
+        }
       }
     }
     if (remove) {
