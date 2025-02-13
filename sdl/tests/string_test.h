@@ -25,9 +25,12 @@ void ReplaceTest(OlxTests& t)  {
   a = "abcwwwbcawww";
   if( a.DeleteStrings("www") != "abcbca" )
     throw TFunctionFailedException(__OlxSourceInfo, EmptyString());
-  if( a.DeleteChars('a') != "bcbc" )
+  a = "abcawwwbcawww";
+  if (a.DeleteStrings("ca") != "abwwwbwww")
     throw TFunctionFailedException(__OlxSourceInfo, EmptyString());
-  if( a.DeleteCharSet("abc") != "" )
+  if( a.DeleteChars('a') != "bwwwbwww" )
+    throw TFunctionFailedException(__OlxSourceInfo, EmptyString());
+  if( a.DeleteCharSet("bw") != "" )
     throw TFunctionFailedException(__OlxSourceInfo, EmptyString());
 }
 

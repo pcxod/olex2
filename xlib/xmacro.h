@@ -19,8 +19,8 @@
 //simply a macro registry
 class XLibMacros : public IOlxObject {
 protected:
-  static bool ParseResParam(TStrObjList &Cmds, double& esd, double* len=NULL,
-    double* len1=NULL, double* ang=NULL);
+  static bool ParseResParam(TStrObjList &Cmds, double& esd, double* len=0,
+    double* len1=0, double* ang=0);
   struct MacroInput {
     ConstPtrList<TSAtom> atoms;
     ConstPtrList<TSBond> bonds;
@@ -129,8 +129,8 @@ public:
   static DefMacro(Fvar)
   static DefMacro(Sump)
   static DefMacro(Afix)
+  static DefMacro(UpdateAfix)
   static DefMacro(RefineHDist)
-  static DefMacro(NeutronHDist)
   static DefMacro(Part)
   static DefMacro(Spec)
 
@@ -239,27 +239,27 @@ public:
   */
   template <class list>
   static size_t Parse(list& Cmds, const char* format, ...) {
-    size_t cnt=0;
+    size_t cnt = 0;
     va_list argptr;
     va_start(argptr, format);
-    try  {
+    try {
       const size_t len = olxstr::o_strlen(format);
-      for( size_t i=0, j=0; i < len; i++, j++ )  {
+      for (size_t i = 0, j = 0; i < len; i++, j++) {
         while (j < Cmds.Count() && !Cmds[j].IsNumber())
           j++;
-        if (j>=Cmds.Count()) break;
-        if( format[i] == 'v' )  {
-          if( len < (i+1) || Cmds.Count() < (j+3) ) {
+        if (j >= Cmds.Count()) break;
+        if (format[i] == 'v') {
+          if (len < (i + 1) || Cmds.Count() < (j + 3)) {
             throw TInvalidArgumentException(__OlxSourceInfo,
               "invalid format");
           }
-          if( format[++i] == 'i' )  {
+          if (format[++i] == 'i') {
             vec3i* iv = va_arg(argptr, vec3i*);
-            for( int k=0; k < 3; k++ ) (*iv)[k] = Cmds[j+k].ToInt();
+            for (int k = 0; k < 3; k++) (*iv)[k] = Cmds[j + k].ToInt();
           }
-          else if( format[i] == 'd' )  {
+          else if (format[i] == 'd') {
             vec3d* dv = va_arg(argptr, vec3d*);
-            for( int k=0; k < 3; k++ ) (*dv)[k] = Cmds[j+k].ToDouble();
+            for (int k = 0; k < 3; k++) (*dv)[k] = Cmds[j + k].ToDouble();
           }
           else {
             throw TInvalidArgumentException(__OlxSourceInfo,
@@ -268,22 +268,22 @@ public:
           Cmds.DeleteRange(j--, 3);
           cnt++;
         }
-        else if( format[i] == 'm' )  {
-          if( len < (i+1) || Cmds.Count() < (j+9) ) {
+        else if (format[i] == 'm') {
+          if (len < (i + 1) || Cmds.Count() < (j + 9)) {
             throw TInvalidArgumentException(__OlxSourceInfo,
               "invalid format");
           }
-          if( format[++i] == 'i' )  {
+          if (format[++i] == 'i') {
             mat3i* im = va_arg(argptr, mat3i*);
-            for( int k=0; k < 3; k++ )
-              for( int l=0; l < 3; l++ )
-                (*im)[k][l] = Cmds[j+k*3+l].ToInt();
+            for (int k = 0; k < 3; k++)
+              for (int l = 0; l < 3; l++)
+                (*im)[k][l] = Cmds[j + k * 3 + l].ToInt();
           }
-          else if( format[i] == 'd' )  {
+          else if (format[i] == 'd') {
             mat3d* dm = va_arg(argptr, mat3d*);
-            for( int k=0; k < 3; k++ )
-              for( int l=0; l < 3; l++ )
-                (*dm)[k][l] = Cmds[j+k*3+l].ToDouble();
+            for (int k = 0; k < 3; k++)
+              for (int l = 0; l < 3; l++)
+                (*dm)[k][l] = Cmds[j + k * 3 + l].ToDouble();
           }
           else {
             throw TInvalidArgumentException(__OlxSourceInfo,
@@ -292,21 +292,21 @@ public:
           Cmds.DeleteRange(j--, 9);
           cnt++;
         }
-        else if( format[i] == 'i' )  {
+        else if (format[i] == 'i') {
           int* iv = va_arg(argptr, int*);
           *iv = Cmds[j].ToInt();
           Cmds.Delete(j--);
           cnt++;
         }
-        else if( format[i] == 'd' )  {
-          double *dv = va_arg(argptr, double*);
+        else if (format[i] == 'd') {
+          double* dv = va_arg(argptr, double*);
           *dv = Cmds[j].ToDouble();
           Cmds.Delete(j--);
           cnt++;
         }
       }
     }
-    catch(const TExceptionBase &e)  {
+    catch (const TExceptionBase& e) {
       va_end(argptr);
       throw TFunctionFailedException(__OlxSourceInfo, e);
     }
@@ -317,73 +317,81 @@ public:
   found numbers
   */
   template <class list>
-  static size_t ParseOnly(const list& Cmds, const char *format, ...) {
-    size_t cnt=0;
+  static size_t ParseOnly(const list& Cmds, const char* format, ...) {
+    size_t cnt = 0;
     va_list argptr;
     va_start(argptr, format);
-    try  {
+    try {
       const size_t len = olxstr::o_strlen(format);
-      for( size_t i=0, j=0; i < len; i++, j++ )  {
+      for (size_t i = 0, j = 0; i < len; i++, j++) {
         while (j < Cmds.Count() && !Cmds[j].IsNumber())
           j++;
-        if (j>=Cmds.Count()) break;
-        if( format[i] == 'v' )  {
-          if( len < (i+1) || Cmds.Count() < (j+3) ) {
+        if (j >= Cmds.Count()) break;
+        if (format[i] == 'v') {
+          if (len < (i + 1) || Cmds.Count() < (j + 3)) {
             throw TInvalidArgumentException(__OlxSourceInfo,
               "invalid format");
           }
-          if( format[++i] == 'i' )  {
+          if (format[++i] == 'i') {
             vec3i* iv = va_arg(argptr, vec3i*);
-            for( int k=0; k < 3; k++ ) (*iv)[k] = Cmds[j+k].ToInt();
+            for (int k = 0; k < 3; k++) {
+              (*iv)[k] = Cmds[j + k].ToInt();
+            }
           }
-          else if( format[i] == 'd' )  {
+          else if (format[i] == 'd') {
             vec3d* dv = va_arg(argptr, vec3d*);
-            for( int k=0; k < 3; k++ ) (*dv)[k] = Cmds[j+k].ToDouble();
+            for (int k = 0; k < 3; k++) {
+              (*dv)[k] = Cmds[j + k].ToDouble();
+            }
           }
           else {
             throw TInvalidArgumentException(__OlxSourceInfo,
               "undefined vector type");
           }
-          j+=2;
+          j += 2;
           cnt++;
         }
-        else if( format[i] == 'm' )  {
-          if( len < (i+1) || Cmds.Count() < (j+9) ) {
+        else if (format[i] == 'm') {
+          if (len < (i + 1) || Cmds.Count() < (j + 9)) {
             throw TInvalidArgumentException(__OlxSourceInfo,
               "invalid format");
           }
-          if( format[++i] == 'i' )  {
+          if (format[++i] == 'i') {
             mat3i* im = va_arg(argptr, mat3i*);
-            for( int k=0; k < 3; k++ )
-              for( int l=0; l < 3; l++ )
-                (*im)[k][l] = Cmds[j+k*3+l].ToInt();
+            for (int k = 0; k < 3; k++) {
+              for (int l = 0; l < 3; l++) {
+                (*im)[k][l] = Cmds[j + k * 3 + l].ToInt();
+              }
+            }
           }
-          else if( format[i] == 'd' )  {
+          else if (format[i] == 'd') {
             mat3d* dm = va_arg(argptr, mat3d*);
-            for( int k=0; k < 3; k++ )
-              for( int l=0; l < 3; l++ )
-                (*dm)[k][l] = Cmds[j+k*3+l].ToDouble();
+            for (int k = 0; k < 3; k++) {
+              for (int l = 0; l < 3; l++) {
+                (*dm)[k][l] = Cmds[j + k * 3 + l].ToDouble();
+              }
+            }
           }
           else {
             throw TInvalidArgumentException(__OlxSourceInfo,
               "undefined matrix type");
           }
-          j+=8;
+          j += 8;
           cnt++;
         }
-        else if( format[i] == 'i' )  {
+        else if (format[i] == 'i') {
           int* iv = va_arg(argptr, int*);
           *iv = Cmds[j].ToInt();
           cnt++;
         }
-        else if( format[i] == 'd' )  {
-          double *dv = va_arg(argptr, double*);
+        else if (format[i] == 'd') {
+          double* dv = va_arg(argptr, double*);
           *dv = Cmds[j].ToDouble();
           cnt++;
         }
       }
     }
-    catch(const TExceptionBase &e)  {
+    catch (const TExceptionBase& e) {
       va_end(argptr);
       throw TFunctionFailedException(__OlxSourceInfo, e);
     }
@@ -397,15 +405,15 @@ public:
     return Actions_;
   }
   static TActionQueue &OnDelIns() {
-    static TActionQueue *OnDelIns=NULL;
-    if (OnDelIns == NULL) {
+    static TActionQueue *OnDelIns=0;
+    if (OnDelIns == 0) {
       OnDelIns = &XLibMacros::Actions().New("OnDelIns");
     }
     return *OnDelIns;
   }
   static TActionQueue &OnAddIns() {
-    static TActionQueue *OnAddIns=NULL;
-    if (OnAddIns == NULL) {
+    static TActionQueue *OnAddIns=0;
+    if (OnAddIns == 0) {
       OnAddIns = &XLibMacros::Actions().New("OnAddIns");
     }
     return *OnAddIns;
@@ -413,6 +421,11 @@ public:
   static olxstr VarName_ResetLock()  {  return "olx_lock_reset";  }
   static olxstr VarName_InternalTref()  {  return "olx_internal_tref";  }
   static olxstr GetCompilationInfo();
+  /* parses["a b c"] or [a, b, c] form, the first may come from c / crd
+  * 
+  */
+  static bool VecFromParam_s(TStrObjList& Cmds, size_t i,
+    bool condensed, vec3d& res, bool remove = true);
 protected:
   class TEnviComparator {
   public:

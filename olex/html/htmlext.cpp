@@ -1013,3 +1013,24 @@ void THtml::SetFonts(const olxstr &normal, const olxstr &fixed) {
   wxHtmlWindow::SetFonts(normal.u_str(), fixed.u_str());
 }
 //.............................................................................
+void THtml::CyclicReduce(olxstr_dict<olxstr, true>& values) {
+  for (size_t i = 0; i < values.Count(); i++) {
+    bool reduce = false;
+    if (values.GetValue(i).StartsFrom('#')) {
+      TEBitArray used(values.Count());
+      used.SetTrue(i);
+      size_t ni = values.IndexOf(values.GetValue(i).SubStringFrom(1));
+      while (ni != InvalidIndex) {
+        if (used[ni]) {
+          reduce = true;
+          break;
+        }
+        ni = values.IndexOf(values.GetValue(ni).SubStringFrom(1));
+      }
+    }
+    if (reduce) {
+      values.GetValue(i).SetLength(0);
+    }
+  }
+}
+//.............................................................................

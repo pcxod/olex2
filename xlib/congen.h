@@ -15,22 +15,40 @@ BeginXlibNamespace()
 
 // groups
 const uint16_t
-  fgCH3 = 1,
-  fgCH2 = 2,
-  fgCH1 = 3,
-  fgOH3 = 4,
-  fgOH2 = 5,
-  fgOH1 = 6,
-  fgNH4 = 7,
-  fgNH3 = 8,
-  fgNH2 = 9,
-  fgNH1 = 10,
-  fgNH1t = 11,
-  fgBH1 = 12,
-  fgSiH1 = 13,
-  fgSiH2 = 14,
-  fgSH1 = 15,
-  fgCH3x2 = 16;
+  fgBH1 = 1,
+  fgB_start = 1,
+  fgB_end = 1,
+  
+  fgC_start = 11,
+  fgCH1 = 11,
+  fgCH2 = 12,
+  fgCH3 = 13,
+  fgCH3x2 = 14,
+  fgC_end = 14,
+
+  fgN_start = 21,
+  fgNH1 = 21,
+  fgNH1t = 22,
+  fgNH2 = 23,
+  fgNH3 = 24,
+  fgNH4 = 25,
+  fgN_end = 25,
+
+  fgO_start = 31,
+  fgOH3 = 31,
+  fgOH2 = 32,
+  fgOH1 = 33,
+  fgO_end = 33,
+
+  fgSi_start = 41,
+  fgSiH1 = 41,
+  fgSiH2 = 42,
+  fgSi_end = 42,
+
+  fgS_start = 51,
+  fgSH1 = 51,
+  fgS_end = 51
+  ;
 
 // parameters
 const uint16_t
@@ -69,6 +87,30 @@ public:
     const TTypeList<TCAtomPList>& parts) = 0;
   
   DefPropBIsSet(UseRestrains);
+
+  void ApplyCorrection(double v);
+  //neutron.dist file format type
+  void UpdateFromFile(const olxstr& fn, bool apply_temp_correction, double def=-1);
+
+  double GetTempCorrection() const {
+    return GetTempCorrection(RefMod);
+  }
+
+  static double GetTempCorrection(const RefinementModel& rm) {
+    if (rm.expl.IsTemperatureSet()) {
+      if (rm.expl.GetTempValue().GetV() < -70) {
+        return 0.02;
+      }
+      else if (rm.expl.GetTempValue().GetV() < -20) {
+        return 0.01;
+      }
+    }
+    return 0;
+  }
+
+  static olx_pair_t<uint16_t, uint16_t> GetZGroupRange(unsigned Z);
+
+  // this is used in TLattice::_AnalyseAtomHAdd
   TParamList Options;
 
   /* front 16 bits - number of bonds, following 8 bits - geometry, rear 8 bits
@@ -77,18 +119,19 @@ public:
     uint16_t geometry=fgDefault)
   {
     return ((uint32_t)(groupId))
-      |(((uint32_t(geometry))) << 8)
-      |(((uint32_t)bonds) << 16);
+      |(((uint32_t(geometry))) << 16)
+      |(((uint32_t)bonds) << 24);
   }
   static uint32_t GroupFromId(uint32_t id)  {
-    return (id&0x000f);
+    return (id&0x00ff);
   }
   static uint32_t GeometryFromId(uint32_t id)  {
-    return (id&0x00f0) >> 8;
+    return (id&0x0f00) >> 16;
   }
   static uint32_t NumberOfBondsFromId(uint32_t id)  {
-    return (id&0xff00) >> 16;
+    return (id&0xf0000) >> 24;
   }
+  static uint32_t AfixM2GroupId(int M, int Z);
 };
 
 // This can replace hardcoded values at some point...

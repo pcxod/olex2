@@ -19,7 +19,6 @@ class IXVarReferencer : public virtual IOlxObject {
 public:
   virtual size_t VarCount() const = 0;
   virtual struct XVarReference* GetVarRef(size_t i) const = 0;
-  //virtual XVarReference* GetVarRef(size_t i) const = 0;
   virtual olxstr GetVarName(size_t i) const = 0;
   virtual void SetVarRef(size_t i, XVarReference* var_ref) = 0;
   virtual double GetValue(size_t var_index) const = 0;
@@ -29,6 +28,7 @@ public:
   virtual size_t GetReferencerId() const;
   virtual size_t GetPersistentId() const;
   virtual olxstr GetIdName() const = 0;
+  bool AreAllFixed(size_t start, size_t sz) const;
 };
 
 class IXVarReferencerContainer : public virtual IOlxObject {

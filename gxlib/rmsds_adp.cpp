@@ -78,6 +78,11 @@ void TRMDSADP::Create(const olxstr& cName) {
     if (a.GetEllipsoid()->IsNPD()) {
       vm = 0;
     }
+    /* To render the ADP surface
+      mat3f M = a.GetEllipsoid()->GetMatrix();
+      M.Scale(a.GetEllipsoid()->GetNorms());
+      vecs[i] = a.crd() + (sph_v[i] * M)*Scale;
+    */
     mat3f M = a.GetEllipsoid()->ExpandQuad();
     olx_object_ptr<GramCharlier> t = a.GetEllipsoid()->GetAnharmonicPart();
     if (!t.ok() && AnhType != anh_none && AnhType != anh_all) {

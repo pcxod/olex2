@@ -1520,8 +1520,13 @@ public:
     size_t wht_len)
   {
     size_t cnt = 0;
-    for (size_t i = 0; i < whr_len; i++) {
+    for (size_t i = 0, dest = 0; i < whr_len; i++, dest++) {
       if (i + wht_len > whr_len) {
+        if (dest != i) {
+          for (;i < whr_len; i++, dest++) {
+            whr[dest] = whr[i];
+          }
+        }
         return cnt;
       }
       bool found = true;
@@ -1533,13 +1538,11 @@ public:
       }
       if (found) {
         cnt++;
-        const size_t si = i + wht_len;
-        for (size_t j = si; j < whr_len; j++) {
-          whr[j - wht_len] = whr[j];
-        }
-        whr_len -= wht_len;
-        i--;
+        i += wht_len - 1;
+        dest--;
+        continue;
       }
+      whr[dest] = whr[i];
     }
     return cnt;
   }

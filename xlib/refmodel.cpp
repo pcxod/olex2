@@ -1368,7 +1368,7 @@ const_strlist RefinementModel::Describe() {
     olxdict<const TCAtom *, TCAtomPList, TPointerComparator> > riding_u;
   for (size_t i = 0; i < aunit.AtomCount(); i++) {
     TCAtom &a = aunit.GetAtom(i);
-    if (a.GetUisoOwner() != NULL && !a.IsDeleted()) {
+    if (a.GetUisoOwner() != 0 && !a.IsDeleted()) {
       riding_u.Add(a.GetUisoScale()).Add(a.GetUisoOwner()).Add(a);
     }
   }
@@ -1535,13 +1535,17 @@ const_strlist RefinementModel::Describe() {
     lst.Add(olxstr(++sec_num)) << ". Rigid bond restraints";
     for (size_t i = 0; i < rDELU.Count(); i++) {
       TSimpleRestraint& sr = rDELU[i];
-      if (sr.GetEsd() == 0 || sr.GetEsd1() == 0)  continue;
-      if (sr.IsAllNonHAtoms())
+      if (sr.GetEsd() == 0 || sr.GetEsd1() == 0) {
+        continue;
+      }
+      if (sr.IsAllNonHAtoms()) {
         lst.Add(" All non-hydrogen atoms");
+      }
       else {
         TTypeList<TAtomRefList> atoms = sr.GetAtoms().Expand(*this);
-        for (size_t j = 0; j < atoms.Count(); j++)
+        for (size_t j = 0; j < atoms.Count(); j++) {
           lst.Add(' ') << AtomListToStr(atoms[j], InvalidSize, ", ");
+        }
       }
       lst.Add(" with sigma for 1-2 distances of ") << sr.GetEsd() <<
         " and sigma for 1-3 distances of " <<
@@ -1573,8 +1577,10 @@ const_strlist RefinementModel::Describe() {
       else {
         TAtomRefList al = sr.GetAtoms().ExpandList(*this);
         for (size_t j = 0; j < al.Count(); j++) {
-          if (al[j].GetAtom().GetEllipsoid() == NULL)  continue;
-          str << "Uanis(" << al[j].GetExpression(NULL) << ") ~ Ueq";
+          if (al[j].GetAtom().GetEllipsoid() == 0) {
+            continue;
+          }
+          str << "Uanis(" << al[j].GetExpression(0) << ") ~ Ueq";
           if ((j + 1) < al.Count())
             str << ", ";
         }
@@ -1593,7 +1599,7 @@ const_strlist RefinementModel::Describe() {
         else {
           str << "Uanis(";
         }
-        str << al[j].GetExpression(NULL) << ')';
+        str << al[j].GetExpression(0) << ')';
         if ((j + 1) < al.Count()) {
           str << " = ";
         }
@@ -1604,7 +1610,7 @@ const_strlist RefinementModel::Describe() {
       olxstr& str = lst.Add(EmptyString());
       TAtomRefList al = sr.GetAtoms().ExpandList(*this);
       for (size_t j = 0; j < al.Count(); j++) {
-        str << "Ueq(" << al[j].GetExpression(NULL) << ')';
+        str << "Ueq(" << al[j].GetExpression(0) << ')';
         if ((j + 1) < al.Count()) {
           str << ", ";
         }
@@ -1620,7 +1626,7 @@ const_strlist RefinementModel::Describe() {
       else {
         TAtomRefList al = sr.GetAtoms().ExpandList(*this);
         for (size_t j = 0; j < al.Count(); j++) {
-          str << "Ueq(" << al[j].GetExpression(NULL) << ')';
+          str << "Ueq(" << al[j].GetExpression(0) << ')';
           if ((j + 1) < al.Count()) {
             str << " ~ ";
           }
@@ -1637,7 +1643,7 @@ const_strlist RefinementModel::Describe() {
       else {
         TAtomRefList al = sr.GetAtoms().ExpandList(*this);
         for (size_t j = 0; j < al.Count(); j++) {
-          str << "Uvol(" << al[j].GetExpression(NULL) << ')';
+          str << "Uvol(" << al[j].GetExpression(0) << ')';
           if ((j + 1) < al.Count()) {
             str << " ~ ";
           }
@@ -1754,7 +1760,7 @@ const_strlist RefinementModel::Describe() {
   size_t afix_sn = 0;
   olx_pdict<int, TPtrList<TAfixGroup> > a_gs;
   for (size_t i = 0; i < AfixGroups.Count(); i++) {
-    if (!AfixGroups[i].IsEmpty()) {
+    if (!AfixGroups[i].IsEmpty() && AfixGroups[i].IsUsable()) {
       a_gs.Add(AfixGroups[i].GetAfix()).Add(AfixGroups[i]);
     }
   }

@@ -208,6 +208,10 @@ public:
     static str_stack st;
     return st;
   }
+  /* removes cycling refences like #onclick = #onclick or
+  #onclick = #onchange, #onchange = #onclick, returns 
+  */
+  static void CyclicReduce(olxstr_dict<olxstr, true> &values);
   // an extention...
   class WordCell : public wxHtmlWordCell  {
   public:
