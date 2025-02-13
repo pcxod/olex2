@@ -18,11 +18,14 @@
 
 static const double THA = acos(-1./3)*180/M_PI,
   water_angle = 104.5;
-
+//.............................................................................
 AConstraintGenerator::AConstraintGenerator(RefinementModel& rm)
   : UseRestrains(false),
   RefMod(rm)
 {
+  Distances(GenId(fgBH1, 3), 0.98);
+  Distances(GenId(fgBH1, 5), 1.10);
+
   Distances(GenId(fgCH3, 1), 0.96);
   Distances(GenId(fgCH2, 2), 0.97);
   Distances(GenId(fgCH2, 1), 0.86);
@@ -39,28 +42,18 @@ AConstraintGenerator::AConstraintGenerator(RefinementModel& rm)
   Distances(GenId(fgNH1, 0), 0.86);
   Distances(GenId(fgNH1, 3), 0.91);
 
-  Distances(GenId(fgBH1, 3), 0.98);
-  Distances(GenId(fgBH1, 5), 1.10);
-
   Distances(GenId(fgSiH1, 3), 1.00);
   Distances(GenId(fgSiH2, 2), 1.43);
 
   Distances(GenId(fgSH1, 0), 1.2);
-
-  if (rm.expl.IsTemperatureSet()) {
-    if (rm.expl.GetTempValue().GetV() < -70) {
-      for (size_t i = 0; i < Distances.Count(); i++) {
-        Distances.GetValue(i) += 0.02;
-      }
-    }
-    else if (rm.expl.GetTempValue().GetV() < -20) {
-      for (size_t i = 0; i < Distances.Count(); i++) {
-        Distances.GetValue(i) += 0.01;
-      }
-    }
+}
+//.............................................................................
+void AConstraintGenerator::ApplyCorrection(double v) {
+  for (size_t i = 0; i < Distances.Count(); i++) {
+    Distances.GetValue(i) += v;
   }
 }
-
+//.............................................................................
 void AConstraintGenerator::DoGenerateAtom(TResidue &r, TCAtomPList& created,
   TAsymmUnit& au, vec3d_list& Crds, const olxstr& StartingName)
 {
@@ -82,7 +75,7 @@ void AConstraintGenerator::DoGenerateAtom(TResidue &r, TCAtomPList& created,
     created.Add(CA);
   }
 }
-
+//.............................................................................
 vec3d AConstraintGenerator::Generate_1(short group,
   const TAtomEnvi& envi) const
 {
@@ -118,7 +111,7 @@ vec3d AConstraintGenerator::Generate_1(short group,
     return Vec1.NormaliseTo(-dis) + envi.crd();
   }
 }
-
+//.............................................................................
 void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
   const short Group, const cm_Element& atomType, TAtomEnvi* pivoting)
 {
@@ -399,7 +392,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
     }
     break;
   case fgOH1:
-    dis = Distances.Get(GenId(fgOH1, envi.Count() == 3 ? 3 : 0));
+    dis = Distances.Get(GenId(fgOH1, envi.Count() == 3 ? 3 : (envi.Count() == 1 ? 1 :0)));
     // special case AFIX 13
     if (envi.Count() == 3) {
       crds.AddNew(Generate_1(fgOH1, envi));
@@ -417,7 +410,7 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
     }
     else {
       if (envi.Count() == 1) {
-        if (pivoting != 0 && pivoting->Count() >= 1) {  // any pssibl H-bonds?
+        if (pivoting != 0 && pivoting->Count() >= 1) {  // any possible H-bonds?
           vec3d Vec1 = pivoting->GetCrd(0) - envi.crd();
           vec3d Vec2 = envi.GetVec(0);
           vec3d RotVec;
@@ -748,4 +741,148 @@ void AConstraintGenerator::GenerateAtom(TCAtomPList& created, TAtomEnvi& envi,
   envi.GetBase().CAtom().SetHAttached(!crds.IsEmpty());
   DoGenerateAtom(au.GetResidue(envi.GetBase().CAtom().GetResiId()),
     created, au, crds, tmp);
+}
+//.............................................................................
+uint32_t AConstraintGenerator::AfixM2GroupId(int M, int Z) {
+  switch (M) {
+  case 1:
+    if (Z == iBoronZ) {
+      return GenId(fgBH1, 3);
+    }
+    else if (Z == iCarbonZ) {
+      return GenId(fgCH1, 3);
+    }
+    else if (Z == iNitrogenZ) {
+      return GenId(fgNH1, 3);
+    }
+    else if (Z == iOxygenZ) {
+      return GenId(fgOH1, 3);
+    }
+    else if (Z == iSiliconZ) {
+      return GenId(fgSiH1, 3);
+    }
+    break;
+  case 2:
+    if (Z == iCarbonZ) {
+      return GenId(fgCH2, 2);
+    }
+    else if (Z == iNitrogenZ) {
+      return GenId(fgNH2, 2);
+    }
+    break;
+  case 3:
+  case 12:
+  case 13:
+    if (Z == iCarbonZ) {
+      return GenId(fgCH3, 1);
+    }
+    else if (Z == iNitrogenZ) {
+      return GenId(fgNH3, 1);
+    }
+    break;
+  case 4:
+    if (Z == iCarbonZ) {
+      return GenId(fgCH1, 2);
+    }
+    else if (Z == iNitrogenZ) {
+      return GenId(fgNH1, 2);
+    }
+    break;
+  case 8:
+  case 14:
+    if (Z == iOxygenZ) {
+      return GenId(fgOH1, 1);
+    }
+    break;
+  case 9:
+    if (Z == iCarbonZ) {
+      return GenId(fgCH2, 2);
+    }
+    else if (Z == iNitrogenZ) {
+      return GenId(fgNH2, 2);
+    }
+    break;
+  case 15:
+    if (Z == iBoronZ) {
+      return GenId(fgBH1, 5);
+    }
+  }
+  return 0;
+}
+//.............................................................................
+olx_pair_t<uint16_t, uint16_t> AConstraintGenerator::GetZGroupRange(unsigned Z) {
+  switch (Z) {
+  case iBoronZ:
+    return olx_pair::make(fgB_start,fgB_end);
+  case iCarbonZ:
+    return olx_pair::make(fgC_start, fgC_end);
+  case iNitrogenZ:
+    return olx_pair::make(fgN_start, fgN_end);
+  case iOxygenZ:
+    return olx_pair::make(fgO_start, fgO_end);
+  case iSiliconZ:
+    return olx_pair::make(fgSi_start, fgSi_end);
+  case iSulphurZ:
+    return olx_pair::make(fgS_start, fgS_end);
+  }
+  return olx_pair_t<uint16_t, uint16_t>(0, 0);
+}
+//.............................................................................
+void AConstraintGenerator::UpdateFromFile(const olxstr& fn,
+  bool apply_temp_correction, double def)
+{
+  double extra = apply_temp_correction ? GetTempCorrection() : 0;
+  if (def >= 0) {
+    def += extra;
+    for (size_t i = 0; i < Distances.Count(); i++) {
+      Distances.GetValue(i) = def;
+    }
+  }
+  TStrList lines = TEFile::ReadLines(fn);
+  if (!lines.IsEmpty() && lines[0].StartsFrom('#')) {
+    TBasicApp::NewLogEntry() << lines[0].SubStringFrom(1);
+  }
+  olx_pset<uint32_t> defaults;
+  for (size_t i = 1; i < lines.Count(); i++) {
+    olxstr l = lines[i].TrimWhiteChars();
+    if (l.IsEmpty() || l.StartsFrom('#')) {
+      continue;
+    }
+    TStrList toks(l, ' ');
+    if (toks.Count() < 2) {
+      continue;
+    }
+    double d = toks.GetLastString().ToDouble() + extra;
+    if (toks.Count() == 2) { // no AFIX_m
+      olx_pair_t<uint16_t, uint16_t> range = GetZGroupRange(toks[0].ToUInt());
+      if (range.a != 0) {
+        size_t cnt = 0, tcnt = (range.b - range.a + 1);
+        for (size_t di = 0; di < Distances.Count(); di++) {
+          uint32_t gi = GroupFromId(Distances.GetKey(di));
+          if (gi >= range.a && gi <= range.b) {
+            Distances.GetValue(di) = d;
+            if (++cnt > tcnt) {
+              break;
+            }
+          }
+        }
+      }
+    }
+    else {
+      unsigned Z = toks[0].ToUInt();
+      for (size_t mc = 0; mc < toks.Count() - 2; mc++) {
+        unsigned m = toks[mc + 1].ToUInt();
+        uint32_t gi = AfixM2GroupId(m, Z);
+        if (gi == 0) {
+          continue;
+        }
+        uint32_t g = GroupFromId(gi);
+        if (!defaults.Contains(g)) {
+          defaults.Add(g);
+          Distances.Add(GenId(g, 0), d, true);
+        }
+        Distances.Add(gi, d, true);
+      }
+    }
+  }
 }
