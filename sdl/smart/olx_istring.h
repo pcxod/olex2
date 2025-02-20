@@ -1709,39 +1709,104 @@ public:
   // replaces a string with another, returns number of replacements
   template <typename OC, typename AC>
   static size_t o_strrplstr(const OC* wht, size_t wht_len,
-    const AC* with, size_t with_len, TC* whr, size_t whr_len)
+    const AC* with, size_t with_len, TC* whr, size_t whr_len,
+    size_t final_len=InvalidIndex)
   {
     if (wht_len > whr_len) {
       return 0;
     }
     size_t cnt = 0;
-    for (size_t i = 0; i < whr_len; i++) {
-      if (i + wht_len > whr_len) {
-        return cnt;
+    if (wht_len >= with_len) {
+      for (size_t i = 0, dest = 0; i < whr_len; i++, dest++) {
+        if (i + wht_len > whr_len) {
+          if (dest != i) {
+            for (; i < whr_len; i++) {
+              whr[dest++] = whr[i];
+            }
+          }
+          return cnt;
+        }
+        bool found = true;
+        for (size_t j = 0; j < wht_len; j++) {
+          if (whr[i + j] != wht[j]) {
+            found = false;
+            break;
+          }
+        }
+        if (found) {
+          cnt++;
+          for (size_t j = 0; j < with_len; j++) {
+            whr[dest++] = with[j];
+          }
+          i += wht_len;
+          i--;
+          dest--;
+          continue;
+        }
+        whr[dest] = whr[i];
       }
-      bool found = true;
-      for (size_t j = 0; j < wht_len; j++) {
-        if (whr[i + j] != wht[j]) {
-          found = false;
-          break;
+      return cnt;
+    }
+    else {
+      if (final_len == InvalidIndex || (final_len - whr_len) < with_len) {
+        for (size_t i = 0; i < whr_len; i++) {
+          if (i + wht_len > whr_len) {
+            return cnt;
+          }
+          bool found = true;
+          for (size_t j = 0; j < wht_len; j++) {
+            if (whr[i + j] != wht[j]) {
+              found = false;
+              break;
+            }
+          }
+          if (found) {
+            if (with_len != wht_len) {
+              olx_memmove(&whr[i + with_len], &whr[i + wht_len],
+                whr_len - i - wht_len);
+              whr_len -= (wht_len - with_len);
+            }
+            for (size_t j = 0; j < with_len; j++) {
+              whr[i + j] = with[j];
+            }
+            cnt++;
+            i += (with_len - 1);
+          }
         }
       }
-      if (found) {
-        if (with_len != wht_len) {
-          olx_memmove(&whr[i + with_len], &whr[i + wht_len],
-            whr_len - i - wht_len);
-          whr_len -= (wht_len - with_len);
+      else {
+        // shift source to the end
+        size_t src_i = 0;
+        if (whr_len != final_len) {
+          src_i = final_len - whr_len;
+          olx_memmove(&whr[src_i], &whr[0], whr_len);
         }
-        for (size_t j = 0; j < with_len; j++) {
-          whr[i + j] = with[j];
+        for (size_t i = 0, dest_i = 0; i < whr_len; i++, dest_i++) {
+          bool found = true;
+          for (size_t j = 0; j < wht_len; j++) {
+            if (whr[src_i + i + j] != wht[j]) {
+              found = false;
+              break;
+            }
+          }
+          if (found) {
+            for (size_t j = 0; j < with_len; j++) {
+              whr[dest_i + j] = with[j];
+            }
+            cnt++;
+            dest_i += with_len - 1;
+            i += wht_len - 1;
+          }
+          else {
+            whr[dest_i] = whr[src_i + i];
+          }
         }
-        cnt++;
-        i += (with_len - 1);
       }
     }
     return cnt;
   }
   //...........................................................................
+  // replaces a string with a char
   template <typename OC, typename AC>
   static size_t o_strrplch(const OC* wht, size_t wht_len, AC with,
     TC* whr, size_t whr_len)
@@ -1750,8 +1815,13 @@ public:
       return 0;
     }
     size_t cnt = 0;
-    for (size_t i = 0; i < whr_len; i++) {
+    for (size_t i = 0, dest = 0; i < whr_len; i++, dest++) {
       if (i + wht_len > whr_len) {
+        if (dest != i) {
+          for (; i < whr_len; i++, dest++) {
+            whr[dest] = whr[i];
+          }
+        }
         return cnt;
       }
       bool found = true;
@@ -1762,32 +1832,56 @@ public:
         }
       }
       if (found) {
-        if (wht_len != 1) {
-          olx_memmove(&whr[i + 1], &whr[i + wht_len], whr_len - i - wht_len);
-          whr_len -= (wht_len - 1);
-        }
-        whr[i] = with;
         cnt++;
+        i += wht_len;
+        whr[dest] = with;
+        i--;
+        continue;
       }
+      whr[dest] = whr[i];
     }
     return cnt;
   }
   //...........................................................................
+  /* replaces a char with a string, provide final length after the replacement
+  for optimal performace
+  */
   template <typename OC, typename AC>
   static size_t o_chrplstr(OC wht, const AC* with, size_t with_len,
-    TC* whr, size_t whr_len) {
+    TC* whr, size_t whr_len, size_t final_len=InvalidIndex)
+  {
     size_t cnt = 0;
-    for (size_t i = 0; i < whr_len; i++) {
-      if (whr[i] == wht) {
-        if (with_len != 1) {
+    if (final_len == InvalidIndex || (final_len - whr_len) < with_len) {
+      for (size_t i = 0; i < whr_len; i++) {
+        if (whr[i] == wht) {
           olx_memmove(&whr[i + with_len], &whr[i + 1], whr_len - i - 1);
           whr_len -= (1 - with_len);
+          for (size_t j = 0; j < with_len; j++) {
+            whr[i + j] = with[j];
+          }
+          cnt++;
+          i += (with_len - 1);
         }
-        for (size_t j = 0; j < with_len; j++) {
-          whr[i + j] = with[j];
+      }
+    }
+    else {
+      // shift source to the end
+      size_t src_i = 0;
+      if (whr_len != final_len) {
+        src_i = final_len - whr_len;
+        olx_memmove(&whr[src_i], &whr[0], whr_len);
+      }
+      for (size_t i = 0, dest_i = 0; i < whr_len; i++, dest_i++) {
+        if (whr[src_i + i] == wht) {
+          for (size_t j = 0; j < with_len; j++) {
+            whr[dest_i + j] = with[j];
+          }
+          cnt++;
+          dest_i += (with_len - 1);
         }
-        cnt++;
-        i += (with_len - 1);
+        else {
+          whr[dest_i] = whr[src_i + i];
+        }
       }
     }
     return cnt;
@@ -1873,14 +1967,18 @@ public:
       T::_Length -= o_strdch(T::Data(), T::_Length, wht);
       return *this;
     }
-    if (with_len > 1) {
-      extra_len = (with_len - 1) * o_chrcnt(wht, T::Data(), T::_Length);
-      if (extra_len == 0) {
-        return *this;
-      }
+    if (with_len == 1) {
+      o_chrplch(wht, *with, T::Data(), T::_Length);
+      return *this;
     }
+    size_t ch_cnt = o_chrcnt(wht, T::Data(), T::_Length);
+    if (ch_cnt == 0) {
+      return *this;
+    }
+    extra_len = (with_len - 1) * ch_cnt;
     T::checkBufferForModification(T::_Length + extra_len);
-    size_t rv = o_chrplstr(wht, with, with_len, T::Data(), T::_Length);
+    size_t rv = o_chrplstr(wht, with, with_len, T::Data(), T::_Length,
+      ch_cnt > 1 ? T::_Length + extra_len : InvalidIndex);
     T::_Length -= (1 - with_len)*rv;
     return *this;
   }
@@ -1904,11 +2002,13 @@ public:
     if( wht_len < with_len )  {
       extra_len = (with_len - wht_len)*
         o_strcnt(wht, wht_len, T::Data(), T::_Length);
-      if( extra_len == 0 )  return *this;
+      if (extra_len == 0) {
+        return *this;
+      }
     }
     T::checkBufferForModification(T::_Length+extra_len);
     const size_t rv = o_strrplstr(wht, wht_len, with, with_len, T::Data(),
-      T::_Length);
+      T::_Length, T::_Length + extra_len);
     T::_Length -= (wht_len - with_len)*rv;
     return *this;
   }
@@ -2429,6 +2529,12 @@ public:
     return Join(l, acc, *this, start, end);
   }
 };
+
+template <class T>
+olxstr olx_quote(const T& v, olxch q = '\'') {
+  olxstr rv(olx_reserve(olxstr::o_strlen(v) + 2));
+  return rv << q << v << q;
+}
 
 #include "olx_strcvt.h"
 EndEsdlNamespace()

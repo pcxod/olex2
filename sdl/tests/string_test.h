@@ -32,6 +32,12 @@ void ReplaceTest(OlxTests& t)  {
     throw TFunctionFailedException(__OlxSourceInfo, EmptyString());
   if( a.DeleteCharSet("bw") != "" )
     throw TFunctionFailedException(__OlxSourceInfo, EmptyString());
+  if (olxstr("bw_bw_").Replace("bw", "wbw") != "wbw_wbw_")
+    throw TFunctionFailedException(__OlxSourceInfo, EmptyString());
+  if (olxstr("bw_bw_bw").Replace("bw", "wbw") != "wbw_wbw_wbw")
+    throw TFunctionFailedException(__OlxSourceInfo, EmptyString());
+  if (olxstr("_xw_bw_xw").Replace("xw", "w_w") != "_w_w_bw_w_w")
+    throw TFunctionFailedException(__OlxSourceInfo, EmptyString());
 }
 
 void IsNumberTest(OlxTests& t)  {
