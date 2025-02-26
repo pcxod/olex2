@@ -788,7 +788,17 @@ void TIns::_FinishParsing(ParseContext& cx, bool header_only) {
   }
   cx.rm.ReadInsExtras(cx.Extras);
   for (size_t i = 0; i < cx.Sump.Count(); i++) {
-    cx.rm.Vars.AddSUMP(cx.Sump[i]);
+    try {
+      cx.rm.Vars.AddSUMP(cx.Sump[i]);
+    }
+    catch (const TExceptionBase& e) {
+      TBasicApp::NewLogEntry(logWarning) << "Failed to add SUMP: "
+        << e.GetException()->GetFullMessage();
+      TBasicApp::NewLogEntry(logWarning) << "The instruction has been commented out";
+      TInsList& params = *(new TInsList());
+      params << "SUMP" << cx.Sump[i];
+      Ins.Add("REM", &params);
+    }
   }
   cx.rm.Vars.Validate(header_only);
   cx.rm.ProcessFrags();

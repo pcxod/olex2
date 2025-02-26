@@ -34,11 +34,11 @@ protected:
   bool volatile Terminate, Detached, Running;
   //...........................................................................
 #ifdef __WIN32__
-  struct HandleRemover  : public IOlxObject  {
+  struct HandleRemover : public IOlxObject {
     HANDLE handle;
     HandleRemover(HANDLE _handle) : handle(_handle) {}
-    ~HandleRemover()  {
-      if( handle != NULL )
+    ~HandleRemover() {
+      if (handle != NULL)
         CloseHandle(handle);
     }
   };
@@ -50,13 +50,14 @@ protected:
   pthread_t Handle;
   static void* _Run(void* _instance) {
 #endif
-    AOlxThread *th = (AOlxThread*)_instance;
+    AOlxThread* th = (AOlxThread*)_instance;
     th->Running = true;
     th->RetVal = ((AOlxThread*)_instance)->Run();
     // running prevents the object deletion...
     th->Running = false;
-    if( th->Detached )
+    if (th->Detached) {
       delete th;
+    }
 #ifdef __WIN32__
     ExitThread(0);
 #else
@@ -74,16 +75,17 @@ protected:  // do not allow to create externally
     Detached(true),
     Running(false),
     Handle(0),
-    OnTerminate(Actions.New("ON_TERMINATE")) {}
+    OnTerminate(Actions.New("ON_TERMINATE"))
+  {}
   //...........................................................................
   /* thread can do some extras here, as it will be called from SendTerminate
   before the Terimate flag is set */
   virtual void OnSendTerminate() {}
 public:
   //...........................................................................
-  virtual ~AOlxThread()  {
-    OnTerminate.Execute(this, NULL);
-    if( Running )  {  // prevent deleting
+  virtual ~AOlxThread() {
+    OnTerminate.Execute(this, 0);
+    if (Running) {  // prevent deleting
       Detached = false;
       Terminate = true;
     }
@@ -92,27 +94,32 @@ public:
     it has to be checked if the normal termination procedure was bypassed
     */
 #if defined(__WIN32__) && defined(_DLL)
-    if (Handle != NULL && Running) {
+    if (Handle != 0 && Running) {
       unsigned long ec = STILL_ACTIVE, rv;
-      while (ec == STILL_ACTIVE && (rv=GetExitCodeThread(Handle, &ec)) != 0) {
-        if( SwitchToThread() == 0 )
+      while (ec == STILL_ACTIVE && (rv = GetExitCodeThread(Handle, &ec)) != 0) {
+        if (SwitchToThread() == 0) {
           olx_sleep(5);
+        }
+        if (!Running) {
+          break;
+        }
       }
     }
     Running = false;
 #endif
-    while( Running )  {
+    while (Running) {
       Yield();
       olx_sleep(5);
     }
-#ifdef __WIN32__  // costed me may restarts...
-    if( Handle != NULL )
+#ifdef __WIN32__  // costed me many restarts...
+    if (Handle != 0) {
       CloseHandle(Handle);
+    }
 #else
 #endif
   }
   //...........................................................................
-  TActionQueue &OnTerminate;
+  TActionQueue& OnTerminate;
   //...........................................................................
   /* It is crutial to check if the terminate flag is set. In that case the
   function should return a value, or a deadlock situation may arise.
@@ -122,9 +129,10 @@ public:
   bool Start() {
 #ifdef __WIN32__
     unsigned long thread_id;
-    Handle = CreateThread(NULL, 0, _Run, this, 0, &thread_id);
-    if( Handle == NULL )
+    Handle = CreateThread(0, 0, _Run, this, 0, &thread_id);
+    if (Handle == 0) {
       return false;
+    }
 #else
     return (pthread_create(&Handle, NULL, _Run, this) == 0);
 #endif
@@ -134,24 +142,30 @@ public:
   /* returns true if successful, the process calling Join is responsible for
   the memory deallocation...
   */
-  bool Join(bool send_terminate = false)  {
-    if( Handle == 0 ) {
+  bool Join(bool send_terminate = false) {
+    if (Handle == 0 || !Running) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         "the tread must be started at first");
     }
     Detached = false;
-    if( send_terminate && !Terminate )
+    if (send_terminate && !Terminate) {
       SendTerminate();
+    }
 #ifdef __WIN32__
     unsigned long ec = STILL_ACTIVE, rv;
-    while( ec == STILL_ACTIVE && (rv=GetExitCodeThread(Handle, &ec)) != 0 )  {
-      if( SwitchToThread() == 0 )
+    while (ec == STILL_ACTIVE && (rv = GetExitCodeThread(Handle, &ec)) != 0) {
+      if (SwitchToThread() == 0) {
         olx_sleep(5);
+      }
+      if (!Running) {
+        break;
+      }
     }
     return rv != 0;
 #else
-    if( pthread_join(Handle, NULL) != 0 )
+    if (pthread_join(Handle, 0) != 0) {
       return false;
+    }
 #endif
     return true;
   }
@@ -159,11 +173,11 @@ public:
   /* this only has effect if the main procedure of the thread checks for this
   flag...
   */
-  void SendTerminate()  {
+  void SendTerminate() {
     OnSendTerminate();
     Terminate = true;
   }
-  bool IsRunning() const {  return Running;  }
+  bool IsRunning() const { return Running; }
   //...........................................................................
   /* executes a simplest function thread, the function should not take any
   arguments the return value will be ignored. To be used for global detached
@@ -171,24 +185,25 @@ public:
     void TestTh()  {  your code here...  }
     AOlxThread::RunThread(&TestTh);
   */
-  template <class T> static bool RunThread(T f)  {
+  template <class T> static bool RunThread(T f) {
 #ifdef __WIN32__
     unsigned long thread_id;
-    HANDLE h = CreateThread(NULL, 0, &ThreadFunctionConverter<T>::Func, f,
+    HANDLE h = CreateThread(0, 0, &ThreadFunctionConverter<T>::Func, f,
       0, &thread_id);
-    if( h == NULL )
+    if (h == 0) {
       return false;
+    }
     // make sure it gets deleted at the end!
-    TEGC::AddP( new HandleRemover(h) );
+    TEGC::AddP(new HandleRemover(h));
 #else
     pthread_t thread_id;
-    return (pthread_create(&thread_id, NULL,
+    return (pthread_create(&thread_id, 0,
       &ThreadFunctionConverter<T>::Func, (void*)(f)) == 0);
 #endif
     return true;
   }
   //...........................................................................
-  static void Yield()  {
+  static void Yield() {
 #ifdef __WIN32__
     SwitchToThread();
 #else
@@ -196,7 +211,7 @@ public:
 #endif
   }
   //...........................................................................
-  static unsigned long GetCurrentThreadId()  {
+  static unsigned long GetCurrentThreadId() {
 #ifdef __WIN32__
     return ::GetCurrentThreadId();
 #else

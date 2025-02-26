@@ -3648,6 +3648,36 @@ size_t Esd_CutsThrough(const TSAtomCPList &atoms,
   return InvalidIndex;
 }
 
+TStrList::const_list_type Esd_angle(const TSAtom &a1, const TSAtom &a2,
+  const TSAtom &a3, VcoVContainer &vcovc, int precision)
+{
+  TStrList values;
+  if (precision > 0) {
+    TEValue<double> a(vcovc.CalcAngle(a1, a2, a3));
+    TEValue<double> aA(vcovc.CalcAngleA(a1, a2, a3));
+    TEValue<double> d(vcovc.CalcAtomToVectorDistance(a1, a2, a3));
+    values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel() << " angle(numerical): " <<
+      olxstr().FormatFloat(precision, a.GetV()) << "(ESD=" << olxstr().FormatFloat(precision, a.GetE()) << ')';
+    values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel() << " angle(numerical): " <<
+      olxstr().FormatFloat(precision, aA.GetV()) << "(ESD=" << olxstr().FormatFloat(precision, aA.GetE()) << ')';
+    values.Add(a1.GetLabel()) << " to " <<
+      a2.GetLabel() << '-' << a3.GetLabel() << " distance: " <<
+      olxstr().FormatFloat(precision, d.GetV()) << "(ESD=" <<
+      olxstr().FormatFloat(precision, d.GetE()) << ')' << " A";
+  }
+  else {
+    values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel()
+      << " angle (numerical): " << vcovc.CalcAngle(a1, a2, a3).ToString();
+    values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel()
+      << " angle (analytical): " << vcovc.CalcAngleA(a1, a2, a3).ToString();
+
+    values.Add(a1.GetLabel()) << " to " <<
+      a2.GetLabel() << '-' << a3.GetLabel() << " distance: " <<
+      vcovc.CalcAtomToVectorDistance(a1, a2, a3).ToString();
+  }
+  return values;
+}
+
 void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
@@ -3826,7 +3856,8 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
          TEValue<double> d(vcovc.CalcDistance((TXAtom&)sel[0], (TXAtom&)sel[1]));
          values.Add(((TXAtom&)sel[0]).GetLabel()) << " to " <<
            ((TXAtom&)sel[1]).GetLabel() << " distance: " <<
-           olxstr().FormatFloat(precision, d.GetV()) << "(ESD=" << olxstr().FormatFloat(precision, d.GetE()) << ')' << " A";
+           olxstr().FormatFloat(precision, d.GetV()) <<
+           "(ESD=" << olxstr().FormatFloat(precision, d.GetE()) << ')' << " A";
         }
         else
          values.Add(((TXAtom&)sel[0]).GetLabel()) << " to " <<
@@ -3836,13 +3867,32 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
 
       }
       else if (olx_list_and(sel, &IOlxObject::Is<TXBond>)) {
-        TSBond& b1 = ((TXBond&)sel[0]);
-        TSBond& b2 = ((TXBond&)sel[1]);
-        TEValue<double> v(vcovc.CalcB2BAngle(b1.A(), b1.B(), b2.A(), b2.B())),
-          v1(180 - v.GetV(), v.GetE());
-        values.Add(b1.A().GetLabel()) << '-' << b1.B().GetLabel() << " to " <<
-          b2.A().GetLabel() << '-' << b2.B().GetLabel() << " angle: " <<
-          v.ToString() << '(' << v1.ToString() << ')';
+        TSBond& A = ((TXBond&)sel[0]);
+        TSBond& B = ((TXBond&)sel[1]);
+        TSAtomPList sa;
+        if (&A.A() == &B.A()) {
+          sa << A.B() << B.A() << B.B();
+        }
+        else if (&A.A() == &B.B()) {
+          sa << A.B() << A.A() << B.A();
+        }
+        else if (&A.B() == &B.A()) {
+          sa << A.A() << B.A() << B.B();
+        }
+        else if (&A.B() == &B.B()) {
+          sa << A.A() << A.B() << B.A();
+        }
+        if (sa.IsEmpty()) {
+          TEValue<double> v(vcovc.CalcB2BAngle(A.A(), A.B(), B.A(), B.B())),
+            v1(180 - v.GetV(), v.GetE());
+          values.Add(A.A().GetLabel()) << '-' << A.B().GetLabel() << " to " <<
+            B.A().GetLabel() << '-' << B.B().GetLabel() << " angle: " <<
+            v.ToString() << '(' << v1.ToString() << ')';
+        }
+        else {
+          values.AddAll(Esd_angle(*sa[0], *sa[1], *sa[2], vcovc,
+            Options.FindValue('p', "-1").ToInt()));
+        }
       }
       else if ((sel[0].Is<TXBond>() && sel[1].Is<TXAtom>()) ||
         (sel[1].Is<TXBond>() && sel[0].Is<TXAtom>()))
@@ -3966,32 +4016,8 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
     }
     else if (sel.Count() == 3) {
       if (olx_list_and(sel, &IOlxObject::Is<TXAtom>)) {
-        TSAtom& a1 = (TXAtom&)sel[0];
-        TSAtom& a2 = (TXAtom&)sel[1];
-        TSAtom& a3 = (TXAtom&)sel[2];
-        if (Options.Contains('p')) {
-         const int precision = Options.FindValue('p','6').ToInt();
-         TEValue<double> a(vcovc.CalcAngle(a1, a2, a3));
-         TEValue<double> aA(vcovc.CalcAngleA(a1, a2, a3));
-         TEValue<double> d(vcovc.CalcAtomToVectorDistance(a1, a2, a3));
-         values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel() << " angle(numerical): " <<
-           olxstr().FormatFloat(precision, a.GetV()) << "(ESD=" << olxstr().FormatFloat(precision, a.GetE()) << ')';
-         values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel() << " angle(numerical): " <<
-           olxstr().FormatFloat(precision, aA.GetV()) << "(ESD=" << olxstr().FormatFloat(precision, aA.GetE()) << ')';
-         values.Add(a1.GetLabel()) << " to " <<
-           a2.GetLabel() << '-' << a3.GetLabel() << " distance: " <<
-           olxstr().FormatFloat(precision, d.GetV()) << "(ESD=" << olxstr().FormatFloat(precision, d.GetE()) << ')' << " A";
-        }
-        else{
-         values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel()
-           << " angle (numerical): " << vcovc.CalcAngle(a1, a2, a3).ToString();
-         values.Add(a1.GetLabel()) << '-' << a2.GetLabel() << '-' << a3.GetLabel()
-           << " angle (analytical): " << vcovc.CalcAngleA(a1, a2, a3).ToString();
-
-         values.Add(a1.GetLabel()) << " to " <<
-           a2.GetLabel() << '-' << a3.GetLabel() << " distance: " <<
-           vcovc.CalcAtomToVectorDistance(a1, a2, a3).ToString();
-        }
+        values.AddAll(Esd_angle((TXAtom&)sel[0], (TXAtom&)sel[1],
+          (TXAtom&)sel[2], vcovc, Options.FindValue('p', "-1").ToInt()));
       }
       else if (
         (sel[0].Is<TXPlane>() && sel[1].Is<TXAtom>() &&
@@ -4001,8 +4027,8 @@ void GXLibMacros::macEsd(TStrObjList &Cmds, const TParamList &Options,
         (sel[2].Is<TXPlane>() && sel[1].Is<TXAtom>() &&
           sel[0].Is<TXAtom>()))
       {
-        TSAtom* a1 = NULL, *a2 = NULL;
-        TXPlane* xp = NULL;
+        TSAtom* a1 = 0, *a2 = 0;
+        TXPlane* xp = 0;
         TSAtomCPList atoms;
         for (size_t i = 0; i < 3; i++) {
           if (sel[i].Is<TXPlane>())
