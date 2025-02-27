@@ -9213,12 +9213,12 @@ void XLibMacros::macUpdateAfix(TStrObjList& Cmds, const TParamList& Options,
 
   for (size_t group = 0; group < groups.Count(); group++) {
     TAfixGroup& ag = *groups.Get(group);
-    int n = rm.AfixGroups[group].GetN();
+    int n = ag.GetN();
     if (n != 3 && n != 7) {
       continue;
     }
     TCAtom& pivot = ag.GetPivot();
-    int m = rm.AfixGroups[group].GetM();
+    int m = ag.GetM();
     double d = def.Find(pivot.GetType().z << 8 | m, -1);
     if (d < 0) { // fall back to no AFIX_m
       d = def.Find(pivot.GetType().z << 8 | 0xFF, -1);
