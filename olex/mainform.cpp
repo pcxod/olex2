@@ -604,7 +604,7 @@ void TMainForm::XApp(Olex2App *XA)  {
     " part value&;"
     "s-[grow] short interactions; [name] suffix;"
     " [fit] split, atoms to split offset [0]&;"
-    "t-[name] type&;"
+    "t-[name] type&;temperature correction for distance [hfix]"
     "c-[grow] covalent bonds; [move] copy fragments instead of moving&;"
     "r-[split] a restraint/constraint for split atoms; [grow] show radial "
     "bonds between the same atoms; [fit] rotation angle increment (smooth "

@@ -35,6 +35,7 @@ AConstraintGenerator::AConstraintGenerator(RefinementModel& rm)
 
   Distances(GenId(fgOH2, 0), 0.85);
   Distances(GenId(fgOH1, 0), 0.82);
+  Distances(GenId(fgOH1, 1), 0.82);
   Distances(GenId(fgOH1, 3), 0.85);
 
   Distances(GenId(fgNH3, 0), 0.89);
