@@ -227,7 +227,7 @@ TAG_HANDLER_PROC(tag) {
     fsFile.release(),
     ax,
     ay,
-    m_WParser->GetPixelScale(),
+    1,//m_WParser->GetPixelScale(),
     wxHTML_ALIGN_BOTTOM,
     mapName,
     WidthInPercent,
