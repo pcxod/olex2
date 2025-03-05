@@ -158,7 +158,13 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
       FunctionAccessor::MakeConst(&olxstr::ToSizeT));
     size_t crystals_data_off = GetCrystalsDataOffset(SL);
     if (fl.IsEmpty()) {
-      fl << 4 << 4 << 4 << (crystals_data_off == InvalidIndex ? 8 : 10)  << 8;
+      size_t crystals_fl = 8;
+      if (crystals_data_off != InvalidIndex && crystals_data_off > 2) {
+        if (SL[crystals_data_off - 2].Contains("I4,F10.2")) {
+          crystals_fl = 10;
+        }
+      }
+      fl << 4 << 4 << 4 << (crystals_data_off == InvalidIndex ? 8 : crystals_fl)  << 8;
     }
     else {
       if (fl.Count() < 5) {
