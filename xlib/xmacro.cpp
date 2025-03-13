@@ -547,7 +547,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     "p-number of parts&;lo-link ocupancy of given atoms through FVAR's&;"
     "c-creates a copy of all grown atoms to which applied in the asymmetric unit and "
     "automatically links occupancies with the original atoms&;"
-    "f-do not 'fuse' the structure to be used with -c option [false]",
+    ,
     fpAny|psFileLoaded,
     "Sets part(s) to given atoms, also if -lo is given and -p > 1 allows linking "
     "occupancy of given atoms through FVAR and/or SUMP in cases when -p > 2");
@@ -2648,7 +2648,7 @@ void XLibMacros::macGraphPD(TStrObjList &Cmds, const TParamList &Options,
   TUnitCell::SymmSpace sp =
     rm.aunit.GetLattice().GetUnitCell().GetSymmSpace();
   SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
-  double d = half_lambda / sin(tt*M_PI / 360),
+  double d = 0.7, //half_lambda / sin(tt*M_PI / 360),
     ds_sq = olx_sqr(1. / d);
   olx_pair_t<vec3i, vec3i> range = rm.CalcIndicesToD(d,
     &info_ex);
@@ -8832,10 +8832,6 @@ void XLibMacros::macPart(TStrObjList &Cmds, const TParamList &Options,
       Atoms[i]->CAtom().SetPart(part);
     }
     app.XFile().EndUpdate();
-    if (Options.GetBoolOption('f', false, true)) {
-      olex2::IOlex2Processor::GetInstance()->processMacro("fuse 0.05",
-        __OlxSrcInfo);
-    }
     return;
   }
   XVar* xv = 0;

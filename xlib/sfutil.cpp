@@ -478,7 +478,9 @@ void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
         vec3i stf = TReflection::Standardise(refs[i], info_ex, &mi);
         size_t idx = fab.IndexOf(TReflection::CalcHKLHash(stf));
         if (idx == InvalidIndex) {
-          missing << refs[i].ToString();
+          if (!TReflection::IsAbsent(stf, info_ex)) {
+            missing << refs[i].ToString();
+          }
           continue;
         }
         compd ps = TReflection::PhaseShift(refs[i], info_ex, mi);

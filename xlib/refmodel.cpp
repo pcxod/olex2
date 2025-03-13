@@ -1023,11 +1023,17 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       if (HKLF >= 5) {
         measured_refs = refs.ptr().Filter(olx_alg::olx_gt(0,
           FunctionAccessor::MakeConst(&TReflection::GetBatch)));
-        if (TWST <= 0) {
+        int twst = TWST;
+        if (twst <= 0) {
           olx_pdict<int16_t, size_t> batches;
-          for (size_t i = 0; i < measured_refs.Count(); i++) {
-            int16_t b = measured_refs[i]->GetBatch();
-            batches.Add(b, 0)++;
+          for (size_t i = 0; i < refs.Count(); i++) {
+            int16_t b = refs[i].GetBatch();
+            if (b < 0) {
+              continue;
+            }
+            if (i == 0 || refs[i - 1].GetBatch() > 0) {
+              batches.Add(b, 0)++;
+            }
           }
           // find the most occupied batch for merge stats
           if (batches.Count() > 0) {
@@ -1038,14 +1044,16 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
                 max_i = i;
               }
             }
-            merge_stats_refs = measured_refs.Filter(
-              olx_alg::olx_eq(batches.GetKey(max_i),
-                FunctionAccessor::MakeConst(&TReflection::GetBatch)));
+            twst = batches.GetKey(max_i);
           }
         }
-        else {
-          merge_stats_refs = refs.ptr().Filter(olx_alg::olx_eq(TWST,
-              FunctionAccessor::MakeConst(&TReflection::GetBatch)));
+        if (twst > 0) {
+          for (size_t i = 1; i < refs.Count(); i++) {
+            int16_t b = refs[i].GetBatch();
+            if (b == twst && (i == 0 || refs[i - 1].GetBatch() > 0)) {
+              merge_stats_refs.Add(refs[i]);
+            }
+          }
         }
         for (size_t i = 0; i < refs.Count(); i++) {
           if (refs[i].GetBatch() >= 0) {
