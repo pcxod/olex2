@@ -242,6 +242,9 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
       }
       if (line.Length() != line_length) {
         if (line_cnt - i > 50 && !ZeroRead) {
+          if (crystals_data_off != InvalidIndex) {
+            continue;
+          }
           TBasicApp::NewLogEntry(logWarning) << (line_cnt - i) <<
             " Lines of the HKL file have been ignored after line #" <<
             (i+1);

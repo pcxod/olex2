@@ -10122,7 +10122,7 @@ void XLibMacros::macExport(TStrObjList& Cmds, const TParamList& Options,
       }
       crystals_data_idx = THklFile::GetCrystalsDataOffset(lines);
       if (crystals_data_idx != InvalidIndex) {
-        TBasicApp::NewLogEntry() << "Exportint Crystals data set, take note of AFIX";
+        TBasicApp::NewLogEntry() << "Exporting Crystals data set, take note of AFIX";
         THklFile hkl;
         hkl.LoadFromStrings(lines, false);
         hkl.SaveToFile(hkl_name);
