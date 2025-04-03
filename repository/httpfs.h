@@ -270,4 +270,7 @@ public:
   ~TSSLHttpFileSystem();
 };
 #endif //_OPENSSL
+
+olx_object_ptr<AFileSystem> HttpFSFromURL(const TUrl &url);
+
 #endif

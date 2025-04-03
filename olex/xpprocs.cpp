@@ -2826,7 +2826,6 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
     if (TEFile::UnixPath(file_n.file_name).StartsFrom("http://") ||
       TEFile::UnixPath(file_n.file_name).StartsFrom("https://"))
     {
-      TUrl url(TEFile::UnixPath(file_n.file_name));
       TStrList files;
       files << file_n.file_name;
       // loking for COD urls
@@ -2835,6 +2834,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
       }
       olxstr dest_dir = TBasicApp::GetInstanceDir() + "web/";
       if (DownloadFiles(files, dest_dir) > 0) {
+        TUrl url(TEFile::UnixPath(file_n.file_name));
         olxstr dest_fn = dest_dir + TEFile::ExtractFileName(url.GetPath());
         if (TEFile::Exists(dest_fn)) {
           Macros.ProcessMacro(olxstr("@reap '") << dest_fn << '\'', Error);
