@@ -3237,7 +3237,11 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options,
     if (!tm.IsI()) {
       ChangeCell(tm, *sg, hkl_fn);
       TBasicApp::NewLogEntry() << "The cell, atomic coordinates and ADP's are "
-        "transformed using user transform";
+        "transformed using given transformion";
+      if (tm.Determinant() < 0) {
+        TBasicApp::NewLogEntry(logWarning) <<
+          "Note that the transformation matrix has a negative determinant";
+      }
     }
     else {
       TAsymmUnit& au = xapp.XFile().LastLoader()->GetAsymmUnit();
@@ -8818,16 +8822,22 @@ void XLibMacros::macPart(TStrObjList &Cmds, const TParamList &Options,
       part = rm.aunit.GetNextPart(true);
     }
     XVar& xv = rm.Vars.NewVar(0.5);
+    olx_pdict<size_t, TCAtomPList> groups;
     for (size_t i = 0; i < Atoms.Count(); i++) {
       if (!Atoms[i]->GetMatrix().IsFirst()) {
         TCAtom& ca = rm.aunit.NewAtom();
         ca.Assign(Atoms[i]->CAtom());
         ca.ccrd() = Atoms[i]->ccrd();
+        Atoms[i]->SetDeleted(true);
         ca.SetPart(part);
         rm.Vars.AddVarRef(xv, Atoms[i]->CAtom(), catom_var_name_Sof,
           relation_AsVar, 1.0 / Atoms[i]->CAtom().GetDegeneracy());
         rm.Vars.AddVarRef(xv, ca, catom_var_name_Sof, relation_AsVar,
           1.0 / Atoms[i]->CAtom().GetDegeneracy());
+        groups.Add(Atoms[i]->CAtom().GetId()).Add(ca);
+      }
+      else {
+        groups.Add(Atoms[i]->CAtom().GetId()).Add(Atoms[i]->CAtom());
       }
       Atoms[i]->CAtom().SetPart(part);
     }

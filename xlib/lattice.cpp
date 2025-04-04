@@ -2940,6 +2940,9 @@ TLattice::GrowInfo* TLattice::GetGrowInfo() const {
   const size_t ac = Objects.atoms.Count();
   for (size_t i = 0; i < ac; i++) {
     TSAtom& sa = Objects.atoms[i];
+    if (sa.IsDeleted()) {
+      continue;
+    }
     gi.info[sa.CAtom().GetId()] << sa.GetMatrix().GetId();
   }
   return &gi;
