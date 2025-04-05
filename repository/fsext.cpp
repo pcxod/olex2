@@ -124,7 +124,7 @@ olx_object_ptr<IDataInputStream> TFileHandlerManager::_GetInputStream(const olxs
 class TwxInputStream : public wxInputStream {
   olx_array_ptr<char> data;
   size_t sz, off;
-  size_t wxInputStream::OnSysRead(void* buffer, size_t bufsize)
+  size_t OnSysRead(void* buffer, size_t bufsize)
   {
     if (off >= sz) {
       return 0;
