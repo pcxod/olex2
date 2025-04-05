@@ -5700,7 +5700,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
         if (insert_vars) {
           TTypeList<cif_dp::cetTable> tabs = xapp.XFile().GetRM().CVars.ToCIF(*Cif);
           for (size_t i = 0; i < tabs.Count(); i++) {
-            if (!Cif->Add(tabs[i])) {
+            if (!Cif->Add(tabs[i], true)) {
               TBasicApp::NewLogEntry(logWarning) << "Failed to add "
                 << tabs[i].GetName() << " table";
             }
@@ -5712,7 +5712,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
         if (insert_rtab) {
           TTypeList<cif_dp::cetTable> tabs = xapp.XFile().GetRM().ExportInfo(*Cif, vcovc);
           for (size_t i = 0; i < tabs.Count(); i++) {
-            if (!Cif->Add(tabs[i])) {
+            if (!Cif->Add(tabs[i], true)) {
               TBasicApp::NewLogEntry(logWarning) << "Failed to add "
                 << tabs[i].GetName() << " table";
             }

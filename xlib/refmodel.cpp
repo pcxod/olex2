@@ -576,6 +576,10 @@ TTypeList<cif_dp::cetTable>::const_list_type
   using namespace cif_dp;
 
   if (!others.IsEmpty()) {
+    olx_object_ptr<cetTable> b_tab = new cetTable(
+      "_geom_bond_atom_site_label_1,"
+      "_geom_bond_atom_site_label_2,_geom_bond_site_symmetry_2,"
+      "_geom_bond_distance,_geom_bond_publ_flag");
     olx_object_ptr<cetTable> d_tab = new cetTable(
       "_geom_contact_atom_site_label_1,"
       "_geom_contact_atom_site_label_2,_geom_contact_site_symmetry_2,"
@@ -596,7 +600,29 @@ TTypeList<cif_dp::cetTable>::const_list_type
       if (others[i].a.Count() == 1) {
       }
       if (others[i].a.Count() == 2) {
-        row = &d_tab->AddRow();
+        others[i].a[1].matrix = others[i].a[0].matrix.Inverse() * others[i].a[1].matrix;
+        if (others[i].a[0].atom->IsAttachedTo(*others[i].a[1].atom)) {
+          double d = others[i].b.GetV();
+          bool bonded = true;
+          if (aunit.HasLattice()) {
+            bonded = aunit.GetLattice().GetNetwork().CBondExists(
+              *others[i].a[0].atom, *others[i].a[1].atom,
+              others[i].a[1].matrix, d);
+          }
+          else {
+            bonded = TNetwork::BondExists(*others[i].a[0].atom, *others[i].a[1].atom,
+              others[i].a[1].matrix, d, 0.5);
+          }
+          if (bonded) {
+            row = &b_tab->AddRow();
+          }
+          else {
+            row = &d_tab->AddRow();
+          }
+        }
+        else {
+          row = &d_tab->AddRow();
+        }
         (*row)[0] = new AtomCifEntry(*others[i].a[0].atom);
         (*row)[1] = new AtomCifEntry(*others[i].a[1].atom);
         (*row)[2] = new SymmCifEntry(cif, others[i].a[1].matrix);
@@ -606,8 +632,8 @@ TTypeList<cif_dp::cetTable>::const_list_type
         row = &a_tab->AddRow();
         if (!others[i].a[1].matrix.IsI()) {
           smatd im = others[i].a[1].matrix.Inverse();
-          others[i].a[0].matrix *= im;
-          others[i].a[2].matrix *= im;
+          others[i].a[0].matrix = im * others[i].a[0].matrix;
+          others[i].a[2].matrix = im * others[i].a[2].matrix;
         }
         (*row)[0] = new AtomCifEntry(*others[i].a[0].atom);
         (*row)[1] = new SymmCifEntry(cif, others[i].a[0].matrix);
@@ -634,6 +660,9 @@ TTypeList<cif_dp::cetTable>::const_list_type
         }
       }
       row->GetLast() = new cetString("yes");
+    }
+    if (b_tab->RowCount() > 0) {
+      rv.Add(b_tab.release());
     }
     if (d_tab->RowCount() > 0) {
       rv.Add(d_tab.release());

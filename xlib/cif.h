@@ -235,8 +235,11 @@ public:
   match.
   */
   cif_dp::cetTable& AddLoopDef(const olxstr& col_names, bool replace=false);
-  /* adds a new table or a table with matching cols */
-  bool Add(const cif_dp::cetTable& tab);
+  /* adds a new table or a table with matching cols. If update_atom_deps is true
+  rows with matching atoms/symm will be updated; skipped otherwise to prevent
+  duplication
+  */
+  bool Add(const cif_dp::cetTable& tab, bool update_atom_deps);
   /* this is the only loop, which is not automatically created from structure
   data! If the loop does not exist it is automatically created
   */
