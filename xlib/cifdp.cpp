@@ -500,20 +500,11 @@ void cetTable::ToStrings(TStrList& list) const {
     out.Add("  ") << data.ColName(i);
   }
   for (size_t i = 0; i < data.RowCount(); i++) {  // loop content
-    bool saveable = true;
-    for (size_t j = 0; j < data.ColCount(); j++) {
-      if (!data[i][j]->IsSaveable()) {
-        saveable = false;
-        break;
-      }
-    }
-    if (!saveable) {
+    olx_object_ptr<TStrList> rc = RowContent(i);
+    if (!rc.ok()) {
       continue;
     }
-    out.Add();
-    for (size_t j = 0; j < data.ColCount(); j++) {
-      data[i][j]->ToStrings(out);
-    }
+    out.AddAll(*rc);
   }
   if (out.Count() == data.ColCount() + 1) { // no content is added
     return;
@@ -584,6 +575,7 @@ void cetTable::Sort() {
   }
   data.SortRows(TableSorter());
 }
+//.............................................................................
 void cetTable::SetName(const olxstr& nn) {
   for (size_t i = 0; i < data.ColCount(); i++) {
     data.ColName(i) = nn + data.ColName(i).SubStringFrom(name->Length());
@@ -591,25 +583,94 @@ void cetTable::SetName(const olxstr& nn) {
   this->name = nn;
 }
 //.............................................................................
-bool cetTable::Add(const cetTable& t) {
-  if (t.ColCount() != ColCount()) {
+olx_object_ptr<TStrList> cetTable::RowContent(size_t row,
+  const TSizeList* indices,
+  const TEBitArray* mask) const
+{
+  bool saveable = true;
+  for (size_t j = 0; j < data.ColCount(); j++) {
+    size_t idx = indices == 0 ? j : (*indices)[j];
+    if ((mask == 0 || mask->Get(j)) && !data[row][idx]->IsSaveable()) {
+      saveable = false;
+      break;
+    }
+  }
+  if (!saveable) {
+    return 0;
+  }
+  olx_object_ptr<TStrList> out = new TStrList();
+  for (size_t j = 0; j < data.ColCount(); j++) {
+    size_t idx = indices == 0 ? j : (*indices)[j];
+    if (mask == 0 || mask->Get(j)) {
+      data[row][idx]->ToStrings(*out);
+    }
+  }
+  return out;
+}
+//.............................................................................
+bool cetTable::Add(const cetTable& t, bool unique, bool update_existing,
+  const TEBitArray* uniq_cols)
+{
+  TArrayList<size_t> cids = MatchCols(*this, t), cid_r;
+  if (cids.IsEmpty()) {
     return false;
   }
-  TArrayList<size_t> cids(ColCount());
-  for (size_t i = 0; i < ColCount(); i++) {
-    size_t ci = t.ColIndex(ColName(i));
-    if (ci == InvalidIndex) {
-      return false;
+  olxstr_dict<size_t> content;
+  if (unique) {
+    for (size_t i = 0; i < data.RowCount(); i++) {  // loop content
+      olx_object_ptr<TStrList> rc = RowContent(i, 0, uniq_cols);
+      if (!rc.ok()) {
+        continue;
+      }
+      content.Add(rc->Text(EmptyString()), i);
     }
-    cids[i] = ci;
   }
   for (size_t i = 0; i < t.RowCount(); i++) {
-    CifRow &r = AddRow();
+    olxstr cnt;
+    if (unique) {
+      olx_object_ptr<TStrList> rc = t.RowContent(i, &cids, uniq_cols);
+      // do add unsavables disregarding...
+      cnt = rc->Text(EmptyString());
+      if (rc.ok()) {
+        size_t ki = content.IndexOf(cnt);
+        if (ki != InvalidIndex) {
+          size_t ri = content.GetValue(ki);
+          if (update_existing) {
+            for (size_t j = 0; j < ColCount(); j++) {
+              delete this->data[ri][j];
+              this->data[ri][j] = t[i][cids[j]]->Replicate();
+            }
+          }
+          continue;
+        }
+      }
+    }
+    CifRow& r = AddRow();
     for (size_t j = 0; j < ColCount(); j++) {
       r[j] = t[i][cids[j]]->Replicate();
     }
+    if (unique) {
+      content.Add(cnt, data.RowCount()-1);
+    }
   }
   return true;
+}
+//.............................................................................
+TSizeList::const_list_type cetTable::MatchCols(const cetTable& t1,
+  const cetTable& t2)
+{
+  TArrayList<size_t> cids(olx_reserve(t1.ColCount()));
+  if (t1.ColCount() == t2.ColCount()) {
+    for (size_t i = 0; i < t1.ColCount(); i++) {
+      size_t ci = t2.ColIndex(t1.ColName(i));
+      if (ci == InvalidIndex) {
+        cids.Clear();
+        break;
+      }
+      cids.Add(ci);
+    }
+  }
+  return cids;
 }
 //.............................................................................
 //.............................................................................

@@ -12,6 +12,7 @@
 #include "estrlist.h"
 #include "etable.h"
 #include "edict.h"
+#include "bitarray.h"
 
 namespace cif_dp {
   class ParsingException : public TBasicException {
@@ -248,8 +249,14 @@ namespace cif_dp {
     size_t RowCount() const { return data.RowCount(); }
     void SetRowCount(size_t sz) { data.SetRowCount(sz); }
     void SetRowCapacity(size_t sz) { data.SetRowCapacity(sz); }
-    /* add the table content if the column names match*/
-    bool Add(const cetTable& t);
+    /* adds the table content if the column names match (order does not matter).
+    * if unique == true, only unique entries are added, the uniq_cols mask can
+    * specify which cols to consider for unqiqueness. If a non unique row is
+    located it could be updated with values from t by setting update_existing
+    to true
+    */
+    bool Add(const cetTable& t, bool unique, bool update_existing,
+      const TEBitArray* uniq_cols=0);
     virtual void ToStrings(TStrList& list) const;
     virtual void Format() {}
     virtual ICifEntry* Replicate() const { return new cetTable(*this); }
@@ -292,6 +299,15 @@ namespace cif_dp {
         return Compare_(olx_ref::get(r1), olx_ref::get(r2));
       }
     };
+    olx_object_ptr<TStrList> RowContent(size_t row,
+      const TSizeList* indices=0,
+      const TEBitArray* mask=0) const;
+
+    /* returns indecis of cols in t2 to match cols in t1 or an epmty list if
+    cols do not matach
+    */
+    static TSizeList::const_list_type MatchCols(const cetTable& t1,
+      const cetTable& t2);
   };
   /////////////////////////////////////////////////////////////////////////////
   struct CifBlock : public ICifEntry {

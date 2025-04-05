@@ -210,9 +210,7 @@ void THtmlImageCell::AdvanceAnimation(wxTimer* timer) {
 //..............................................................................
 TGIFTimer::TGIFTimer(THtmlImageCell* cell)
 : m_cell(cell)
-{
-  TBasicApp::NewLogEntry() << "x";
-}
+{}
 void TGIFTimer::Notify() {
   m_cell->AdvanceAnimation(this);
 }

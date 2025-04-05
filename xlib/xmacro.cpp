@@ -547,7 +547,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     "p-number of parts&;lo-link ocupancy of given atoms through FVAR's&;"
     "c-creates a copy of all grown atoms to which applied in the asymmetric unit and "
     "automatically links occupancies with the original atoms&;"
-    "f-do not 'fuse' the structure to be used with -c option [false]",
+    ,
     fpAny|psFileLoaded,
     "Sets part(s) to given atoms, also if -lo is given and -p > 1 allows linking "
     "occupancy of given atoms through FVAR and/or SUMP in cases when -p > 2");
@@ -2648,7 +2648,7 @@ void XLibMacros::macGraphPD(TStrObjList &Cmds, const TParamList &Options,
   TUnitCell::SymmSpace sp =
     rm.aunit.GetLattice().GetUnitCell().GetSymmSpace();
   SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
-  double d = half_lambda / sin(tt*M_PI / 360),
+  double d = 0.7, //half_lambda / sin(tt*M_PI / 360),
     ds_sq = olx_sqr(1. / d);
   olx_pair_t<vec3i, vec3i> range = rm.CalcIndicesToD(d,
     &info_ex);
@@ -3237,7 +3237,11 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options,
     if (!tm.IsI()) {
       ChangeCell(tm, *sg, hkl_fn);
       TBasicApp::NewLogEntry() << "The cell, atomic coordinates and ADP's are "
-        "transformed using user transform";
+        "transformed using given transformion";
+      if (tm.Determinant() < 0) {
+        TBasicApp::NewLogEntry(logWarning) <<
+          "Note that the transformation matrix has a negative determinant";
+      }
     }
     else {
       TAsymmUnit& au = xapp.XFile().LastLoader()->GetAsymmUnit();
@@ -5696,7 +5700,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
         if (insert_vars) {
           TTypeList<cif_dp::cetTable> tabs = xapp.XFile().GetRM().CVars.ToCIF(*Cif);
           for (size_t i = 0; i < tabs.Count(); i++) {
-            if (!Cif->Add(tabs[i])) {
+            if (!Cif->Add(tabs[i], true)) {
               TBasicApp::NewLogEntry(logWarning) << "Failed to add "
                 << tabs[i].GetName() << " table";
             }
@@ -5708,7 +5712,7 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
         if (insert_rtab) {
           TTypeList<cif_dp::cetTable> tabs = xapp.XFile().GetRM().ExportInfo(*Cif, vcovc);
           for (size_t i = 0; i < tabs.Count(); i++) {
-            if (!Cif->Add(tabs[i])) {
+            if (!Cif->Add(tabs[i], true)) {
               TBasicApp::NewLogEntry(logWarning) << "Failed to add "
                 << tabs[i].GetName() << " table";
             }
@@ -8818,24 +8822,26 @@ void XLibMacros::macPart(TStrObjList &Cmds, const TParamList &Options,
       part = rm.aunit.GetNextPart(true);
     }
     XVar& xv = rm.Vars.NewVar(0.5);
+    olx_pdict<size_t, TCAtomPList> groups;
     for (size_t i = 0; i < Atoms.Count(); i++) {
       if (!Atoms[i]->GetMatrix().IsFirst()) {
         TCAtom& ca = rm.aunit.NewAtom();
         ca.Assign(Atoms[i]->CAtom());
         ca.ccrd() = Atoms[i]->ccrd();
+        Atoms[i]->SetDeleted(true);
         ca.SetPart(part);
         rm.Vars.AddVarRef(xv, Atoms[i]->CAtom(), catom_var_name_Sof,
           relation_AsVar, 1.0 / Atoms[i]->CAtom().GetDegeneracy());
         rm.Vars.AddVarRef(xv, ca, catom_var_name_Sof, relation_AsVar,
           1.0 / Atoms[i]->CAtom().GetDegeneracy());
+        groups.Add(Atoms[i]->CAtom().GetId()).Add(ca);
+      }
+      else {
+        groups.Add(Atoms[i]->CAtom().GetId()).Add(Atoms[i]->CAtom());
       }
       Atoms[i]->CAtom().SetPart(part);
     }
     app.XFile().EndUpdate();
-    if (Options.GetBoolOption('f', false, true)) {
-      olex2::IOlex2Processor::GetInstance()->processMacro("fuse 0.05",
-        __OlxSrcInfo);
-    }
     return;
   }
   XVar* xv = 0;
@@ -10126,7 +10132,7 @@ void XLibMacros::macExport(TStrObjList& Cmds, const TParamList& Options,
       }
       crystals_data_idx = THklFile::GetCrystalsDataOffset(lines);
       if (crystals_data_idx != InvalidIndex) {
-        TBasicApp::NewLogEntry() << "Exportint Crystals data set, take note of AFIX";
+        TBasicApp::NewLogEntry() << "Exporting Crystals data set, take note of AFIX";
         THklFile hkl;
         hkl.LoadFromStrings(lines, false);
         hkl.SaveToFile(hkl_name);

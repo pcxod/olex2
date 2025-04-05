@@ -143,9 +143,12 @@ public:
   the memory deallocation...
   */
   bool Join(bool send_terminate = false) {
-    if (Handle == 0 || !Running) {
+    if (Handle == 0) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         "the tread must be started at first");
+    }
+    if (!Running) {
+      return true;
     }
     Detached = false;
     if (send_terminate && !Terminate) {

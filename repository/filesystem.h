@@ -42,19 +42,19 @@ protected:
   virtual bool _DoDelFile(const olxstr& f) = 0;
   virtual bool _DoDelDir(const olxstr& f) = 0;
   virtual bool _DoNewDir(const olxstr& f) = 0;
-  virtual bool _DoAdoptFile(const TFSItem& src)=0;
+  virtual bool _DoAdoptFile(const TFSItem& src) = 0;
   /* forced check only affects remote systems like http, if the value is true
   the check will be performed, otherwise, unless the index is loaded, FS
   dependent value will be returned
   */
-  virtual bool _DoesExist(const olxstr& df, bool forced_check)=0;
-  virtual olx_object_ptr<IInputStream> _DoOpenFile(const olxstr& src)=0;
+  virtual bool _DoesExist(const olxstr& df, bool forced_check) = 0;
+  virtual olx_object_ptr<IInputStream> _DoOpenFile(const olxstr& src) = 0;
   virtual bool _DoAdoptStream(IInputStream& file, const olxstr& name) = 0;
   // handles OnBreak
-  virtual bool Execute(const IOlxObject* , const IOlxObject* , TActionQueue *) {
+  virtual bool Execute(const IOlxObject*, const IOlxObject*, TActionQueue*) {
     DoBreak();
     return true;
- }
+  }
 public:
   AFileSystem() :
     Index(0),
@@ -65,15 +65,15 @@ public:
   {
     AActionHandler::SetToDelete(false);
     OnBreak.Add(this);
- }
+  }
 
   virtual ~AFileSystem() {
     OnBreak.Clear();
   }
 
   // called on progress
-  TActionQueue &OnProgress,
-    &OnBreak;  // add this one to the higher level handler to handle breaks
+  TActionQueue& OnProgress,
+    & OnBreak;  // add this one to the higher level handler to handle breaks
 
   // deletes a file
   bool DelFile(const olxstr& f) {
@@ -81,54 +81,54 @@ public:
       return false;
     }
     return _DoDelFile(f);
- }
+  }
   // deletes a folder
   bool DelDir(const olxstr& d) {
     if ((Access & afs_DeleteAccess) == 0) {
       return false;
     }
     return _DoDelDir(d);
- }
+  }
   // puts a file to the file system
   bool AdoptFile(const TFSItem& src) {
     if ((Access & afs_WriteAccess) == 0) {
       return false;
     }
     return _DoAdoptFile(src);
- }
+  }
   // creates a new folder
   bool NewDir(const olxstr& d) {
     if ((Access & afs_WriteAccess) == 0) {
       return false;
     }
     return _DoNewDir(d);
- }
+  }
   /* checks if the file exists, forced_check is applies to http FS, where
   the check can take some time. See _DoesExist description for more details. */
-  bool Exists(const olxstr& fn, bool forced_check=false) {
+  bool Exists(const olxstr& fn, bool forced_check = false) {
     if ((Access & afs_BrowseAccess) == 0) {
       return false;
     }
     return _DoesExist(fn, forced_check);
- }
+  }
   // returns a stream for a specified stream, must be deleted
   olx_object_ptr<IInputStream> OpenFile(const olxstr& src) {
     if ((Access & afs_ReadAccess) == 0) {
       return 0;
     }
     return _DoOpenFile(src);
- }
+  }
   bool AdoptStream(IInputStream& file, const olxstr& name) {
     if ((Access & afs_WriteAccess) == 0) {
       return false;
     }
     return _DoAdoptStream(file, name);
- }
+  }
   void RemoveAccessRight(uint16_t access) {
     Access &= ~access;
- }
+  }
   bool HasAccess(uint16_t access) const { return (Access & access) != 0; }
-  DefPropP(TFSIndex*, Index)
+  DefPropP(TFSIndex*, Index);
   // returns a base at which the file system is initalised
   const olxstr& GetBase() const { return FBase; }
   void SetBase(const olxstr& b) { FBase = TEFile::AddPathDelimeter(b); }

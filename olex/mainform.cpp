@@ -3898,28 +3898,33 @@ void TMainForm::DoUpdateFiles()  {
 }
 //..............................................................................
 size_t TMainForm::DownloadFiles(const TStrList& files, const olxstr& dest) {
-  if (files.IsEmpty()) return 0;
-  THttpFileSystem fs;
+  if (files.IsEmpty()) {
+    return 0;
+  }
   size_t cnt = 0;
   updater::SettingsFile sf(updater::UpdateAPI::GetSettingsFileName());
   TUrl proxy(sf.proxy);
   for (size_t i = 0; i < files.Count(); i++) {
     TUrl url(TEFile::UnixPath(files[i]));
-    if (!proxy.GetHost().IsEmpty())
+    if (!proxy.GetHost().IsEmpty()) {
       url.SetProxy(proxy);
-    fs.SetUrl(url);
-    olx_object_ptr<TEFile> file;
+    }
+    olx_object_ptr<AFileSystem> fs = HttpFSFromURL(url);
+    if (!fs.ok()) {
+      TBasicApp::NewLogEntry(logWarning) << "failed to get FS for "
+        << url.GetFullAddress();
+      continue;
+    }
     try {
-      file = fs.OpenFileAsFile(url.GetPath());
-      if (file != 0) {
+      olx_object_ptr<IInputStream> ins = fs->OpenFile(url.GetPath());
+      if (ins.ok()) {
         if (!TEFile::Exists(dest)) {
           TEFile::MakeDir(dest);
         }
         const olxstr dest_fn = TEFile::AddPathDelimeter(dest) <<
           TEFile::ExtractFileName(url.GetPath());
         TEFile dest(dest_fn, "wb+");
-        dest << *file;
-        file = 0;
+        dest << *ins;
         dest.Close();
         cnt++;
       }

@@ -353,6 +353,9 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
             ins.SetLoadQPeaks(false);
             ins.LoadFromStrings(resContent);
             // check the AU is the same and in the same order
+            bool ED = ins.GetRM().expl.GetRadiation() < 0.1;
+            double cell_th = ED ? 1e-2 : 1e-5,
+              crd_th = ED ? 5e-2 : 1e-3;
             bool match = true;
             {
               TAsymmUnit &that_au = ins.GetAsymmUnit(),
@@ -360,8 +363,8 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
               if (that_au.AtomCount() < this_au.AtomCount()) {
                 match = false;
               }
-              if (that_au.GetAngles().QDistanceTo(this_au.GetAngles())*M_PI/180 > 1e-6 ||
-                that_au.GetAxes().QDistanceTo(this_au.GetAxes()) > 1e-6)
+              if (that_au.GetAngles().QDistanceTo(this_au.GetAngles())*M_PI/180 > cell_th ||
+                that_au.GetAxes().QDistanceTo(this_au.GetAxes()) > cell_th)
               {
                 match = false;
               }
@@ -370,7 +373,7 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
                   TCAtom &a1 = this_au.GetAtom(ai);
                   TCAtom &a2 = that_au.GetAtom(ai);
                   if (!a1.GetLabel().Equalsi(a2.GetLabel()) ||
-                    a1.ccrd().QDistanceTo(a2.ccrd()) > 1e-3)
+                    a1.ccrd().QDistanceTo(a2.ccrd()) > crd_th)
                   {
                     match = false;
                     break;

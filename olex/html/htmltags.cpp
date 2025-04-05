@@ -214,7 +214,7 @@ TAG_HANDLER_PROC(tag) {
     src = TZipWrapper::ComposeFileName(THtml::SwitchSource(), src);
   }
 
-  olx_object_ptr<wxFSFile> fsFile = TFileHandlerManager::GetFSFileHandler( src );
+  olx_object_ptr<wxFSFile> fsFile = TFileHandlerManager::GetFSFileHandler(src);
   if (!fsFile.ok()) {
     TBasicApp::NewLogEntry(logError) << "Could not locate image: '"
       << src << '\'';

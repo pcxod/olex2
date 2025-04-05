@@ -1010,13 +1010,26 @@ cetTable& TCif::AddLoopDef(const olxstr& col_names, bool replace) {
   return *LoopFromDef(data_provider[block_index], toks);
 }
 //..............................................................................
-bool TCif::Add(const cetTable& tab) {
+bool TCif::Add(const cetTable& tab, bool update_atom_deps) {
+  if (tab.RowCount() == 0) {
+    return true;
+  }
   cetTable *t = FindLoop(tab.GetName());
   if (t == 0) {
     data_provider[block_index].Add(tab.Replicate());
     return true;
   }
-  return t->Add(tab);
+  if (t->RowCount() == 0) {
+    return t->Add(tab, false, false);
+  }
+  TEBitArray to_hash(t->ColCount());
+  for (size_t j = 0; j < t->ColCount(); j++) {
+    bool do_hash = t->ColName(j).Contains("atom_site_label") ||
+      t->ColName(j).Contains("site_symmetry");
+    to_hash.Set(j, do_hash);
+  }
+  return t->Add(tab, true, update_atom_deps,
+    to_hash.CountTrue() == 0 ? 0 : &to_hash);
 }
 //..............................................................................
 cetTable& TCif::GetPublicationInfoLoop() {

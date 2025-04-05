@@ -120,6 +120,52 @@ olx_object_ptr<IDataInputStream> TFileHandlerManager::_GetInputStream(const olxs
 }
 //..............................................................................
 #ifdef __WXWIDGETS__
+
+class TwxInputStream : public wxInputStream {
+  olx_array_ptr<char> data;
+  size_t sz, off;
+  size_t OnSysRead(void* buffer, size_t bufsize)
+  {
+    if (off >= sz) {
+      return 0;
+    }
+    size_t ac = olx_min(sz-off, bufsize);
+    memcpy(buffer, &(&data)[off], ac);
+    off += ac;
+    return ac;
+  }
+  
+  virtual wxFileOffset OnSysSeek(wxFileOffset pos,
+    wxSeekMode 	mode)
+  {
+    switch (mode) {
+    case wxFromStart:
+      off = pos;
+      break;
+    case wxFromCurrent:
+      off += pos;
+      break;
+    case wxFromEnd:
+      off = sz + off;
+      break;
+    }
+    return off;
+  }
+  virtual wxFileOffset OnSysTell()	const {
+    return off;
+  }
+
+  virtual bool IsSeekable()	const { return true; }
+  virtual size_t GetSize()	const { return sz; }
+  virtual wxFileOffset GetLength()	const { return sz; }
+
+  virtual bool IsOk()	const { return true; }
+public:
+  TwxInputStream(olx_array_ptr<char> data, size_t sz)
+    : data(data), sz(sz), off(0)
+  {}
+};
+
 olx_object_ptr<wxFSFile> TFileHandlerManager::_GetFSFileHandler(const olxstr &FN) {
   static wxString st(wxT("OCTET")), es;
   if (TZipWrapper::IsZipFile(FN)) {
@@ -136,17 +182,20 @@ olx_object_ptr<wxFSFile> TFileHandlerManager::_GetFSFileHandler(const olxstr &FN
   }
   else if (FN.StartsFromi("http://") || FN.StartsFromi("https://")) {
     try {
-      THttpFileSystem fs;
       TUrl url(FN);
-      fs.SetUrl(url);
-      olx_object_ptr<TEFile> is = fs.OpenFileAsFile(url.GetPath());
-      if (is.ok()) {
-        size_t sz = is->GetSize();
-        olx_array_ptr<char> bf = new char[sz];
-        is->Read(bf, sz);
-        return new wxFSFile(new wxMemoryInputStream(
-          bf, sz), es, st, es, wxDateTime((time_t)0));
+      olx_object_ptr<AFileSystem> fs = HttpFSFromURL(url);
+      if (!fs.ok()) {
+        return 0;
       }
+      olx_object_ptr<IInputStream> is = fs->OpenFile(url.GetPath());
+      if (!is.ok()) {
+        return 0;
+      }
+      size_t sz = is->GetSize();
+      olx_array_ptr<char> bf = new char[sz];
+      is->Read(bf, sz);
+      return new wxFSFile(new TwxInputStream(
+        bf, sz), es, st, es, wxDateTime((time_t)0));
     }
     catch (TExceptionBase& e) {
     }

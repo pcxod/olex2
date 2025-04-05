@@ -576,6 +576,10 @@ TTypeList<cif_dp::cetTable>::const_list_type
   using namespace cif_dp;
 
   if (!others.IsEmpty()) {
+    olx_object_ptr<cetTable> b_tab = new cetTable(
+      "_geom_bond_atom_site_label_1,"
+      "_geom_bond_atom_site_label_2,_geom_bond_site_symmetry_2,"
+      "_geom_bond_distance,_geom_bond_publ_flag");
     olx_object_ptr<cetTable> d_tab = new cetTable(
       "_geom_contact_atom_site_label_1,"
       "_geom_contact_atom_site_label_2,_geom_contact_site_symmetry_2,"
@@ -596,7 +600,29 @@ TTypeList<cif_dp::cetTable>::const_list_type
       if (others[i].a.Count() == 1) {
       }
       if (others[i].a.Count() == 2) {
-        row = &d_tab->AddRow();
+        others[i].a[1].matrix = others[i].a[0].matrix.Inverse() * others[i].a[1].matrix;
+        if (others[i].a[0].atom->IsAttachedTo(*others[i].a[1].atom)) {
+          double d = others[i].b.GetV();
+          bool bonded = true;
+          if (aunit.HasLattice()) {
+            bonded = aunit.GetLattice().GetNetwork().CBondExists(
+              *others[i].a[0].atom, *others[i].a[1].atom,
+              others[i].a[1].matrix, d);
+          }
+          else {
+            bonded = TNetwork::BondExists(*others[i].a[0].atom, *others[i].a[1].atom,
+              others[i].a[1].matrix, d, 0.5);
+          }
+          if (bonded) {
+            row = &b_tab->AddRow();
+          }
+          else {
+            row = &d_tab->AddRow();
+          }
+        }
+        else {
+          row = &d_tab->AddRow();
+        }
         (*row)[0] = new AtomCifEntry(*others[i].a[0].atom);
         (*row)[1] = new AtomCifEntry(*others[i].a[1].atom);
         (*row)[2] = new SymmCifEntry(cif, others[i].a[1].matrix);
@@ -606,8 +632,8 @@ TTypeList<cif_dp::cetTable>::const_list_type
         row = &a_tab->AddRow();
         if (!others[i].a[1].matrix.IsI()) {
           smatd im = others[i].a[1].matrix.Inverse();
-          others[i].a[0].matrix *= im;
-          others[i].a[2].matrix *= im;
+          others[i].a[0].matrix = im * others[i].a[0].matrix;
+          others[i].a[2].matrix = im * others[i].a[2].matrix;
         }
         (*row)[0] = new AtomCifEntry(*others[i].a[0].atom);
         (*row)[1] = new SymmCifEntry(cif, others[i].a[0].matrix);
@@ -634,6 +660,9 @@ TTypeList<cif_dp::cetTable>::const_list_type
         }
       }
       row->GetLast() = new cetString("yes");
+    }
+    if (b_tab->RowCount() > 0) {
+      rv.Add(b_tab.release());
     }
     if (d_tab->RowCount() > 0) {
       rv.Add(d_tab.release());
@@ -1023,11 +1052,17 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       if (HKLF >= 5) {
         measured_refs = refs.ptr().Filter(olx_alg::olx_gt(0,
           FunctionAccessor::MakeConst(&TReflection::GetBatch)));
-        if (TWST <= 0) {
+        int twst = TWST;
+        if (twst <= 0) {
           olx_pdict<int16_t, size_t> batches;
-          for (size_t i = 0; i < measured_refs.Count(); i++) {
-            int16_t b = measured_refs[i]->GetBatch();
-            batches.Add(b, 0)++;
+          for (size_t i = 0; i < refs.Count(); i++) {
+            int16_t b = refs[i].GetBatch();
+            if (b < 0) {
+              continue;
+            }
+            if (i == 0 || refs[i - 1].GetBatch() > 0) {
+              batches.Add(b, 0)++;
+            }
           }
           // find the most occupied batch for merge stats
           if (batches.Count() > 0) {
@@ -1038,14 +1073,16 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
                 max_i = i;
               }
             }
-            merge_stats_refs = measured_refs.Filter(
-              olx_alg::olx_eq(batches.GetKey(max_i),
-                FunctionAccessor::MakeConst(&TReflection::GetBatch)));
+            twst = batches.GetKey(max_i);
           }
         }
-        else {
-          merge_stats_refs = refs.ptr().Filter(olx_alg::olx_eq(TWST,
-              FunctionAccessor::MakeConst(&TReflection::GetBatch)));
+        if (twst > 0) {
+          for (size_t i = 1; i < refs.Count(); i++) {
+            int16_t b = refs[i].GetBatch();
+            if (b == twst && (i == 0 || refs[i - 1].GetBatch() > 0)) {
+              merge_stats_refs.Add(refs[i]);
+            }
+          }
         }
         for (size_t i = 0; i < refs.Count(); i++) {
           if (refs[i].GetBatch() >= 0) {

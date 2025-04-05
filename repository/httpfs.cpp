@@ -726,3 +726,20 @@ int TSSLHttpFileSystem::http_write(const olxcstr& str) {
 }
 //..............................................................................
 #endif // _OPENSSL
+//..............................................................................
+//..............................................................................
+//..............................................................................
+olx_object_ptr<AFileSystem> HttpFSFromURL(const TUrl& url) {
+  if (url.GetProtocol() == "http") {
+    return new THttpFileSystem(url);
+  }
+  if (url.GetProtocol() == "https") {
+#ifdef __WIN32__
+    return new TWinHttpFileSystem(url);
+#else
+    return new TSSLHttpFileSystem(url);
+#endif
+  }
+  return 0;
+}
+//..............................................................................
