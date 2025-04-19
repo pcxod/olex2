@@ -134,7 +134,7 @@ public:
   */
   static bool SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms,
     TIndexList& index, TStrList& SL,
-    RefinementModel::ReleasedItems* processed);
+    TPtrList<AReleasable>* processed);
   /* returns atom Ids as they will be saved according to constraints */
   static TSizeList::const_list_type DrySave(const TAsymmUnit& au,
     bool expandSAME=true);
@@ -144,9 +144,9 @@ public:
     const TStrList& toks, bool warnings = true, size_t r_position=InvalidIndex,
     class TSimpleRestraint** r=0);
   static void SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
-    RefinementModel::ReleasedItems* processed, RefinementModel& rm);
+    TPtrList<AReleasable>* processed, RefinementModel& rm);
   static void SaveExtras(TStrList& SL, const TCAtomPList* atoms,
-    RefinementModel::ReleasedItems* processed, RefinementModel& rm,
+    TPtrList<AReleasable>* processed, RefinementModel& rm,
     bool hyphenate=true);
 
   void ParseRestraints(RefinementModel& rm, const TStringToList<olxstr,

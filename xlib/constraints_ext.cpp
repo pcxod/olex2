@@ -14,8 +14,9 @@
 #include "index_range.h"
 #include "analysis.h"
 
-void rotated_adp_constraint::FromToks(const TStrList& toks, RefinementModel& rm,
-  TTypeList<rotated_adp_constraint>& out)
+void rotated_adp_constraint::FromToks(
+  AReleasableContainer<rotated_adp_constraint>& to,
+  const TStrList& toks, RefinementModel& rm)
 {
   if (toks.Count() < 4) {
     return;
@@ -25,16 +26,17 @@ void rotated_adp_constraint::FromToks(const TStrList& toks, RefinementModel& rm,
   if (src == 0 || dest == 0) {
     return;
   }
-  adirection& dir = rm.DirectionById(toks[2]);
+  const adirection& dir = rm.DirectionById(toks[2]);
   bool refine_angle = false;
   const double angle = toks[3].ToDouble();
   if (toks.Count() > 4) {
     refine_angle = toks[4].ToBool();
   }
-  out.Add(new rotated_adp_constraint(*src, *dest, dir, angle, refine_angle));
+  new rotated_adp_constraint(to, *src, *dest, dir, angle, refine_angle);
 }
 //.............................................................................
-rotated_adp_constraint* rotated_adp_constraint::Copy(
+rotated_adp_constraint* rotated_adp_constraint::Copy
+(AReleasableContainer<rotated_adp_constraint>& to,
   RefinementModel& rm, const rotated_adp_constraint& c)
 {
   TCAtom* ref = rm.aunit.FindCAtomById(c.source.GetId());
@@ -43,7 +45,7 @@ rotated_adp_constraint* rotated_adp_constraint::Copy(
     throw TFunctionFailedException(__OlxSourceInfo,
       "asymmetric units do not match");
   }
-  return new rotated_adp_constraint(*ref,
+  return new rotated_adp_constraint(to, *ref,
     *atom, rm.DirectionById(c.dir.id), c.angle, c.refine_angle);
 }
 //.............................................................................
@@ -60,7 +62,7 @@ olxstr rotated_adp_constraint::ToInsStr(const RefinementModel& rm) const {
     << destination.GetResiLabel(true) << dir.id << angle << refine_angle;
 }
 //.............................................................................
-const olxstr& rotated_adp_constraint::GetName()  {
+const olxstr& rotated_adp_constraint::GetName() {
   static olxstr name("olex2.constraint.rotated_adp");
   return name;
 }
@@ -74,9 +76,10 @@ void rotated_adp_constraint::ToDataItem(TDataItem& di) const {
 }
 //.............................................................................
 rotated_adp_constraint* rotated_adp_constraint::FromDataItem(
+  AReleasableContainer<rotated_adp_constraint>& to,
   const TDataItem& di, const RefinementModel& rm)
 {
-  return new rotated_adp_constraint(
+  return new rotated_adp_constraint(to,
     rm.aunit.GetAtom(di.GetFieldByName("source").ToSizeT()),
     rm.aunit.GetAtom(di.GetFieldByName("destination").ToSizeT()),
       rm.DirectionById(di.GetFieldByName("dir_id")),
@@ -100,8 +103,9 @@ olxstr rotated_adp_constraint::Describe() const {
 //.............................................................................
 //.............................................................................
 //.............................................................................
-void rotating_adp_constraint::FromToks(const TStrList& toks, RefinementModel& rm,
-  TTypeList<rotating_adp_constraint>& out)
+void rotating_adp_constraint::FromToks(
+  AReleasableContainer<rotating_adp_constraint>& to,
+  const TStrList& toks, RefinementModel& rm)
 {
   if (toks.Count() < 6) {
     return;
@@ -117,10 +121,12 @@ void rotating_adp_constraint::FromToks(const TStrList& toks, RefinementModel& rm
     g = toks[6].ToDouble();
   bool refine_size = toks[3].ToBool(),
     refine_angle = toks[7].ToBool();
-  out.Add(new rotating_adp_constraint(*src, *dest, s, refine_size, a, b, g, refine_angle));
+  new rotating_adp_constraint(to,
+    *src, *dest, s, refine_size, a, b, g, refine_angle);
 }
 //.............................................................................
 rotating_adp_constraint* rotating_adp_constraint::Copy(
+  AReleasableContainer<rotating_adp_constraint>& to,
   RefinementModel& rm, const rotating_adp_constraint& c)
 {
   TCAtom* ref = rm.aunit.FindCAtomById(c.source.GetId());
@@ -129,7 +135,7 @@ rotating_adp_constraint* rotating_adp_constraint::Copy(
     throw TFunctionFailedException(__OlxSourceInfo,
       "asymmetric units do not match");
   }
-  return new rotating_adp_constraint(*ref,
+  return new rotating_adp_constraint(to, *ref,
     *atom, c.size, c.refine_size,
     c.alpha, c.beta, c.gamma, c.refine_angle);
 }
@@ -165,9 +171,10 @@ void rotating_adp_constraint::ToDataItem(TDataItem& di) const {
 }
 //.............................................................................
 rotating_adp_constraint* rotating_adp_constraint::FromDataItem(
+  AReleasableContainer<rotating_adp_constraint>& to,
   const TDataItem& di, const RefinementModel& rm)
 {
-  return new rotating_adp_constraint(
+  return new rotating_adp_constraint(to,
     rm.aunit.GetAtom(di.GetFieldByName("source").ToSizeT()),
     rm.aunit.GetAtom(di.GetFieldByName("destination").ToSizeT()),
     di.GetFieldByName("size").ToDouble(),
@@ -235,8 +242,8 @@ uint16_t adirection::DecodeType(const olxstr& type) {
   throw TInvalidArgumentException(__OlxSourceInfo, olxstr("type=") << type);
 }
 //.............................................................................
-void adirection::FromToks(const TStrList& toks, RefinementModel& rm,
-  TTypeList<adirection>& out)
+void adirection::FromToks(AReleasableContainer<adirection>& to,
+  const TStrList& toks, RefinementModel& rm)
 {
   if (toks.Count() < 4) {
     return;
@@ -249,22 +256,24 @@ void adirection::FromToks(const TStrList& toks, RefinementModel& rm,
           "Too few parameters for a static direction";
         return;
       }
-      out.Add(new static_direction(toks[1],
-        vec3d(toks[2].ToDouble(), toks[3].ToDouble(), toks[4].ToDouble())));
+      new static_direction(to, toks[1],
+        vec3d(toks[2].ToDouble(), toks[3].ToDouble(), toks[4].ToDouble()));
       return;
     }
     TAtomReference aref(toks.Text(' ', 2));
     TCAtomGroup agroup;
     size_t atomAGroup;
     aref.Expand(rm, agroup, EmptyString(), atomAGroup);
-    out.Add(new direction(toks[1], agroup, type));
+    new direction(to, toks[1], agroup, type);
   }
   catch (const TExceptionBase& ex) {
     TBasicApp::NewLogEntry(logException) << ex.GetException()->GetError();
   }
 }
 //.............................................................................
-adirection* direction::DoCopy(RefinementModel& rm) const {
+adirection* direction::DoCopy(AReleasableContainer<adirection>& to,
+  RefinementModel& rm) const
+{
   TCAtomGroup agroup;
   agroup.SetCapacity(atoms.Count());
   for (size_t i = 0; i < atoms.Count(); i++) {
@@ -278,7 +287,7 @@ adirection* direction::DoCopy(RefinementModel& rm) const {
     }
     agroup.Add(new TGroupCAtom(a, m));
   }
-  return new direction(id, agroup, type);
+  return new direction(to, id, agroup, type);
 }
 //.............................................................................
 olxstr direction::Describe() const {
@@ -366,22 +375,24 @@ void direction::ToDataItem(TDataItem& di) const {
   }
 }
 //.............................................................................
-adirection* adirection::FromDataItem(const TDataItem& di,
-  const RefinementModel& rm)
+adirection* adirection::FromDataItem(AReleasableContainer<adirection>& to,
+  const TDataItem& di, const RefinementModel& rm)
 {
   uint16_t type = adirection::DecodeType(di.GetFieldByName("type"));
   if (type == direction_static) {
-    return static_direction().CreateFromDataItem(di, rm);
+    return static_direction(to).CreateFromDataItem(di, rm);
   }
   else {
-    return direction(type).CreateFromDataItem(di, rm);
+    return direction(to, type).CreateFromDataItem(di, rm);
   }
 }
 //.............................................................................
 adirection* static_direction::CreateFromDataItem(const TDataItem& di,
   const RefinementModel& rm) const
 {
-  return new static_direction(di.GetFieldByName("id"),
+  return new static_direction(
+    dynamic_cast<AReleasableContainer<adirection>&>(this->parent),
+    di.GetFieldByName("id"),
     PersUtil::VecFromStr<vec3d>(di.GetFieldByName("value")));
 }
 //.............................................................................
@@ -394,7 +405,8 @@ adirection* direction::CreateFromDataItem(const TDataItem& di,
   for (size_t i = 0; i < di.ItemCount(); i++) {
     agroup.Add(new TGroupCAtom(di.GetItemByIndex(i), rm));
   }
-  return new direction(di.GetFieldByName("id"), agroup, type);
+  return new direction(dynamic_cast<AReleasableContainer<adirection>&>(this->parent),
+    di.GetFieldByName("id"), agroup, type);
 }
 //.............................................................................
 vec3d direction::get() const {
@@ -429,8 +441,9 @@ vec3d direction::get() const {
 //.............................................................................
 //.............................................................................
 //.............................................................................
-void same_group_constraint::FromToks(const TStrList& toks, RefinementModel& rm,
-  TTypeList<same_group_constraint>& out)
+void same_group_constraint::FromToks(
+  AReleasableContainer<same_group_constraint>&to,
+  const TStrList& toks, RefinementModel& rm)
 {
   if (toks.Count() < 7) {
     return;
@@ -443,7 +456,7 @@ void same_group_constraint::FromToks(const TStrList& toks, RefinementModel& rm,
   if ((agroup.Count() % gc) != 0 || (agroup.Count() / gc < 3)) {
     throw TInvalidArgumentException(__OlxSourceInfo, "atom number");
   }
-  same_group_constraint& g = *new same_group_constraint;
+  same_group_constraint& g = *new same_group_constraint(to);
   atomAGroup = agroup.Count() / gc;
   for (size_t i = 0, cnt = 0; i < gc; i++) {
     TCAtomPList& l = g.groups.AddNew(atomAGroup);
@@ -451,13 +464,13 @@ void same_group_constraint::FromToks(const TStrList& toks, RefinementModel& rm,
       l[j] = agroup[cnt].GetAtom();
     }
   }
-  out.Add(g);
 }
 //.............................................................................
 same_group_constraint* same_group_constraint::Copy(
+  AReleasableContainer<same_group_constraint>& to,
   RefinementModel& rm, const same_group_constraint& c)
 {
-  same_group_constraint& g = *new same_group_constraint;
+  same_group_constraint& g = *new same_group_constraint(to);
   for (size_t i = 0; i < c.groups.Count(); i++) {
     TCAtomPList& l = g.groups.AddNew(c.groups[i].Count());
     for (size_t j = 0; j < c.groups[i].Count(); j++) {
@@ -515,10 +528,11 @@ void same_group_constraint::ToDataItem(TDataItem& di) const {
 }
 //.............................................................................
 same_group_constraint* same_group_constraint::FromDataItem(
+  AReleasableContainer<same_group_constraint>& to,
   const TDataItem& di, const RefinementModel& rm)
 {
   size_t n = di.GetValue().ToSizeT();
-  same_group_constraint &g = *new same_group_constraint;
+  same_group_constraint &g = *new same_group_constraint(to);
   IndexRange::RangeItr ai(di.GetFieldByName("atoms"));
   size_t ag = n/ai.CalcSize();
   for( size_t i=0; i < n; i++ )  {
@@ -555,8 +569,9 @@ olxstr tls_group_constraint::ToInsStr(const RefinementModel& rm) const {
   return olxstr(rv);
 }
 //.............................................................................
-void tls_group_constraint::FromToks(const TStrList& toks, RefinementModel& rm,
-  TTypeList<tls_group_constraint>& out)
+void tls_group_constraint::FromToks(
+  AReleasableContainer<tls_group_constraint>& to,
+  const TStrList& toks, RefinementModel& rm)
 {
   if (toks.Count() < 4) {
     return;
@@ -569,10 +584,11 @@ void tls_group_constraint::FromToks(const TStrList& toks, RefinementModel& rm,
     throw TInvalidArgumentException(__OlxSourceInfo, "atom number");
   }
   TCAtomPList l(agroup, FunctionAccessor::MakeConst(&TGroupCAtom::GetAtom));
-  out.Add(new tls_group_constraint(l));
+  new tls_group_constraint(to, l);
 }
 //.............................................................................
 tls_group_constraint* tls_group_constraint::Copy(
+  AReleasableContainer<tls_group_constraint>& to,
   RefinementModel& rm, const tls_group_constraint& c)
 {
   TCAtomPList l(c.atoms.Count());
@@ -584,7 +600,7 @@ tls_group_constraint* tls_group_constraint::Copy(
     }
     l[i] = a;
   }
-  return new tls_group_constraint(l);
+  return new tls_group_constraint(to, l);
 }
 //.............................................................................
 const olxstr& tls_group_constraint::GetName() {
@@ -610,8 +626,9 @@ void tls_group_constraint::ToDataItem(TDataItem& di) const {
   di.AddField("atoms", rb.GetString());
 }
 //.............................................................................
-tls_group_constraint* tls_group_constraint::FromDataItem(const TDataItem& di,
-  const RefinementModel& rm)
+tls_group_constraint* tls_group_constraint::FromDataItem(
+  AReleasableContainer<tls_group_constraint>& to,
+  const TDataItem& di, const RefinementModel& rm)
 {
   IndexRange::RangeItr ai(di.GetFieldByName("atoms"));
   TCAtomPList l;
@@ -621,7 +638,7 @@ tls_group_constraint* tls_group_constraint::FromDataItem(const TDataItem& di,
   if (l.Count() < 3) {
     throw TInvalidArgumentException(__OlxSourceInfo, "atom number");
   }
-  return new tls_group_constraint(l);
+  return new tls_group_constraint(to, l);
 }
 //.............................................................................
 #ifdef _PYTHON
@@ -647,8 +664,8 @@ olxstr same_disp_constraint::ToInsStr(const RefinementModel& rm) const {
   return olxstr(rv);
 }
 //.............................................................................
-void same_disp_constraint::FromToks(const TStrList& toks, RefinementModel& rm,
-  TTypeList<same_disp_constraint>& out)
+void same_disp_constraint::FromToks(AReleasableContainer<same_disp_constraint>& to,
+  const TStrList& toks, RefinementModel& rm)
 {
   if (toks.Count() < 2) {
     return;
@@ -661,10 +678,11 @@ void same_disp_constraint::FromToks(const TStrList& toks, RefinementModel& rm,
     throw TInvalidArgumentException(__OlxSourceInfo, "atom number");
   }
   TCAtomPList l(agroup, FunctionAccessor::MakeConst(&TGroupCAtom::GetAtom));
-  out.Add(new same_disp_constraint(l));
+  new same_disp_constraint(to, l);
 }
 //.............................................................................
 same_disp_constraint* same_disp_constraint::Copy(
+  AReleasableContainer<same_disp_constraint>& to,
   RefinementModel& rm, const same_disp_constraint& c)
 {
   TCAtomPList l(c.atoms.Count());
@@ -676,7 +694,7 @@ same_disp_constraint* same_disp_constraint::Copy(
     }
     l[i] = a;
   }
-  return new same_disp_constraint(l);
+  return new same_disp_constraint(to, l);
 }
 //.............................................................................
 const olxstr& same_disp_constraint::GetName() {
@@ -702,8 +720,9 @@ void same_disp_constraint::ToDataItem(TDataItem& di) const {
   di.AddField("atoms", rb.GetString());
 }
 //.............................................................................
-same_disp_constraint* same_disp_constraint::FromDataItem(const TDataItem& di,
-  const RefinementModel& rm)
+same_disp_constraint* same_disp_constraint::FromDataItem(
+  AReleasableContainer<same_disp_constraint>& to,
+  const TDataItem& di,  const RefinementModel& rm)
 {
   IndexRange::RangeItr ai(di.GetFieldByName("atoms"));
   TCAtomPList l;
@@ -713,7 +732,7 @@ same_disp_constraint* same_disp_constraint::FromDataItem(const TDataItem& di,
   if (l.Count() < 2) {
     throw TInvalidArgumentException(__OlxSourceInfo, "atom number");
   }
-  return new same_disp_constraint(l);
+  return new same_disp_constraint(to, l);
 }
 //.............................................................................
 #ifdef _PYTHON

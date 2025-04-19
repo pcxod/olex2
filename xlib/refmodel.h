@@ -96,7 +96,7 @@ protected:
   TTypeListExt<class InfoTab, IOlxObject> InfoTables;
   SelectedTableRows selectedTableRows;
   // adds a givin direction (if unique) and returns its name
-  adirection *AddDirection(const TCAtomGroup &atoms, uint16_t type);
+  adirection &AddDirection(const TCAtomGroup &atoms, uint16_t type);
   // atoms omitted from the maps
   AtomRefList Omitted;
   // to be used with 'stack_restraints' option
@@ -421,7 +421,7 @@ Friedel opposites of components 1 ... m
   */
   void UpdateUsedSymm(const class TUnitCell& uc);
   // throws an exception if not found
-  adirection& DirectionById(const olxstr &id) const;
+  const adirection& DirectionById(const olxstr &id) const;
   // adds new custom scatterer (created with new, will be deleted)
   void AddSfac(XScatterer& sc);
   // returns number of custom scatterers
@@ -587,6 +587,7 @@ Friedel opposites of components 1 ... m
   void ToDataItem(TDataItem& item);
   void FromDataItem(TDataItem& item);
   olxstr WriteInsExtras(const TCAtomPList* atoms,
+    TPtrList<AReleasable>* processed,
     bool write_internals) const;
   void ReadInsExtras(const TStrList &items);
   // initialises default values for esd and if needs, value (SIMU)
@@ -623,12 +624,6 @@ Friedel opposites of components 1 ... m
   TLibrary* ExportLibrary(const olxstr& name=EmptyString());
   struct VPtr : public olx_virtual_ptr<RefinementModel> {
     virtual IOlxObject *get_ptr() const;
-  };
-  
-  struct ReleasedItems {
-    TSimpleRestraintPList restraints;
-    TPtrList<TSameGroup> sameList;
-    //TPtrList<XLEQ> equations;
   };
   
   // EXTI stuff

@@ -22,7 +22,7 @@ enum {
 
 // implements data for collection item
 class ACollectionItem : public virtual IOlxObject {
-  index_t CollectionItemTag;
+  mutable index_t CollectionItemTag;
 public:
   ACollectionItem() : CollectionItemTag(-1) {}
   virtual ~ACollectionItem()  {}
@@ -31,9 +31,9 @@ public:
   static index_t GetTag(const item_t& i) { return olx_ref::get(i).GetTag(); }
   template <class item_t>
   static void SetTag(item_t& i, index_t t) { olx_ref::get(i).SetTag(t); }
-  void SetTag(index_t v) { CollectionItemTag = v;  }
-  index_t IncTag()  {  return ++CollectionItemTag;  }
-  index_t DecTag()  {  return --CollectionItemTag;  }
+  void SetTag(index_t v) const { CollectionItemTag = v;  }
+  index_t IncTag()  const {  return ++CollectionItemTag;  }
+  index_t DecTag()  const {  return --CollectionItemTag;  }
   // for extended functionality of containers
   template <class Accessor> struct TagAnalyser_  {
     const Accessor &accessor;

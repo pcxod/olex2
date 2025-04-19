@@ -350,7 +350,7 @@ public:
   virtual olxstr GetIdName() const { return Label; }
   virtual TIString ToString() const;
 #ifdef _DEBUG
-  void SetTag(index_t v) { ACollectionItem::SetTag(v); }
+  void SetTag(index_t v) const { ACollectionItem::SetTag(v); }
 #endif
   const olx_object_ptr<Disp>& GetDisp() const { return disp; }
   olx_object_ptr<Disp>& GetDisp() { return disp; }

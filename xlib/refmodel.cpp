@@ -1756,35 +1756,35 @@ const_strlist RefinementModel::Describe() {
         sg.Esd13;
     }
   }
-  if (!SameGroups.items.IsEmpty()) {
+  if (!SameGroups.IsEmpty()) {
     lst.Add(olxstr(++sec_num)) << ". Same fragment constrains";
-    for (size_t i = 0; i < SameGroups.items.Count(); i++) {
-      if (SameGroups.items[i].IsValid()) {
-        lst.Add(SameGroups.items[i].Describe());
+    for (size_t i = 0; i < SameGroups.Count(); i++) {
+      if (SameGroups.GetItem(i).IsValid()) {
+        lst.Add(SameGroups.GetItem(i).Describe());
       }
     }
   }
-  if (!SameDisp.items.IsEmpty()) {
+  if (!SameDisp.IsEmpty()) {
     lst.Add(olxstr(++sec_num)) << ". Same DISP constrains";
-    for (size_t i = 0; i < SameDisp.items.Count(); i++) {
-      if (SameDisp.items[i].IsValid()) {
-        lst.Add(SameDisp.items[i].Describe());
+    for (size_t i = 0; i < SameDisp.Count(); i++) {
+      if (SameDisp.GetItem(i).IsValid()) {
+        lst.Add(SameDisp.GetItem(i).Describe());
       }
     }
   }
-  if (!SharedRotatedADPs.items.IsEmpty()) {
+  if (!SharedRotatedADPs.IsEmpty()) {
     lst.Add(olxstr(++sec_num)) << ". Shared rotated ADPs";
-    for (size_t i = 0; i < SharedRotatedADPs.items.Count(); i++) {
-      if (SharedRotatedADPs.items[i].IsValid()) {
-        lst.Add(SharedRotatedADPs.items[i].Describe());
+    for (size_t i = 0; i < SharedRotatedADPs.Count(); i++) {
+      if (SharedRotatedADPs.GetItem(i).IsValid()) {
+        lst.Add(SharedRotatedADPs.GetItem(i).Describe());
       }
     }
   }
-  if (!SharedRotatingADPs.items.IsEmpty()) {
+  if (!SharedRotatingADPs.IsEmpty()) {
     lst.Add(olxstr(++sec_num)) << ". Shared rotating ADPs";
-    for (size_t i = 0; i < SharedRotatingADPs.items.Count(); i++) {
-      if (SharedRotatingADPs.items[i].IsValid()) {
-        lst.Add(SharedRotatingADPs.items[i].Describe());
+    for (size_t i = 0; i < SharedRotatingADPs.Count(); i++) {
+      if (SharedRotatingADPs.GetItem(i).IsValid()) {
+        lst.Add(SharedRotatingADPs.GetItem(i).Describe());
       }
     }
   }
@@ -2604,16 +2604,16 @@ double RefinementModel::CalcCompletenessTo2Theta(double tt, bool Laue) {
   return rv;
 }
 //..............................................................................
-adirection& RefinementModel::DirectionById(const olxstr &id) const {
-  for (size_t i = 0; i < Directions.items.Count(); i++) {
-    if (Directions.items[i].id.Equalsi(id)) {
-      return Directions.items[i];
+const adirection& RefinementModel::DirectionById(const olxstr &id) const {
+  for (size_t i = 0; i < Directions.Count(); i++) {
+    if (Directions.GetItem(i).id.Equalsi(id)) {
+      return Directions.GetItem(i);
     }
   }
   throw TInvalidArgumentException(__OlxSourceInfo, "direction ID");
 }
 //..............................................................................
-adirection *RefinementModel::AddDirection(const TCAtomGroup &atoms, uint16_t type) {
+adirection &RefinementModel::AddDirection(const TCAtomGroup &atoms, uint16_t type) {
   olxstr dname;
   if (type == direction_vector) {
     dname << 'v';
@@ -2628,12 +2628,12 @@ adirection *RefinementModel::AddDirection(const TCAtomGroup &atoms, uint16_t typ
   for (size_t i = 0; i < atoms.Count(); i++) {
     dname << atoms[i].GetFullLabel(*this);
   }
-  for (size_t i = 0; i < Directions.items.Count(); i++) {
-    if (Directions.items[i].id == dname) {
-      return &Directions.items[i];
+  for (size_t i = 0; i < Directions.Count(); i++) {
+    if (Directions.GetItem(i).id == dname) {
+      return Directions.GetItem(i);
     }
   }
-  return &Directions.items.Add(new direction(dname, atoms, type));
+  return *(new direction(Directions, dname, atoms, type));
 }
 //..............................................................................
 TSimpleRestraint & RefinementModel::SetRestraintDefaults(
@@ -2746,6 +2746,7 @@ bool RefinementModel::DoShowRestraintDefaults() const {
 }
 //..............................................................................
 olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
+  TPtrList<AReleasable>* processed,
   bool write_internals) const
 {
   TDataItem di(0, "root");
@@ -2780,7 +2781,7 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
   }
   rl.Clear();
   for (size_t i = 0; i < rcList.Count(); i++) {
-    rl << rcList[i]->ToInsList(*this);
+    rl << rcList[i]->ToInsList(*this, atoms, processed);
   }
   if (write_internals) {
     bool has_int_groups = false;
@@ -3556,9 +3557,8 @@ void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
   atoms = TXApp::GetInstance().FindSAtoms(Cmds);
   // special case of rotating ADP
   if (atoms.Count() == 2) {
-    SharedRotatingADPs.items.Add(
-      new rotating_adp_constraint(
-        atoms[0]->CAtom(), atoms[1]->CAtom(), 1, false, 0, 0, 0, true));
+    new rotating_adp_constraint(SharedRotatingADPs,
+      atoms[0]->CAtom(), atoms[1]->CAtom(), 1, false, 0, 0, 0, true);
 
     return;
   }
@@ -3618,7 +3618,7 @@ void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
         as.Add(new TGroupCAtom(cnt[0]->CAtom(), cnt[0]->GetMatrix()));
         normal = (cnt[0]->crd() - cnt[0]->Node(p_ind).crd()).Normalise();
         center = (atoms[0]->crd() + atoms[1]->crd() + atoms[2]->crd()) / 3;
-        d = AddDirection(as, direction_vector);
+        d = &AddDirection(as, direction_vector);
       }
     }
   }
@@ -3628,7 +3628,7 @@ void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
     for (size_t i = 0; i < atoms.Count(); i++) {
       as.Add(new TGroupCAtom(atoms[i]->CAtom(), atoms[i]->GetMatrix()));
     }
-    d = AddDirection(as, direction_normal);
+    d = &AddDirection(as, direction_normal);
     plane::mean<>::out po = plane::mean<>::calc(atoms, TSAtom::CrdAccessor());
     center = po.center;
     normal = po.normals[0];
@@ -3639,25 +3639,9 @@ void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
   }
   plane::Sort(atoms, TSAtom::CrdAccessor(), center, normal);
   double ra = atoms.Count()*ang;
-  bool forward = true;
-  // check direction
-  {
-    mat3d rm;
-    olx_create_rotation_matrix(rm, normal, cos(ra - ang));
-    mat3d new_elp = rm * atoms[0]->CAtom().GetEllipsoid()->GetMatrix() * rm.GetT();
-    for (size_t i = 0; i < 3; i++) {
-      double dp1 = atoms[0]->CAtom().GetEllipsoid()->GetMatrix()[i].DotProd(normal);
-      double dp2 = new_elp[i].DotProd(normal);
-      if (olx_sign(dp1) != olx_sign(dp2)) {
-        forward = false;
-      }
-    }
-  }
   for (size_t i = 1; i < atoms.Count(); i++) {
-    size_t idx = forward ? i : atoms.Count() - i;
-    SharedRotatedADPs.items.Add(
-      new rotated_adp_constraint(
-        atoms[0]->CAtom(), atoms[idx]->CAtom(), *d, (ra -= ang), false));
+    new rotated_adp_constraint(SharedRotatedADPs,
+      atoms[0]->CAtom(), atoms[i]->CAtom(), *d, (ra -= ang), false);
   }
 }
 //..............................................................................
@@ -3673,14 +3657,12 @@ void RefinementModel::LibShareDisp(TStrObjList& Cmds, const TParamList& Options,
   }
   app.XFile().GetAsymmUnit().GetAtoms().ForEach(ACollectionItem::TagSetter(0));
   atoms.ForEach(ACollectionItem::TagSetter(1));
-  for (size_t i = 0; i < SameDisp.items.Count(); i++) {
-    for (size_t j = 0; j < SameDisp.items[i].atoms.Count(); j++) {
-      if (SameDisp.items[i].atoms[j]->GetTag() == 1) {
-        SameDisp.items[i].atoms.Delete(j--);
-      }
+  for (size_t i = 0; i < SameDisp.Count(); i++) {
+    for (size_t j = 0; j < SameDisp.GetItem(i).atoms.Count(); j++) {
+      SameDisp.GetItem(i).atoms.Pack(ACollectionItem::TagAnalyser(1));
     }
   }
-  SameDisp.items.AddNew(atoms);
+  new same_disp_constraint(SameDisp, atoms);
 }
 //..............................................................................
 void RefinementModel::LibCalcCompleteness(const TStrObjList& Params,

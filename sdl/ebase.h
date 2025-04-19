@@ -377,14 +377,14 @@ public:
 
 // an interface for a referencible object
 class AReferencible : public virtual IOlxObject {
-  int This_RefCount;
+  mutable int This_RefCount;
 public:
   AReferencible() : This_RefCount(0)
   {}
   virtual ~AReferencible();
   int GetRefCount() const { return This_RefCount; }
-  int DecRef() { return --This_RefCount; }
-  int IncRef() { return ++This_RefCount; }
+  int DecRef() const { return --This_RefCount; }
+  int IncRef() const { return ++This_RefCount; }
 };
 
 // we need this class to throw exceptions from string with gcc ...

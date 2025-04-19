@@ -997,7 +997,7 @@ void THtml::OnClipboard(wxClipboardTextEvent& evt) {
   else
     processed = false;
   if (processed && !text.IsEmpty() && wxTheClipboard->Open()) {
-    if (wxTheClipboard->IsSupported(wxDF_TEXT)) {
+    if (wxTheClipboard->IsSupported(wxDF_UNICODETEXT)) {
       wxTheClipboard->SetData(new wxTextDataObject(text));
     }
     wxTheClipboard->Close();

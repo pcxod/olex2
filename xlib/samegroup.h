@@ -10,21 +10,20 @@
 #ifndef __olx_xl_same_group_h
 #define __olx_xl_same_group_h
 #include "catomlist.h"
+#include "releasable.h"
 
 BeginXlibNamespace()
 
 class TSameGroupList;
-class TSameGroup : public ACollectionItem {
+
+class TSameGroup : public ACollectionItem, public AReleasable {
   TPtrList<TSameGroup> Dependent;  // pointers borrowed from Parent
   AtomRefList Atoms;
-  uint16_t Id;
-  TSameGroupList& Parent;
   TSameGroup* ParentGroup;
 protected:
-  void SetId(uint16_t id) { SetAtomIds(Id = id); }
   // it does not clear the ParentGroup, to make Restore work...
   bool RemoveDependent(TSameGroup& sg) { return Dependent.Remove(sg); }
-  void SetAtomIds(uint16_t);
+  void SetAtomIds(size_t);
   // on release
   void ClearAtomIds() { SetAtomIds(~0); }
   // re-orders this groups and dependent groups atoms according to tags
@@ -32,13 +31,11 @@ protected:
   // initialises atom_map_N
   olx_object_ptr<DistanceGenerator> get_generator() const;
 public:
-  TSameGroup(uint16_t id, TSameGroupList& parent);
+  TSameGroup(TSameGroupList& parent);
   ~TSameGroup();
 
-  const TSameGroupList& GetParent() const { return Parent; }
-  TSameGroupList& GetParent() { return Parent; }
+  TSameGroupList& GetParent() const;
   TSameGroup* GetParentGroup() const { return ParentGroup; }
-  uint16_t GetId() const { return Id; }
 
   void Assign(const TSameGroup& sg);
   // this is called internally by the RM
@@ -55,12 +52,13 @@ public:
     Dependent.Clear();
   }
   // does not reset the Atom's SameId
-  void ReleasedClear() {
+  void OnReleasedDelete() {
     Atoms.Clear();
     Dependent.Clear();
   }
 
   bool IsReference() const { return !Dependent.IsEmpty(); }
+  size_t GetId() const { return this->GetReleasableId(); }
 
   // will invalidate previously assigned group
   TCAtom& Add(TCAtom& ca);
@@ -142,10 +140,11 @@ public:
   friend class TSameGroupList;
 };
 
-class TSameGroupList {
-  TTypeList<TSameGroup> Groups;
+class TSameGroupList : public AReleasableContainer<TSameGroup> {
+protected:
+  void OnRestore(TSameGroup& item);
+  void OnRelease(TSameGroup& item);
 public:
-
   class RefinementModel& RM;
 
   TSameGroupList(RefinementModel& parent)
@@ -156,19 +155,36 @@ public:
 
   TSameGroup& Build(const olxstr &exp, const olxstr &resi=EmptyString());
   void FixIds();
-  TSameGroup& operator [] (size_t i) { return Groups[i]; }
   const TSameGroup& operator [] (size_t i) const {
-    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, i, 0, Groups.Count());
-    return Groups[i];
+#ifdef OLX_DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, i, 0, items.Count());
+#endif
+    return (const TSameGroup&)items[i];
   }
-  size_t Count() const { return Groups.Count(); }
-  bool IsEmpty() const { return Groups.IsEmpty(); }
+  TSameGroup& operator [] (size_t i) {
+#ifdef OLX_DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, i, 0, items.Count());
+#endif
+    return (TSameGroup&)items[i];
+  }
+  const TSameGroup& GetItem(size_t i) const {
+#ifdef OLX_DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, i, 0, items.Count());
+#endif
+    return (const TSameGroup&)items[i];
+  }
+  TSameGroup& GetItem(size_t i) {
+#ifdef OLX_DEBUG
+    TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo, i, 0, items.Count());
+#endif
+    return (TSameGroup&)items[i];
+  }
+  size_t Count() const { return items.Count(); }
+  bool IsEmpty() const { return items.IsEmpty(); }
   // searches a group by the content
   TSameGroup *Find(const TSameGroup &g) const;
-  void Clear() { Groups.Clear(); }
+  void Clear() { AReleasableContainer::Clear(); }
   void Assign(const TSameGroupList& sl);
-  void Release(TSameGroup& sg);
-  void Restore(TSameGroup& sg);
   void Delete(const TPtrList <TSameGroup> &groups);
   void Delete(TSameGroup& g) {
     Delete(TPtrList<TSameGroup>() << g);
@@ -218,7 +234,7 @@ private:
     {}
     ~GroupTrimmer() {
       while (groups.Count() > sz) {
-        groups.GetLast().ReleasedClear();
+        groups.GetLast().OnReleasedDelete();
         groups.Delete(groups.Count() - 1);
       }
     }

@@ -2508,8 +2508,8 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options,
       atoms[i]->CAtom().GetDisp() = 0;
       atoms[i]->CAtom().SetTag(1);
     }
-    for (size_t i = 0; i < rm.SameDisp.items.Count(); i++) {
-      rm.SameDisp.items[i].atoms.Pack(ACollectionItem::TagAnalyser(1));
+    for (size_t i = 0; i < rm.SameDisp.Count(); i++) {
+      rm.SameDisp.GetItem(i).atoms.Pack(ACollectionItem::TagAnalyser(1));
     }
     if (Options.GetBoolOption('c')) {
       for (size_t i = 0; i < types.Count(); i++) {
@@ -2602,8 +2602,8 @@ void XLibMacros::macFree(TStrObjList &Cmds, const TParamList &Options,
       }
       atoms[i]->CAtom().SetTag(1);
     }
-    for (size_t i = 0; i < rm.SameDisp.items.Count(); i++) {
-      rm.SameDisp.items[i].atoms.Pack(ACollectionItem::TagAnalyser(1));
+    for (size_t i = 0; i < rm.SameDisp.Count(); i++) {
+      rm.SameDisp.GetItem(i).atoms.Pack(ACollectionItem::TagAnalyser(1));
     }
   }
 }
@@ -10028,7 +10028,7 @@ void XLibMacros::macRRings(TStrObjList& Cmds, const TParamList& Options,
       olxstr r_str = rs[0]->ToString();
       if (unique.Contains(r_str)) {
         for (size_t j = 0; j < rs.Count(); j++) {
-          rs[j]->GetParent().Release(*rs[j]);
+          rs[j]->Release();
           delete rs[j];
         }
       }
@@ -10724,7 +10724,7 @@ void XLibMacros::macConstrain(TStrObjList &Cmds,
         for (size_t j=0; j < ag; j++, ac++)
           al[j] = &atoms[ac]->CAtom();
       }
-      app.XFile().GetRM().SameGroups.items.AddNew(
+      new same_group_constraint(app.XFile().GetRM().SameGroups, 
         ConstTypeList<TCAtomPList>(groups));
     }
     else if (atoms.Count() == 2) {
@@ -10766,7 +10766,7 @@ void XLibMacros::macConstrain(TStrObjList &Cmds,
         groups[0][i] = &ma[i].GetA()->CAtom();
         groups[1][i] = &ma[i].GetB()->CAtom();
       }
-      app.XFile().GetRM().SameGroups.items.AddNew(
+      new same_group_constraint(app.XFile().GetRM().SameGroups,
         ConstTypeList<TCAtomPList>(groups));
     }
   }
@@ -12802,7 +12802,7 @@ void XLibMacros::macWigl(TStrObjList& Cmds, const TParamList& Options,
       TEllipsoid& r = *a.GetEllipsoid();
       evecd q = r.GetQuad();
       for (int qi = 0; qi < 3; qi++) {
-        double shift = 0.5 + (double)rand() * dU / (2*RAND_MAX);
+        double shift = 0.5 + (double)rand() * dU / (2.0*(double)RAND_MAX);
         int idx = TEllipsoid::linear_to_shelx(qi);
         r.SetQuad(idx, r.GetQuad(idx) * shift);
       }

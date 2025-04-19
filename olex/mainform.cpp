@@ -2415,7 +2415,7 @@ void TMainForm::OnKeyDown(wxKeyEvent& m) {
       // avoid duplication
       olxstr content;
       if (wxTheClipboard->Open()) {
-        if (wxTheClipboard->IsSupported(wxDF_TEXT)) {
+        if (wxTheClipboard->IsSupported(wxDF_UNICODETEXT)) {
           wxTextDataObject data;
           wxTheClipboard->GetData(data);
           content = data.GetText();

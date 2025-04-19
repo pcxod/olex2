@@ -2319,7 +2319,7 @@ olx_pair_t<bool,bool> RunExternalEdit(TStrList &SL, const olxstr& fn_) {
     }
   }
   TXApp::UnifyPAtomList(CAtoms);
-  RefinementModel::ReleasedItems released;
+  TPtrList<AReleasable> released;
   olxset<TSameGroup *, TPointerComparator> sameGroups;
   for (size_t i = 0; i < CAtoms.Count(); i++) {
     if (olx_is_valid_index(CAtoms[i]->GetSameId())) {
@@ -2337,9 +2337,9 @@ olx_pair_t<bool,bool> RunExternalEdit(TStrList &SL, const olxstr& fn_) {
     }
   }
   // process SAME's
-  released.sameList.AddAll(sameGroups);
-  for (size_t i = 0; i < released.sameList.Count(); i++) {
-    TSameGroup &sg = *released.sameList[i];
+  released.AddAll(sameGroups);
+  for (size_t i = 0; i < sameGroups.Count(); i++) {
+    TSameGroup &sg = *sameGroups[i];
     TAtomRefList atoms = sg.GetAtoms().ExpandList(rm);
     for (size_t j = 0; j < atoms.Count(); j++) {
       CAtoms.Add(atoms[j].GetAtom());
@@ -2420,12 +2420,8 @@ olx_pair_t<bool,bool> RunExternalEdit(TStrList &SL, const olxstr& fn_) {
     TPrimitiveComparator()));
   TIns::SaveAtomsToStrings(FXApp->XFile().GetRM(), CAtoms, atomIndex, SL,
     &released);
-  for (size_t i = 0; i < released.restraints.Count(); i++) {
-    released.restraints[i]->GetParent().Release(*released.restraints[i]);
-  }
-  ACollectionItem::Unify(released.sameList);
-  for (size_t i = 0; i < released.sameList.Count(); i++) {
-    released.sameList[i]->GetParent().Release(*released.sameList[i]);
+  for (size_t i = 0; i < released.Count(); i++) {
+    released[i]->Release();
   }
   au.Release(TPtrList<TResidue>(residues_to_release));
   olx_pair_t<bool, bool> res = RunExternalEdit(SL, "atoms.txt");
@@ -2474,30 +2470,18 @@ olx_pair_t<bool,bool> RunExternalEdit(TStrList &SL, const olxstr& fn_) {
           FXApp->XFile().GetRM(), false);
       }
     }
-    for (size_t i = 0; i < released.restraints.Count(); i++) {
-      released.restraints[i]->GetParent().Restore(*released.restraints[i]);
-    }
-    if (!released.sameList.IsEmpty()) {
-      for (size_t i = 0; i < released.sameList.Count(); i++) {
-        released.sameList[i]->GetParent().Restore(*released.sameList[i]);
-      }
-      released.sameList[0]->GetParent().Sort();
+    for (size_t i = 0; i < released.Count(); i++) {
+      released[i]->Restore();
     }
   }
   else {
     for (size_t i = 0; i < RemovedIns.Count(); i++) {
       delete RemovedIns.GetObject(i);
     }
-    for (size_t i = 0; i < released.restraints.Count(); i++) {
-      if (released.restraints[i]->GetVarRef(0) != 0) {
-        delete released.restraints[i]->GetVarRef(0);
-      }
-      delete released.restraints[i];
+    for (size_t i = 0; i < released.Count(); i++) {
+      released[i]->OnReleasedDelete();
     }
-    for (size_t i = 0; i < released.sameList.Count(); i++) {
-      released.sameList[i]->ReleasedClear();
-      delete released.sameList[i];
-    }
+    released.DeleteItems();
     for (size_t i = 0; i < residues_to_release.Count(); i++) {
       delete residues_to_release[i];
     }
@@ -5462,7 +5446,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
   if (Options.Contains('c')) {
     olxstr clipbrd_content;
     if (wxTheClipboard->Open()) {
-      if (wxTheClipboard->IsSupported(wxDF_TEXT)) {
+      if (wxTheClipboard->IsSupported(wxDF_UNICODETEXT)) {
         wxTextDataObject data;
         wxTheClipboard->GetData(data);
         clipbrd_content = data.GetText();
