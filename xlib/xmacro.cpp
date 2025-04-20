@@ -5760,6 +5760,18 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   Cif->SaveToFile(file_name);
 }
 //.............................................................................
+struct CifBlockIndexReverter {
+  TCif& cif;
+  size_t index;
+  CifBlockIndexReverter(TCif& cif, size_t index)
+    : cif(cif), index(index)
+  {}
+  ~CifBlockIndexReverter() {
+    if (index != InvalidIndex) {
+      cif.SetCurrentBlock(index);
+    }
+  }
+};
 void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
@@ -5768,6 +5780,10 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options,
     force = Options.GetBoolOption("force");
   olxstr items_file = (use_items ? Options.FindValue("i") : EmptyString());
   olx_object_ptr<TCif> external_cif;
+  /* to be used if a CIF with identical name is loaded, but requested operation is from
+  different block.
+  */
+  olx_object_ptr<CifBlockIndexReverter> cbi_reverter;
   TCif *cif = 0;
   bool export_metacif = false, export_ed = false;
   if (use_items) {
@@ -5787,15 +5803,64 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else {
-    external_cif = new TCif;
-    try {
-      external_cif->LoadFromFile(Cmds[0]);
-      cif = &external_cif;
+    TXFile::NameArg file_n(Cmds[0]);
+    if (!xapp.CheckFileType<TCif>() ||
+      xapp.XFile().GetFileName() != file_n.file_name)
+    {
+      external_cif = new TCif;
+      try {
+        external_cif->LoadFromFile(Cmds[0]);
+        cif = &external_cif;
+      }
+      catch (const TExceptionBase& e) {
+        throw TFunctionFailedException(__OlxSrcInfo, e);
+      }
     }
-    catch (const TExceptionBase &e) {
-      throw TFunctionFailedException(__OlxSrcInfo, e);
+    if (cif == 0) {
+      cif = &xapp.XFile().GetLastLoader<TCif>();
+    }
+    size_t new_idx = InvalidIndex-1;
+    if (file_n.data_name.IsEmpty()) {
+      if (Cmds.Count() > 1) {
+        olxstr matacif_n =
+          TEFile::ChangeFileExt(TEFile::ExtractFileName(Cmds[1]), EmptyString());
+        if (cif->BlockCount() > 1) {
+          new_idx = cif->FindBlockIndex(matacif_n);
+          // WARNING: useful for reporting errors only now
+          file_n.data_name = matacif_n;
+        }
+        else {
+          if (cif->GetDataName() != matacif_n) {
+            TBasicApp::NewLogEntry(logWarning) <<
+              "CIF data name does not match the destination file name: '" <<
+              cif->GetDataName() << "' vs '" << matacif_n << '\'';
+          }
+        }
+      }
+    }
+    else if (
+      (file_n.is_index && file_n.data_name.ToSizeT() != cif->GetBlockIndex()) ||
+      (!file_n.is_index && file_n.data_name != cif->GetDataName()))
+    {
+      new_idx = file_n.is_index ? file_n.data_name.ToSizeT() :
+        cif->FindBlockIndex(file_n.data_name);
+    }
+    if (new_idx != InvalidIndex-1) {
+      if (new_idx != cif->GetBlockIndex() && new_idx < cif->BlockCount()) {
+        // initialise the reverter for internal CIF
+        if (!external_cif.ok()) {
+          cbi_reverter = new CifBlockIndexReverter(*cif, cif->GetBlockIndex());
+        }
+        cif->SetCurrentBlock(new_idx);
+      }
+      else {
+        E.ProcessingError(__OlxSrcInfo,
+          "Specified CIF block does not exist: ").quote() << file_n.data_name;
+        return;
+      }
     }
   }
+
   olxstr dest;
   if (Cmds.Count() == 2) {
     dest = Cmds[1];
@@ -5901,8 +5966,7 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options,
       mcf.SaveToFile(dest);
     }
     catch (const TExceptionBase &e) {
-      TBasicApp::NewLogEntry(logError) << "Failed to retrieve structure "
-        "folder - skipping metacif export";
+      TBasicApp::NewLogEntry(logError) << "Failed to create '" << dest << '\'';
     }
   }
   else {

@@ -194,8 +194,10 @@ public:
   size_t BlockCount() const { return data_provider.Count(); }
   // changes current block index, i.e. loads structure from different block
   void SetCurrentBlock(size_t i) {
-    block_index = i;
-    _LoadCurrent();
+    if (i != block_index) {
+      block_index = i;
+      _LoadCurrent();
+    }
   }
   /* Sets current block and creates if specified to in the case the block does
   not exist. When a block is created, parent can be used to create save_blocks
@@ -208,13 +210,18 @@ public:
       if (create) {
         cb = &data_provider.Add(block_name, parent);
         block_index = data_provider.Count() - 1;
-        return;
       }
+      return;
     }
-    if (cb != 0) {
-      block_index = data_provider.IndexOf(*cb);
+    SetCurrentBlock(data_provider.IndexOf(*cb));
+  }
+
+  size_t FindBlockIndex(const olxstr& block_name) const {
+    cif_dp::CifBlock* cb = data_provider.Find(block_name);
+    if (cb == 0) {
+      return InvalidIndex;
     }
-    _LoadCurrent();
+    return data_provider.IndexOf(*cb);
   }
   // renames current block
   void RenameCurrentBlock(const olxstr& new_name) {
