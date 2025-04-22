@@ -615,6 +615,7 @@ void TMainForm::XApp(Olex2App *XA)  {
     "l-[name] lock atom types after naming;[grow] list contacts&;"
     "e-a macro to run on mode exit&;"
     "d-[hfix] distance&;"
+    "i-[fit, false] use only the selected atoms for 1-3 distances&;"
     ,
     (fpAny^fpNone)|psFileLoaded,
     "Turns specified mode on. Valid mode: fixu, fixc, grow, himp, match, move,"
