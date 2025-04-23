@@ -2761,9 +2761,12 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
   for (size_t i = 0; i < restraints.Count(); i++) {
     for (size_t j = 0; j < restraints[i].GetA()->Count(); j++) {
       olxstr line = TIns::RestraintToString(
-        (*restraints[i].GetA())[j], restraints[i].GetB());
+        (*restraints[i].GetA())[j], restraints[i].GetB(), atoms);
       if (!line.IsEmpty()) {
         rl.Add(line);
+        if (processed != 0) {
+          processed->Add((*restraints[i].GetA())[j]);
+        }
       }
     }
   }
