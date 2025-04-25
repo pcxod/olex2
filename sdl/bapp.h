@@ -43,7 +43,7 @@ protected:
   short MaxThreadCount;
   bool MainFormVisible, Profiling, BaseDirWriteable;
   void ValidateArgs() const;
-  TParamList Options;
+  TParamList Options, ArgOptions;
   TStrList Arguments;
   virtual olxstr GetPlatformString_(bool full) const;
   virtual bool HasGUI_() const { return false; }
@@ -59,6 +59,9 @@ public:
   // the file name of the application with full path
   TBasicApp(const olxstr& AppName, bool read_options=false);
   virtual ~TBasicApp();
+  // only options what were passed to InitArguments
+  const TParamList& GetArgOptions() const { return ArgOptions; }
+  // all options, inc ones from option files
   const TParamList &GetOptions() const { return Options; }
   const TStrList &GetArguments() const { return Arguments; }
   // this can be used to identify version changes
@@ -74,6 +77,8 @@ public:
       olxstr arg = olxstr::FromCStr(argv[i]);
       if (arg.Contains('=') || arg.StartsFrom('-')) {
         Options.FromString(arg, '=');
+        ArgOptions.AddParam(Options.GetName(Options.Count() - 1),
+          Options.GetValue(Options.Count() - 1));
       }
       else {
         Arguments.Add(arg);
