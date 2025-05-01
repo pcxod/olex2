@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2025 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -381,6 +381,7 @@ public:
   // sets current active XFile...
   void SetActiveXFile(size_t i);
   TGXFile& NewXFile();
+  size_t XFileCount() const { return Files.Count(); }
   // aligns overlayed structures on a 2D grid
   void AlignXFiles();
   // calculates maximum radius and center of given lattice
