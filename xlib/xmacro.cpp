@@ -841,7 +841,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     "file");
   xlib_InitFunc(FilePath, fpNone|fpOne,
     "Returns file path. If no arguments provided - of currently loaded file");
-  xlib_InitFunc(FileFull, fpNone, "Returns full path of currently loaded file");
+  xlib_InitFunc(FileFull, fpNone|fpOne,
+    "Returns full path of currently loaded or overlayed file");
   xlib_InitFunc(FileDrive, fpNone|fpOne,
     "Returns file drive. If no arguments provided - of currently loaded file");
   xlib_InitFunc(Title, fpNone|fpOne,
@@ -4166,69 +4167,60 @@ void XLibMacros::funRemoveSE(const TStrObjList &Params, TMacroData &E) {
   }
 }
 //.............................................................................
-void XLibMacros::funFileName(const TStrObjList &Params, TMacroData &E)  {
-  olxstr Tmp;
-  if( !Params.IsEmpty() )
-    Tmp = TEFile::ExtractFileName(Params[0]);
-  else  {
-    if( TXApp::GetInstance().XFile().HasLastLoader() )
-      Tmp = TEFile::ExtractFileName(TXApp::GetInstance().XFile().GetFileName());
-    else
-      Tmp = NoneString();
+const TXFile* GetXFile(const TStrObjList& Params) {
+  const TXApp& app = TXApp::GetInstance();
+  if (!Params.IsEmpty()) {
+    if (Params[0].IsUInt()) {
+      size_t idx = Params[0].ToSizeT();
+      if (idx < app.XFiles().Count()) {
+        return &app.XFiles()[idx];
+      }
+    }
+    else {
+      return 0;
+    }
   }
-  E.SetRetVal(TEFile::ChangeFileExt(Tmp, EmptyString()));
+  else {
+    return &app.XFile();
+  }
+  return 0;
+}
+
+olxstr GetFileName(const TStrObjList& Params) {
+  const TXFile* xf = GetXFile(Params);
+  if (xf == 0) {
+    return Params.IsEmpty() ? EmptyString() : Params[0];
+  }
+  return xf->GetFileName();
+}
+
+void XLibMacros::funFileName(const TStrObjList& Params, TMacroData& E) {
+  olxstr Tmp = GetFileName(Params);
+  E.SetRetVal(Tmp.IsEmpty() ? NoneString()
+    : TEFile::ChangeFileExt(
+      TEFile::ExtractFileName(Tmp), EmptyString()));
 }
 //.............................................................................
-void XLibMacros::funFileExt(const TStrObjList &Params, TMacroData &E)  {
-  olxstr Tmp;
-  if( !Params.IsEmpty() )
-    E.SetRetVal(TEFile::ExtractFileExt(Params[0]));
-  else  {
-    if( TXApp::GetInstance().XFile().HasLastLoader() ) {
-      E.SetRetVal(
-        TEFile::ExtractFileExt(TXApp::GetInstance().XFile().GetFileName()));
-    }
-    else
-      E.SetRetVal(NoneString());
-  }
+void XLibMacros::funFileExt(const TStrObjList& Params, TMacroData& E) {
+  olxstr Tmp = GetFileName(Params);
+  E.SetRetVal(Tmp.IsEmpty() ? NoneString() : TEFile::ExtractFileExt(Tmp));
 }
 //.............................................................................
 void XLibMacros::funFilePath(const TStrObjList& Params, TMacroData& E) {
-  olxstr Tmp;
-  if (!Params.IsEmpty())
-    Tmp = TEFile::ExtractFilePath(Params[0]);
-  else {
-    if (TXApp::GetInstance().XFile().HasLastLoader()) {
-      Tmp = TEFile::ExtractFilePath(TXApp::GetInstance().XFile().GetFileName());
-    }
-    else {
-      Tmp = NoneString();
-    }
-  }
+  olxstr Tmp = GetFileName(Params);
   // see notes in funBaseDir
-  TEFile::TrimPathDelimeterI(Tmp);
-  E.SetRetVal(Tmp);
+  TEFile::TrimPathDelimeterI(TEFile::ExtractFilePath(Tmp));
+  E.SetRetVal(Tmp.IsEmpty() ? NoneString() : Tmp);
 }
 //.............................................................................
-void XLibMacros::funFileDrive(const TStrObjList &Params, TMacroData &E)  {
-  olxstr Tmp;
-  if( !Params.IsEmpty() )
-    E.SetRetVal(TEFile::ExtractFileDrive(Params[0]));
-  else  {
-    if( TXApp::GetInstance().XFile().HasLastLoader() ) {
-      E.SetRetVal(
-        TEFile::ExtractFileDrive(TXApp::GetInstance().XFile().GetFileName()));
-    }
-    else
-      E.SetRetVal(NoneString());
-  }
+void XLibMacros::funFileDrive(const TStrObjList& Params, TMacroData& E) {
+  olxstr Tmp = GetFileName(Params);
+  E.SetRetVal(Tmp.IsEmpty() ? NoneString() : TEFile::ExtractFileDrive(Tmp));
 }
 //.............................................................................
-void XLibMacros::funFileFull(const TStrObjList &Params, TMacroData &E)  {
-  if( TXApp::GetInstance().XFile().HasLastLoader() )
-    E.SetRetVal(TXApp::GetInstance().XFile().GetFileName());
-  else
-    E.SetRetVal(NoneString());
+void XLibMacros::funFileFull(const TStrObjList& Params, TMacroData& E) {
+  olxstr Tmp = GetFileName(Params);
+  E.SetRetVal(Tmp.IsEmpty() ? NoneString() : Tmp);
 }
 //.............................................................................
 void XLibMacros::funIsFileLoaded(const TStrObjList& Params, TMacroData &E) {
@@ -4236,14 +4228,17 @@ void XLibMacros::funIsFileLoaded(const TStrObjList& Params, TMacroData &E) {
 }
 //.............................................................................
 void XLibMacros::funTitle(const TStrObjList& Params, TMacroData &E)  {
-  if( !TXApp::GetInstance().XFile().HasLastLoader() )  {
-    if( Params.IsEmpty() )
-      E.SetRetVal(olxstr("File is not loaded"));
-    else
-      E.SetRetVal(Params[0]);
+  const TXFile* xf = GetXFile(Params);
+  if (xf == 0) {
+    E.SetRetVal(Params.IsEmpty() ? EmptyString() : Params[0]);
+    return;
   }
-  else
-    E.SetRetVal(TXApp::GetInstance().XFile().LastLoader()->GetTitle());
+  if (!xf->HasLastLoader()) {
+    E.SetRetVal(olxstr("File is not loaded"));
+  }
+  else {
+    E.SetRetVal(xf->LastLoader()->GetTitle());
+  }
 }
 //.............................................................................
 void XLibMacros::funIsFileType(const TStrObjList& Params, TMacroData &E) {
