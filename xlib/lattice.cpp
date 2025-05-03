@@ -3523,31 +3523,36 @@ void TLattice::LibIsPolymeric(const TStrObjList& Params, TMacroData& E) {
   E.SetRetVal(IsPolymeric(Params.IsEmpty() ? false : Params[0].ToBool()));
 }
 //..............................................................................
+IOlxObject* TLattice::VPtr::get_ptr() const {
+  return &TXApp::GetInstance().XFile().GetLattice();
+}
+//..............................................................................
 TLibrary*  TLattice::ExportLibrary(const olxstr& name)  {
+  olx_vptr<TLattice> thisp(new VPtr);
   TLibrary* lib = new TLibrary(name.IsEmpty() ? olxstr("latt") : name);
   lib->Register(
-    new TFunction<TLattice>(this,  &TLattice::LibGetFragmentCount,
+    new TFunction<TLattice>(thisp,  &TLattice::LibGetFragmentCount,
     "GetFragmentCount", fpNone,
     "Returns number of fragments in the lattice")
   );
   lib->Register(
-    new TFunction<TLattice>(this,  &TLattice::LibGetFragmentAtoms,
+    new TFunction<TLattice>(thisp,  &TLattice::LibGetFragmentAtoms,
     "GetFragmentAtoms", fpOne,
     "Returns a comma separated list of atoms in specified fragment")
   );
   lib->Register(
-    new TFunction<TLattice>(this,  &TLattice::LibGetMoiety,
+    new TFunction<TLattice>(thisp,  &TLattice::LibGetMoiety,
     "GetMoiety", fpNone|fpOne,
     "Returns molecular moiety. HTML formatted depending on the first boolean "
       "argument [false].")
   );
   lib->Register(
-    new TFunction<TLattice>(this,  &TLattice::LibIsGrown,
+    new TFunction<TLattice>(thisp,  &TLattice::LibIsGrown,
     "IsGrown", fpNone,
     "Returns true if the structure is grow")
   );
   lib->Register(
-    new TFunction<TLattice>(this, &TLattice::LibIsPolymeric,
+    new TFunction<TLattice>(thisp, &TLattice::LibIsPolymeric,
       "IsPolymeric", fpNone|fpOne,
       "Returns true if the structure is polymeric. The use of Q-peaks is "
       "controlled by the first boolean argument [false]")
