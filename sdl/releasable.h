@@ -34,7 +34,7 @@ public:
     ReleasableId = id;
   }
 public:
-  AReleasable(parent_t& parent);
+  AReleasable(parent_t& parent, bool tmp=false);
   virtual ~AReleasable() {}
 
   void Release();

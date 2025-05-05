@@ -29,12 +29,13 @@ struct adirection : public AReferencible, public AReleasable {
     static olxstr ts[] = {"static", "vector", "normal", "centroid"};
     return &ts[0];
   }
-  adirection(AReleasableContainer<adirection>& parent)
-  : AReleasable(parent)
+  adirection(AReleasableContainer<adirection>& parent, bool tmp=false)
+  : AReleasable(parent, tmp)
   {}
-  adirection(AReleasableContainer<adirection>& parent, const olxstr &_id)
-    : AReleasable(parent), id(_id)
+  adirection(AReleasableContainer<adirection>& parent, const olxstr &_id, bool tmp = false)
+    : AReleasable(parent, tmp), id(_id)
   {}
+
   virtual vec3d get() const = 0;
 
   static adirection* FromDataItem(AReleasableContainer<adirection>& to,
@@ -68,8 +69,8 @@ struct adirection : public AReferencible, public AReleasable {
 
 struct static_direction : public adirection {
   vec3d value;
-  static_direction(AReleasableContainer<adirection>& parent)
-  : adirection(parent)
+  static_direction(AReleasableContainer<adirection>& parent, bool tmp=false)
+  : adirection(parent, tmp)
   {}
   static_direction(AReleasableContainer<adirection>& parent, const olxstr& id,
     const vec3d &_value)
@@ -95,8 +96,8 @@ struct static_direction : public adirection {
 struct direction : public adirection {
   TCAtomGroup atoms;
   uint16_t type;
-  direction(AReleasableContainer<adirection>& parent, uint16_t type)
-    : adirection(parent), type(type)
+  direction(AReleasableContainer<adirection>& parent, uint16_t type, bool tmp = false)
+    : adirection(parent, tmp), type(type)
   {}
   direction(AReleasableContainer<adirection>& parent, const olxstr &id,
     const TCAtomGroup &_atoms,

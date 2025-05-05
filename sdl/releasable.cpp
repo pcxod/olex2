@@ -1,9 +1,11 @@
 #include "releasable.h"
 
-AReleasable::AReleasable(parent_t& parent)
+AReleasable::AReleasable(parent_t& parent, bool tmp)
   : ReleasableId(InvalidIndex), parent(parent)
 {
-  parent.Add(this);
+  if (!tmp) {
+    parent.Add(this);
+  }
 }
 void AReleasable::Release() { parent.Release(*this); }
 //.............................................................................

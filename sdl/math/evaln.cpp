@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2025 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -16,9 +16,8 @@
 using namespace exparse;
 using namespace math_eval;
 //.............................................................................
-//.............................................................................
 ExpEvaluator::ExpEvaluator()
-  : root(NULL), eval_root(NULL)
+  : root(0), eval_root(0)
 {
   factory('@', new FuncEvaluator1::factory(&nop));
   factory('~', new FuncEvaluator1::factory(&chs));
@@ -41,63 +40,82 @@ ExpEvaluator::ExpEvaluator()
   factory('*', new FuncEvaluator2::factory(&mul));
   factory('/', new FuncEvaluator2::factory(&div));
   factory('%', new FuncEvaluator2::factory(&mod));
+
+  factory("==", new FuncEvaluator2::factory(&eq));
+  factory("!=", new FuncEvaluator2::factory(&neq));
+  factory(">", new FuncEvaluator2::factory(&gt));
+  factory(">=", new FuncEvaluator2::factory(&ge));
+  factory("<", new FuncEvaluator2::factory(&lt));
+  factory("<=", new FuncEvaluator2::factory(&le));
+  factory("||", new FuncEvaluator2::factory(&or_));
+  factory("&&", new FuncEvaluator2::factory(&and_));
 }
 //.............................................................................
 ExpEvaluator::~ExpEvaluator() {
-  if (root != NULL)
-    delete root;
-  if (eval_root != NULL)
-    delete eval_root;
-  for (size_t i=0; i < factory.Count(); i++)
+  olx_del_obj(root);
+  olx_del_obj(eval_root);
+  for (size_t i = 0; i < factory.Count(); i++) {
     delete factory.GetValue(i);
+  }
 }
 //.............................................................................
 AEvaluable *ExpEvaluator::create(const olxstr &name,
     const TPtrList<AEvaluable> &args)
 {
-  IFactory *f = factory.Find(name, NULL);
-  if (f==NULL)
+  IFactory *f = factory.Find(name, 0);
+  if (f == 0) {
     return Evaluators.Add(new Evaluator(name, args));
+  }
   AEvaluable *e = f->create(args);
-  return e == NULL ? Evaluators.Add(new Evaluator(name, args)) : e;
+  return e == 0 ? Evaluators.Add(new Evaluator(name, args)) : e;
 }
 //.............................................................................
 AEvaluable *ExpEvaluator::create(exparse::expression_tree *t) {
-  if (t->left != NULL || t->right != NULL) {
+  if (t->left != 0 || t->right != 0) {
     TPtrList<AEvaluable> args;
-    if (t->left == NULL) {
-      if (t->evator == NULL) {
+    if (t->left == 0) {
+      if (t->evator == 0) {
         if (t->data != '-' && t->data != '+')
            throw TFunctionFailedException(__OlxSourceInfo, "invalid expression");
-        if (t->data == '-')
+        if (t->data == '-') {
           t->data = '~';
-        else
+        }
+        else {
           t->data = '@';
+        }
       }
       else {
         TPtrList<AEvaluable> largs;
-        for (size_t i=0; i < t->evator->args.Count(); i++)
+        for (size_t i = 0; i < t->evator->args.Count(); i++) {
           largs.Add(create(t->evator->args[i]));
+        }
         args << create(t->evator->name, largs);
       }
     }
-    else
+    else {
       args << create(t->left);
-    if (t->right != NULL) args << create(t->right);
+    }
+    if (t->right != 0) {
+      args << create(t->right);
+    }
     return create(t->data, args);
   }
-  if (t->evator != NULL) {
+  if (t->evator != 0) {
     TPtrList<AEvaluable> args;
-    for (size_t i=0; i < t->evator->args.Count(); i++)
+    for (size_t i = 0; i < t->evator->args.Count(); i++) {
       args.Add(create(t->evator->args[i]));
+    }
     return create(t->evator->name, args);
   }
-  if (t->left == NULL && t->right == NULL) {
-    if (t->data.IsNumber())
+  if (t->left == 0&& t->right == 0) {
+    if (t->data.IsNumber()) {
       return new NumberEvaluator(t->data.ToDouble());
+    }
     else {
-      AEvaluable *ae = ScopeVariables.FindPointer(t->data, NULL);
-      if (ae != NULL) return ae;
+      AEvaluable *ae = ScopeVariables.FindPointer(t->data, 0);
+      if (ae != 0) {
+        return ae;
+      }
       return Variables.Add(new Variable(t->data));
     }
   }
@@ -109,19 +127,19 @@ ConstPtrList<AEvaluable> ExpEvaluator::create_args(const olxstr &args_) {
   TStrList args;
   parser_util::split_args(args_, args);
   for (size_t i=0; i < args.Count(); i++) {
-    if (args[i].IsNumber())
+    if (args[i].IsNumber()) {
       rv.Add(new NumberEvaluator(args[i].ToDouble()));
-
+    }
   }
   return rv;
 }
 //.............................................................................
 void ExpEvaluator::build(const olxstr &expr) {
-  if (root != NULL) delete root;
-  if (eval_root != NULL) delete eval_root;
-  Variables.Clear();
+  olx_del_obj(root);
+  olx_del_obj(eval_root);
+ Variables.Clear();
   Evaluators.Clear();
-  root = new expression_tree(NULL, expr);
+  root = new expression_tree(0, expr);
   parser_util::operator_set os;
   os.remove_operator('.');
   root->expand(os);

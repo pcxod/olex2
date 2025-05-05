@@ -380,10 +380,10 @@ adirection* adirection::FromDataItem(AReleasableContainer<adirection>& to,
 {
   uint16_t type = adirection::DecodeType(di.GetFieldByName("type"));
   if (type == direction_static) {
-    return static_direction(to).CreateFromDataItem(di, rm);
+    return static_direction(to, true).CreateFromDataItem(di, rm);
   }
   else {
-    return direction(to, type).CreateFromDataItem(di, rm);
+    return direction(to, type, true).CreateFromDataItem(di, rm);
   }
 }
 //.............................................................................

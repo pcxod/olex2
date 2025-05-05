@@ -1304,6 +1304,13 @@ public:
     return false; // to avoid compiler warning
   }
   //...........................................................................
+  bool ToBool(bool consider_number) const {
+    if (consider_number && IsNumber()) {
+      return ToDouble() != 0;
+    }
+    return ToBool();
+  }
+  //...........................................................................
   bool IsBool() const {
     return Equalsi(TrueString()) || Equalsi(FalseString());
   }
