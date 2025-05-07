@@ -27,12 +27,13 @@ public:
     throw TNotImplementedException(__OlxSourceInfo);
   }
   virtual bool IsNative() const { return true; }
-  virtual bool Adopt(TXFile &, int) {
-    throw TNotImplementedException(__OlxSourceInfo);
+  virtual bool Adopt(TXFile &f, int) {
+    RefMod.Assign(f.GetRM(), true);
+    return true;
   }
   virtual void LoadFromFile(const olxstr &fn) {
     gxapp.LoadModel(fn);
-    RefMod.Assign( gxapp.XFile().GetRM(), true);
+    RefMod.Assign(gxapp.XFile().GetRM(), true);
     FileName = fn;
   }
   virtual void SaveToFile(const olxstr& fn) {

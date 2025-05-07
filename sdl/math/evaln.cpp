@@ -41,6 +41,7 @@ ExpEvaluator::ExpEvaluator()
   factory('/', new FuncEvaluator2::factory(&div));
   factory('%', new FuncEvaluator2::factory(&mod));
 
+  factory('!', new FuncEvaluator1::factory(&not_));
   factory("==", new FuncEvaluator2::factory(&eq));
   factory("!=", new FuncEvaluator2::factory(&neq));
   factory(">", new FuncEvaluator2::factory(&gt));
@@ -75,13 +76,19 @@ AEvaluable *ExpEvaluator::create(exparse::expression_tree *t) {
     TPtrList<AEvaluable> args;
     if (t->left == 0) {
       if (t->evator == 0) {
-        if (t->data != '-' && t->data != '+')
-           throw TFunctionFailedException(__OlxSourceInfo, "invalid expression");
-        if (t->data == '-') {
-          t->data = '~';
+        if (t->data == '!') {
+          ;
         }
         else {
-          t->data = '@';
+          if (t->data != '-' && t->data != '+') {
+            throw TFunctionFailedException(__OlxSourceInfo, "invalid expression");
+          }
+          if (t->data == '-') {
+            t->data = '~';
+          }
+          else {
+            t->data = '@';
+          }
         }
       }
       else {
@@ -137,7 +144,7 @@ ConstPtrList<AEvaluable> ExpEvaluator::create_args(const olxstr &args_) {
 void ExpEvaluator::build(const olxstr &expr) {
   olx_del_obj(root);
   olx_del_obj(eval_root);
- Variables.Clear();
+  Variables.Clear();
   Evaluators.Clear();
   root = new expression_tree(0, expr);
   parser_util::operator_set os;

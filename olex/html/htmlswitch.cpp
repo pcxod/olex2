@@ -81,7 +81,7 @@ void THtmlSwitch::UpdateFileIndex() {
       }
       olxstr rv = fn;
       if (olex2::IOlex2Processor::GetInstance()->processFunction(rv)) {
-        if (rv.ToBool(true)) {
+        if (rv.ToBool()) {
           Strings.DeleteRange(i, j - i + 1);
         }
         else {

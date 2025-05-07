@@ -164,6 +164,16 @@ void TBasicCFile::RearrangeAtoms(const TSizeList & new_indices) {
   GetAsymmUnit().SetNonHAtomTags_();
   GetRM().AfterAUSort_();
 }
+//..............................................................................
+void TBasicCFile::ToDataItem(TDataItem& item) {
+  item.AddField("FileName", FileName);
+  item.AddField("Title", Title);
+}
+//..............................................................................
+void TBasicCFile::FromDataItem(const TDataItem& item) {
+  FileName = item.GetFieldByName("FileName");
+  Title = item.GetFieldByName("Title");
+}
 //----------------------------------------------------------------------------//
 // Utils
 //----------------------------------------------------------------------------//
@@ -1044,6 +1054,11 @@ void TXFile::EndUpdate() {
 void TXFile::ToDataItem(TDataItem& item) {
   GetLattice().ToDataItem(item.AddItem("Lattice"));
   GetRM().ToDataItem(item.AddItem("RefModel"));
+  if (FLastLoader != 0) {
+    FLastLoader->ToDataItem(item.AddItem("BCF"));
+    item.AddField("Title", FLastLoader->GetTitle());
+    item.AddField("FileName", FLastLoader->GetFileName());
+  }
 }
 //..............................................................................
 void TXFile::FromDataItem(const TDataItem& item) {
@@ -1052,6 +1067,16 @@ void TXFile::FromDataItem(const TDataItem& item) {
   GetRM().FromDataItem(item.GetItemByName("RefModel"));
   GetLattice().FinaliseLoading();
   data_source = &item;
+  TBasicCFile* oxm = FindFormat("oxm");
+  if (oxm != 0) {
+    oxm->Adopt(*this);
+    FLastLoader = oxm;
+    TDataItem* bcf = item.FindAnyItem("BCF");
+    if (bcf != 0) {
+      oxm->FromDataItem(*bcf);
+    }
+    FSG = &TSymmLib::GetInstance().FindSG(oxm->GetAsymmUnit());
+  }
 }
 //..............................................................................
 void TXFile::FinaliseFromDataItem_() {

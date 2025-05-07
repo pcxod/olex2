@@ -13,7 +13,10 @@
 BeginEsdlNamespace()
 
 struct LibMath {
+
+  static double eval_(const TStrObjList& Params, TMacroData& E);
   static void Eval(const TStrObjList& Params, TMacroData& E);
+  static void EvalBool(const TStrObjList& Params, TMacroData& E);
   static TLibrary *ExportLibrary(const olxstr &name=EmptyString());
 };
 

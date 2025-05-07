@@ -157,6 +157,7 @@ struct ExpEvaluator {
   static double div(double a, double b) { return a/b; }
   static double mod(double a, double b) { return (int)a%(int)b; }
   // boolean ops
+  static double not_(double a) { return a == 0; }
   static double eq(double a, double b) { return a == b; }
   static double neq(double a, double b) { return a != b; }
   static double gt(double a, double b) { return a > b; }
