@@ -131,6 +131,12 @@ bool TGlXApp::OnInit() {
 #else
     XApp = new Olex2App(TBasicApp::GuessBaseDir(BaseDir, "OLEX2_DIR"));
 #endif
+    {
+      olxstr af_log = olx_getenv("OLEX2_AUTOFLUSH_LOG");
+      if (af_log.IsBool()) {
+        XApp->GetLog().SetAutoFlush(af_log.ToBool());
+      }
+    }
 #ifdef _CUSTOM_BUILD_
   if (!CustomCodeBase::OnStartup())
 #endif

@@ -293,7 +293,9 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(FixHL, EmptyString(), fpNone|psFileLoaded,
     "Fixes hydrogen atom labels");
   xlib_InitMacro(Fix,
-    "c-when fixing DISP, removes DISP as well",
+    "c-when fixing DISP, removes DISP as well&;"
+    "fvar-when fixing OCCU, leave occupancies linked to FVAR as they are&;"
+    ,
     (fpAny^fpNone)|psCheckFileTypeIns,
     "Fixes specified parameters of atoms: XYZ, Uiso/ADP, Occu, Disp. Special "
     "parameter 'H' changes refined AFIX to fixed (like 137/134->33). 'HUiso' "
@@ -2454,15 +2456,17 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   if (vars.Contains("OCCU")) {
+    bool skip_fvar = Options.GetBoolOption("fvar");
     const ASObjectProvider& objects = xapp.XFile().GetLattice().GetObjects();
     objects.atoms.ForEach(ACollectionItem::TagSetter(0));
     XVar *var = 0;
+    XVarManager& Vars = xapp.XFile().GetRM().Vars;
     int rel = relation_None;
     if (olx_abs(var_val) > 10) {
       rel = var_val < 0 ? relation_AsOneMinusVar : relation_AsVar;
       int var_n = (int)(olx_abs(var_val) / 10) - 1;
       var_val = olx_abs(var_val) - var_n * 10;
-      var = &xapp.XFile().GetRM().Vars.GetReferencedVar(var_n);
+      var = &Vars.GetReferencedVar(var_n);
     }
     for (size_t i = 0; i < atoms.Count(); i++) {
       if (atoms[i]->GetTag() != 0) {
@@ -2475,17 +2479,24 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options,
         if (n.IsDeleted() || n.GetType() != iHydrogenZ || n.GetTag() != 0) {
           continue;
         }
+        if (n.CAtom().GetPart() != atoms[i]->CAtom().GetPart()) {
+          continue;
+        }
         neighbours.Add(n);
       }
       for (size_t j = 0; j < neighbours.Count(); j++) {
-        if (neighbours[j]->CAtom().GetPart() != atoms[i]->CAtom().GetPart()) {
+        TSAtom& n = *neighbours[j];
+        n.SetTag(1);
+        if (skip_fvar &&
+          n.CAtom().GetVarRef(catom_var_name_Sof) != 0)
+        {
           continue;
         }
-        neighbours[j]->SetTag(1);
-        xapp.XFile().GetRM().Vars.FixParam(neighbours[j]->CAtom(), catom_var_name_Sof);
+        Vars.FixParam(n.CAtom(), catom_var_name_Sof);
         if (var_val == 0) {
-          if (neighbours[j]->CAtom().GetPart() == 0)  // else leave as it is
-            neighbours[j]->CAtom().SetOccu(1. / neighbours[j]->CAtom().GetDegeneracy());
+          if (n.CAtom().GetPart() == 0) { // else leave as it is
+            n.CAtom().SetOccu(1. / neighbours[j]->CAtom().GetDegeneracy());
+          }
         }
         else {
           if (var == 0) {
@@ -2493,8 +2504,7 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options,
               var_val / neighbours[j]->CAtom().GetDegeneracy());
           }
           else {
-            xapp.XFile().GetRM().Vars.AddVarRef(*var, neighbours[j]->CAtom(),
-              catom_var_name_Sof, rel, var_val);
+            Vars.AddVarRef(*var, n.CAtom(), catom_var_name_Sof, rel, var_val);
           }
         }
       }
