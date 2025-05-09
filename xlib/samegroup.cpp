@@ -14,8 +14,8 @@
 #include "tagholder.h"
 #include "ins.h"
 
-TSameGroup::TSameGroup(TSameGroupList& parent)
-  : AReleasable(parent),
+TSameGroup::TSameGroup(TSameGroupList& parent, bool tmp)
+  : AReleasable(parent, tmp),
   Atoms(parent.RM),
   ParentGroup(0), Esd12(0.02), Esd13(0.04)
 {}
@@ -523,7 +523,7 @@ void TSameGroup::Expand(TStrList* log) const {
 //.............................................................................
 //.............................................................................
 TSameGroup& TSameGroupList::New(TSameGroup* ref, TTypeList<TSameGroup>* dest) {
-  TSameGroup* rv = new TSameGroup(*this);
+  TSameGroup* rv = new TSameGroup(*this, dest != 0);
   if (ref != 0) {
     ref->AddDependent(*rv);
   }

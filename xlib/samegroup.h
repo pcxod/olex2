@@ -31,7 +31,7 @@ protected:
   // initialises atom_map_N
   olx_object_ptr<DistanceGenerator> get_generator() const;
 public:
-  TSameGroup(TSameGroupList& parent);
+  TSameGroup(TSameGroupList& parent, bool tmp=false);
   ~TSameGroup();
 
   TSameGroupList& GetParent() const;
