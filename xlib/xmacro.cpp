@@ -4219,7 +4219,8 @@ void XLibMacros::funFileExt(const TStrObjList& Params, TMacroData& E) {
 void XLibMacros::funFilePath(const TStrObjList& Params, TMacroData& E) {
   olxstr Tmp = GetFileName(Params);
   // see notes in funBaseDir
-  Tmp = TEFile::TrimPathDelimeterI(TEFile::ExtractFilePath(Tmp));
+  olxstr TmpPath = TEFile::ExtractFilePath(Tmp);
+  Tmp = TEFile::TrimPathDelimeterI(TmpPath);
   E.SetRetVal(Tmp.IsEmpty() ? NoneString() : Tmp);
 }
 //.............................................................................
