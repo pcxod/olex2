@@ -134,7 +134,7 @@ target_compile_definitions(olex2 PRIVATE _PYTHON _OPENSSL)
 target_compile_definitions(unirun PRIVATE _PYTHON _OPENSSL)
 if (COPY_GUI_FILES)
   add_custom_command(TARGET olex2 POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
       "${OLEX2_GUI_DIRECTORY}"
       "${CMAKE_CURRENT_BINARY_DIR}"
     COMMENT "Copying files to build directory"
