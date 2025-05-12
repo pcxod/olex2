@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2025 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -134,7 +134,11 @@ public:
     return SortedL::operator[] (ind);
   }
   template <class T> bool HasKey(const T& key) const {
-    return SortedL::IndexOf(key) != InvalidIndex;
+    return SortedL::Contains(key);
+  }
+
+  template <class T> bool Contains(const T& key) const {
+    return SortedL::Contains(key);
   }
 
   template <typename T>

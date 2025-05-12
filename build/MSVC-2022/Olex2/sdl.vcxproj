@@ -570,6 +570,7 @@
     <ClInclude Include="..\..\..\sdl\efilelist.h" />
     <ClInclude Include="..\..\..\sdl\egc.h" />
     <ClInclude Include="..\..\..\sdl\egraph.h" />
+    <ClInclude Include="..\..\..\sdl\ehashed.h" />
     <ClInclude Include="..\..\..\sdl\ellist.h" />
     <ClInclude Include="..\..\..\sdl\emath.h" />
     <ClInclude Include="..\..\..\sdl\ematrix.h" />

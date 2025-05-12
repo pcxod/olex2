@@ -188,6 +188,9 @@ public:
   olxstr_set()
     : parent_t(olxstrComparator<case_insensitive>())
   {}
+  olxstr_set(const olx_capacity_t& cap)
+    : parent_t(olxstrComparator<case_insensitive>(), cap)
+  {}
 };
 
 // a primitive set
@@ -200,6 +203,7 @@ public:
   typedef const_olxset<obj_t, TPrimitiveComparator> const_set_type;
 
   olx_pset() {}
+  olx_pset(const olx_capacity_t& cap) : parent_t(cap) {}
   olx_pset(const olx_pset &s) : parent_t(s) {}
   olx_pset(const const_set_type &s) : parent_t(s) {}
   olx_pset &operator = (const olx_pset &s) {
@@ -222,6 +226,7 @@ public:
   typedef const_olxset<obj_t, TComparableComparator> const_set_type;
 
   olx_cset() {}
+  olx_cset(const olx_capacity_t& cap) : parent_t(cap) {}
   olx_cset(const olx_cset &s) : parent_t(s) {}
   olx_cset(const const_set_type &s) : parent_t(s) {}
   olx_cset &operator = (const olx_cset &s) {

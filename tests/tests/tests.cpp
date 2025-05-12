@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2025 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -45,6 +45,7 @@
 #include "tests/olx_func_test.h"
 #include "tests/ptr_test.h"
 #include "tests/binding_test.h"
+#include "tests/hashed_test.h"
 
 class Listener : public AActionHandler {
 public:
@@ -67,6 +68,7 @@ int main(int argc, char* argv[]) {
   xapp.GetLog().AddStream(new TOutStream, true);
   xapp.GetLog().AddStream(TUtf8File::Create(xapp.GetBaseDir()+"log.out", false), true);
   OlxTests tests;
+  tests.Add(&test::HashedTests);
   tests.Add(&test::exparse::ExparseTests);
   tests.Add(&test::StringTests);
   tests.Add(&test::ContainerTests);

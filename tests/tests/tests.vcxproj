@@ -190,7 +190,7 @@
       <BrowseInformation>true</BrowseInformation>
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
-      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <OmitFramePointers>false</OmitFramePointers>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -224,6 +224,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <OmitFramePointers>true</OmitFramePointers>
       <SDLCheck>false</SDLCheck>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <AdditionalDependencies>sdl.lib;xlib-np.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -307,6 +308,7 @@
     <ClInclude Include="..\..\repository\tests\shellutil_test.h" />
     <ClInclude Include="..\..\sdl\tests\encoding_test.h" />
     <ClInclude Include="..\..\sdl\tests\file_test.h" />
+    <ClInclude Include="..\..\sdl\tests\hashed_test.h" />
     <ClInclude Include="..\..\sdl\tests\matrix_test.h" />
     <ClInclude Include="..\..\sdl\tests\sort_test.h" />
     <ClInclude Include="..\..\sdl\tests\spline_test.h" />
