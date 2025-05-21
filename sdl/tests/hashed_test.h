@@ -79,8 +79,8 @@ namespace test {
     }
 
     olxstr_set<> binary_set(olx_reserve(test_binary ? max_str_c : 1));
-    typedef TEHashSet<olxstr, olxstrComparator<false>, 64, 2> set_t;
-    set_t has_set;
+    typedef TEHashSet<olxstr, olxstrComparator<false>, 4, 4> set_t;
+    set_t hash_set;
 
     size_t bin_st = TETime::msNow();
     if (test_binary) {
@@ -90,7 +90,7 @@ namespace test {
     }
     size_t hash_st = TETime::msNow();
     for (size_t i = 0; i < max_str_c; i++) {
-      has_set.Add(strings[i]);
+      hash_set.Add(strings[i]);
     }
     size_t hash_end = TETime::msNow();
     // hash set is about 20 times faster
@@ -109,7 +109,7 @@ namespace test {
     }
     hash_st = TETime::msNow();
     for (size_t i = 0; i < max_str_c; i++) {
-      if (!has_set.Contains(strings[i])) {
+      if (!hash_set.Contains(strings[i])) {
         throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
       }
     }
@@ -119,6 +119,23 @@ namespace test {
       hash_st - bin_st;
     TBasicApp::NewLogEntry() << "Hash set contains time (ms): " <<
       hash_end - hash_st;
+
+    olx_pdict<size_t,size_t> stats = hash_set.get_stats();
+    TArrayList<olx_pair_t<size_t, size_t> > rv_stats(stats.Count());
+    for (size_t i = 0; i < stats.Count(); i++) {
+      //TBasicApp::NewLogEntry() << stats.GetKey(i) << " -> " << stats.GetValue(i);
+      rv_stats[i].a = stats.GetValue(i);
+      rv_stats[i].b = stats.GetKey(i);
+    }
+    QuickSorter::Sort(rv_stats,
+      ReverseComparator::Make(
+      ComplexComparator::Make(
+        FunctionAccessor::MakeConst(&olx_pair_t<size_t, size_t>::GetA),
+        TPrimitiveComparator())));
+
+    for (size_t i = 0; i < olx_min(10, rv_stats.Count()); i++) {
+      TBasicApp::NewLogEntry() << rv_stats[i].a << " -> " << rv_stats[i].b;
+    }
   }
   //...........................................................................................
   void HashedTests(OlxTests& t) {

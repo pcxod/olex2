@@ -3275,6 +3275,11 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
     }
     FGlConsole->SetCommand(FGlConsole->GetCommand());  // force the update
     FXApp->Draw();
+    olxstr title = "Olex2";
+    if (FXApp->XFile().HasLastLoader()) {
+      title << ": " << TEFile::ExtractFileName(FXApp->XFile().GetFileName());
+    }
+    this->SetTitle(title.u_str());
   }
   else {
     Error.ProcessingError(__OlxSrcInfo, EmptyString());

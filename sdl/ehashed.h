@@ -21,8 +21,11 @@ public:
 
 // 2^32 = N^L * 2^[32 - log_2(N)*L]
 template <class basket_factory_t,
-  uint32_t N=64, uint32_t L=4>
+  uint32_t N=64, uint32_t L=2>
 class TEHashed {
+public:
+  typedef typename basket_factory_t::basket_t basket_t;
+private:
   struct entry_array_base_t {
     void** data;
     entry_array_base_t() {
@@ -58,18 +61,57 @@ class TEHashed {
   entry_array_t data;
   size_t basket_n;
 #ifdef _DEBUG
-  size_t entry_n, mem_b;
+  size_t entry_n;
   void init() {
-    entry_n = basket_n = mem_b = 0;
+    entry_n = basket_n = 0;
   }
 #else
   void init() {
     basket_n = 0;
   }
 #endif
+protected:
+  template<class T>
+  basket_t& GetBasket(const T& item) {
+    uint32_t hash = item.HashCode();
+    entry_array_base_t* en = &data;
+    for (int i = 0; i < L; i++) {
+      uint32_t f = hash / N;
+      uint32_t r = hash - f * N;
+      hash = f;
+      entry_array_base_t* en_ = ((entry_array_base_t**)en->data)[r];
+      if (en_ == 0) {
+#ifdef _DEBUG
+        entry_n++;
+#endif
+        if (i + 1 < L) {
+          en_ = new entry_array_t();
+        }
+        else {
+          en_ = new basket_array_t();
+        }
+        en->data[r] = en_;
+      }
+      en = en_;
+    }
+    uint32_t f = hash / N;
+    uint32_t r = hash - f * N;
+    basket_t* b = ((basket_t**)en->data)[r];
+    if (b == 0) {
+      b = basket_factory.new_basket();
+      en->data[r] = b;
+      basket_n++;
+    }
+    return *b;
+  }
+
+  template<class T>
+  void Add(const T& item) {
+    GetAddBasket(item).Add(item);
+  }
+
 public:
 
-  typedef typename basket_factory_t::basket_t basket_t;
   TEHashed() {
     init();
   }
@@ -83,6 +125,7 @@ public:
 
   virtual ~TEHashed() {
   }
+
 
   template<class T>
   basket_t *Find(const T &key) const {
@@ -106,51 +149,6 @@ public:
   const bool Contains(const T& key) const {
     const basket_t* b = Find(key);
     return b == 0 ? false : b->Contains(key);
-  }
-
-  template<class T>
-  basket_t& GetBasket(const T& item) {
-    uint32_t hash = item.HashCode();
-    entry_array_base_t* en = &data;
-    for (int i = 0; i < L; i++) {
-      uint32_t f = hash / N;
-      uint32_t r = hash - f * N;
-      hash = f;
-      entry_array_base_t* en_ = ((entry_array_base_t**)en->data)[r];
-      if (en_ == 0) {
-#ifdef _DEBUG
-        entry_n++;
-#endif
-        if (i + 1 < L) {
-          en_ = new entry_array_t();
-        }
-        else {
-          en_ = new basket_array_t();
-        }
-        en->data[r] = en_;
-#ifdef _DEBUG
-        mem_b += N * sizeof(entry_array_base_t);
-#endif
-      }
-      en = en_;
-    }
-    uint32_t f = hash / N;
-    uint32_t r = hash - f * N;
-    basket_t* b = ((basket_t**)en->data)[r];
-    if (b == 0) {
-      b = basket_factory.new_basket();
-      en->data[r] = b;
-      basket_n++;
-#ifdef _DEBUG
-      mem_b += sizeof(basket_t);
-#endif
-    }
-    return *b;
-  }
-
-  template<class T>
-  void Add(const T &item) {
-    GetAddBasket(item).Add(item);
   }
 
   template<class T>
@@ -255,6 +253,24 @@ public:
   Iterator Iterate() const {
     return Iterator(this->data);
   }
+
+#ifdef _DEBUG
+  size_t mem_usage() const {
+    size_t mem_b = sizeof(basket_t) * basket_n +
+      N * sizeof(entry_array_base_t) * entry_n;
+    return mem_b;
+  }
+#endif
+  // collects stats N of items in baskets vs basket N
+  olx_pdict<size_t, size_t>::const_dict_type get_stats() {
+    Iterator itr = Iterate();
+    basket_t* b;
+    olx_pdict<size_t, size_t> rv;
+    while ((b = itr.Next()) != 0) {
+      rv(b->Count(), 0)++;
+    }
+    return rv;
+  }
 };
 
 template <typename item_t, class comparator_t>
@@ -288,8 +304,8 @@ struct MapFactory {
 };
 
 template <typename item_t, class comparator_t,
-  uint32_t N = 64, uint32_t L = 4>
-class TEHashSet : protected TEHashed<SetFactory<item_t, comparator_t>, N, L> {
+  uint32_t N = 64, uint32_t L = 2>
+class TEHashSet : public TEHashed<SetFactory<item_t, comparator_t>, N, L> {
   typedef TEHashed<SetFactory<item_t, comparator_t>, N, L> parent_t;
   SetFactory<item_t, comparator_t> factory;
 public:
@@ -323,25 +339,11 @@ public:
     return *this;
   }
 
-  template <typename T>
-  bool Contains(const T& item) const {
-    return parent_t::Contains(item);
-  }
-
-  template<class T>
-  bool Remove(const T& key) {
-    return parent_t::Remove(key);
-  }
-
-  iterator_t Iterate() const {
-    return parent_t::Iterate();
-  }
-
 };
 
 template <typename key_t, typename item_t, class comparator_t,
-  uint32_t N = 64, uint32_t L = 4>
-class TEHashMap : protected TEHashed<MapFactory<key_t, item_t, comparator_t>, N, L> {
+  uint32_t N = 64, uint32_t L = 2>
+class TEHashMap : public TEHashed<MapFactory<key_t, item_t, comparator_t>, N, L> {
   typedef TEHashed<MapFactory<key_t, item_t, comparator_t>, N, L> parent_t;
   MapFactory<key_t, item_t, comparator_t> factory;
 public:
@@ -359,18 +361,5 @@ public:
     return parent_t::GetBasket(key).Add(key, value);
   }
 
-  template <typename T>
-  bool Contains(const T& key) const {
-    return parent_t::Contains(key);
-  }
-
-  template<class T>
-  bool Remove(const T& key) {
-    return parent_t::Remove(key);
-  }
-
-  iterator_t Iterate() const {
-    return parent_t::Iterate();
-  }
 };
 EndEsdlNamespace();

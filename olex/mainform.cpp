@@ -1845,11 +1845,19 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
     }
   }
   else if (MsgId == ID_FileLoad) {
+    if (MsgSubId == msiExit) {
+      olxstr title = "Olex2";
+      if (FXApp->XFile().HasLastLoader()) {
+        title << ": " << TEFile::ExtractFileName(FXApp->XFile().GetFileName());
+      }
+      this->SetTitle(title.u_str());
+    }
   }
   else if (MsgId == ID_FileClose) {
     if (MsgSubId == msiExit) {
       UpdateRecentFile(EmptyString());
       UpdateInfoBox();
+      SetTitle(wxT("Olex2"));
     }
   }
   else if (MsgId == ID_CMDLINECHAR) {

@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2025 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -34,8 +34,8 @@ public:
   TSBond(TNetwork* Parent);
   virtual ~TSBond() {}
 
-  DefPropBIsSet(Deleted)
-    bool IsAvailable() const {
+  DefPropBIsSet(Deleted);
+  bool IsAvailable() const {
     return (!IsDeleted() && FA->IsAvailable() && FB->IsAvailable());
   }
   vec3d GetCenter() const { return (FA->crd() + FB->crd()) / 2; }
@@ -86,12 +86,12 @@ public:
     return GetRef(a, 0, b, 0);
   }
   static Ref GetRef(const TCAtom& a, const smatd* ma, const TCAtom& b, const smatd* mb);
-  DefPropP(short, Order)
-    /* returns MOL file compatible bond order:
-    1 = Single, 2 = Double, 3 = Triple, 4 = Aromatic, 0 - undefined
-    The first element argument is the heavier one
-    */
-    static short PercieveOrder(const cm_Element& a,
+  /* returns MOL file compatible bond order:
+  1 = Single, 2 = Double, 3 = Triple, 4 = Aromatic, 0 - undefined
+  The first element argument is the heavier one
+  */
+  DefPropP(short, Order);
+  static short PercieveOrder(const cm_Element& a,
       const cm_Element& b, double d);
   virtual void ToDataItem(TDataItem& item) const;
   virtual void FromDataItem(const TDataItem& item, TLattice& parent);

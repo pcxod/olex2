@@ -440,7 +440,7 @@ void RefinementModel::SetPlan(int v) {
 void RefinementModel::AddSfac(XScatterer& sc) {
   const size_t i = SfacData.IndexOf(sc.GetLabel());
   if (i != InvalidIndex) {
-    SfacData.GetEntry(i).val->Merge(sc);
+    SfacData.GetValue(i)->Merge(sc);
     delete &sc;
   }
   else {
