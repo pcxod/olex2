@@ -1820,7 +1820,7 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
     if (sg.IsValidForSave()) {
       if (sg.IsReference()) {
         if (sg.GetAtoms().IsExplicit()) {
-          olx_pset<uint16_t> saved_headers;
+          olx_pset<size_t> saved_headers;
           TAtomRefList atoms;
           TPtrList<TSameGroup> sgs = rm.rSAME.FindSupergroups(sg);
           if (!sgs.IsEmpty()) {
@@ -2291,7 +2291,7 @@ void TIns::UpdateAtomsFromStrings(RefinementModel& rm,
 }
 //..............................................................................
 bool TIns::SaveAtomsToStrings(RefinementModel& rm, const TCAtomPList& CAtoms,
-  TIndexList& index, TStrList& SL, RefinementModel::ReleasedItems* processed)
+  TIndexList& index, TStrList& SL, TPtrList<AReleasable>* processed)
 {
   if (CAtoms.IsEmpty()) {
     return false;
@@ -2690,7 +2690,7 @@ olxstr TIns::RestraintToString(const TSimpleRestraint &sr,
 }
 //..............................................................................
 void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
-  RefinementModel::ReleasedItems* processed, RefinementModel& rm)
+  TPtrList<AReleasable>* processed, RefinementModel& rm)
 {
   size_t oindex = SL.Count();
   typedef olx_pair_t<TSRestraintList*,RCInfo> ResInfo;
@@ -2765,7 +2765,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     }
     HyphenateIns(line, SL);
     if (processed != 0) {
-      processed->restraints.Add(sr);
+      processed->Add(sr);
     }
   }
 
@@ -2804,7 +2804,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
         }
         l << ' ' << rm.rSAME[i].GetAtoms().GetExpression();
         if (processed != 0) {
-          processed->sameList.Add(rm.rSAME[i]);
+          processed->Add(rm.rSAME[i]);
         }
       }
     }
@@ -2837,10 +2837,10 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
 }
 //..............................................................................
 void TIns::SaveExtras(TStrList& SL, const TCAtomPList* atoms,
-  RefinementModel::ReleasedItems* processed, RefinementModel& rm,
+  TPtrList<AReleasable>* processed, RefinementModel& rm,
   bool hyphenate)
 {
-  TStrList extras(rm.WriteInsExtras(atoms, false), NewLineSequence());
+  TStrList extras(rm.WriteInsExtras(atoms, processed, false), NewLineSequence());
   if (!extras.IsEmpty()) {
     SL.Add("REM <olex2.extras>");
     for (size_t i = 0; i < extras.Count(); i++) {

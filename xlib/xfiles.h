@@ -49,9 +49,13 @@ public:
     const olxstr &nameToken = EmptyString());
   // only oxm loader is native
   virtual bool IsNative() const { return false; }
-  // adopts the content of the AsemmUnit to the virtual format
+  // adopts the content of the AsymmUnit to the virtual format
   virtual bool Adopt(class TXFile &, int flags = 0) = 0;
   virtual void RearrangeAtoms(const TSizeList & new_indices);
+  // saves just title and file name
+  virtual void ToDataItem(TDataItem& item);
+  // loads only title and file name
+  virtual void FromDataItem(const TDataItem& item);
 };
 //---------------------------------------------------------------------------
 

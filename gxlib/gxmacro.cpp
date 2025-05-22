@@ -407,6 +407,8 @@ void GXLibMacros::Export(TLibrary& lib) {
     "Deletes overlayed file specified by index");
   gxlib_InitMacro(OFileSwap, EmptyString(), fpNone | fpOne,
     "Sets current file to which all commands are applied");
+  gxlib_InitFunc(OFileCount, fpNone,
+    "Returns number of overlayed files");
 
   gxlib_InitMacro(TwinView,
     "c-Cartesian matrix is provided[true]&;"
@@ -6569,3 +6571,8 @@ void GXLibMacros::funVisible(const TStrObjList& Params, TMacroData& E) {
     olx_list_call(gpc->GetObjects(), &AGDrawObject::SetVisible, Params[1].ToBool());
   }
 }
+//.............................................................................
+void GXLibMacros::funOFileCount(const TStrObjList& Params, TMacroData& E) {
+  E.SetRetVal(app.XFileCount());
+}
+//.............................................................................

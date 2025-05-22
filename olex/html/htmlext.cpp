@@ -392,9 +392,9 @@ bool THtml::AddControl(const olxstr& Name, AOlxCtrl *Object, wxWindow* wxWin,
   }
   size_t idx = Objects.IndexOf(Name);
   if (idx != InvalidIndex) {
-    Objects.GetEntry(idx).val.a = Object;
-    Objects.GetEntry(idx).val.b = wxWin;
-    Objects.GetEntry(idx).val.c = Manage;
+    Objects.GetValue(idx).a = Object;
+    Objects.GetValue(idx).b = wxWin;
+    Objects.GetValue(idx).c = Manage;
     return true;
   }
   else {
@@ -997,7 +997,7 @@ void THtml::OnClipboard(wxClipboardTextEvent& evt) {
   else
     processed = false;
   if (processed && !text.IsEmpty() && wxTheClipboard->Open()) {
-    if (wxTheClipboard->IsSupported(wxDF_TEXT)) {
+    if (wxTheClipboard->IsSupported(wxDF_UNICODETEXT)) {
       wxTheClipboard->SetData(new wxTextDataObject(text));
     }
     wxTheClipboard->Close();

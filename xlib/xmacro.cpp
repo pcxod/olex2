@@ -293,7 +293,9 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(FixHL, EmptyString(), fpNone|psFileLoaded,
     "Fixes hydrogen atom labels");
   xlib_InitMacro(Fix,
-    "c-when fixing DISP, removes DISP as well",
+    "c-when fixing DISP, removes DISP as well&;"
+    "fvar-when fixing OCCU, leave occupancies linked to FVAR as they are&;"
+    ,
     (fpAny^fpNone)|psCheckFileTypeIns,
     "Fixes specified parameters of atoms: XYZ, Uiso/ADP, Occu, Disp. Special "
     "parameter 'H' changes refined AFIX to fixed (like 137/134->33). 'HUiso' "
@@ -841,7 +843,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     "file");
   xlib_InitFunc(FilePath, fpNone|fpOne,
     "Returns file path. If no arguments provided - of currently loaded file");
-  xlib_InitFunc(FileFull, fpNone, "Returns full path of currently loaded file");
+  xlib_InitFunc(FileFull, fpNone|fpOne,
+    "Returns full path of currently loaded or overlayed file");
   xlib_InitFunc(FileDrive, fpNone|fpOne,
     "Returns file drive. If no arguments provided - of currently loaded file");
   xlib_InitFunc(Title, fpNone|fpOne,
@@ -2453,15 +2456,17 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   if (vars.Contains("OCCU")) {
+    bool skip_fvar = Options.GetBoolOption("fvar");
     const ASObjectProvider& objects = xapp.XFile().GetLattice().GetObjects();
     objects.atoms.ForEach(ACollectionItem::TagSetter(0));
     XVar *var = 0;
+    XVarManager& Vars = xapp.XFile().GetRM().Vars;
     int rel = relation_None;
     if (olx_abs(var_val) > 10) {
       rel = var_val < 0 ? relation_AsOneMinusVar : relation_AsVar;
       int var_n = (int)(olx_abs(var_val) / 10) - 1;
       var_val = olx_abs(var_val) - var_n * 10;
-      var = &xapp.XFile().GetRM().Vars.GetReferencedVar(var_n);
+      var = &Vars.GetReferencedVar(var_n);
     }
     for (size_t i = 0; i < atoms.Count(); i++) {
       if (atoms[i]->GetTag() != 0) {
@@ -2474,17 +2479,24 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options,
         if (n.IsDeleted() || n.GetType() != iHydrogenZ || n.GetTag() != 0) {
           continue;
         }
+        if (n.CAtom().GetPart() != atoms[i]->CAtom().GetPart()) {
+          continue;
+        }
         neighbours.Add(n);
       }
       for (size_t j = 0; j < neighbours.Count(); j++) {
-        if (neighbours[j]->CAtom().GetPart() != atoms[i]->CAtom().GetPart()) {
+        TSAtom& n = *neighbours[j];
+        n.SetTag(1);
+        if (skip_fvar &&
+          n.CAtom().GetVarRef(catom_var_name_Sof) != 0)
+        {
           continue;
         }
-        neighbours[j]->SetTag(1);
-        xapp.XFile().GetRM().Vars.FixParam(neighbours[j]->CAtom(), catom_var_name_Sof);
+        Vars.FixParam(n.CAtom(), catom_var_name_Sof);
         if (var_val == 0) {
-          if (neighbours[j]->CAtom().GetPart() == 0)  // else leave as it is
-            neighbours[j]->CAtom().SetOccu(1. / neighbours[j]->CAtom().GetDegeneracy());
+          if (n.CAtom().GetPart() == 0) { // else leave as it is
+            n.CAtom().SetOccu(1. / neighbours[j]->CAtom().GetDegeneracy());
+          }
         }
         else {
           if (var == 0) {
@@ -2492,8 +2504,7 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options,
               var_val / neighbours[j]->CAtom().GetDegeneracy());
           }
           else {
-            xapp.XFile().GetRM().Vars.AddVarRef(*var, neighbours[j]->CAtom(),
-              catom_var_name_Sof, rel, var_val);
+            Vars.AddVarRef(*var, n.CAtom(), catom_var_name_Sof, rel, var_val);
           }
         }
       }
@@ -2508,8 +2519,8 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options,
       atoms[i]->CAtom().GetDisp() = 0;
       atoms[i]->CAtom().SetTag(1);
     }
-    for (size_t i = 0; i < rm.SameDisp.items.Count(); i++) {
-      rm.SameDisp.items[i].atoms.Pack(ACollectionItem::TagAnalyser(1));
+    for (size_t i = 0; i < rm.SameDisp.Count(); i++) {
+      rm.SameDisp.GetItem(i).atoms.Pack(ACollectionItem::TagAnalyser(1));
     }
     if (Options.GetBoolOption('c')) {
       for (size_t i = 0; i < types.Count(); i++) {
@@ -2602,8 +2613,8 @@ void XLibMacros::macFree(TStrObjList &Cmds, const TParamList &Options,
       }
       atoms[i]->CAtom().SetTag(1);
     }
-    for (size_t i = 0; i < rm.SameDisp.items.Count(); i++) {
-      rm.SameDisp.items[i].atoms.Pack(ACollectionItem::TagAnalyser(1));
+    for (size_t i = 0; i < rm.SameDisp.Count(); i++) {
+      rm.SameDisp.GetItem(i).atoms.Pack(ACollectionItem::TagAnalyser(1));
     }
   }
 }
@@ -4166,69 +4177,61 @@ void XLibMacros::funRemoveSE(const TStrObjList &Params, TMacroData &E) {
   }
 }
 //.............................................................................
-void XLibMacros::funFileName(const TStrObjList &Params, TMacroData &E)  {
-  olxstr Tmp;
-  if( !Params.IsEmpty() )
-    Tmp = TEFile::ExtractFileName(Params[0]);
-  else  {
-    if( TXApp::GetInstance().XFile().HasLastLoader() )
-      Tmp = TEFile::ExtractFileName(TXApp::GetInstance().XFile().GetFileName());
-    else
-      Tmp = NoneString();
+const TXFile* GetXFile(const TStrObjList& Params) {
+  const TXApp& app = TXApp::GetInstance();
+  if (!Params.IsEmpty()) {
+    if (Params[0].IsUInt()) {
+      size_t idx = Params[0].ToSizeT();
+      if (idx < app.XFiles().Count()) {
+        return &app.XFiles()[idx];
+      }
+    }
+    else {
+      return 0;
+    }
   }
-  E.SetRetVal(TEFile::ChangeFileExt(Tmp, EmptyString()));
+  else {
+    return &app.XFile();
+  }
+  return 0;
+}
+
+olxstr GetFileName(const TStrObjList& Params) {
+  const TXFile* xf = GetXFile(Params);
+  if (xf == 0) {
+    return Params.IsEmpty() ? EmptyString() : Params[0];
+  }
+  return xf->GetFileName();
+}
+
+void XLibMacros::funFileName(const TStrObjList& Params, TMacroData& E) {
+  olxstr Tmp = GetFileName(Params);
+  E.SetRetVal(Tmp.IsEmpty() ? NoneString()
+    : TEFile::ChangeFileExt(
+      TEFile::ExtractFileName(Tmp), EmptyString()));
 }
 //.............................................................................
-void XLibMacros::funFileExt(const TStrObjList &Params, TMacroData &E)  {
-  olxstr Tmp;
-  if( !Params.IsEmpty() )
-    E.SetRetVal(TEFile::ExtractFileExt(Params[0]));
-  else  {
-    if( TXApp::GetInstance().XFile().HasLastLoader() ) {
-      E.SetRetVal(
-        TEFile::ExtractFileExt(TXApp::GetInstance().XFile().GetFileName()));
-    }
-    else
-      E.SetRetVal(NoneString());
-  }
+void XLibMacros::funFileExt(const TStrObjList& Params, TMacroData& E) {
+  olxstr Tmp = GetFileName(Params);
+  E.SetRetVal(Tmp.IsEmpty() ? NoneString() : TEFile::ExtractFileExt(Tmp));
 }
 //.............................................................................
 void XLibMacros::funFilePath(const TStrObjList& Params, TMacroData& E) {
-  olxstr Tmp;
-  if (!Params.IsEmpty())
-    Tmp = TEFile::ExtractFilePath(Params[0]);
-  else {
-    if (TXApp::GetInstance().XFile().HasLastLoader()) {
-      Tmp = TEFile::ExtractFilePath(TXApp::GetInstance().XFile().GetFileName());
-    }
-    else {
-      Tmp = NoneString();
-    }
-  }
+  olxstr Tmp = GetFileName(Params);
   // see notes in funBaseDir
-  TEFile::TrimPathDelimeterI(Tmp);
-  E.SetRetVal(Tmp);
+  olxstr TmpPath = TEFile::ExtractFilePath(Tmp);
+  Tmp = TEFile::TrimPathDelimeterI(TmpPath);
+  E.SetRetVal(Tmp.IsEmpty() ? NoneString() : Tmp);
 }
 //.............................................................................
-void XLibMacros::funFileDrive(const TStrObjList &Params, TMacroData &E)  {
-  olxstr Tmp;
-  if( !Params.IsEmpty() )
-    E.SetRetVal(TEFile::ExtractFileDrive(Params[0]));
-  else  {
-    if( TXApp::GetInstance().XFile().HasLastLoader() ) {
-      E.SetRetVal(
-        TEFile::ExtractFileDrive(TXApp::GetInstance().XFile().GetFileName()));
-    }
-    else
-      E.SetRetVal(NoneString());
-  }
+void XLibMacros::funFileDrive(const TStrObjList& Params, TMacroData& E) {
+  olxstr Tmp = GetFileName(Params);
+  E.SetRetVal(Tmp.IsEmpty() ? NoneString() : TEFile::ExtractFileDrive(Tmp));
 }
 //.............................................................................
-void XLibMacros::funFileFull(const TStrObjList &Params, TMacroData &E)  {
-  if( TXApp::GetInstance().XFile().HasLastLoader() )
-    E.SetRetVal(TXApp::GetInstance().XFile().GetFileName());
-  else
-    E.SetRetVal(NoneString());
+void XLibMacros::funFileFull(const TStrObjList& Params, TMacroData& E) {
+  olxstr Tmp = GetFileName(Params);
+  E.SetRetVal(Tmp.IsEmpty() ? NoneString() : Tmp);
 }
 //.............................................................................
 void XLibMacros::funIsFileLoaded(const TStrObjList& Params, TMacroData &E) {
@@ -4236,14 +4239,17 @@ void XLibMacros::funIsFileLoaded(const TStrObjList& Params, TMacroData &E) {
 }
 //.............................................................................
 void XLibMacros::funTitle(const TStrObjList& Params, TMacroData &E)  {
-  if( !TXApp::GetInstance().XFile().HasLastLoader() )  {
-    if( Params.IsEmpty() )
-      E.SetRetVal(olxstr("File is not loaded"));
-    else
-      E.SetRetVal(Params[0]);
+  const TXFile* xf = GetXFile(Params);
+  if (xf == 0) {
+    E.SetRetVal(Params.IsEmpty() ? EmptyString() : Params[0]);
+    return;
   }
-  else
-    E.SetRetVal(TXApp::GetInstance().XFile().LastLoader()->GetTitle());
+  if (!xf->HasLastLoader()) {
+    E.SetRetVal(olxstr("File is not loaded"));
+  }
+  else {
+    E.SetRetVal(xf->LastLoader()->GetTitle());
+  }
 }
 //.............................................................................
 void XLibMacros::funIsFileType(const TStrObjList& Params, TMacroData &E) {
@@ -5760,6 +5766,18 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   Cif->SaveToFile(file_name);
 }
 //.............................................................................
+struct CifBlockIndexReverter {
+  TCif& cif;
+  size_t index;
+  CifBlockIndexReverter(TCif& cif, size_t index)
+    : cif(cif), index(index)
+  {}
+  ~CifBlockIndexReverter() {
+    if (index != InvalidIndex) {
+      cif.SetCurrentBlock(index);
+    }
+  }
+};
 void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
@@ -5768,6 +5786,10 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options,
     force = Options.GetBoolOption("force");
   olxstr items_file = (use_items ? Options.FindValue("i") : EmptyString());
   olx_object_ptr<TCif> external_cif;
+  /* to be used if a CIF with identical name is loaded, but requested operation is from
+  different block.
+  */
+  olx_object_ptr<CifBlockIndexReverter> cbi_reverter;
   TCif *cif = 0;
   bool export_metacif = false, export_ed = false;
   if (use_items) {
@@ -5787,15 +5809,64 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else {
-    external_cif = new TCif;
-    try {
-      external_cif->LoadFromFile(Cmds[0]);
-      cif = &external_cif;
+    TXFile::NameArg file_n(Cmds[0]);
+    if (!xapp.CheckFileType<TCif>() ||
+      xapp.XFile().GetFileName() != file_n.file_name)
+    {
+      external_cif = new TCif;
+      try {
+        external_cif->LoadFromFile(Cmds[0]);
+        cif = &external_cif;
+      }
+      catch (const TExceptionBase& e) {
+        throw TFunctionFailedException(__OlxSrcInfo, e);
+      }
     }
-    catch (const TExceptionBase &e) {
-      throw TFunctionFailedException(__OlxSrcInfo, e);
+    if (cif == 0) {
+      cif = &xapp.XFile().GetLastLoader<TCif>();
+    }
+    size_t new_idx = InvalidIndex-1;
+    if (file_n.data_name.IsEmpty()) {
+      if (Cmds.Count() > 1) {
+        olxstr matacif_n =
+          TEFile::ChangeFileExt(TEFile::ExtractFileName(Cmds[1]), EmptyString());
+        if (cif->BlockCount() > 1) {
+          new_idx = cif->FindBlockIndex(matacif_n);
+          // WARNING: useful for reporting errors only now
+          file_n.data_name = matacif_n;
+        }
+        else {
+          if (cif->GetDataName() != matacif_n) {
+            TBasicApp::NewLogEntry(logWarning) <<
+              "CIF data name does not match the destination file name: '" <<
+              cif->GetDataName() << "' vs '" << matacif_n << '\'';
+          }
+        }
+      }
+    }
+    else if (
+      (file_n.is_index && file_n.data_name.ToSizeT() != cif->GetBlockIndex()) ||
+      (!file_n.is_index && file_n.data_name != cif->GetDataName()))
+    {
+      new_idx = file_n.is_index ? file_n.data_name.ToSizeT() :
+        cif->FindBlockIndex(file_n.data_name);
+    }
+    if (new_idx != InvalidIndex-1) {
+      if (new_idx != cif->GetBlockIndex() && new_idx < cif->BlockCount()) {
+        // initialise the reverter for internal CIF
+        if (!external_cif.ok()) {
+          cbi_reverter = new CifBlockIndexReverter(*cif, cif->GetBlockIndex());
+        }
+        cif->SetCurrentBlock(new_idx);
+      }
+      else {
+        E.ProcessingError(__OlxSrcInfo,
+          "Specified CIF block does not exist: ").quote() << file_n.data_name;
+        return;
+      }
     }
   }
+
   olxstr dest;
   if (Cmds.Count() == 2) {
     dest = Cmds[1];
@@ -5901,8 +5972,7 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options,
       mcf.SaveToFile(dest);
     }
     catch (const TExceptionBase &e) {
-      TBasicApp::NewLogEntry(logError) << "Failed to retrieve structure "
-        "folder - skipping metacif export";
+      TBasicApp::NewLogEntry(logError) << "Failed to create '" << dest << '\'';
     }
   }
   else {
@@ -10028,7 +10098,7 @@ void XLibMacros::macRRings(TStrObjList& Cmds, const TParamList& Options,
       olxstr r_str = rs[0]->ToString();
       if (unique.Contains(r_str)) {
         for (size_t j = 0; j < rs.Count(); j++) {
-          rs[j]->GetParent().Release(*rs[j]);
+          rs[j]->Release();
           delete rs[j];
         }
       }
@@ -10724,7 +10794,7 @@ void XLibMacros::macConstrain(TStrObjList &Cmds,
         for (size_t j=0; j < ag; j++, ac++)
           al[j] = &atoms[ac]->CAtom();
       }
-      app.XFile().GetRM().SameGroups.items.AddNew(
+      new same_group_constraint(app.XFile().GetRM().SameGroups, 
         ConstTypeList<TCAtomPList>(groups));
     }
     else if (atoms.Count() == 2) {
@@ -10766,7 +10836,7 @@ void XLibMacros::macConstrain(TStrObjList &Cmds,
         groups[0][i] = &ma[i].GetA()->CAtom();
         groups[1][i] = &ma[i].GetB()->CAtom();
       }
-      app.XFile().GetRM().SameGroups.items.AddNew(
+      new same_group_constraint(app.XFile().GetRM().SameGroups,
         ConstTypeList<TCAtomPList>(groups));
     }
   }
@@ -12802,7 +12872,7 @@ void XLibMacros::macWigl(TStrObjList& Cmds, const TParamList& Options,
       TEllipsoid& r = *a.GetEllipsoid();
       evecd q = r.GetQuad();
       for (int qi = 0; qi < 3; qi++) {
-        double shift = 0.5 + (double)rand() * dU / (2*RAND_MAX);
+        double shift = 0.5 + (double)rand() * dU / (2.0*(double)RAND_MAX);
         int idx = TEllipsoid::linear_to_shelx(qi);
         r.SetQuad(idx, r.GetQuad(idx) * shift);
       }

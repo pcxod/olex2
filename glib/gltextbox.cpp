@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2025 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -34,12 +34,14 @@ TGlTextBox::TGlTextBox(TGlRenderer& Render, const olxstr& collectionName):
 //..............................................................................
 TGlTextBox::~TGlTextBox()  {  Clear();  }
 //..............................................................................
-void TGlTextBox::Create(const olxstr& cName)  {
-  if( !cName.IsEmpty() )
+void TGlTextBox::Create(const olxstr& cName) {
+  if (!cName.IsEmpty())
     SetCollectionName(cName);
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
-  if( GPC.PrimitiveCount() != 0 )  return;
+  if (GPC.PrimitiveCount() != 0) {
+    return;
+  }
 
   TGraphicsStyle& GS = GPC.GetStyle();
   Left = GS.GetParam("Left", Left, true).ToInt();
@@ -47,7 +49,7 @@ void TGlTextBox::Create(const olxstr& cName)  {
   TGlMaterial GlM;
   GlM.SetFlags(0);
   GlM.ShininessF = 128;
-  GlM.SetFlags(sglmAmbientF|sglmDiffuseF|sglmIdentityDraw|sglmTransparent);
+  GlM.SetFlags(sglmAmbientF | sglmDiffuseF | sglmIdentityDraw | sglmTransparent);
   GlM.AmbientF = 0xff0f0f0f;
   GlM.DiffuseF = 0x000f0f0f;
 
@@ -160,17 +162,17 @@ void TGlTextBox::PostText(const TStrList &SL, TGlMaterial *M) {
   }
 }
 //..............................................................................
-void TGlTextBox::Fit()  {
+void TGlTextBox::Fit() {
   const TGlFont& glf = GetFont();
   double scale = 1;
   if (glf.IsVectorFont())
-    scale = 1./Parent.GetScale();
-  if( FBuffer.Count() > 1 )  {
+    scale = 1. / Parent.GetScale();
+  if (FBuffer.Count() > 1) {
     const uint16_t th = glf.TextHeight(EmptyString());
-    const double LineSpacer = (0.05+LineSpacing-1)*th;
+    const double LineSpacer = (0.05 + LineSpacing - 1) * th;
     Height = 0;
     Width = 0;
-    for( size_t i=0; i < FBuffer.Count(); i++ )  {
+    for (size_t i = 0; i < FBuffer.Count(); i++) {
       TTextRect tr = glf.GetTextRect(FBuffer[i]);
       if (glf.IsVectorFont()) {
         tr.height *= scale;
@@ -179,29 +181,29 @@ void TGlTextBox::Fit()  {
       Height += (uint16_t)olx_round(olx_max(tr.height, glf.GetMaxHeight()));
       if (tr.width > Width) Width = (uint16_t)olx_round(tr.width);
     }
-    Height += (uint16_t)olx_round(LineSpacer*(FBuffer.Count()-1));
+    Height += (uint16_t)olx_round(LineSpacer * (FBuffer.Count() - 1));
   }
-  else if( FBuffer.Count() == 1 )  {
+  else if (FBuffer.Count() == 1) {
     TTextRect tr = glf.GetTextRect(FBuffer[0]);
     if (glf.IsVectorFont()) {
       tr.height *= scale;
       tr.width *= scale;
     }
     // add 3 extra pixels for better presentation...
-    Height = (uint16_t)olx_round(tr.height)+3;
+    Height = (uint16_t)olx_round(tr.height) + 3;
     Width = (uint16_t)olx_round(tr.width);
   }
-  else  {
+  else {
     Height = Width = 0;
   }
 }
 //..............................................................................
-void TGlTextBox::SetLeft(int l)  {
+void TGlTextBox::SetLeft(int l) {
   Left = l;
   GetPrimitives().GetStyle().SetParam("Left", Left, true);
 }
 //..............................................................................
-void TGlTextBox::SetTop(int t)  {
+void TGlTextBox::SetTop(int t) {
   Top = t;
   GetPrimitives().GetStyle().SetParam("Top", Top, true);
 }
@@ -215,5 +217,38 @@ bool TGlTextBox::OnMouseUp(const IOlxObject *Sender, const TMouseData& Data)  {
 //..............................................................................
 TGlFont& TGlTextBox::GetFont() const {
   return Parent.GetScene().GetFont(FontIndex, true);
+}
+//..............................................................................
+//..............................................................................
+//..............................................................................
+void TGlTextBox::LibReset(const TStrObjList& Params, TMacroData& E) {
+  TStrList toks(Params[0], ',');
+  if (toks.Count() == 2 && olx_list_and(toks, &olxstr::IsInt)) {
+    SetPosition(toks[0].ToInt(), toks[1].ToInt());
+  }
+  else {
+    int margin = 0;
+    bool bottom = Params[0].Contains("b"),
+      right = Params[0].Contains("r");
+    if (!toks.IsEmpty() && toks.GetLastString().IsInt()) {
+      margin = toks.GetLastString().ToInt();
+    }
+    int t = margin, l = margin;
+    if (right) {
+      l = Parent.GetWidth() - GetWidth() - margin;
+    }
+    if (bottom) {
+      t = Parent.GetHeight() - GetHeight() - margin;
+    }
+    SetPosition(l, t);
+  }
+  Update();
+}
+//..............................................................................
+void TGlTextBox::ExportLibrary(TLibrary& lib) {
+  AGDrawObject::ExportLibrary(lib);
+
+  lib.Register(new TFunction<TGlTextBox>(this, &TGlTextBox::LibReset,
+    "Reset", fpOne, "Resets the text box position"));
 }
 //..............................................................................

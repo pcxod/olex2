@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2025 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -36,10 +36,13 @@ public:
   TTSortedListBase(const TTSortedListBase& l)
     : list(l.list), cmp(l.cmp)
   {}
+  ~TTSortedListBase() {
+  }
   void TakeOver(TTSortedListBase &l, bool do_delete=false)  {
     list.TakeOver(l.list);
-    if (do_delete)
-      delete &l;
+    if (do_delete) {
+      delete& l;
+    }
   }
   bool IsEmpty() const {  return list.IsEmpty();  }
   size_t Count() const {  return list.Count();  }
@@ -61,7 +64,9 @@ public:
   */
   bool Remove(const TypeClass& entity)  {
     size_t ind = IndexOf(entity);
-    if( ind == InvalidIndex )  return false;
+    if (ind == InvalidIndex) {
+      return false;
+    }
     list.Delete(ind);
     return true;
   }
@@ -276,7 +281,9 @@ public:
   {
     SortedObjectList rv;
     rv.SetCapacity(sz);
-    for (size_t i=0; i < sz; i++) rv.Add(a[i]);
+    for (size_t i = 0; i < sz; i++) {
+      rv.Add(a[i]);
+    }
     return rv;
   }
 public:

@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2025 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -45,9 +45,9 @@ struct DictEntry {
 };
 
 template <typename KType, typename VType, class Comparator> class olxdict
-  : protected SortedObjectList
-  <DictEntry<KType, VType, Comparator>,
-  typename DictEntry<KType, VType, Comparator>::Comparator>
+  : protected SortedObjectList<
+      DictEntry<KType, VType, Comparator>,
+      typename DictEntry<KType, VType, Comparator>::Comparator>
 {
   typedef DictEntry<KType, VType, Comparator> EntryType;
   typedef typename EntryType::Comparator cmpt_t;
@@ -118,11 +118,17 @@ public:
     }
     return SortedL::operator[] (ind).val;
   }
+
   void Clear() { SortedL::Clear(); }
   size_t Count() const { return SortedL::Count(); }
   bool IsEmpty() const { return SortedL::IsEmpty(); }
   void SetCapacity(const olx_capacity_t& c) { SortedL::SetCapacity(c); }
   void SetCapacity(size_t c) { SortedL::SetCapacity(c); }
+
+  const EntryType& GetListItem(size_t ind) const {
+    return SortedL::operator[] (ind);
+  }
+
   VType& GetValue(size_t ind) { return SortedL::operator[] (ind).val; }
   const VType& GetValue(size_t ind) const {
     return SortedL::operator[] (ind).val;
@@ -130,11 +136,16 @@ public:
   const KType& GetKey(size_t ind) const {
     return SortedL::operator[] (ind).key;
   }
-  const EntryType& GetEntry(size_t ind) const {
-    return SortedL::operator[] (ind);
-  }
   template <class T> bool HasKey(const T& key) const {
-    return SortedL::IndexOf(key) != InvalidIndex;
+    return SortedL::Contains(key);
+  }
+
+  template <class T> bool Contains(const T& key) const {
+    return SortedL::Contains(key);
+  }
+
+  void AddListItem(const EntryType& e) {
+    SortedL::AddUnique(e.key);
   }
 
   template <typename T>
@@ -176,6 +187,11 @@ public:
     }
     return InvalidIndex;
   }
+
+  bool RemoveListItem(const EntryType& e) {
+    return Remove(e.key);
+  }
+
   template <class T>
   bool Remove(const T& key) {
     size_t ind = SortedL::IndexOf(key);
@@ -201,6 +217,7 @@ public:
 public:
   typedef KType key_item_type;
   typedef VType value_item_type;
+  typedef DictEntry<KType, VType, Comparator> list_item_type;
   typedef const_olxdict<KType, VType, Comparator> const_dict_type;
 };
 

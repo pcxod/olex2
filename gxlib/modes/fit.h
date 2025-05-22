@@ -20,7 +20,7 @@ class TFitMode : public AEventsDispatcher, public AMode {
   TXGroup* group;
   TXAtomPList Atoms, AtomsToMatch;
   vec3d_alist original_crds, saved_crds;
-  bool Initialised, DoSplit, Restrain, RestrainU;
+  bool Initialised, DoSplit, Restrain, RestrainU, Incl;
   int afix, part, var;
   size_t split_offset;
   class OnUniqHandler : public AActionHandler {
@@ -77,7 +77,7 @@ public:
     : AMode(id),
     Initialised(false),
     DoSplit(false),
-    Restrain(false), RestrainU(false),
+    Restrain(false), RestrainU(false), Incl(false),
     AngleInc(0),
     undo(0)
   {
@@ -93,6 +93,7 @@ public:
   bool Initialise_(TStrObjList& Cmds, const TParamList& Options) {
     Restrain = Cmds.Containsi("same");
     RestrainU = Cmds.Containsi("rigu");
+    Incl = Options.GetBoolOption('i');
     DoSplit = Options.Contains('s');
     if (DoSplit) {
       split_offset = 0;
@@ -159,6 +160,7 @@ public:
       bool set_parts = part == DefNoPart;
       for (size_t i = split_offset; i < Atoms.Count(); i++) {
         if (Atoms[i]->crd().QDistanceTo(original_crds[i]) < 0.01) {
+          atom_set.Add(Atoms[i]->CAtom().GetId());
           continue;
         }
         TXAtom& nxa = gxapp.AddAtom(Atoms[i]);
@@ -256,7 +258,7 @@ public:
       }
       if (Restrain) {
         DistanceGenerator ds;
-        ds.Generate(au, atom_set, true, false);
+        ds.Generate(au, atom_set, true, Incl);
         ds.GenerateSADI(rm, atom_map, 0.02, 0.04);
       }
       if (RestrainU) {

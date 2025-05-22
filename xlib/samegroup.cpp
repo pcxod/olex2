@@ -14,25 +14,35 @@
 #include "tagholder.h"
 #include "ins.h"
 
-TSameGroup::TSameGroup(uint16_t id, TSameGroupList& parent)
-  : Atoms(parent.RM), Id(id), Parent(parent),
+TSameGroup::TSameGroup(TSameGroupList& parent, bool tmp)
+  : AReleasable(parent, tmp),
+  Atoms(parent.RM),
   ParentGroup(0), Esd12(0.02), Esd13(0.04)
 {}
 //.............................................................................
 TSameGroup::~TSameGroup() {
+  // app has been destroyed, GetParent will fail and dynamic data to delete!
+  if (!TBasicApp::HasInstance()) {
+    return;
+  }
   Clear();
   // manage in batch when needed onstead
   //if (ParentGroup != 0) {
   //  ParentGroup->RemoveDependent(*this);
   //}
 }
-void TSameGroup::SetAtomIds(uint16_t id) {
+//.............................................................................
+TSameGroupList& TSameGroup::GetParent() const {
+  return dynamic_cast<TSameGroupList&>(parent);
+}
+//.............................................................................
+void TSameGroup::SetAtomIds(size_t id) {
   if (!Atoms.IsExplicit()) {
     return;
   }
-  TAtomRefList atoms = Atoms.ExpandList(Parent.RM);
+  TAtomRefList atoms = Atoms.ExpandList(GetParent().RM);
   for (size_t i = 0; i < atoms.Count(); i++) {
-    atoms[i].GetAtom().SetSameId(id);
+    atoms[i].GetAtom().SetSameId((uint16_t)id);
   }
 }
 //.............................................................................
@@ -42,19 +52,19 @@ void TSameGroup::Assign(const TSameGroup& sg) {
     return;
   }
   Atoms.Assign(sg.Atoms);
-  SetAtomIds(GetId());
+  SetAtomIds(GetReleasableId());
   Esd12 = sg.Esd12;
   Esd13 = sg.Esd13;
   for (size_t i = 0; i < sg.Dependent.Count(); i++) {
-    Dependent.Add(Parent[sg.Dependent[i]->Id]);
+    Dependent.Add(GetParent()[sg.Dependent[i]->GetReleasableId()]);
   }
   if (sg.GetParentGroup() != 0) {
-    ParentGroup = &Parent[sg.GetParentGroup()->Id];
+    ParentGroup = &GetParent()[sg.GetParentGroup()->GetReleasableId()];
   }
 }
 //.............................................................................
 TCAtom& TSameGroup::Add(TCAtom& ca) {
-  ca.SetSameId(Id);
+  ca.SetSameId((uint16_t)GetReleasableId());
   Atoms.AddExplicit(ca);
   return ca;
 }
@@ -106,7 +116,7 @@ void TSameGroup::FromDataItem_HRF(TDataItem& item) {
   // reference?
   if (item.ItemCount() > 0 && ParentGroup == 0) {
     for (size_t i = 0; i < item.ItemCount(); i++) {
-      Parent.New(this).FromDataItem_HRF(item.GetItemByIndex(i));
+      GetParent().New(this).FromDataItem_HRF(item.GetItemByIndex(i));
     }
   }
   else {
@@ -126,14 +136,14 @@ TSameGroup* TSameGroup::ToExplicit(TTypeList<TSameGroup> *storage) const {
     return 0;
   }
   TTypeList<TAtomRefList> groups;
-  Atoms.Expand(Parent.RM, groups);
+  Atoms.Expand(GetParent().RM, groups);
   if (groups.Count() < 2 || groups[0].Count() < 2) {
     return 0;
   }
-  TSameGroup& ref = Parent.New(0, storage);
+  TSameGroup& ref = GetParent().New(0, storage);
   ref.GetAtoms().AddAll(groups[0], true);
   for (size_t i = 1; i < groups.Count(); i++) {
-    TSameGroup& dep = Parent.New(&ref, storage);
+    TSameGroup& dep = GetParent().New(&ref, storage);
     dep.Esd12 = this->Esd12;
     dep.Esd13 = this->Esd13;
     dep.GetAtoms().AddAll(groups[i], true);
@@ -147,7 +157,7 @@ PyObject* TSameGroup::PyExport(PyObject* main, TPtrList<PyObject>& allGroups,
 {
   PythonExt::SetDictItem(main, "esd12", Py_BuildValue("d", Esd12));
   PythonExt::SetDictItem(main, "esd13", Py_BuildValue("d", Esd13));
-  TAtomRefList atom_list = Atoms.ExpandList(Parent.RM);
+  TAtomRefList atom_list = Atoms.ExpandList(GetParent().RM);
   PyObject* atoms = PyTuple_New(atom_list.Count());
   for (size_t i = 0; i < atom_list.Count(); i++) {
     PyObject* eq;
@@ -191,12 +201,12 @@ void TSameGroup::FromDataItem(TDataItem& item) {
     if (!dep_l.IsEmpty()) {
       IndexRange::RangeItr di(dep_l);
       while (di.HasNext()) {
-        AddDependent(Parent[di.Next()]);
+        AddDependent(GetParent()[di.Next()]);
       }
     }
   }
   else { // backwards compatibility
-    TAsymmUnit& au = Parent.RM.aunit;
+    TAsymmUnit& au = GetParent().RM.aunit;
     const TDataItem* _atoms = item.FindItem("atoms");
     if (_atoms != 0) {
       for (size_t i = 0; i < _atoms->ItemCount(); i++) {
@@ -211,18 +221,18 @@ void TSameGroup::FromDataItem(TDataItem& item) {
     }
     TDataItem& dep = item.GetItemByName("dependent");
     for (size_t i = 0; i < dep.ItemCount(); i++) {
-      AddDependent(Parent[dep.GetItemByIndex(i).GetValue().ToInt()]);
+      AddDependent(GetParent()[dep.GetItemByIndex(i).GetValue().ToInt()]);
     }
   }
   const olxstr p_id = item.FindField("parent");
   if (!p_id.IsEmpty()) {
-    ParentGroup = &Parent[p_id.ToInt()];
+    ParentGroup = &GetParent()[p_id.ToInt()];
   }
 }
 //.............................................................................
 bool TSameGroup::DoOverlap(const TSameGroup& g) const {
-  TAtomRefList ar1 = Atoms.ExpandList(Parent.RM);
-  TAtomRefList ar2 = g.Atoms.ExpandList(g.Parent.RM);
+  TAtomRefList ar1 = Atoms.ExpandList(GetParent().RM);
+  TAtomRefList ar2 = g.Atoms.ExpandList(g.GetParent().RM);
   for (size_t i = 0; i < ar1.Count(); i++) {
     ar1[i].GetAtom().SetTag(0);
   }
@@ -238,15 +248,15 @@ bool TSameGroup::DoOverlap(const TSameGroup& g) const {
 }
 //.............................................................................
 int TSameGroup::DoOverlapEx(const TSameGroup& g) const {
-  TAtomRefList ar1 = Atoms.ExpandList(Parent.RM);
-  TAtomRefList ar2 = g.Atoms.ExpandList(g.Parent.RM);
+  TAtomRefList ar1 = Atoms.ExpandList(GetParent().RM);
+  TAtomRefList ar2 = g.Atoms.ExpandList(g.GetParent().RM);
   return ACollectionItem::AnalyseOverlap(ar1, ar2,
     FunctionAccessor::MakeConst(&ExplicitCAtomRef::GetAtom));
 }
 //.............................................................................
 bool TSameGroup::IsSubgroupOf(const TSameGroup& g) const {
-  TAtomRefList ar1 = Atoms.ExpandList(Parent.RM);
-  TAtomRefList ar2 = g.Atoms.ExpandList(g.Parent.RM);
+  TAtomRefList ar1 = Atoms.ExpandList(GetParent().RM);
+  TAtomRefList ar2 = g.Atoms.ExpandList(g.GetParent().RM);
   for (size_t i = 0; i < ar1.Count(); i++) {
     ar1[i].GetAtom().SetTag(0);
   }
@@ -266,7 +276,7 @@ bool TSameGroup::IsValidForSave() const {
 }
 //.............................................................................
 bool TSameGroup::AreAllAtomsUnique() const {
-  TAtomRefList atoms = Atoms.ExpandList(Parent.RM);
+  TAtomRefList atoms = Atoms.ExpandList(GetParent().RM);
   for (size_t i = 0; i < atoms.Count(); i++) {
     atoms[i].GetAtom().SetTag(i);
   }
@@ -309,8 +319,8 @@ int TSameGroup::Compare(const TSameGroup& g) const {
   if (!Atoms.IsExplicit() || !g.Atoms.IsExplicit()) {
     return 0;
   }
-  TAtomRefList this_atoms = Atoms.ExpandList(Parent.RM);
-  TAtomRefList that_atoms = g.Atoms.ExpandList(g.Parent.RM);
+  TAtomRefList this_atoms = Atoms.ExpandList(GetParent().RM);
+  TAtomRefList that_atoms = g.Atoms.ExpandList(g.GetParent().RM);
   if (this_atoms.IsEmpty()) {
     if (that_atoms.IsEmpty()) {
       return 0;
@@ -324,10 +334,10 @@ int TSameGroup::Compare(const TSameGroup& g) const {
 }
 //.............................................................................
 olx_object_ptr<DistanceGenerator> TSameGroup::get_generator() const {
-  TAtomRefList ar = GetAtoms().ExpandList(Parent.RM);
+  TAtomRefList ar = GetAtoms().ExpandList(GetParent().RM);
   TArrayList<TAtomRefList> di_atoms(DependentCount());
   for (size_t di = 0; di < DependentCount(); di++) {
-    di_atoms[di] = GetDependent(di).GetAtoms().ExpandList(Parent.RM);
+    di_atoms[di] = GetDependent(di).GetAtoms().ExpandList(GetParent().RM);
     if (ar.Count() != di_atoms[di].Count()) {
       throw TInvalidArgumentException(__OlxSrcInfo, "atoms list sizes");
     }
@@ -353,14 +363,14 @@ olx_object_ptr<DistanceGenerator> TSameGroup::get_generator() const {
   d->atom_map_N->TakeOver(atom_map);
   //d->Generate(Parent.RM.aunit, atom_set, true, true, inc_set);
   // this way matches ShelXl
-  d->Generate(Parent.RM.aunit, atom_set, true, true, atom_set);
+  d->Generate(GetParent().RM.aunit, atom_set, true, true, atom_set);
   return d;
 }
 //.............................................................................
 TStrList::const_list_type TSameGroup::GenerateList() const {
   TStrList rv;
   olx_object_ptr<DistanceGenerator> d = get_generator();
-  rv.AddAll(d->GenerateSADIList(Parent.RM.aunit, *d->atom_map_N, Esd12, Esd13));
+  rv.AddAll(d->GenerateSADIList(GetParent().RM.aunit, *d->atom_map_N, Esd12, Esd13));
   return rv;
 }
 //.............................................................................
@@ -372,10 +382,10 @@ TStrList::const_list_type TSameGroup::Analyse(bool report,
     return log;
   }
   olxset< const TSameGroup*, TPointerComparator> conflicted;
-  TAtomRefList this_atoms = Atoms.ExpandList(Parent.RM);
+  TAtomRefList this_atoms = Atoms.ExpandList(GetParent().RM);
   for (size_t i = 0; i < Dependent.Count(); i++) {
     const TSameGroup& dg = *Dependent[i];
-    TAtomRefList that_atoms = Dependent[i]->Atoms.ExpandList(dg.Parent.RM);
+    TAtomRefList that_atoms = Dependent[i]->Atoms.ExpandList(dg.GetParent().RM);
     if (this_atoms.Count() != that_atoms.Count()) {
       if (report) {
         log.Add("Mismatching atom number for ") << this_atoms.Count()
@@ -434,7 +444,7 @@ void TSameGroup::GetRestrainedDistances(
     TSameGroup* tmp = ToExplicit(&tmp_groups);
     if (tmp != 0) {
       tmp->GetRestrainedDistances(d12, d13);
-      olx_list_call(tmp_groups, &TSameGroup::ReleasedClear);
+      olx_list_call(tmp_groups, &TSameGroup::OnReleasedDelete);
     }
     return;
   }
@@ -443,11 +453,11 @@ void TSameGroup::GetRestrainedDistances(
   }
   olx_object_ptr<DistanceGenerator> d = get_generator();
   TTypeList<DistanceGenerator::pair_list_t> l12 =
-    DistanceGenerator::GeneratePairList(d->distances_12, Parent.RM.aunit, *d->atom_map_N);
+    DistanceGenerator::GeneratePairList(d->distances_12, GetParent().RM.aunit, *d->atom_map_N);
   d12.AddAll(l12);
   l12.ReleaseAll();
   TTypeList<DistanceGenerator::pair_list_t> l13 =
-    DistanceGenerator::GeneratePairList(d->distances_13, Parent.RM.aunit, *d->atom_map_N);
+    DistanceGenerator::GeneratePairList(d->distances_13, GetParent().RM.aunit, *d->atom_map_N);
   d13.AddAll(l13);
   l13.ReleaseAll();
 }
@@ -460,7 +470,7 @@ void TSameGroup::GetRestrainedDistances(
     TSameGroup *tmp = ToExplicit(&tmp_groups);
     if (tmp != 0) {
       tmp->GetRestrainedDistances(ds);
-      olx_list_call(tmp_groups, &TSameGroup::ReleasedClear);
+      olx_list_call(tmp_groups, &TSameGroup::OnReleasedDelete);
     }
     return;
   }
@@ -478,14 +488,14 @@ void TSameGroup::GetRestrainedDistances(
   for (int di = 0; di < 2; di++) {
     list_t dl = DistanceGenerator::GeneratePairList(
       di == 0 ? d->distances_12 : d->distances_13,
-      Parent.RM.aunit, *d->atom_map_N);
+      GetParent().RM.aunit, *d->atom_map_N);
     TArrayList<list_t*>& esd_map = di == 0 ? l12_map : l13_map;
     for (size_t i = 0; i < dl.Count(); i++) {
       for (size_t j = 1; j < dl[i].Count(); j++) {
         TTypeList<DistanceGenerator::idx_pair_t>& l = esd_map[dl[i][j].extra]->AddNew();
         l.AddCopy(dl[i][0]);
         l.AddCopy(dl[i][j]);
-        if (Parent.RM.aunit.GetAtom(dl[i][0].a).GetType().z == 1) {
+        if (GetParent().RM.aunit.GetAtom(dl[i][0].a).GetType().z == 1) {
           break;
         }
       }
@@ -499,7 +509,7 @@ void TSameGroup::Expand(TStrList* log) const {
     TSameGroup* tmp = ToExplicit(&tmp_groups);
     if (tmp != 0) {
       tmp->Expand(log);
-      olx_list_call(tmp_groups, &TSameGroup::ReleasedClear);
+      olx_list_call(tmp_groups, &TSameGroup::OnReleasedDelete);
     }
     return;
   }
@@ -507,62 +517,42 @@ void TSameGroup::Expand(TStrList* log) const {
     return;
   }
   olx_object_ptr<DistanceGenerator> d = get_generator();
-  d->GenerateSADI(Parent.RM, d->atom_map_N, Esd12, Esd13, log);
+  d->GenerateSADI(GetParent().RM, d->atom_map_N, Esd12, Esd13, log);
 }
 //.............................................................................
 //.............................................................................
 //.............................................................................
 TSameGroup& TSameGroupList::New(TSameGroup* ref, TTypeList<TSameGroup>* dest) {
-  if (dest == 0) {
-    dest = &Groups;
-  }
-  TSameGroup& rv = dest->Add(new TSameGroup((uint16_t)Groups.Count(), *this));
+  TSameGroup* rv = new TSameGroup(*this, dest != 0);
   if (ref != 0) {
-    ref->AddDependent(rv);
+    ref->AddDependent(*rv);
   }
-  return rv;
+  if (dest != 0) {
+    dest->Add(rv);
+  }
+  return *rv;
 }
 //.............................................................................
-void TSameGroupList::Release(TSameGroup& sg) {
-  if (&sg.GetParent() != this) {
-    throw TInvalidArgumentException(__OlxSourceInfo,
-      "SAME group parent differs");
-  }
-  if (Groups.Count() <= sg.GetId() || &Groups[sg.GetId()] != &sg) {
-#ifdef _DEBUG
-    throw TFunctionFailedException(__OlxSrcInfo, "assert");
-#endif
-    return;
-  }
-  Groups.Release(sg.GetId());
+void TSameGroupList::OnRelease(TSameGroup& sg) {
   if (sg.GetParentGroup() != 0) {
     sg.GetParentGroup()->RemoveDependent(sg);
   }
   sg.ClearAtomIds();
-  for (size_t i = 0; i < Groups.Count(); i++) {
-    Groups[i].SetId((uint16_t)i);
-  }
   FixIds();
 }
 //.............................................................................
-void TSameGroupList::Restore(TSameGroup& sg) {
-  if (&sg.GetParent() != this) {
-    throw TInvalidArgumentException(__OlxSourceInfo,
-      "SAME group parent differs");
-  }
-  sg.SetId((uint16_t)Groups.Count());
-  Groups.Add(sg);
+void TSameGroupList::OnRestore(TSameGroup& sg) {
   if (sg.GetParentGroup() != 0) {
     sg.GetParentGroup()->AddDependent(sg);
     // make sure that atoms have parent group Id
-    if (Groups.Contains(sg.GetParentGroup())) {
-      sg.GetParentGroup()->SetId(sg.GetParentGroup()->GetId());
+    if (items.Contains(sg.GetParentGroup())) {
+      sg.GetParentGroup()->SetAtomIds(sg.GetParentGroup()->GetReleasableId());
     }
   }
 }
 //.............................................................................
 void TSameGroupList::Delete(const TPtrList <TSameGroup>& groups_) {
-  Groups.ForEach(ACollectionItem::TagSetter(0));
+  items.ForEach(ACollectionItem::TagSetter(0));
   TPtrList <TSameGroup> groups = groups_;
   ACollectionItem::Unify(groups);
   // implicit recursion
@@ -572,58 +562,58 @@ void TSameGroupList::Delete(const TPtrList <TSameGroup>& groups_) {
     }
   }
   for (size_t i = 0; i < groups.Count(); i++) {
-    if (&groups[i]->GetParent() != this) {
+    if (&groups[i]->parent != this) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         "SAME group parent differs");
     }
     groups[i]->SetTag(1);
   }
-  for (size_t i = 0; i < Groups.Count(); i++) {
-    Groups[i].PackDependent(1);
-    if (Groups[i].GetParentGroup() == 0 && Groups[i].DependentCount() == 0) {
-      Groups[i].SetTag(1);
+  for (size_t i = 0; i < Count(); i++) {
+    items[i].PackDependent(1);
+    if (items[i].GetParentGroup() == 0 && items[i].DependentCount() == 0) {
+      items[i].SetTag(1);
     }
   }
-  Groups.Pack(ACollectionItem::TagAnalyser(1));
-  for (size_t i = 0; i < Groups.Count(); i++) {
-    Groups[i].SetId((uint16_t)i);
+  items.Pack(ACollectionItem::TagAnalyser(1));
+  for (size_t i = 0; i < Count(); i++) {
+    items[i].SetReleasableId(i);
   }
   FixIds();
 }
 //.............................................................................
 void TSameGroupList::Sort() {
-  QuickSorter::Sort(Groups);
-  for (size_t i = 0; i < Groups.Count(); i++) {
-    Groups[i].SetId((uint16_t)i);
+  QuickSorter::Sort(items);
+  for (size_t i = 0; i < Count(); i++) {
+    items[i].SetReleasableId(i);
   }
   FixIds();
 }
 //.............................................................................
 void TSameGroupList::ToDataItem(TDataItem& item) const {
   size_t cnt = 0;
-  Groups.ForEach(ACollectionItem::TagSetter(-1));
-  for (size_t i = 0; i < Groups.Count(); i++) {
-    if (Groups[i].IsValidForSave() && Groups[i].GetTag() == -1) {
-      Groups[i].SetTag(cnt++);
-      for (size_t j = 0; j < Groups[i].DependentCount(); j++) {
-        TSameGroup& dp = Groups[i].GetDependent(j);
+  items.ForEach(ACollectionItem::TagSetter(-1));
+  for (size_t i = 0; i < Count(); i++) {
+    if (items[i].IsValidForSave() && items[i].GetTag() == -1) {
+      items[i].SetTag(cnt++);
+      for (size_t j = 0; j < items[i].DependentCount(); j++) {
+        TSameGroup& dp = items[i].GetDependent(j);
         if (dp.IsValidForSave()) {
           dp.SetTag(cnt++);
         }
       }
     }
   }
-  for (size_t i = 0; i < Groups.Count(); i++) {
-    if (Groups[i].GetTag() >= 0) {
-      Groups[i].ToDataItem(item.AddItem("group"));
-      for (size_t j = 0; j < Groups[i].DependentCount(); j++) {
-        TSameGroup& dp = Groups[i].GetDependent(j);
+  for (size_t i = 0; i < Count(); i++) {
+    if (items[i].GetTag() >= 0) {
+      items[i].ToDataItem(item.AddItem("group"));
+      for (size_t j = 0; j < items[i].DependentCount(); j++) {
+        TSameGroup& dp = items[i].GetDependent(j);
         if (dp.GetTag() >= 0) {
           dp.ToDataItem(item.AddItem("group"));
           dp.SetTag(-1);
         }
       }
-      Groups[i].SetTag(-1);
+      items[i].SetTag(-1);
     }
   }
   item.AddField("n", cnt);
@@ -631,21 +621,21 @@ void TSameGroupList::ToDataItem(TDataItem& item) const {
 //..............................................................................
 void TSameGroupList::ToDataItem_HRF(TDataItem& item) const {
   size_t cnt = 0;
-  Groups.ForEach(ACollectionItem::TagSetter(-1));
-  for (size_t i = 0; i < Groups.Count(); i++) {
-    if (Groups[i].IsValidForSave() && Groups[i].GetTag() == -1) {
-      Groups[i].SetTag(cnt++);
-      for (size_t j = 0; j < Groups[i].DependentCount(); j++) {
-        TSameGroup& dp = Groups[i].GetDependent(j);
+  items.ForEach(ACollectionItem::TagSetter(-1));
+  for (size_t i = 0; i < Count(); i++) {
+    if (items[i].IsValidForSave() && items[i].GetTag() == -1) {
+      items[i].SetTag(cnt++);
+      for (size_t j = 0; j < items[i].DependentCount(); j++) {
+        TSameGroup& dp = items[i].GetDependent(j);
         if (dp.IsValidForSave()) {
           dp.SetTag(cnt++);
         }
       }
     }
   }
-  for (size_t i = 0; i < Groups.Count(); i++) {
-    if (Groups[i].GetTag() >= 0 && Groups[i].IsReference()) {
-      Groups[i].ToDataItem_HRF(item.AddItem("ref"));
+  for (size_t i = 0; i < Count(); i++) {
+    if (items[i].GetTag() >= 0 && items[i].IsReference()) {
+      items[i].ToDataItem_HRF(item.AddItem("ref"));
     }
   }
 }
@@ -661,17 +651,17 @@ PyObject* TSameGroupList::PyExport(TPtrList<PyObject>& _atoms,
   TPtrList<PyObject>& equiv)
 {
   size_t id = 0;
-  const size_t g_cnt = Groups.Count();
-  GroupTrimmer gt(Groups);
+  const size_t g_cnt = Count();
+  GroupTrimmer gt(items);
   // Count will change as explicts expand
-  for (size_t i = 0; i < Groups.Count(); i++) {
-    if (Groups[i].IsValidForSave()) {
-      if (!Groups[i].GetAtoms().IsExplicit()) {
-        Groups[i].ToExplicit();
-        Groups[i].SetTag(-1);
+  for (size_t i = 0; i < Count(); i++) {
+    if (items[i].IsValidForSave()) {
+      if (!items[i].GetAtoms().IsExplicit()) {
+        items[i].ToExplicit();
+        items[i].SetTag(-1);
       }
       else {
-        Groups[i].SetTag(id++);
+        items[i].SetTag(id++);
       }
     }
   }
@@ -684,9 +674,9 @@ PyObject* TSameGroupList::PyExport(TPtrList<PyObject>& _atoms,
     PyTuple_SetItem(main, i, allGroups.Add(PyDict_New()));
   }
   id = 0;
-  for (size_t i = 0; i < Groups.Count(); i++) {
-    if (Groups[i].GetTag() >= 0) {
-      Groups[i].PyExport(allGroups[id++], allGroups, _atoms, equiv);
+  for (size_t i = 0; i < Count(); i++) {
+    if (items[i].GetTag() >= 0) {
+      items[i].PyExport(allGroups[id++], allGroups, _atoms, equiv);
     }
   }
   return main;
@@ -701,8 +691,8 @@ TPtrList<PyObject>::const_list_type TSameGroupList::PyExportAsSADI(
   ItemTagHolder tags_(RM.aunit.GetAtoms());
 #endif
   TTypeList<TSameGroup> tmp_groups;
-  for (size_t gi = 0; gi < Groups.Count(); gi++) {
-    const TSameGroup& sg = Groups[gi];
+  for (size_t gi = 0; gi < Count(); gi++) {
+    const TSameGroup& sg = items[gi];
     if (!sg.GetAtoms().IsExplicit()) {
       TSameGroup *tmp = sg.ToExplicit(&tmp_groups);
       if (tmp != 0) {
@@ -770,67 +760,67 @@ void TSameGroupList::FromDataItem_(TDataItem& item, size_t n) {
     New();
   }
   for (size_t i = 0; i < n; i++) {
-    Groups[i].FromDataItem(item.GetItemByIndex(i));
+    items[i].FromDataItem(item.GetItemByIndex(i));
   }
 }
 //.............................................................................
 void TSameGroupList::FixIds() {
-  for (size_t i = 0; i < Groups.Count(); i++) {
-    if (!Groups[i].IsReference()) {
+  for (size_t i = 0; i < Count(); i++) {
+    if (!items[i].IsReference()) {
       continue;
     }
-    Groups[i].SetAtomIds(Groups[i].GetId());
+    items[i].SetAtomIds(items[i].GetReleasableId());
   }
 }
 void TSameGroupList::Assign(const TSameGroupList& sl) {
   Clear();
-  Groups.SetCapacity(sl.Groups.Count());
-  for (size_t i = 0; i < sl.Groups.Count(); i++) {
+  items.SetCapacity(sl.Count());
+  for (size_t i = 0; i < sl.Count(); i++) {
     New();
   }
-  for (size_t i = 0; i < sl.Groups.Count(); i++) {
-    Groups[i].Assign(sl.Groups[i]);
+  for (size_t i = 0; i < sl.Count(); i++) {
+    items[i].Assign(sl.items[i]);
   }
   FixIds();
 }
 //.............................................................................
 void TSameGroupList::OnAUUpdate() {
-  for (size_t i = 0; i < Groups.Count(); i++) {
-    Groups[i].OnAUUpdate();
+  for (size_t i = 0; i < Count(); i++) {
+    items[i].OnAUUpdate();
   }
 }
 //.............................................................................
 void TSameGroupList::BeginAUSort() {
-  for (size_t i = 0; i < Groups.Count(); i++) {
-    Groups[i].BeginAUSort();
+  for (size_t i = 0; i < Count(); i++) {
+    items[i].BeginAUSort();
   }
 }
 //.............................................................................
 void TSameGroupList::EndAUSort() {
-  for (size_t i = 0; i < Groups.Count(); i++) {
-    Groups[i].EndAUSort();
+  for (size_t i = 0; i < Count(); i++) {
+    items[i].EndAUSort();
   }
 }
 //.............................................................................
 void TSameGroupList::SortGroupContent() {
-  for (size_t i = 0; i < Groups.Count(); i++) {
-    if (Groups[i].GetParentGroup() == 0) {
+  for (size_t i = 0; i < Count(); i++) {
+    if (items[i].GetParentGroup() == 0) {
       TPtrList<AtomRefList> deps;
-      for (size_t j = 0; j < Groups[i].DependentCount(); j++) {
-        deps.Add(Groups[i].GetDependent(j).GetAtoms());
+      for (size_t j = 0; j < items[i].DependentCount(); j++) {
+        deps.Add(items[i].GetDependent(j).GetAtoms());
       }
-      Groups[i].GetAtoms().SortByTag(deps);
+      items[i].GetAtoms().SortByTag(deps);
     }
   }
 }
 //.............................................................................
 TSameGroup* TSameGroupList::Find(const TSameGroup& g) const {
   TAtomRefList ar1 = g.GetAtoms().ExpandList(RM);
-  for (size_t i = 0; i < Groups.Count(); i++) {
-    if (&Groups[i] == &g || !Groups[i].GetAtoms().IsExplicit()) {
+  for (size_t i = 0; i < Count(); i++) {
+    if (&items[i] == &g || !GetItem(i).GetAtoms().IsExplicit()) {
       continue;
     }
-    TAtomRefList ar2 = Groups[i].GetAtoms().ExpandList(RM);
+    TAtomRefList ar2 = items[i].GetAtoms().ExpandList(RM);
     if (ar1.Count() != ar2.Count()) {
       continue;
     }
@@ -842,22 +832,21 @@ TSameGroup* TSameGroupList::Find(const TSameGroup& g) const {
       }
     }
     if (eq) {
-      return &Groups[i];
+      return &items[i];
     }
   }
   return 0;
 }
 //.............................................................................
 TSameGroup& TSameGroupList::Build(const olxstr& exp, const olxstr& resi) {
-  TSameGroup& rv = Groups.Add(
-    new TSameGroup((uint16_t)Groups.Count(), *this));
-  rv.GetAtoms().Build(exp, resi);
-  rv.SetId(rv.GetId());
-  return rv;
+  TSameGroup* rv = new TSameGroup(*this);
+  rv->GetAtoms().Build(exp, resi);
+  rv->SetAtomIds(rv->GetReleasableId());
+  return *rv;
 }
 //.............................................................................
 void TSameGroupList::Analyse() {
-  TPtrList< TSameGroup> refs = Groups.ptr().Filter(
+  TPtrList< TSameGroup> refs = items.ptr().Filter(
     FunctionAccessorAnalyser::Make(
       FunctionAccessor::MakeConst(&TSameGroup::IsReference)));
   TStrList log;
@@ -890,7 +879,7 @@ void TSameGroupList::Analyse() {
 }
 //.............................................................................
 void TSameGroupList::FixOverlapping() {
-  TPtrList<TSameGroup> refs = Groups.ptr().Filter(
+  TPtrList<TSameGroup> refs = items.ptr().Filter(
     FunctionAccessorAnalyser::Make(
       FunctionAccessor::MakeConst(&TSameGroup::IsReference)));
   TPtrList<TSameGroup> to_del;
@@ -961,14 +950,14 @@ void TSameGroupList::FixOverlapping() {
 void TSameGroupList::PrepareSave() {
   TIndexList tags = TIndexList::FromList(RM.aunit.GetAtoms(), TCAtom::TagAccessor());
   typedef TPtrList<TSameGroup> ref_l_t;
-  ref_l_t refs = Groups.ptr().Filter(
+  ref_l_t refs = items.ptr().Filter(
     FunctionAccessorAnalyser::Make(
       FunctionAccessor::MakeConst(&TSameGroup::IsReference)));
   refs.ForEach(ACollectionItem::TagSetter(0));
   olxdict<const TSameGroup*, TAtomRefList, TPointerComparator>
     sg_atoms;
-  for (size_t i = 0; i < Groups.Count(); i++) {
-    sg_atoms.Add(&Groups[i], Groups[i].GetAtoms().ExpandList(RM));
+  for (size_t i = 0; i < Count(); i++) {
+    sg_atoms.Add(&items[i], items[i].GetAtoms().ExpandList(RM));
   }
   /* Several complex scenario to be considered:
    - check if any of the atom in dependent groups come from a refence group
@@ -978,7 +967,7 @@ void TSameGroupList::PrepareSave() {
   FunctionAccessor::ConstFunctionAccessorR_<TCAtom, ExplicitCAtomRef> acc =
     FunctionAccessor::MakeConst(&ExplicitCAtomRef::GetAtom);
   // merge reference groups
-  Groups.ForEach(ACollectionItem::TagSetter(0));
+  items.ForEach(ACollectionItem::TagSetter(0));
   for (size_t i = 0; i < refs.Count(); i++) {
     TSameGroup& sg1 = *refs[i];
     if (sg1.GetTag() != 0) {
@@ -1006,7 +995,7 @@ void TSameGroupList::PrepareSave() {
               sg_atoms[&sg1.GetDependent(di1)], acc))
             {
               dep.SetTag(2);
-              dep.ReleasedClear();
+              dep.OnReleasedDelete();
               uniq = false;
               break;
             }
@@ -1017,27 +1006,27 @@ void TSameGroupList::PrepareSave() {
         }
         TAtomRefList& arl = sg_atoms[&sg2];
         for (size_t ai = 0; ai < arl.Count(); ai++) {
-          arl[i].GetAtom().SetSameId(sg1.GetId());
+          arl[i].GetAtom().SetSameId((uint16_t)sg1.GetReleasableId());
         }
         sg2.SetTag(2);
-        sg2.ReleasedClear();
+        sg2.OnReleasedDelete();
         merge_cnt++;
       }
     }
   }
   if (merge_cnt > 0) {
     refs.Pack(ACollectionItem::TagAnalyser(2));
-    Groups.Pack(ACollectionItem::TagAnalyser(2));
+    items.Pack(ACollectionItem::TagAnalyser(2));
   }
   // make sure subgroups survive!
-  for (size_t i = 0; i < Groups.Count(); i++) {
-    Groups[i].SetTag(sg_atoms[&Groups[i]].Count());
+  for (size_t i = 0; i < Count(); i++) {
+    items[i].SetTag(sg_atoms[&items[i]].Count());
   }
-  QuickSorter::Sort(Groups,
+  QuickSorter::Sort(items,
     ReverseComparator::Make(ACollectionItem::TagComparator()));
-  for (size_t i = 0; i < Groups.Count(); i++) {
-    Groups[i].SetId((uint16_t)i);
-    Groups[i].SetTag(sg_atoms[&Groups[i]].Count());
+  for (size_t i = 0; i < Count(); i++) {
+    items[i].SetReleasableId(i);
+    items[i].SetTag(sg_atoms[&items[i]].Count());
   }
   FixIds();
   /* Find overlaps between any ref groups
@@ -1076,7 +1065,7 @@ void TSameGroupList::PrepareSave() {
         for (size_t gi = 1; gi < overlapping.Count(); gi++) {
           TAtomRefList& ar = sg_atoms[overlapping[gi]];
           for (size_t ai = 0; ai < ar.Count(); ai++) {
-            ar[ai].GetAtom().SetTag(overlapping[gi]->GetId());
+            ar[ai].GetAtom().SetTag(overlapping[gi]->GetReleasableId());
           }
         }
         olx_pdict<index_t, index_t> gs;
@@ -1092,12 +1081,12 @@ void TSameGroupList::PrepareSave() {
             olx_pair_t<size_t, bool> ip = gs.AddEx(ca.GetTag());
             if (ip.b) {
               gs.GetValue(ip.a) = tag;
-              tag += Groups[ca.GetTag()].Atoms.RefCount() + 1;
+              tag += items[ca.GetTag()].Atoms.RefCount() + 1;
               inc_tag = false;
             }
             if (inc_tag && gs.GetValue(ip.a) < tag) {
               gs.GetValue(ip.a) = tag;
-              tag += Groups[ca.GetTag()].Atoms.RefCount() + 1;
+              tag += items[ca.GetTag()].Atoms.RefCount() + 1;
               inc_tag = false;
             }
             ca.SetTag(++gs.GetValue(ip.a));
@@ -1182,13 +1171,13 @@ TSameGroupList::FindSupergroups(const TSameGroup& sg,
   typedef olxdict<const TSameGroup*, TAtomRefList, TPointerComparator> dict_t;
   olx_object_ptr<dict_t> sg_atoms_p;
   if (sg_atoms == 0) {
-    sg_atoms_p = new dict_t(olx_reserve(Groups.Count()));
+    sg_atoms_p = new dict_t(olx_reserve(Count()));
     sg_atoms = &sg_atoms_p;
-    for (size_t i = 0; i < Groups.Count(); i++) {
-      if (!Groups[i].IsReference()) {
+    for (size_t i = 0; i < Count(); i++) {
+      if (!items[i].IsReference()) {
         continue;
       }
-      sg_atoms_p->Add(&Groups[i], Groups[i].GetAtoms().ExpandList(RM));
+      sg_atoms_p->Add(&items[i], items[i].GetAtoms().ExpandList(RM));
     }
   }
   ItemTagHolder ith;
@@ -1197,14 +1186,16 @@ TSameGroupList::FindSupergroups(const TSameGroup& sg,
     ith.store(sg_atoms->GetValue(i), acc);
   }
   TAtomRefList& ar1 = (*sg_atoms)[&sg];
-  for (size_t i = 0; i < Groups.Count(); i++) {
-    if (!Groups[i].IsReference() || sg.GetId() == Groups[i].GetId()) {
+  for (size_t i = 0; i < Count(); i++) {
+    if (!items[i].IsReference() ||
+      sg.GetReleasableId() == items[i].GetReleasableId())
+    {
       continue;
     }
-    TAtomRefList ar2 = (*sg_atoms)[&Groups[i]];
+    TAtomRefList ar2 = (*sg_atoms)[&items[i]];
     int ov = ACollectionItem::AnalyseOverlap(ar2, ar1, acc);
     if (ov == OVERLAP_SUPERGROUP) {
-      rv.Add(Groups[i]);
+      rv.Add(items[i]);
     }
   }
   SortSupergroups(rv, *sg_atoms);
@@ -1246,8 +1237,8 @@ TStrList::const_list_type TSameGroupList::GenerateList() const {
   TStrList rv;
   typedef TTypeList<DistanceGenerator::pair_list_t> lsts_t;
   olx_pdict<double, lsts_t> lists;
-  for (size_t gi = 0; gi < Groups.Count(); gi++) {
-    const TSameGroup& sg = Groups[gi];
+  for (size_t gi = 0; gi < Count(); gi++) {
+    const TSameGroup& sg = GetItem(gi);
     if (!sg.IsReference() && sg.GetAtoms().IsExplicit()) {
       continue;
     }
@@ -1274,8 +1265,8 @@ TStrList::const_list_type TSameGroupList::GenerateList() const {
 }
 //..............................................................................
 void TSameGroupList::Expand(TStrList* log) {
-  for (size_t gi = 0; gi < Groups.Count(); gi++) {
-    const TSameGroup& sg = Groups[gi];
+  for (size_t gi = 0; gi < Count(); gi++) {
+    const TSameGroup& sg = items[gi];
     if (!sg.IsReference() && sg.GetAtoms().IsExplicit()) {
       continue;
     }

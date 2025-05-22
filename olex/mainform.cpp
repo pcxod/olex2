@@ -615,6 +615,7 @@ void TMainForm::XApp(Olex2App *XA)  {
     "l-[name] lock atom types after naming;[grow] list contacts&;"
     "e-a macro to run on mode exit&;"
     "d-[hfix] distance&;"
+    "i-[fit, false] use only the selected atoms for 1-3 distances&;"
     ,
     (fpAny^fpNone)|psFileLoaded,
     "Turns specified mode on. Valid mode: fixu, fixc, grow, himp, match, move,"
@@ -1844,11 +1845,19 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
     }
   }
   else if (MsgId == ID_FileLoad) {
+    if (MsgSubId == msiExit) {
+      olxstr title = "Olex2";
+      if (FXApp->XFile().HasLastLoader()) {
+        title << ": " << TEFile::ExtractFileName(FXApp->XFile().GetFileName());
+      }
+      this->SetTitle(title.u_str());
+    }
   }
   else if (MsgId == ID_FileClose) {
     if (MsgSubId == msiExit) {
       UpdateRecentFile(EmptyString());
       UpdateInfoBox();
+      SetTitle(wxT("Olex2"));
     }
   }
   else if (MsgId == ID_CMDLINECHAR) {
@@ -2415,7 +2424,7 @@ void TMainForm::OnKeyDown(wxKeyEvent& m) {
       // avoid duplication
       olxstr content;
       if (wxTheClipboard->Open()) {
-        if (wxTheClipboard->IsSupported(wxDF_TEXT)) {
+        if (wxTheClipboard->IsSupported(wxDF_UNICODETEXT)) {
           wxTextDataObject data;
           wxTheClipboard->GetData(data);
           content = data.GetText();

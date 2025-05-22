@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2025 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -74,11 +74,19 @@ public:
     return list_t::operator[] (i);
   }
 
+  const object_t& GetListItem(size_t i) const {
+    return list_t::operator[] (i);
+  }
+
   template <class T> bool Contains(const T &key) const {
     return list_t::Contains(key);
   }
 
   template <typename T> bool Add(const T &obj) {
+    return list_t::AddUnique(obj).b;
+  }
+
+  bool AddListItem(const object_t& obj) {
     return list_t::AddUnique(obj).b;
   }
 
@@ -109,7 +117,11 @@ public:
     return list_t::IndexOf(key);
   }
 
-  template <class T> bool Remove(const T &v) {
+  bool RemoveListItem(const object_t &v) {
+    return Remove(v);
+  }
+
+  template <class T> bool Remove(const T& v) {
     size_t ind = list_t::IndexOf(v);
     if (ind != InvalidIndex) {
       list_t::Delete(ind);
@@ -188,6 +200,9 @@ public:
   olxstr_set()
     : parent_t(olxstrComparator<case_insensitive>())
   {}
+  olxstr_set(const olx_capacity_t& cap)
+    : parent_t(olxstrComparator<case_insensitive>(), cap)
+  {}
 };
 
 // a primitive set
@@ -200,6 +215,7 @@ public:
   typedef const_olxset<obj_t, TPrimitiveComparator> const_set_type;
 
   olx_pset() {}
+  olx_pset(const olx_capacity_t& cap) : parent_t(cap) {}
   olx_pset(const olx_pset &s) : parent_t(s) {}
   olx_pset(const const_set_type &s) : parent_t(s) {}
   olx_pset &operator = (const olx_pset &s) {
@@ -222,6 +238,7 @@ public:
   typedef const_olxset<obj_t, TComparableComparator> const_set_type;
 
   olx_cset() {}
+  olx_cset(const olx_capacity_t& cap) : parent_t(cap) {}
   olx_cset(const olx_cset &s) : parent_t(s) {}
   olx_cset(const const_set_type &s) : parent_t(s) {}
   olx_cset &operator = (const olx_cset &s) {

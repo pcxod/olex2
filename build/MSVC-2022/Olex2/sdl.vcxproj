@@ -526,6 +526,7 @@
     <ClCompile Include="..\..\..\sdl\math\libmath.cpp" />
     <ClCompile Include="..\..\..\sdl\md5.cpp" />
     <ClCompile Include="..\..\..\sdl\os_util.cpp" />
+    <ClCompile Include="..\..\..\sdl\releasable.cpp" />
     <ClCompile Include="..\..\..\sdl\smart\olx_cstring.cpp" />
     <ClCompile Include="..\..\..\sdl\smart\olx_istring.cpp" />
     <ClCompile Include="..\..\..\sdl\smart\olx_wstring.cpp" />
@@ -569,6 +570,7 @@
     <ClInclude Include="..\..\..\sdl\efilelist.h" />
     <ClInclude Include="..\..\..\sdl\egc.h" />
     <ClInclude Include="..\..\..\sdl\egraph.h" />
+    <ClInclude Include="..\..\..\sdl\ehashed.h" />
     <ClInclude Include="..\..\..\sdl\ellist.h" />
     <ClInclude Include="..\..\..\sdl\emath.h" />
     <ClInclude Include="..\..\..\sdl\ematrix.h" />
@@ -629,6 +631,7 @@
     <ClInclude Include="..\..\..\sdl\olxpptr.h" />
     <ClInclude Include="..\..\..\sdl\olxptr.h" />
     <ClInclude Include="..\..\..\sdl\olxvptr.h" />
+    <ClInclude Include="..\..\..\sdl\releasable.h" />
     <ClInclude Include="..\..\..\sdl\roman.h" />
     <ClInclude Include="..\..\..\sdl\shared.h" />
     <ClInclude Include="..\..\..\sdl\smart\olx_cstring.h" />

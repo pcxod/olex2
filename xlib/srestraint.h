@@ -10,6 +10,7 @@
 #ifndef __olx_xl_srestraint_H
 #define __olx_xl_srestraint_H
 #include "catomlist.h"
+#include "releasable.h"
 #undef AddAtom
 BeginXlibNamespace()
 
@@ -37,20 +38,21 @@ const short
   ;
 
 class TSAtom;
+class TSRestraintList;
 
-class TSimpleRestraint : public IXVarReferencer {
-  TSRestraintList& Parent;
-  size_t Id, Position;
+class TSimpleRestraint : public IXVarReferencer, public AReleasable {
+  size_t Position;
   short ListType;
   double Value, Esd, Esd1;
   XVarReference* VarRef;
   bool AllNonHAtoms;
   AtomRefList Atoms;
-protected:
-  void SetId(size_t id) { Id = id; }
 public:
-  TSimpleRestraint(TSRestraintList& parent, size_t id, short listType);
+  TSimpleRestraint(TSRestraintList& parent, short listType);
   virtual ~TSimpleRestraint() {}
+
+  TSRestraintList& GetParent() const;
+  
   void AddAtoms(const TCAtomGroup& atoms);
   TSimpleRestraint &AddAtom(TCAtom& aa, const smatd* ma);
   TSimpleRestraint &AddAtom(TGroupCAtom& a) {
@@ -69,8 +71,6 @@ public:
   }
   void ConvertToImplicit() { Atoms.ConvertToImplicit(); }
 
-  const TSRestraintList& GetParent() const { return Parent; }
-  TSRestraintList& GetParent() { return Parent; }
   const AtomRefList &GetAtoms() const { return Atoms; }
   // clears atoms and assiciated VarRef
   void Delete();
@@ -95,12 +95,14 @@ public:
       : InvalidIndex;
   }
 
-  size_t GetId() const { return Id; }
-  DefPropP(size_t, Position)
-  DefPropP(double, Value)
-  DefPropP(double, Esd)
-  DefPropP(double, Esd1)
-  DefPropBIsSet(AllNonHAtoms)
+  DefPropP(size_t, Position);
+  DefPropP(double, Value);
+  DefPropP(double, Esd);
+  DefPropP(double, Esd1);
+  DefPropBIsSet(AllNonHAtoms);
+
+  size_t GetId() const { return this->GetReleasableId(); }
+
   TStrList remarks;
 
   // compares pointer addresses only!
@@ -113,6 +115,11 @@ public:
       throw TInvalidArgumentException(__OlxSourceInfo, "var index");
     }
     return VarRef;
+  }
+  virtual void OnReleasedDelete() {
+    if (GetVarRef(0) != 0) {
+      delete GetVarRef(0);
+    }
   }
 
   virtual olxstr GetVarName(size_t var_index) const;
@@ -152,13 +159,16 @@ public:
   friend class TSRestraintList;
 };
 
-class TSRestraintList : public IXVarReferencerContainer {
-  TTypeList<TSimpleRestraint> Restraints;
+class TSRestraintList : public IXVarReferencerContainer,
+  public AReleasableContainer<TSimpleRestraint>
+{
   short RestraintListType;
   RefinementModel& RefMod;
   olxstr IdName;
   short parameters; // a combination of the rptXXX constants
   bool AllowSymm;
+  virtual void OnRestore(TSimpleRestraint& item);
+  virtual void OnRelease(TSimpleRestraint& item);
 public:
   TSRestraintList(RefinementModel& rm, short restraintListType,
     const olxstr& id_name, short parameters, bool allow_symm)
@@ -176,17 +186,11 @@ public:
     return AllowSymm;
   }
 
-  TSimpleRestraint& Release(size_t i);
-  void Release(TSimpleRestraint& sr);
-  void Restore(TSimpleRestraint& sr);
-
   const RefinementModel& GetRM() const { return RefMod; }
   RefinementModel& GetRM() { return RefMod; }
   short GetParameters() const { return parameters; }
   void Assign(const TSRestraintList& rl);
   void Clear();
-  size_t Count() const { return Restraints.Count(); }
-  TSimpleRestraint& operator [] (size_t i) const { return Restraints[i]; }
   short GetRestraintListType() const { return RestraintListType; }
   void UpdateResi();
   // this is called internally by the RM
@@ -200,15 +204,15 @@ public:
     if (!vr.Is<TSimpleRestraint>()) {
       throw TInvalidArgumentException(__OlxSourceInfo, "var referencer");
     }
-    return ((TSimpleRestraint&)vr).GetId();
+    return ((TSimpleRestraint&)vr).GetReleasableId();
   }
   virtual size_t GetPersistentIdOf(const IXVarReferencer& vr) const {
     return GetIdOf(vr);
   }
   virtual IXVarReferencer& GetReferencer(size_t id) const {
-    return Restraints[id];
+    return (IXVarReferencer&)GetItem(id);
   }
-  virtual size_t ReferencerCount() const { return Restraints.Count(); }
+  virtual size_t ReferencerCount() const { return items.Count(); }
   //
   void ToDataItem(TDataItem& item) const;
 #ifdef _PYTHON

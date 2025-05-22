@@ -80,5 +80,8 @@
     <ClInclude Include="..\..\repository\tests\shellutil_test.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\sdl\tests\hashed_test.h">
+      <Filter>Header Files\sdl</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

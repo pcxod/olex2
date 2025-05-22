@@ -973,7 +973,8 @@ void DistanceGenerator::Generate(const TAsymmUnit &au,
     TCAtom &a = au.GetAtom(atom_set[i]);
     for (size_t j = 0; j < a.AttachedSiteCount(); j++) {
       TCAtom::Site &s1 = a.GetAttachedSite(j);
-      if (!s1.matrix.IsFirst() || s1.atom->IsDeleted() ||
+      if (s1.atom->GetType().z < 0 ||
+        !s1.matrix.IsFirst() || s1.atom->IsDeleted() ||
         (skip_h && s1.atom->GetType().z == 1) ||
         (skip_afixed && s1.atom->GetAfix() > 0))
       {
@@ -1006,7 +1007,11 @@ void DistanceGenerator::Generate(const TAsymmUnit &au,
         bool set_atom_1 = atom_set.Contains(s1.atom->GetId());
         for (size_t k = j + 1; k < a.AttachedSiteCount(); k++) {
           TCAtom::Site &s2 = a.GetAttachedSite(k);
-          if (!s2.matrix.IsFirst() || s2.atom->IsDeleted() ||
+          if (s2.atom->GetType().z < 0) {
+            continue;
+          }
+          if (s2.atom->GetType().z < 0 ||
+            !s2.matrix.IsFirst() || s2.atom->IsDeleted() ||
             (skip_h && s2.atom->GetType().z == 1) ||
             (skip_afixed && s2.atom->GetAfix() > 0))
           {
@@ -1047,12 +1052,16 @@ void DistanceGenerator::GenerateSADI_(
   RefinementModel &rm, const DistanceGenerator::atom_map_1_t &atom_map)
 {
   for (size_t i = 0; i < d.Count(); i++) {
+    size_t a = atom_map.Find(d[i].a, d[i].a),
+      b = atom_map.Find(d[i].b, d[i].b);
+    // maps onto itself?
+    if (d[i].a == a && d[i].b == b) {
+      continue;
+    }
     TSimpleRestraint &sr = rm.rSADI.AddNew();
     sr.SetEsd(esd);
     sr.AddAtomPair(rm.aunit.GetAtom(d[i].a), 0, rm.aunit.GetAtom(d[i].b), 0);
-    sr.AddAtomPair(
-      rm.aunit.GetAtom(atom_map.Find(d[i].a, d[i].a)), 0,
-      rm.aunit.GetAtom(atom_map.Find(d[i].b, d[i].b)), 0);
+    sr.AddAtomPair(rm.aunit.GetAtom(a), 0, rm.aunit.GetAtom(b), 0);
   }
 }
 //........................................................................

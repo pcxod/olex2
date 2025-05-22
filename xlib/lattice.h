@@ -316,6 +316,9 @@ public:
   void LibIsGrown(const TStrObjList& Params, TMacroData& E);
   void LibIsPolymeric(const TStrObjList& Params, TMacroData& E);
   TLibrary* ExportLibrary(const olxstr& name = EmptyString());
+  struct VPtr : public olx_virtual_ptr<TLattice> {
+    virtual IOlxObject* get_ptr() const;
+  };
 };
 
 EndXlibNamespace()

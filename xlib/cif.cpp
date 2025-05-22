@@ -1046,7 +1046,7 @@ cetTable& TCif::GetPublicationInfoLoop() {
 //..............................................................................
 bool TCif::Adopt(TXFile& XF, int flags) {
   Clear();
-  double Q[6], E[6];  // quadratic form of s thermal ellipsoid
+  double Q[6], E[6];  // quadratic form of thermal ellipsoid
   GetRM().Assign(XF.GetRM(), true);
   if (flags != 0) {
     ASObjectProvider& objects = XF.GetLattice().GetObjects();

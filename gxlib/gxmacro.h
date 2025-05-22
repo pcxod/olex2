@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2012 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2025 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -74,6 +74,7 @@ public:
   DefMacro(ProjSph)
   DefMacro(OFileDel)
   DefMacro(OFileSwap)
+  DefFunc(OFileCount)
   DefMacro(TwinView)
   DefMacro(CalcSurf)
   DefMacro(Legend)

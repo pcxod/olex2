@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2025 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -100,7 +100,9 @@ struct FuncEvaluator1 : public AEvaluable {
       : func(func)
     {}
     AEvaluable *create(const TPtrList<AEvaluable> &args) {
-      if (args.Count() != 1) return NULL;
+      if (args.Count() != 1) {
+        return 0;
+      }
       return new FuncEvaluator1(func, *args[0]);
     }
   };
@@ -117,8 +119,12 @@ struct FuncEvaluator2 : public AEvaluable {
     arg2.IncRef();
   }
   ~FuncEvaluator2() {
-    if (arg1.DecRef() == 0) delete &arg1;
-    if (arg2.DecRef() == 0) delete &arg2;
+    if (arg1.DecRef() == 0) {
+      delete& arg1;
+    }
+    if (arg2.DecRef() == 0) {
+      delete& arg2;
+    }
   }
   double evaluate() const { return (*func)(arg1.evaluate(), arg2.evaluate()); }
   struct factory : public IFactory {
@@ -127,7 +133,9 @@ struct FuncEvaluator2 : public AEvaluable {
       : func(func)
     {}
     AEvaluable *create(const TPtrList<AEvaluable> &args) {
-      if (args.Count() != 2) return NULL;
+      if (args.Count() != 2) {
+        return 0;
+      }
       return new FuncEvaluator2(func, *args[0], *args[1]);
     }
   };
@@ -148,6 +156,16 @@ struct ExpEvaluator {
   static double mul(double a, double b) { return a*b; }
   static double div(double a, double b) { return a/b; }
   static double mod(double a, double b) { return (int)a%(int)b; }
+  // boolean ops
+  static double not_(double a) { return a == 0; }
+  static double eq(double a, double b) { return a == b; }
+  static double neq(double a, double b) { return a != b; }
+  static double gt(double a, double b) { return a > b; }
+  static double ge(double a, double b) { return a >= b; }
+  static double lt(double a, double b) { return a < b; }
+  static double le(double a, double b) { return a <= b; }
+  static double or_(double a, double b) { return a != 0 || b != 0; }
+  static double and_(double a, double b) { return a != 0 && b != 0; }
 
   TStringToList<olxstr, AEvaluable *> ScopeVariables;
   // these are filled in by the build function
@@ -159,7 +177,7 @@ struct ExpEvaluator {
   ~ExpEvaluator();
   void build(const olxstr &expr);
   double evaluate() {
-    if (eval_root == NULL) {
+    if (eval_root == 0) {
       throw TFunctionFailedException(__OlxSourceInfo,
         "parse an expression first");
     }

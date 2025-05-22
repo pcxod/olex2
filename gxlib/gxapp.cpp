@@ -1775,7 +1775,7 @@ void TGXApp::PasteSelection() {
   }
 #elif defined(__WXWIDGETS__)
   if (wxTheClipboard->Open()) {
-    if (wxTheClipboard->IsSupported(wxDF_TEXT)) {
+    if (wxTheClipboard->IsSupported(wxDF_UNICODETEXT)) {
       wxTextDataObject data;
       wxTheClipboard->GetData(data);
       content = data.GetText();

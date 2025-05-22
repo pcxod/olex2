@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2025 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -38,8 +38,9 @@ protected:
     HANDLE handle;
     HandleRemover(HANDLE _handle) : handle(_handle) {}
     ~HandleRemover() {
-      if (handle != NULL)
+      if (handle != 0) {
         CloseHandle(handle);
+      }
     }
   };
   //...........................................................................
@@ -147,29 +148,27 @@ public:
       throw TInvalidArgumentException(__OlxSourceInfo,
         "the tread must be started at first");
     }
-    if (!Running) {
-      return true;
-    }
     Detached = false;
     if (send_terminate && !Terminate) {
       SendTerminate();
     }
 #ifdef __WIN32__
-    unsigned long ec = STILL_ACTIVE, rv;
-    while (ec == STILL_ACTIVE && (rv = GetExitCodeThread(Handle, &ec)) != 0) {
-      if (SwitchToThread() == 0) {
-        olx_sleep(5);
-      }
-      if (!Running) {
+    DWORD res;
+    while ((res = WaitForSingleObject(Handle, 10))) {
+      if (res == WAIT_OBJECT_0 || res == WAIT_ABANDONED || !Running) {
         break;
       }
+      if (res != WAIT_TIMEOUT) {
+        return false;
+      }
+      olx_sleep(10);
     }
-    return rv != 0;
 #else
     if (pthread_join(Handle, 0) != 0) {
       return false;
     }
 #endif
+    Running = false;
     return true;
   }
   //...........................................................................

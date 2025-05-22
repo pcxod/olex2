@@ -26,6 +26,7 @@
 #include "xapp.h"
 #include "cif.h"
 #include "hkl.h"
+#include "unitcell.h"
 
 #undef GetObject
 
@@ -496,8 +497,14 @@ PyObject* pyGetVdWRadii(PyObject* self, PyObject* args) {
 //..............................................................................
 PyObject* pySetBadReflections(PyObject* self, PyObject* args) {
   PyObject *r, *l;
-  if (!PythonExt::ParseTuple(args, "O", &l) || !PyIter_Check(l)) {
-    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "O");
+  bool standardise = true;
+  if (!PythonExt::ParseTuple(args, "O|b", &l, &standardise) || !PyIter_Check(l)) {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "O|b");
+  }
+  TXFile& xf = TXApp::GetInstance().XFile();
+  SymmSpace::InfoEx info_ex;
+  if (standardise) {
+    info_ex = SymmSpace::Compact(xf.GetLattice().GetUnitCell().GetSymmSpace());
   }
   TTypeList<RefinementModel::BadReflection> bad_refs;
   while ((r = PyIter_Next(l)) != 0) {
@@ -510,9 +517,12 @@ PyObject* pySetBadReflections(PyObject* self, PyObject* args) {
       return PythonExt::InvalidArgumentException(__OlxSourceInfo, "iiiddd");
     }
     Py_DECREF(r);
+    if (standardise) {
+      br.index = TReflection::Standardise(br.index, info_ex);
+    }
     bad_refs.AddCopy(br).UpdateFactor();
   }
-  TXApp::GetInstance().XFile().GetRM().SetBadReflectionList(bad_refs);
+  xf.GetRM().SetBadReflectionList(bad_refs);
   return PythonExt::PyNone();
 }
 //..............................................................................
