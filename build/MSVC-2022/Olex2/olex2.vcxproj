@@ -538,6 +538,7 @@
     </ClCompile>
     <ClCompile Include="..\..\..\repository\pyext.cpp" />
     <ClCompile Include="..\..\..\olex\scenep.cpp" />
+    <ClCompile Include="..\..\..\repository\py_reg.cpp" />
     <ClCompile Include="..\..\..\repository\shellutil.cpp" />
     <ClCompile Include="..\..\..\repository\updateapi.cpp" />
     <ClCompile Include="..\..\..\olex\updateoptions.cpp" />
@@ -593,6 +594,7 @@
     <ClInclude Include="..\..\..\olex\updateoptions.h" />
     <ClInclude Include="..\..\..\olex\updateth.h" />
     <ClInclude Include="..\..\..\olex\wininterface.h" />
+    <ClInclude Include="..\..\..\repository\py_reg.h" />
     <ClInclude Include="..\..\..\repository\wxgltctrl.h" />
     <ClInclude Include="..\..\..\repository\wxzipfsext.h" />
     <ClInclude Include="..\..\..\olex\xglapp.h" />
