@@ -210,6 +210,9 @@
     <ClCompile Include="..\..\..\olex\html\htmlprep.cpp">
       <Filter>html\sources</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\repository\py_reg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\olex\cmdline.h">
@@ -234,9 +237,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\repository\hkl_py.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\repository\hkl_util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\olex\imagep.h">
@@ -367,6 +367,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\olex\html\htmlprep.h">
       <Filter>html\headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\repository\py_reg.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

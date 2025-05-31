@@ -194,10 +194,11 @@ public:
   size_t BlockCount() const { return data_provider.Count(); }
   // changes current block index, i.e. loads structure from different block
   void SetCurrentBlock(size_t i) {
-    if (i != block_index) {
-      block_index = i;
-      _LoadCurrent();
-    }
+    /* special handling of InvalidIndex is done here!
+    do not check for: block_index == i !!!
+    */
+    block_index = i;
+    _LoadCurrent();
   }
   /* Sets current block and creates if specified to in the case the block does
   not exist. When a block is created, parent can be used to create save_blocks

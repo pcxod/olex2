@@ -170,7 +170,7 @@ np_repository = Split("""./repository/filesystem.cpp   ./repository/shellutil.cp
                          ./repository/olxvar.cpp       ./repository/cdsfs.cpp
                          ./repository/hkl_util.cpp
                          """)
-py_repository = Split("""./repository/pyext.cpp
+py_repository = Split("""./repository/pyext.cpp   ./repository/py_reg.cpp
                          ./repository/py_core.cpp ./repository/updateapi.cpp 
                          ./repository/patchapi.cpp ./repository/hkl_py.cpp""")
 

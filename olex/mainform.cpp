@@ -100,6 +100,7 @@
 #include "libstr.h"
 #include "gxmacro.h"
 #include "auto.h"
+#include "py_reg.h"
 
 #ifdef _CUSTOM_BUILD_
   #include "custom_base.h"
@@ -278,6 +279,10 @@ TMainForm::TMainForm(TGlXApp *Parent)
     hkl_py::ModuleName(), &hkl_py::PyInit);
   PythonExt::GetInstance()->Register(
     TXGrid::ModuleName(), &TXGrid::PyInit);
+#if defined(_WIN32)
+  PythonExt::GetInstance()->Register(
+    py_reg::ModuleName(), &py_reg::PyInit);
+#endif
   //TOlxVars::Init().OnVarChange->Add(this, ID_VarChange);
   FGlCanvas = 0;
   FXApp = 0;
