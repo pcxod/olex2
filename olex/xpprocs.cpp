@@ -3277,7 +3277,8 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
     FXApp->Draw();
     olxstr title = "Olex2";
     if (FXApp->XFile().HasLastLoader()) {
-      title << ": " << TEFile::ExtractFileName(FXApp->XFile().GetFileName());
+      title << ": " << TEFile::ExtractFileName(FXApp->XFile().GetFileName())
+        << ", " << FXApp->XFile().GetFileName();
     }
     this->SetTitle(title.u_str());
   }

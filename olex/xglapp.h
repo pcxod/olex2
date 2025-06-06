@@ -39,6 +39,10 @@ public:
   static TGlXApp* GetInstance() { return Instance(); }
   static TMainForm* GetMainForm() { return GetInstance()->MainForm; }
   static TGXApp* GetGXApp() { return GetInstance()->XApp; }
+
+#ifdef _WIN32
+  static HWND FindWindow(const olxstr& p_name, const olxstr& f_name);
+#endif
 };
 
 DECLARE_APP(TGlXApp);

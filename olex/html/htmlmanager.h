@@ -33,6 +33,7 @@ protected:
   DefMacro(Group)
   DefMacro(LstObj)
 
+  DefFunc(Refresh)
   DefFunc(GetValue)
   DefFunc(GetData)
   DefFunc(GetLabel)

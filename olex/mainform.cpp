@@ -1853,7 +1853,8 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
     if (MsgSubId == msiExit) {
       olxstr title = "Olex2";
       if (FXApp->XFile().HasLastLoader()) {
-        title << ": " << TEFile::ExtractFileName(FXApp->XFile().GetFileName());
+        title << ": " << TEFile::ExtractFileName(FXApp->XFile().GetFileName())
+          << ", " << FXApp->XFile().GetFileName();
       }
       this->SetTitle(title.u_str());
     }
@@ -4040,6 +4041,30 @@ PyObject* pyPreprocessHtml(PyObject* self, PyObject* args) {
   return PythonExt::BuildString(htmlp.Preprocess(html));
 }
 //..............................................................................
+#ifdef _WIN32
+PyObject* pyCheckPAROpened(PyObject* self, PyObject* args) {
+  olxstr fn;
+  if (!PythonExt::ParseTuple(args, "w", &fn)) {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
+  }
+  return PythonExt::PyBool(TGlXApp::FindWindow("CrysAlisPro", fn) != 0);
+}
+//..............................................................................
+PyObject* pyActivateCAP(PyObject* self, PyObject* args) {
+  olxstr fn;
+  if (!PythonExt::ParseTuple(args, "w", &fn)) {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
+  }
+  HWND wnd = TGlXApp::FindWindow("CrysAlisPro", fn);
+  if (wnd != 0) {
+    ShowWindow(wnd, SW_RESTORE);
+    BringWindowToTop(wnd);
+    return PythonExt::PyTrue();
+  }
+  return PythonExt::PyFalse();
+}
+#endif
+//..............................................................................
 static PyMethodDef CORE_Methods[] = {
   {"GetUserInput", pyGetUserInput, METH_VARARGS,
   "Shows a dialog, where user can type some text. Takes three agruments: flags"
@@ -4053,6 +4078,10 @@ static PyMethodDef CORE_Methods[] = {
   { "GetIdleTime", pyGetIdleTime, METH_VARARGS, "Returns idle time" },
   { "ResetIdleTime", pyResetIdleTime, METH_VARARGS, "Resets idle time to 0" },
   { "PreprocessHtml", pyPreprocessHtml, METH_VARARGS, "Preprocesses given HTML as in the GUI" },
+#ifdef _WIN32
+  { "CheckPAROpened", pyCheckPAROpened, METH_VARARGS, "Checks if PAR file is loaded in CAP" },
+  { "ActivateCAP", pyActivateCAP, METH_VARARGS, "Brings CAP to the front if PAR file is loaded" },
+#endif
   { NULL, NULL, 0, NULL }
 };
 //..............................................................................

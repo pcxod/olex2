@@ -97,6 +97,31 @@ public:
   }
 };
 
+#ifdef _WIN32
+struct FileQuery {
+  olxstr p_name, f_name;
+  HWND wnd;
+
+  FileQuery(const olxstr &p_name, const olxstr &f_name)
+  : p_name(p_name), f_name(f_name), wnd(0)
+  {}
+};
+
+BOOL EnumWindowsFunc(HWND w, LPARAM p) {
+  size_t max_sz = 256;
+  olx_array_ptr<wchar_t> title(max_sz);
+  int sz = GetWindowText(w, &title, max_sz - 1);
+  FileQuery* q = (FileQuery*)p;
+  if (sz >= 0) {
+    olxstr t = olxstr::FromExternal(title.release(), sz, max_sz);
+    if (t.Contains(q->p_name) && t.Contains(q->f_name)) {
+      q->wnd = w;
+      return false;
+    }
+  }
+  return TRUE;
+}
+#endif
 
 //----------------------------------------------------------------------------//
 // TGlApp function bodies
@@ -176,6 +201,21 @@ bool TGlXApp::OnInit() {
       return false;
     }
   }
+#ifdef WIN32
+  if (XApp->GetArguments().Count() >= 2) {
+    if (!XApp->GetArguments().GetLastString().EndsWith(".py") &&
+      !XApp->GetArgOptions().GetBoolOption("-new"))
+    {
+      HWND wnd = FindWindow("Olex2", XApp->GetArguments().Text(' ', 1));
+      if (wnd != 0) {
+        ShowWindow(wnd, SW_RESTORE);
+        SetForegroundWindow(wnd);
+        OnExit();
+        return false;
+      }
+    }
+  }
+#endif
   MainForm = new TMainForm(this);
   XApp->InitOlex2App();
   /* This generic progress box requires more thinking in particular considering
@@ -362,5 +402,13 @@ void TGlXApp::MacOpenFile(const wxString &fileName) {
     TBasicApp::NewLogEntry(logException) << e;
   }
 }
+//..............................................................................
+#ifdef _WIN32
+HWND TGlXApp::FindWindow(const olxstr& p_name, const olxstr& f_name) {
+  FileQuery qp(p_name, f_name);
+  EnumDesktopWindows(0, &EnumWindowsFunc, (LPARAM)&qp);
+  return qp.wnd;
+}
+#endif
 
 IMPLEMENT_APP(TGlXApp)

@@ -12,6 +12,7 @@
 #include "fsext.h"
 #include "utf8file.h"
 #include "olxstate.h"
+#include "imgcellext.h"
 
 #define this_InitFuncD(funcName, argc, desc) \
   (Library).Register(\
@@ -324,7 +325,7 @@ void THtmlManager::macItemState(TStrObjList &Cmds, const TParamList &Options,
       }
     }
   }
-  if (changed && !Options.Contains('u')) {
+  if (changed && !Options.GetBoolOption('u')) {
     html->UpdatePage();
   }
 }
@@ -624,6 +625,25 @@ void THtmlManager::funGetValue(const TStrObjList &Params, TMacroData &E) {
   }
   if (Params.Count() == 2 && E.GetRetVal().IsEmpty()) {
     E.SetRetVal(Params[1]);
+  }
+}
+//.............................................................................
+void THtmlManager::funRefresh(const TStrObjList& Params, TMacroData& E) {
+  Control c = FindControl(Params[0], E, 0, __OlxSrcInfo);
+  if (c.wnd != 0) {
+    c.wnd->Refresh();
+  }
+  else if (c.ctrl != 0) {
+    THtmlImageCell* ic = dynamic_cast<THtmlImageCell*>(c.ctrl);
+    if (ic != 0 && c.html != 0) {
+      try {
+        ic->OnFileChange();
+        c.html->Refresh();
+      }
+      catch (const TExceptionBase &e) {
+        TBasicApp::NewLogEntry(logException) << e;
+      }
+    }
   }
 }
 //.............................................................................
@@ -1391,7 +1411,9 @@ TLibrary *THtmlManager::ExportLibrary(const olxstr &name) {
   InitMacroD(Library, THtmlManager, LstObj, EmptyString(),
     fpNone|fpOne,
     "Prints the list of available HTML objects");
-  this_InitFuncD(GetValue, fpOne|fpTwo,
+  this_InitFuncD(Refresh, fpOne,
+    "Updates given window");
+  this_InitFuncD(GetValue, fpOne | fpTwo,
     "Returns value of specified object. When the value is empty and two params"
     " are provided - the second parameters is returned instead");
   this_InitFuncD(GetData, fpOne,

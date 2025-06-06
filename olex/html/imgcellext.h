@@ -85,6 +85,7 @@ public:
 
   void SetSource(const olxstr& text) { FSource = text; }
   const olxstr& GetSource() const { return FSource; }
+  bool OnFileChange();
 private:
   olx_object_ptr<wxBitmap> m_bitmap;
   olx_object_ptr<wxFSFile> File;

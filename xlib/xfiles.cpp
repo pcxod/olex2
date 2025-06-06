@@ -25,7 +25,9 @@
 #include "analysis.h"
 #include "estopwatch.h"
 #include "olxvar.h"
+#include "integration.h"
 
+const olxstr cbOnSgChange("sgchange");
 TBasicCFile::TBasicCFile()
   : RefMod(AsymmUnit), AsymmUnit(0)
 {
@@ -272,6 +274,11 @@ bool TXFile::Dispatch(int MsgId, short MsgSubId, const IOlxObject* Sender,
     }
     FSG = const_cast<TSpaceGroup*>(dynamic_cast<const TSpaceGroup*>(Data));
     GetRM().ResetHklStats();
+    if (olex2::IOlex2Processor::GetInstance() != 0) {
+      TStrList params;
+      params.Add(FSG->GetName());
+      olex2::IOlex2Processor::GetInstance()->callCallbackFunc(cbOnSgChange, params);
+    }
   }
   else if (MsgId == XFILE_EVT_UNIQ && MsgSubId == msiEnter) {
     //RefMod.Validate();
