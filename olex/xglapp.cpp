@@ -414,7 +414,6 @@ BOOL CALLBACK TGlXApp::QueryOlex2Windows(HWND w, LPARAM p) {
   if (sz >= 0) {
     olxstr t = olxstr::FromExternal(title.release(), sz, max_sz);
     if (t.StartsFrom("Olex2") && TGlXApp::GetMainForm()->GetHWND() != w) {
-      FileQuery1* q = (FileQuery1*)p;
       SendMessage(w, p, (WPARAM)TGlXApp::GetMainForm()->GetHWND(), 0);
     }
   }
