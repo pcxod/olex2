@@ -107,7 +107,7 @@ struct FileQuery {
   {}
 };
 
-BOOL EnumWindowsFunc(HWND w, LPARAM p) {
+BOOL CALLBACK EnumWindowsFunc(HWND w, LPARAM p) {
   size_t max_sz = 256;
   olx_array_ptr<wchar_t> title(max_sz);
   int sz = GetWindowText(w, &title, max_sz - 1);
@@ -305,6 +305,9 @@ bool TGlXApp::OnInit() {
         << "' to " << lc;
     }
   }
+#ifdef WIN32
+  EnumDesktopWindows(0, &TGlXApp::QueryOlex2Windows, (LPARAM)GetFileQueryEvtId());
+#endif
   MainForm->Show(true);
   return true;
 }
@@ -404,11 +407,41 @@ void TGlXApp::MacOpenFile(const wxString &fileName) {
 }
 //..............................................................................
 #ifdef _WIN32
+BOOL CALLBACK TGlXApp::QueryOlex2Windows(HWND w, LPARAM p) {
+  size_t max_sz = 256;
+  olx_array_ptr<wchar_t> title(max_sz);
+  int sz = GetWindowText(w, &title, max_sz - 1);
+  if (sz >= 0) {
+    olxstr t = olxstr::FromExternal(title.release(), sz, max_sz);
+    if (t.StartsFrom("Olex2") && TGlXApp::GetMainForm()->GetHWND() != w) {
+      FileQuery1* q = (FileQuery1*)p;
+      SendMessage(w, p, (WPARAM)TGlXApp::GetMainForm()->GetHWND(), 0);
+    }
+  }
+  return TRUE;
+}
+//..............................................................................
+const olxstr& TGlXApp::GetFileQueryFileName() {
+  static olxstr en("Olex2OpenedFiles");
+  return en;
+}
+//..............................................................................
+const olxstr& TGlXApp::GetFileQueryEvtName() {
+  static olxstr en("Olex2_FILE_QUERY_MSG");
+  return en;
+}
+//..............................................................................
+UINT TGlXApp::GetFileQueryEvtId() {
+  static UINT WM_QUERY_FILE = RegisterWindowMessage(GetFileQueryEvtName().u_str());
+  return WM_QUERY_FILE;
+}
+//..............................................................................
 HWND TGlXApp::FindWindow(const olxstr& p_name, const olxstr& f_name) {
   FileQuery qp(p_name, f_name);
   EnumDesktopWindows(0, &EnumWindowsFunc, (LPARAM)&qp);
   return qp.wnd;
 }
+//..............................................................................
 #endif
 
 IMPLEMENT_APP(TGlXApp)

@@ -327,6 +327,10 @@ protected:
   // tries to expand the command and returns the success status
   bool ProcessTab();
   TPtrList<olxCommandEvent> PostponedEvents;
+#ifdef _WIN32
+  TStringToList<olxstr, HWND> loadedFiles;
+  WXLRESULT MSWWindowProc(WXUINT nMsg, WXWPARAM wParam, WXLPARAM lParam);
+#endif
 private:
   // macro functions
   DefMacro(Reap)

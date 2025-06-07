@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2025 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -7,8 +7,7 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-#ifndef __olx_xglApp_H
-#define __olx_xglApp_H
+#pragma once
 #include "gxapp.h"
 #include "olex2app_imp.h"
 #include "ctrls.h"
@@ -20,7 +19,7 @@ private:
   Olex2App* XApp;
   class TMainForm* MainForm;
   static TGlXApp *&Instance() {
-    static TGlXApp* Instance=NULL;
+    static TGlXApp* Instance=0;
     return Instance;
   }
   TEFile* pid_file;
@@ -30,8 +29,11 @@ private:
   void OnIdle(wxIdleEvent& event);
   void OnCmd(olxCommandEvent &evt);
   void MacOpenFile(const wxString &fileName);
+#ifdef _WIN32
+  static BOOL CALLBACK QueryOlex2Windows(HWND w, LPARAM p);
+#endif
 public:
-  TGlXApp() : pid_file(NULL)  {}
+  TGlXApp() : pid_file(0)  {}
   ~TGlXApp();
   bool Dispatch();
 //  int MainLoop();
@@ -42,8 +44,10 @@ public:
 
 #ifdef _WIN32
   static HWND FindWindow(const olxstr& p_name, const olxstr& f_name);
+  static const olxstr& GetFileQueryEvtName();
+  static const olxstr& GetFileQueryFileName();
+  static UINT GetFileQueryEvtId();
 #endif
 };
 
 DECLARE_APP(TGlXApp);
-#endif

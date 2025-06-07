@@ -4190,3 +4190,69 @@ void TMainForm::ProcessHandler::OnTerminate(const AProcess& p) {
   parent.TimePerFrame = parent.FXApp->Draw();
 }
 //..............................................................................
+#ifdef _WIN32
+WXLRESULT TMainForm::MSWWindowProc(WXUINT msg, WXWPARAM wParam, WXLPARAM lParam) {
+  int msg_id = TGlXApp::GetFileQueryEvtId();
+  if (msg == msg_id && (HWND)wParam != GetHWND()) {
+    const size_t max_sz = MAX_PATH * sizeof(olxch);
+    if (lParam == 0) {
+      static olxstr fn = TXApp::GetInstance().XFile().GetFileName();
+      HANDLE hMapFile = CreateFileMapping(
+        INVALID_HANDLE_VALUE,    // use paging file
+        NULL,                    // default security
+        PAGE_READWRITE,          // read/write access
+        0,                       // maximum object size (high-order DWORD)
+        max_sz,                  // maximum object size (low-order DWORD)
+        TGlXApp::GetFileQueryFileName().u_str());
+      if (hMapFile != 0) {
+        LPCTSTR pBuf = (LPTSTR)MapViewOfFile(hMapFile,
+          FILE_MAP_ALL_ACCESS, // read/write permission
+          0,
+          0,
+          max_sz);
+        if (pBuf != 0) {
+          CopyMemory((PVOID)pBuf, fn.u_str(), olx_min((fn.Length() + 1) * sizeof(olxch), max_sz));
+          SendMessage((HWND)wParam, msg_id, (WPARAM)GetHWND(), 1);
+          //PostThreadMessage(wParam, msg_id, (WPARAM)GetHWND(), 1);
+          UnmapViewOfFile(pBuf);
+        }
+        else {
+          TBasicApp::NewLogEntry(logError) << "Null view: " << GetLastError();
+        }
+        CloseHandle(hMapFile);
+      }
+      else {
+        TBasicApp::NewLogEntry(logError) << "Null mapping: " << GetLastError();
+      }
+      return true;
+    }
+    else {
+      HANDLE hMapFile = OpenFileMapping(
+        FILE_MAP_ALL_ACCESS,
+        FALSE,
+        TGlXApp::GetFileQueryFileName().u_str());
+      if (hMapFile != 0) {
+        LPCTSTR pBuf = (LPTSTR)MapViewOfFile(hMapFile,
+          FILE_MAP_ALL_ACCESS,  // read/write permission
+          0,
+          0,
+          max_sz);
+        if (pBuf != 0) {
+          loadedFiles.Add(pBuf, (HWND)wParam);
+          //TBasicApp::NewLogEntry() << "Loaded file: " << loadedFiles.GetLastString();
+          UnmapViewOfFile(pBuf);
+        }
+        else {
+          TBasicApp::NewLogEntry(logError) << "Null view: " << GetLastError();
+        }
+        CloseHandle(hMapFile);
+      }
+      else {
+        TBasicApp::NewLogEntry(logError) << "Null mapping: " << GetLastError();
+      }
+      return true;
+    }
+  }
+  return wxFrame::MSWWindowProc(msg, wParam, lParam);
+}
+#endif
