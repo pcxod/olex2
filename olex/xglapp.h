@@ -29,9 +29,6 @@ private:
   void OnIdle(wxIdleEvent& event);
   void OnCmd(olxCommandEvent &evt);
   void MacOpenFile(const wxString &fileName);
-#ifdef _WIN32
-  static BOOL CALLBACK QueryOlex2Windows(HWND w, LPARAM p);
-#endif
 public:
   TGlXApp() : pid_file(0)  {}
   ~TGlXApp();
@@ -43,10 +40,12 @@ public:
   static TGXApp* GetGXApp() { return GetInstance()->XApp; }
 
 #ifdef _WIN32
-  static HWND FindWindow(const olxstr& p_name, const olxstr& f_name);
-  static const olxstr& GetFileQueryEvtName();
-  static const olxstr& GetFileQueryFileName();
-  static UINT GetFileQueryEvtId();
+  // all of the and_toks and at least one or_toks should match
+  static HWND FindWindow(const TStrList& and_toks, const TStrList& or_toks);
+  static HWND FindWindow(const olxstr& p_name, const olxstr& f_name) {
+    return FindWindow(TStrList() << p_name, TStrList() << f_name);
+  }
+  static bool ActivateWindow(HWND wnd);
 #endif
 };
 

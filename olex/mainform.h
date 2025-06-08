@@ -330,6 +330,11 @@ protected:
 #ifdef _WIN32
   TStringToList<olxstr, HWND> loadedFiles;
   WXLRESULT MSWWindowProc(WXUINT nMsg, WXWPARAM wParam, WXLPARAM lParam);
+  static BOOL CALLBACK QueryOlex2Windows(HWND w, LPARAM p);
+  void ListOlex2OpenedFiles();
+  static const olxstr& GetFileQueryEvtName();
+  static const olxstr& GetFileQueryFileName();
+  static UINT GetFileQueryEvtId();
 #endif
 private:
   // macro functions

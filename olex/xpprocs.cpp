@@ -3878,30 +3878,31 @@ void TMainForm::macPatt(TStrObjList &Cmds, const TParamList &Options, TMacroData
   FXApp->XFile().UpdateAsymmUnit();  // update the last loader RM
 }
 //..............................................................................
-void TMainForm::funAlert(const TStrObjList& Params, TMacroData &E) {
-  olxstr msg( Params[1] );
+void TMainForm::funAlert(const TStrObjList& Params, TMacroData& E) {
+  olxstr msg(Params[1]);
   msg.Replace("\\n", "\n");
-  if( Params.Count() == 2 )  {
-    E.SetRetVal( TdlgMsgBox::Execute(this, msg, Params[0]) );
+  if (Params.Count() == 2) {
+    E.SetRetVal(TdlgMsgBox::Execute(this, msg, Params[0]));
   }
-  else if( Params.Count() == 3 || Params.Count() == 4 )  {
+  else if (Params.Count() == 3 || Params.Count() == 4) {
     int flags = 0;
-    bool showCheckBox=false;
-    for( size_t i=0; i < Params[2].Length(); i++ )  {
-      if( Params[2].CharAt(i) == 'Y' )  flags |= wxYES;
-      else if( Params[2].CharAt(i) == 'N' )  flags |= wxNO;
-      else if( Params[2].CharAt(i) == 'C' )  flags |= wxCANCEL;
-      else if( Params[2].CharAt(i) == 'O' )  flags |= wxOK;
-      else if( Params[2].CharAt(i) == 'X' )  flags |= wxICON_EXCLAMATION;
-      else if( Params[2].CharAt(i) == 'H' )  flags |= wxICON_HAND;
-      else if( Params[2].CharAt(i) == 'E' )  flags |= wxICON_ERROR;
-      else if( Params[2].CharAt(i) == 'I' )  flags |= wxICON_INFORMATION;
-      else if( Params[2].CharAt(i) == 'Q' )  flags |= wxICON_QUESTION;
-      else if( Params[2].CharAt(i) == 'R' )  showCheckBox = true;
+    bool showCheckBox = false;
+    for (size_t i = 0; i < Params[2].Length(); i++) {
+      if (Params[2].CharAt(i) == 'Y')  flags |= wxYES;
+      else if (Params[2].CharAt(i) == 'N')  flags |= wxNO;
+      else if (Params[2].CharAt(i) == 'C')  flags |= wxCANCEL;
+      else if (Params[2].CharAt(i) == 'O')  flags |= wxOK;
+      else if (Params[2].CharAt(i) == 'X')  flags |= wxICON_EXCLAMATION;
+      else if (Params[2].CharAt(i) == 'H')  flags |= wxICON_HAND;
+      else if (Params[2].CharAt(i) == 'E')  flags |= wxICON_ERROR;
+      else if (Params[2].CharAt(i) == 'I')  flags |= wxICON_INFORMATION;
+      else if (Params[2].CharAt(i) == 'Q')  flags |= wxICON_QUESTION;
+      else if (Params[2].CharAt(i) == 'R')  showCheckBox = true;
     }
     olxstr tickBoxMsg;
-    if( Params.Count() == 4 )
+    if (Params.Count() == 4) {
       tickBoxMsg = Params[3];
+    }
     E.SetRetVal(TdlgMsgBox::Execute(this, msg, Params[0], tickBoxMsg, flags, showCheckBox));
   }
   FGlCanvas->SetFocus();

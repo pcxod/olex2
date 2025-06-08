@@ -99,11 +99,11 @@ public:
 
 #ifdef _WIN32
 struct FileQuery {
-  olxstr p_name, f_name;
+  TStrList and_toks, or_toks;
   HWND wnd;
 
-  FileQuery(const olxstr &p_name, const olxstr &f_name)
-  : p_name(p_name), f_name(f_name), wnd(0)
+  FileQuery(const TStrList& and_toks, const TStrList or_toks)
+  : and_toks(and_toks), or_toks(or_toks), wnd(0)
   {}
 };
 
@@ -114,9 +114,20 @@ BOOL CALLBACK EnumWindowsFunc(HWND w, LPARAM p) {
   FileQuery* q = (FileQuery*)p;
   if (sz >= 0) {
     olxstr t = olxstr::FromExternal(title.release(), sz, max_sz);
-    if (t.Contains(q->p_name) && t.Contains(q->f_name)) {
+    for (size_t i = 0; i < q->and_toks.Count(); i++) {
+      if (!t.Containsi(q->and_toks[i])) {
+        return TRUE;
+      }
+    }
+    if (q->or_toks.IsEmpty()) {
       q->wnd = w;
-      return false;
+      return FALSE;
+    }
+    for (size_t i = 0; i < q->or_toks.Count(); i++) {
+      if (t.Containsi(q->or_toks[i])) {
+        q->wnd = w;
+        return FALSE;
+      }
     }
   }
   return TRUE;
@@ -208,8 +219,7 @@ bool TGlXApp::OnInit() {
     {
       HWND wnd = FindWindow("Olex2", XApp->GetArguments().Text(' ', 1));
       if (wnd != 0) {
-        ShowWindow(wnd, SW_RESTORE);
-        SetForegroundWindow(wnd);
+        TGlXApp::ActivateWindow(wnd);
         OnExit();
         return false;
       }
@@ -305,9 +315,6 @@ bool TGlXApp::OnInit() {
         << "' to " << lc;
     }
   }
-#ifdef WIN32
-  EnumDesktopWindows(0, &TGlXApp::QueryOlex2Windows, (LPARAM)GetFileQueryEvtId());
-#endif
   MainForm->Show(true);
   return true;
 }
@@ -407,40 +414,23 @@ void TGlXApp::MacOpenFile(const wxString &fileName) {
 }
 //..............................................................................
 #ifdef _WIN32
-BOOL CALLBACK TGlXApp::QueryOlex2Windows(HWND w, LPARAM p) {
-  size_t max_sz = 256;
-  olx_array_ptr<wchar_t> title(max_sz);
-  int sz = GetWindowText(w, &title, max_sz - 1);
-  if (sz >= 0) {
-    olxstr t = olxstr::FromExternal(title.release(), sz, max_sz);
-    if (t.StartsFrom("Olex2") && TGlXApp::GetMainForm()->GetHWND() != w) {
-      SendMessage(w, p, (WPARAM)TGlXApp::GetMainForm()->GetHWND(), 0);
-    }
-  }
-  return TRUE;
-}
-//..............................................................................
-const olxstr& TGlXApp::GetFileQueryFileName() {
-  static olxstr en("Olex2OpenedFiles");
-  return en;
-}
-//..............................................................................
-const olxstr& TGlXApp::GetFileQueryEvtName() {
-  static olxstr en("Olex2_FILE_QUERY_MSG");
-  return en;
-}
-//..............................................................................
-UINT TGlXApp::GetFileQueryEvtId() {
-  static UINT WM_QUERY_FILE = RegisterWindowMessage(GetFileQueryEvtName().u_str());
-  return WM_QUERY_FILE;
-}
-//..............................................................................
-HWND TGlXApp::FindWindow(const olxstr& p_name, const olxstr& f_name) {
-  FileQuery qp(p_name, f_name);
+HWND TGlXApp::FindWindow(const TStrList& and_toks, const TStrList& or_toks) {
+  FileQuery qp(and_toks, or_toks);
   EnumDesktopWindows(0, &EnumWindowsFunc, (LPARAM)&qp);
   return qp.wnd;
 }
 //..............................................................................
+bool TGlXApp::ActivateWindow(HWND wnd) {
+  if (IsIconic(wnd)) {
+    // OpenIcon changes the window size to "normal" even if it was maximized before
+    //if (!OpenIcon(wnd)) {
+    //  return false;
+    //}
+    // force maximized as there seems to be no way to restore it properly
+    ShowWindow(wnd, SW_MAXIMIZE);
+  }
+  return SetForegroundWindow(wnd);
+}
 #endif
 
 IMPLEMENT_APP(TGlXApp)
