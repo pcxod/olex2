@@ -3026,16 +3026,22 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
       if (CheckLoaded) {
 #ifdef _WIN32
         ListOlex2OpenedFiles();
-        size_t idx = loadedFiles.IndexOf(file_n.file_name);
+        size_t idx = LoadedFileIdx(file_n.file_name);
         if (idx != InvalidIndex) {
-          olxstr res = TdlgMsgBox::Execute(this, olxstr("The file \n'") << file_n.file_name
+          olxstr res = TdlgMsgBox::Execute(this, olxstr("The file \n'") <<
+            TEFile::ChangeFileExt(file_n.file_name, EmptyString())
             << '\'' <<
             "\nhas been loaded in another instance of Olex2."
-            "\nWould you like to open it in a this instance of Olex2?",
+            "\nWould you like to open it in a this instance of Olex2?"
+            "\n(Press 'No' to switch to the existing window)"
+            ,
             EmptyString(),
             "Remember my decision",
-            wxYES_NO | wxICON_QUESTION,
+            wxYES_NO | wxCANCEL | wxICON_QUESTION,
             false);
+          if (res == 'C') {
+            return;
+          }
           if (res == 'N') {
             TGlXApp::ActivateWindow(loadedFiles.GetObject(idx));
             return;

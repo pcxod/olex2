@@ -1490,18 +1490,19 @@ void TMainForm::StartupInit() {
   }
 
   bool do_load_file = true;
-#ifdef _WIN32
-  ListOlex2OpenedFiles();
   if (!load_file.IsEmpty() && !load_file.Equalsi("none") &&
     TEFile::Exists(load_file))
   {
-    size_t idx = loadedFiles.IndexOf(load_file);
+#ifdef _WIN32
+    ListOlex2OpenedFiles();
+    size_t idx = LoadedFileIdx(load_file);
     olxstr res = "Y";
     if (idx != InvalidIndex) {
       olxstr opt_n = "on_loaded_file";
       res = TBasicApp::GetInstance().GetOptions().FindValue(opt_n);
       if (res.IsEmpty()) {
-        res = TdlgMsgBox::Execute(this, olxstr("The file \n'") << load_file << '\'' <<
+        res = TdlgMsgBox::Execute(this, olxstr("The file \n'") <<
+          TEFile::ChangeFileExt(load_file, EmptyString()) << '\'' <<
           "\nhas been loaded in another instance of Olex2."
           "\nWould you like to open it in a this instance of Olex2?",
           "Please confirm",
@@ -1523,9 +1524,12 @@ void TMainForm::StartupInit() {
       TGlXApp::ActivateWindow(wnd);
       return;
     }
-  }
-  loadedFiles.Clear();
+    loadedFiles.Clear();
 #endif
+  }
+  else {
+    do_load_file = false;
+  }
   processMacro("onstartup", __OlxSrcInfo);
   processMacro("user_onstartup", __OlxSrcInfo);
   if (do_load_file) {
@@ -4351,11 +4355,30 @@ BOOL CALLBACK TMainForm::QueryOlex2Windows(HWND w, LPARAM p) {
 //..............................................................................
 void TMainForm::ListOlex2OpenedFiles() {
   loadedFiles.Clear();
-#ifdef _WIN32
   QueryParams q(GetHWND(), GetFileQueryEvtId());
   EnumDesktopWindows(0, &TMainForm::QueryOlex2Windows, (LPARAM)&q);
+}
+#endif //_WIN32
+//..............................................................................
+size_t TMainForm::LoadedFileIdx(const olxstr& fn_) {
+#ifndef _WIN32
+  return InvalidIndex;
+#else
+  olxstr ext = TEFile::ExtractFileExt(fn_).ToLowerCase();
+  if (ext != "ins" && ext != "res") {
+    return InvalidIndex;
+  }
+  const olxstr fn = TEFile::ChangeFileExt(fn_, EmptyString()).ToLowerCase();
+  for (size_t i = 0; i < loadedFiles.Count(); i++) {
+    olxstr ext = TEFile::ExtractFileExt(loadedFiles[i]).ToLowerCase();
+    if (ext != "ins" && ext != "res") {
+      continue;
+    }
+    if (fn == TEFile::ChangeFileExt(loadedFiles[i], EmptyString()).ToLowerCase()) {
+      return i;
+    }
+  }
+  return InvalidIndex;
 #endif
 }
 //..............................................................................
-
-#endif

@@ -336,6 +336,7 @@ protected:
   static const olxstr& GetFileQueryFileName();
   static UINT GetFileQueryEvtId();
 #endif
+  size_t LoadedFileIdx(const olxstr& fn);
 private:
   // macro functions
   DefMacro(Reap)
