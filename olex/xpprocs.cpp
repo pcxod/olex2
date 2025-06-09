@@ -2749,14 +2749,6 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
     return;
   }
   TStopWatch sw(__FUNC__);
-  olxstr cmdl_fn = TOlxVars::FindValue("olx_reap_cmdl");
-  if (!cmdl_fn.IsEmpty()) {
-    TOlxVars::UnsetVar("olx_reap_cmdl");
-    if (TEFile::Exists(cmdl_fn)) {
-      Cmds.Clear();
-      Cmds << cmdl_fn;
-    }
-  }
   // check if crashed last time
   {
     TStrList pid_files;
@@ -2805,6 +2797,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
   bool Blind = Options.GetBoolOption('b');
   bool ReadStyle = Options.GetBoolOption('r', false, true);
   bool OverlayXFile = Options.Contains('*');
+  bool CheckLoaded = Options.GetBoolOption("check_loaded", false, true);
   if (Cmds.Count() >= 1 && !Cmds[0].IsEmpty()) {  // merge the file name if a long one...
     file_n = TEFile::ExpandRelativePath(Cmds.Text(' '));
     if (TEFile::UnixPath(file_n.file_name).StartsFrom("http://") ||
@@ -3012,8 +3005,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
       else {
         file_n.file_name = TEFile::ChangeFileExt(file_n.file_name, "ins");
       }
-    }
-    // and of p4p files
+    } // and of hkl files
     if (TEFile::ExtractFileExt(file_n.file_name).Equalsi("p4p")) {
       olxstr ins_fn = TEFile::ChangeFileExt(file_n.file_name, "ins");
       if (TEFile::Exists(ins_fn)) {
@@ -3031,6 +3023,26 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
       return;
     }
     try {
+      if (CheckLoaded) {
+#ifdef _WIN32
+        ListOlex2OpenedFiles();
+        size_t idx = loadedFiles.IndexOf(file_n.file_name);
+        if (idx != InvalidIndex) {
+          olxstr res = TdlgMsgBox::Execute(this, olxstr("The file \n'") << file_n.file_name
+            << '\'' <<
+            "\nhas been loaded in another instance of Olex2."
+            "\nWould you like to open it in a this instance of Olex2?",
+            EmptyString(),
+            "Remember my decision",
+            wxYES_NO | wxICON_QUESTION,
+            false);
+          if (res == 'N') {
+            TGlXApp::ActivateWindow(loadedFiles.GetObject(idx));
+            return;
+          }
+        }
+#endif
+      }
       bool update_vfs =
         TEFile::ExtractFilePath(FXApp->XFile().GetFileName()) !=
         TEFile::ExtractFilePath(file_n.file_name);

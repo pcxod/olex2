@@ -410,7 +410,9 @@ void TMainForm::XApp(Olex2App *XA)  {
   this_InitMacroAD(Reap, @reap,
     "b-blind&;"
     "r-prevent resetting the style to default&;"
-    "*-read and overlay",
+    "*-read and overlay&;"
+    "check_loaded-[True] checks if the file has been loaded in another Olex2 instance&;"
+    ,
     fpAny,
     "This macro loads a file if provided as an argument. If no argument is "
     "provided, it shows a file open dialog");
@@ -1463,19 +1465,14 @@ void TMainForm::StartupInit() {
     FXApp->LoadTextures(textures_dir);
   }
 
-  // do the iterpreters job...
+  olxstr load_file;
   if (FXApp->GetArguments().Count() >= 2) {
+    // do the iterpreters job if needed
     if (FXApp->GetArguments().GetLastString().EndsWith(".py")) {
       TStrList in = TEFile::ReadLines(FXApp->GetArguments().GetLastString());
       PythonExt::GetInstance()->RunPython(in.Text('\n'));
     }
-    else { // disable reading last file in
-      TOlxVars::SetVar("olx_reap_cmdl", FXApp->GetArguments()[1]);
-    }
-  }
-  olxstr load_file;
-  if (FXApp->GetArguments().Count() >= 2) {
-    if (!FXApp->GetArguments().GetLastString().EndsWith(".py")) {
+    else {
       load_file = FXApp->GetArguments().Text(' ', 1);
       if (!TEFile::Exists(load_file)) {
         load_file.SetLength(0);
@@ -1491,11 +1488,10 @@ void TMainForm::StartupInit() {
       load_file = TEFile::ExpandRelativePath(load_file);
     }
   }
-  processMacro("onstartup", __OlxSrcInfo);
-  processMacro("user_onstartup", __OlxSrcInfo);
 
+  bool do_load_file = true;
+#ifdef _WIN32
   ListOlex2OpenedFiles();
-
   if (!load_file.IsEmpty() && !load_file.Equalsi("none") &&
     TEFile::Exists(load_file))
   {
@@ -1518,8 +1514,8 @@ void TMainForm::StartupInit() {
         }
       }
     }
-    if (res.Contains('Y')) {
-      processMacro(olxstr("reap \"") << load_file << '\"', __OlxSrcInfo);
+    if (res.Contains('N')) {
+      do_load_file = false;
     }
     else if (res.Contains('C')) {
       Destroying = true;
@@ -1529,6 +1525,13 @@ void TMainForm::StartupInit() {
     }
   }
   loadedFiles.Clear();
+#endif
+  processMacro("onstartup", __OlxSrcInfo);
+  processMacro("user_onstartup", __OlxSrcInfo);
+  if (do_load_file) {
+    processMacro(olxstr("reap -check_loaded \"") << load_file << '\"', __OlxSrcInfo);
+  }
+
   // load html in last call - it might call some destructive functions on uninitialised data
   HtmlManager.main->LoadPage(FHtmlIndexFile.u_str());
   HtmlManager.main->SetHomePage(FHtmlIndexFile);
@@ -4348,8 +4351,10 @@ BOOL CALLBACK TMainForm::QueryOlex2Windows(HWND w, LPARAM p) {
 //..............................................................................
 void TMainForm::ListOlex2OpenedFiles() {
   loadedFiles.Clear();
+#ifdef _WIN32
   QueryParams q(GetHWND(), GetFileQueryEvtId());
   EnumDesktopWindows(0, &TMainForm::QueryOlex2Windows, (LPARAM)&q);
+#endif
 }
 //..............................................................................
 
