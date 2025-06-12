@@ -4301,7 +4301,6 @@ WXLRESULT TMainForm::MSWWindowProc(WXUINT msg, WXWPARAM wParam, WXLPARAM lParam)
           max_sz);
         if (pBuf != 0) {
           loadedFiles.Add(pBuf, (HWND)wParam);
-          //TBasicApp::NewLogEntry() << "Loaded file: " << loadedFiles.GetLastString();
           UnmapViewOfFile(pBuf);
         }
         else {
