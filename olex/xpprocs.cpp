@@ -6003,18 +6003,20 @@ void TMainForm::macElevate(TStrObjList &Cmds, const TParamList &Options, TMacroD
 void TMainForm::macRestart(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
   olxstr cd = TEFile::CurrentDir();
   TEFile::ChangeDir(TBasicApp::GetBaseDir());
-  olxstr en, ext = "sh";
+  olxstr en;
 #if defined(__WIN32__)
   en = TEFile::ChangeFileExt(TBasicApp::GetModuleName(), "exe");
-  ext = "bat";
+  olxstr restart_ss = "restart.bat";
 #elif defined(__MAC__)
-  en = olxstr("open ") << TBasicApp::GetBaseDir() + "olex2.app\"";
+  olxstr restart_ss = "restart-mac.sh";
+  en = TBasicApp::GetBaseDir() + "olex2.app";
 #else
   en = TBasicApp::GetBaseDir() + "start";
+  olxstr restart_ss = "restart.sh";
 #endif
   
-  olxstr restart_ss = TEFile::JoinPath(
-    TStrList() << TBasicApp::GetBaseDir() << "restart") << '.' << ext;
+  restart_ss = TEFile::JoinPath(
+    TStrList() << TBasicApp::GetBaseDir() << "etc" << "bin" << restart_ss);
   if (TEFile::Exists(en) && TEFile::Exists(restart_ss)) {
     unsigned pid = wxGetProcessId();
     olxstr cmd = (olxstr(restart_ss) << ' ' << pid << " \"" << en << '"');
