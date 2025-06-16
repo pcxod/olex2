@@ -6005,6 +6005,11 @@ void TMainForm::macRestart(TStrObjList &Cmds, const TParamList &Options, TMacroD
   TEFile::ChangeDir(TBasicApp::GetBaseDir());
   bool update = Options.GetBoolOption('u');
   olxstr en;
+#if defined(__WIN32__)
+  olxstr ext = "bat";
+#else
+  olxstr ext = "sh";
+#endif
   if (!update) {
     en = TBasicApp::GetModuleName();
   }
@@ -6017,14 +6022,20 @@ void TMainForm::macRestart(TStrObjList &Cmds, const TParamList &Options, TMacroD
     en = TBasicApp::GetBaseDir() + "start";
 #endif
   }
-  if (TEFile::Exists(en)) {
-    wxExecute(en.u_str());
+  olxstr restart_ss = TEFile::JoinPath(
+    TStrList() << TBasicApp::GetBaseDir() << "restart")
+    << '.' << ext;
+  if (TEFile::Exists(en) && TEFile::Exists(restart_ss)) {
+    unsigned pid = wxGetProcessId();
+    olxstr cmd = (olxstr(restart_ss) << ' ' << pid << " \"" << en << '"');
+    wxExecute(cmd.u_str());
     FXApp->UpdateOption("confirm_on_close", FalseString());
     Close(false);
   }
   else {
-    E.ProcessingError(__OlxSrcInfo, "Could not locate the required file: ")
-      .quote() << en;
+    E.ProcessingError(__OlxSrcInfo, "Could not locate the required file(s): ")
+      .quote() << en  << ", " << restart_ss;
+    TEFile::ChangeDir(cd);
   }
 }
 //..............................................................................
