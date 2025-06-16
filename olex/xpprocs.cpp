@@ -6003,28 +6003,18 @@ void TMainForm::macElevate(TStrObjList &Cmds, const TParamList &Options, TMacroD
 void TMainForm::macRestart(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
   olxstr cd = TEFile::CurrentDir();
   TEFile::ChangeDir(TBasicApp::GetBaseDir());
-  bool update = Options.GetBoolOption('u');
-  olxstr en;
+  olxstr en, ext = "sh";
 #if defined(__WIN32__)
-  olxstr ext = "bat";
-#else
-  olxstr ext = "sh";
-#endif
-  if (!update) {
-    en = TBasicApp::GetModuleName();
-  }
-  else {
-#if defined(__WIN32__)
-    en = TEFile::ChangeFileExt(TBasicApp::GetModuleName(), "exe");
+  en = TEFile::ChangeFileExt(TBasicApp::GetModuleName(), "exe");
+  ext = "bat";
 #elif defined(__MAC__)
-    en = TBasicApp::GetBaseDir() + "olex2";
+  en = olxstr("open ") << TBasicApp::GetBaseDir() + "olex2.app\"";
 #else
-    en = TBasicApp::GetBaseDir() + "start";
+  en = TBasicApp::GetBaseDir() + "start";
 #endif
-  }
+  
   olxstr restart_ss = TEFile::JoinPath(
-    TStrList() << TBasicApp::GetBaseDir() << "restart")
-    << '.' << ext;
+    TStrList() << TBasicApp::GetBaseDir() << "restart") << '.' << ext;
   if (TEFile::Exists(en) && TEFile::Exists(restart_ss)) {
     unsigned pid = wxGetProcessId();
     olxstr cmd = (olxstr(restart_ss) << ' ' << pid << " \"" << en << '"');

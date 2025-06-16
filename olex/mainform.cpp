@@ -806,7 +806,7 @@ void TMainForm::XApp(Olex2App *XA)  {
     "Runs Olex2 in elevated/desktop mode [true]/false- only available on "
     "Windows");
   this_InitMacroD(Restart,
-    "u-update [false]",
+    EmptyString(),
     fpNone,
     "Restarts Olex2");
   this_InitMacroD(ADPDisp, EmptyString(),
