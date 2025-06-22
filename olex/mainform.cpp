@@ -412,6 +412,7 @@ void TMainForm::XApp(Olex2App *XA)  {
     "r-prevent resetting the style to default&;"
     "*-read and overlay&;"
     "check_loaded-[True] checks if the file has been loaded in another Olex2 instance&;"
+    "check_crashed-[True] do not load file if crash detected&;"
     ,
     fpAny,
     "This macro loads a file if provided as an argument. If no argument is "
@@ -1466,6 +1467,7 @@ void TMainForm::StartupInit() {
   }
 
   olxstr load_file;
+  bool is_arg = false;
   if (FXApp->GetArguments().Count() >= 2) {
     // do the iterpreters job if needed
     if (FXApp->GetArguments().GetLastString().EndsWith(".py")) {
@@ -1479,6 +1481,7 @@ void TMainForm::StartupInit() {
       }
       else {
         TOlxVars::UnsetVar("startup");
+        is_arg = true;
       }
     }
   }
@@ -1533,7 +1536,12 @@ void TMainForm::StartupInit() {
   processMacro("onstartup", __OlxSrcInfo);
   processMacro("user_onstartup", __OlxSrcInfo);
   if (do_load_file) {
-    processMacro(olxstr("reap -check_loaded \"") << load_file << '\"', __OlxSrcInfo);
+    olxstr reap = "reap -check_loaded";
+    if (is_arg) { // if parsed as an argument - do not check for crash
+      reap << ' ' << "-check_crashed";
+    }
+    reap << ' ' << '"' << load_file << '\"';
+    processMacro(reap, __OlxSrcInfo);
   }
 
   // load html in last call - it might call some destructive functions on uninitialised data

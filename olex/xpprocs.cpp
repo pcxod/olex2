@@ -2749,6 +2749,8 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
     return;
   }
   TStopWatch sw(__FUNC__);
+  bool CheckLoaded = Options.GetBoolOption("check_loaded", false, true);
+  bool CheckCrashed = Options.GetBoolOption("check_crashed", false, true);
   // check if crashed last time
   {
     TStrList pid_files;
@@ -2782,7 +2784,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
         del_cnt++;
       }
     }
-    if (del_cnt != 0) {
+    if (del_cnt != 0 && CheckCrashed) {
       TBasicApp::NewLogEntry(logError) << "It appears that Olex2 has crashed "
         "last time: skip loading of the last file. Please contact "
         "Olex2 team if the problem persists";
@@ -2797,7 +2799,6 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
   bool Blind = Options.GetBoolOption('b');
   bool ReadStyle = Options.GetBoolOption('r', false, true);
   bool OverlayXFile = Options.Contains('*');
-  bool CheckLoaded = Options.GetBoolOption("check_loaded", false, true);
   if (Cmds.Count() >= 1 && !Cmds[0].IsEmpty()) {  // merge the file name if a long one...
     file_n = TEFile::ExpandRelativePath(Cmds.Text(' '));
     if (TEFile::UnixPath(file_n.file_name).StartsFrom("http://") ||
@@ -6009,7 +6010,7 @@ void TMainForm::macRestart(TStrObjList &Cmds, const TParamList &Options, TMacroD
   olxstr restart_ss = "restart.bat";
 #elif defined(__MAC__)
   olxstr restart_ss = "restart-mac.sh";
-  en = TBasicApp::GetBaseDir() + "olex2.app";
+  en = TEFile::ExpandRelativePath(TBasicApp::GetBaseDir() + "../..");
 #else
   en = TBasicApp::GetBaseDir() + "start";
   olxstr restart_ss = "restart.sh";
