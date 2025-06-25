@@ -1788,14 +1788,7 @@ void SaveSAMEReferences(TStrList& sl, TSameGroup &sg) {
     if (!dg.IsValidForSave()) {
       continue;
     }
-    olxstr_buf tmp("SAME");
-    if (!dg.GetAtoms().GetResi().IsEmpty()) {
-      tmp << '_' << dg.GetAtoms().GetResi();
-    }
-    tmp << ' ' << olxstr(dg.Esd12).TrimFloat() << ' '
-      << olxstr(dg.Esd13).TrimFloat() << ' '
-      << dg.GetAtoms().GetExpression();
-    TIns::HyphenateIns(olxstr(tmp), sl);
+    TIns::HyphenateIns(dg.ToInsString(), sl);
   }
 
 }
