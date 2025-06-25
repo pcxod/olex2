@@ -783,6 +783,9 @@ void TSameGroupList::FromDataItem_(TDataItem& item, size_t n) {
 }
 //.............................................................................
 void TSameGroupList::FixIds() {
+  for (size_t i = 0; i < RM.aunit.AtomCount(); i++) {
+    RM.aunit.GetAtom(i).SetSameId(~0);
+  }
   for (size_t i = 0; i < Count(); i++) {
     if (!items[i].IsReference()) {
       continue;
@@ -894,7 +897,7 @@ void TSameGroupList::Analyse() {
   if (!log.IsEmpty()) {
     TBasicApp::NewLogEntry(logWarning) << log;
   }
-  else { // check if the same dependent group is used - invert if possible
+  else if (true) { // check if the same dependent group is used - invert if possible
     olxstr_dict<TPtrList<TSameGroup> > deps; // inst_str -> dep
     olxstr_dict<TPtrList<TSameGroup> > dep2ref; // ins_str of dep -> ref
     for (size_t i = 0; i < items.Count(); i++) {
@@ -912,6 +915,8 @@ void TSameGroupList::Analyse() {
         TPtrList<TSameGroup>& pcs = dep2ref[deps.GetKey(i)];
         for (size_t j = 0; j < pcs.Count(); j++) {
           pcs[j]->ClearDependent(true);
+          pcs[j]->Esd12 = deps.GetValue(i)[0]->Esd12;
+          pcs[j]->Esd13 = deps.GetValue(i)[0]->Esd13;
           deps.GetValue(i)[0]->AddDependent(*pcs[j]);
         }
       }
