@@ -72,7 +72,6 @@ olxdict<PyObject *, olx_PyModuleDef*, TPointerComparator>
   static olxdict<PyObject *, olx_PyModuleDef*, TPointerComparator> reg;
   return reg;
 }
-#endif
 //.............................................................................
 //.............................................................................
 class TFuncWrapper : public PythonExt::BasicWrapper {
@@ -986,3 +985,4 @@ PyObject* PythonExt::ToPython(const TDataItem &di, PyObject* to) {
   return t;
 }
 //.............................................................................
+#endif // _PYTHON

@@ -1033,7 +1033,7 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       return _HklStat;
     }
     else {
-      TOlxVars::GetInstance()->SetVar("merge_stats_updated", TrueString());
+      TOlxVars::GetInstance().SetVar("merge_stats_updated", TrueString());
       completeness_cache.Clear();
       HklStatFileID = HklFileID;
       _HklStat.SetDefaults();
