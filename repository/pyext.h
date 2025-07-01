@@ -271,6 +271,7 @@ public:
   static PyObject* PyNone() { Py_INCREF(Py_None);  return Py_None; }
   static PyObject* PyTrue() { Py_INCREF(Py_True);  return Py_True; }
   static PyObject* PyFalse() { Py_INCREF(Py_False);  return Py_False; }
+  static PyObject* PyBool(bool v) { return v ? PyTrue() : PyFalse(); }
   /* tuple parsing to process unicode and string in the same way...
     s# - char*, len
     s - char*

@@ -13,6 +13,7 @@
 #include "log.h"
 #include "wx/dc.h"
 #include "wx/artprov.h"
+#include "fsext.h"
 
 THtmlImageCell::THtmlImageCell(wxHtmlWindowInterface* windowIface, wxFSFile *input,
   int w, int h, double scale, int align,
@@ -123,6 +124,24 @@ THtmlImageCell::THtmlImageCell(wxHtmlWindowInterface* windowIface, wxFSFile *inp
     m_Descent = 0;
     break;
   }
+}
+//..............................................................................
+bool THtmlImageCell::OnFileChange() {
+  olx_object_ptr<wxFSFile> fsFile = TFileHandlerManager::GetFSFileHandler(FSource);
+  if (!fsFile.ok()) {
+    return false;
+  }
+  wxImage image;
+  {
+    wxLogNull nl;
+    image.LoadFile(*fsFile->GetStream(), wxBITMAP_TYPE_ANY);
+  }
+  if (!image.Ok()) {
+    return false;
+  }
+  File = fsFile.release();
+  SetImage(image);
+  return true;
 }
 //..............................................................................
 void THtmlImageCell::SetImage(const wxImage& img) {

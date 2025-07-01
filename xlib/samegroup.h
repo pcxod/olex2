@@ -23,6 +23,7 @@ class TSameGroup : public ACollectionItem, public AReleasable {
 protected:
   // it does not clear the ParentGroup, to make Restore work...
   bool RemoveDependent(TSameGroup& sg) { return Dependent.Remove(sg); }
+  void ClearDependent(bool clear_dep = true);
   void SetAtomIds(size_t);
   // on release
   void ClearAtomIds() { SetAtomIds(~0); }
@@ -59,6 +60,12 @@ public:
 
   bool IsReference() const { return !Dependent.IsEmpty(); }
   size_t GetId() const { return this->GetReleasableId(); }
+  void SetId(size_t id, bool set_atom_ids=false) {
+    this->SetReleasableId(id);
+    if (set_atom_ids) {
+      SetAtomIds(id);
+    }
+  }
 
   // will invalidate previously assigned group
   TCAtom& Add(TCAtom& ca);
@@ -130,6 +137,7 @@ public:
 
   void ToDataItem(TDataItem& item) const;
   void ToDataItem_HRF(TDataItem& item) const;
+  olxstr ToInsString() const;
 #ifdef _PYTHON
   PyObject* PyExport(PyObject* main, TPtrList<PyObject>& allGroups,
     TPtrList<PyObject>& atoms, TPtrList<PyObject>& equiv);

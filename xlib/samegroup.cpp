@@ -32,6 +32,14 @@ TSameGroup::~TSameGroup() {
   //}
 }
 //.............................................................................
+void TSameGroup::ClearDependent(bool clear_dep) {
+  if (clear_dep) {
+    for (size_t i = 0; i < Dependent.Count(); i++) {
+      Dependent[i]->ParentGroup = 0;
+    }
+  }
+  Dependent.Clear();
+}
 TSameGroupList& TSameGroup::GetParent() const {
   return dynamic_cast<TSameGroupList&>(parent);
 }
@@ -88,6 +96,16 @@ void TSameGroup::ToDataItem(TDataItem& item) const {
   else if (ParentGroup !=0 ) { // implicit?
     item.AddField("parent", ParentGroup->GetTag());
   }
+}
+//..............................................................................
+olxstr TSameGroup::ToInsString() const {
+  olxstr_buf tmp("SAME");
+  if (!GetAtoms().GetResi().IsEmpty()) {
+    tmp << '_' << GetAtoms().GetResi();
+  }
+  return olxstr(tmp << ' ' << olxstr(Esd12).TrimFloat() << ' '
+    << olxstr(Esd13).TrimFloat() << ' '
+    << GetAtoms().GetExpression());
 }
 //..............................................................................
 void TSameGroup::ToDataItem_HRF(TDataItem& item) const {
@@ -765,6 +783,9 @@ void TSameGroupList::FromDataItem_(TDataItem& item, size_t n) {
 }
 //.............................................................................
 void TSameGroupList::FixIds() {
+  for (size_t i = 0; i < RM.aunit.AtomCount(); i++) {
+    RM.aunit.GetAtom(i).SetSameId(~0);
+  }
   for (size_t i = 0; i < Count(); i++) {
     if (!items[i].IsReference()) {
       continue;
@@ -846,7 +867,7 @@ TSameGroup& TSameGroupList::Build(const olxstr& exp, const olxstr& resi) {
 }
 //.............................................................................
 void TSameGroupList::Analyse() {
-  TPtrList< TSameGroup> refs = items.ptr().Filter(
+  TPtrList<TSameGroup> refs = items.ptr().Filter(
     FunctionAccessorAnalyser::Make(
       FunctionAccessor::MakeConst(&TSameGroup::IsReference)));
   TStrList log;
@@ -874,7 +895,45 @@ void TSameGroupList::Analyse() {
     }
   }
   if (!log.IsEmpty()) {
-    TBasicApp::NewLogEntry() << log;
+    TBasicApp::NewLogEntry(logWarning) << log;
+  }
+  else if (true) { // check if the same dependent group is used - invert if possible
+    olxstr_dict<TPtrList<TSameGroup> > deps; // inst_str -> dep
+    olxstr_dict<TPtrList<TSameGroup> > dep2ref; // ins_str of dep -> ref
+    for (size_t i = 0; i < items.Count(); i++) {
+      if (!items[i].IsReference() && items[i].GetAtoms().IsExplicit() &&
+        items[i].GetParentGroup()->DependentCount() == 1)
+      {
+        olxstr ss = items[i].ToInsString();
+        deps.Add(ss).Add(items[i]);
+        dep2ref.Add(ss).Add(items[i].GetParentGroup());
+      }
+    }
+    // invert of needed
+    for (size_t i = 0; i < deps.Count(); i++) {
+      if (deps.GetValue(i).Count() > 1) {
+        TPtrList<TSameGroup>& pcs = dep2ref[deps.GetKey(i)];
+        for (size_t j = 0; j < pcs.Count(); j++) {
+          pcs[j]->ClearDependent(true);
+          pcs[j]->Esd12 = deps.GetValue(i)[0]->Esd12;
+          pcs[j]->Esd13 = deps.GetValue(i)[0]->Esd13;
+          deps.GetValue(i)[0]->AddDependent(*pcs[j]);
+        }
+      }
+    }
+    size_t nulled = 0;
+    for (size_t i = 0; i < items.Count(); i++) {
+      if (items[i].GetParentGroup() == 0 && items[i].DependentCount() == 0) {
+        items.NullItem(i);
+        nulled++;
+      }
+    }
+    if (nulled != 0) {
+      items.Pack();
+      FixIds();
+      TBasicApp::NewLogEntry(logWarning)
+        << "Converted " << nulled << " SAME reference groups into dependent";
+    }
   }
 }
 //.............................................................................

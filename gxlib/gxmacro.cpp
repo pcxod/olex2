@@ -136,6 +136,7 @@ void GXLibMacros::Export(TLibrary& lib) {
     "b-bond lengths&;"
     "co-chemical occupancy&;"
     "c-charge&;"
+    "clear-[true] clear current mode;"
     "ch-chiraliry&;"
     "f-fixed parameters&;"
     "h-show hydrogen atom labels&;"
@@ -1258,7 +1259,7 @@ void GXLibMacros::macLabels(TStrObjList &Cmds, const TParamList &Options,
     opts.Add("v", lmOVar);
     opts.Add("sm", lmSame);
   }
-  uint32_t lmode = 0;
+  uint32_t lmode = Options.GetBoolOption("clear", false, true) ? 0 : app.GetLabelsMode();
 
   if (Options.IsEmpty()) {
     TGlGroup &sel = app.GetSelection();

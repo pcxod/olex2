@@ -156,7 +156,7 @@ Stats::Stats(bool update_scale, bool fcf)
     size_t weight_idx = rl->ColIndex("_refln_F_squared_weight");
     if ((h_idx | k_idx | l_idx | Fc_sq_idx | sig_idx | Fo_sq_idx) == InvalidIndex) {
       throw TInvalidArgumentException(__OlxSourceInfo,
-        "FCF file, LIST 4 with weighst is expected");
+        "FCF file, LIST 4 with weights is expected");
     }
     refs.SetCapacity(rl->RowCount());
     Fsq.SetCount(rl->RowCount());

@@ -410,7 +410,10 @@ void TMainForm::XApp(Olex2App *XA)  {
   this_InitMacroAD(Reap, @reap,
     "b-blind&;"
     "r-prevent resetting the style to default&;"
-    "*-read and overlay",
+    "*-read and overlay&;"
+    "check_loaded-[True] checks if the file has been loaded in another Olex2 instance&;"
+    "check_crashed-[True] do not load file if crash detected&;"
+    ,
     fpAny,
     "This macro loads a file if provided as an argument. If no argument is "
     "provided, it shows a file open dialog");
@@ -804,7 +807,7 @@ void TMainForm::XApp(Olex2App *XA)  {
     "Runs Olex2 in elevated/desktop mode [true]/false- only available on "
     "Windows");
   this_InitMacroD(Restart,
-    "u-update [false]",
+    EmptyString(),
     fpNone,
     "Restarts Olex2");
   this_InitMacroD(ADPDisp, EmptyString(),
@@ -1290,6 +1293,10 @@ void TMainForm::XApp(Olex2App *XA)  {
   miHtmlPanel->Check(!FHtmlMinimized);
 #if defined(__WIN32__) || defined(__MAC__)
   StartupInit();
+  if (Destroying) {
+    Close(true);
+    return;
+  }
 #endif
   try  {
     nui_interface = olx_nui::Initialise();
@@ -1459,24 +1466,84 @@ void TMainForm::StartupInit() {
     FXApp->LoadTextures(textures_dir);
   }
 
-  // do the iterpreters job...
+  olxstr load_file;
+  bool is_arg = false;
   if (FXApp->GetArguments().Count() >= 2) {
+    // do the iterpreters job if needed
     if (FXApp->GetArguments().GetLastString().EndsWith(".py")) {
       TStrList in = TEFile::ReadLines(FXApp->GetArguments().GetLastString());
       PythonExt::GetInstance()->RunPython(in.Text('\n'));
     }
-    else { // disable reading last file in
-      TOlxVars::SetVar("olx_reap_cmdl", FXApp->GetArguments()[1]);
+    else {
+      load_file = FXApp->GetArguments().Text(' ', 1);
+      if (!TEFile::Exists(load_file)) {
+        load_file.SetLength(0);
+      }
+      else {
+        TOlxVars::UnsetVar("startup");
+        is_arg = true;
+      }
     }
+  }
+  else {
+    load_file = TOlxVars::FindValue("startup");
+    if (!load_file.IsEmpty()) {
+      load_file = TEFile::ExpandRelativePath(load_file);
+    }
+  }
+
+  bool do_load_file = true;
+  if (!load_file.IsEmpty() && !load_file.Equalsi("none") &&
+    TEFile::Exists(load_file))
+  {
+#ifdef _WIN32
+    ListOlex2OpenedFiles();
+    size_t idx = LoadedFileIdx(load_file);
+    olxstr res = "Y";
+    if (idx != InvalidIndex) {
+      olxstr opt_n = "on_loaded_file";
+      res = TBasicApp::GetInstance().GetOptions().FindValue(opt_n);
+      if (res.IsEmpty()) {
+        res = TdlgMsgBox::Execute(this, olxstr("The file \n'") <<
+          TEFile::ChangeFileExt(load_file, EmptyString()) << '\'' <<
+          "\nhas been loaded in another instance of Olex2."
+          "\nWould you like to open it in a this instance of Olex2?",
+          "Please confirm",
+          "Remember my decision",
+          wxYES_NO | wxCANCEL | wxICON_QUESTION,
+          true);
+        if (res.StartsFrom('R')) {
+          TBasicApp::GetInstance().UpdateOption(opt_n, res.SubStringFrom(1));
+          TBasicApp::GetInstance().SaveOptions();
+        }
+      }
+    }
+    if (res.Contains('N')) {
+      do_load_file = false;
+    }
+    else if (res.Contains('C')) {
+      Destroying = true;
+      HWND wnd = loadedFiles.GetObject(idx);
+      TGlXApp::ActivateWindow(wnd);
+      return;
+    }
+    loadedFiles.Clear();
+#endif
+  }
+  else {
+    do_load_file = false;
   }
   processMacro("onstartup", __OlxSrcInfo);
   processMacro("user_onstartup", __OlxSrcInfo);
-  if (FXApp->GetArguments().Count() >= 2) {
-    if (!FXApp->GetArguments().GetLastString().EndsWith(".py")) {
-      processMacro(olxstr("reap \"") << FXApp->GetArguments().Text(' ', 1) <<
-        '\"', __OlxSrcInfo);
+  if (do_load_file) {
+    olxstr reap = "reap -check_loaded";
+    if (is_arg) { // if parsed as an argument - do not check for crash
+      reap << ' ' << "-check_crashed";
     }
+    reap << ' ' << '"' << load_file << '\"';
+    processMacro(reap, __OlxSrcInfo);
   }
+
   // load html in last call - it might call some destructive functions on uninitialised data
   HtmlManager.main->LoadPage(FHtmlIndexFile.u_str());
   HtmlManager.main->SetHomePage(FHtmlIndexFile);
@@ -1853,7 +1920,8 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
     if (MsgSubId == msiExit) {
       olxstr title = "Olex2";
       if (FXApp->XFile().HasLastLoader()) {
-        title << ": " << TEFile::ExtractFileName(FXApp->XFile().GetFileName());
+        title << ": " << TEFile::ExtractFileName(FXApp->XFile().GetFileName())
+          << ", " << FXApp->XFile().GetFileName();
       }
       this->SetTitle(title.u_str());
     }
@@ -2522,7 +2590,7 @@ void TMainForm::OnNavigation(wxNavigationKeyEvent& event) {
 }
 //..............................................................................
 void TMainForm::OnMove(wxMoveEvent& evt) {
-  if( FXApp == 0 || FGlConsole == 0 || FInfoBox == 0 ||
+  if (Destroying || FXApp == 0 || FGlConsole == 0 || FInfoBox == 0 ||
     !StartupInitialised)
   {
     return;
@@ -2533,7 +2601,7 @@ void TMainForm::OnMove(wxMoveEvent& evt) {
 //..............................................................................
 void TMainForm::OnSize(wxSizeEvent& event) {
   wxFrame::OnSize(event);
-  if (SkipSizing) {
+  if (SkipSizing || Destroying) {
     return;
   }
   if (FXApp == 0 || FGlConsole == 0 || FInfoBox == 0 || !StartupInitialised) {
@@ -3497,9 +3565,13 @@ void TMainForm::OnIdle() {
 #if !defined(__WIN32__)
   if (!StartupInitialised && IsShownOnScreen() && FGlCanvas->IsShownOnScreen()) {
     StartupInit();
+    if (Destroying) {
+      Close(true);
+      return;
+    }
   }
 #endif
-  TBasicApp::GetInstance().OnIdle.Execute((AEventsDispatcher*)this, NULL);
+    TBasicApp::GetInstance().OnIdle.Execute((AEventsDispatcher*)this, NULL);
   // runonce business...
   if (!RunOnceProcessed && TBasicApp::IsBaseDirWriteable()) {
     RunOnceProcessed = true;
@@ -4040,6 +4112,29 @@ PyObject* pyPreprocessHtml(PyObject* self, PyObject* args) {
   return PythonExt::BuildString(htmlp.Preprocess(html));
 }
 //..............................................................................
+#ifdef _WIN32
+PyObject* pyCheckPAROpened(PyObject* self, PyObject* args) {
+  olxstr fn;
+  if (!PythonExt::ParseTuple(args, "w", &fn)) {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
+  }
+  return PythonExt::PyBool(TGlXApp::FindWindow("CrysAlisPro", fn) != 0);
+}
+//..............................................................................
+PyObject* pyActivateCAP(PyObject* self, PyObject* args) {
+  olxstr fn;
+  if (!PythonExt::ParseTuple(args, "w", &fn)) {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
+  }
+  HWND wnd = TGlXApp::FindWindow("CrysAlisPro", fn);
+  if (wnd != 0) {
+    TGlXApp::ActivateWindow(wnd);
+    return PythonExt::PyTrue();
+  }
+  return PythonExt::PyFalse();
+}
+#endif
+//..............................................................................
 static PyMethodDef CORE_Methods[] = {
   {"GetUserInput", pyGetUserInput, METH_VARARGS,
   "Shows a dialog, where user can type some text. Takes three agruments: flags"
@@ -4053,6 +4148,10 @@ static PyMethodDef CORE_Methods[] = {
   { "GetIdleTime", pyGetIdleTime, METH_VARARGS, "Returns idle time" },
   { "ResetIdleTime", pyResetIdleTime, METH_VARARGS, "Resets idle time to 0" },
   { "PreprocessHtml", pyPreprocessHtml, METH_VARARGS, "Preprocesses given HTML as in the GUI" },
+#ifdef _WIN32
+  { "CheckPAROpened", pyCheckPAROpened, METH_VARARGS, "Checks if PAR file is loaded in CAP" },
+  { "ActivateCAP", pyActivateCAP, METH_VARARGS, "Brings CAP to the front if PAR file is loaded" },
+#endif
   { NULL, NULL, 0, NULL }
 };
 //..............................................................................
@@ -4159,5 +4258,134 @@ void TMainForm::ProcessHandler::OnTerminate(const AProcess& p) {
   TBasicApp::NewLogEntry(logInfo) << "The process '" << p.GetCmdLine() <<
     "' has been terminated...";
   parent.TimePerFrame = parent.FXApp->Draw();
+}
+//..............................................................................
+#ifdef _WIN32
+WXLRESULT TMainForm::MSWWindowProc(WXUINT msg, WXWPARAM wParam, WXLPARAM lParam) {
+  int msg_id = GetFileQueryEvtId();
+  if (msg == msg_id && (HWND)wParam != GetHWND()) {
+    const size_t max_sz = MAX_PATH * sizeof(olxch);
+    if (lParam == 0) {
+      static olxstr fn = TXApp::GetInstance().XFile().GetFileName();
+      HANDLE hMapFile = CreateFileMapping(
+        INVALID_HANDLE_VALUE,    // use paging file
+        NULL,                    // default security
+        PAGE_READWRITE,          // read/write access
+        0,                       // maximum object size (high-order DWORD)
+        max_sz,                  // maximum object size (low-order DWORD)
+        GetFileQueryFileName().u_str());
+      if (hMapFile != 0) {
+        LPCTSTR pBuf = (LPTSTR)MapViewOfFile(hMapFile,
+          FILE_MAP_ALL_ACCESS, // read/write permission
+          0,
+          0,
+          max_sz);
+        if (pBuf != 0) {
+          CopyMemory((PVOID)pBuf, fn.u_str(), olx_min((fn.Length() + 1) * sizeof(olxch), max_sz));
+          SendMessage((HWND)wParam, msg_id, (WPARAM)GetHWND(), 1);
+          //PostThreadMessage(wParam, msg_id, (WPARAM)GetHWND(), 1);
+          UnmapViewOfFile(pBuf);
+        }
+        else {
+          TBasicApp::NewLogEntry(logError) << "Null view: " << GetLastError();
+        }
+        CloseHandle(hMapFile);
+      }
+      else {
+        TBasicApp::NewLogEntry(logError) << "Null mapping: " << GetLastError();
+      }
+      return true;
+    }
+    else {
+      HANDLE hMapFile = OpenFileMapping(
+        FILE_MAP_ALL_ACCESS,
+        FALSE,
+        GetFileQueryFileName().u_str());
+      if (hMapFile != 0) {
+        LPCTSTR pBuf = (LPTSTR)MapViewOfFile(hMapFile,
+          FILE_MAP_ALL_ACCESS,  // read/write permission
+          0,
+          0,
+          max_sz);
+        if (pBuf != 0) {
+          loadedFiles.Add(pBuf, (HWND)wParam);
+          UnmapViewOfFile(pBuf);
+        }
+        else {
+          TBasicApp::NewLogEntry(logError) << "Null view: " << GetLastError();
+        }
+        CloseHandle(hMapFile);
+      }
+      else {
+        TBasicApp::NewLogEntry(logError) << "Null mapping: " << GetLastError();
+      }
+      return true;
+    }
+  }
+  return wxFrame::MSWWindowProc(msg, wParam, lParam);
+}
+//..............................................................................
+const olxstr& TMainForm::GetFileQueryFileName() {
+  static olxstr en("Olex2OpenedFiles");
+  return en;
+}
+//..............................................................................
+const olxstr& TMainForm::GetFileQueryEvtName() {
+  static olxstr en("Olex2_FILE_QUERY_MSG");
+  return en;
+}
+//..............................................................................
+UINT TMainForm::GetFileQueryEvtId() {
+  static UINT WM_QUERY_FILE = RegisterWindowMessage(GetFileQueryEvtName().u_str());
+  return WM_QUERY_FILE;
+}
+//..............................................................................
+struct QueryParams {
+  HWND hwnd;
+  int evt;
+  QueryParams(HWND hwnd, int evt) : hwnd(hwnd), evt(evt)  {}
+};
+
+BOOL CALLBACK TMainForm::QueryOlex2Windows(HWND w, LPARAM p) {
+  size_t max_sz = 256;
+  olx_array_ptr<wchar_t> title(max_sz);
+  int sz = GetWindowText(w, &title, max_sz - 1);
+  if (sz >= 0) {
+    olxstr t = olxstr::FromExternal(title.release(), sz, max_sz);
+    QueryParams* q = (QueryParams*)p;
+    if (t.StartsFrom("Olex2") && q->hwnd != w) {
+      SendMessage(w, q->evt, (WPARAM)q->hwnd, 0);
+    }
+  }
+  return TRUE;
+}
+//..............................................................................
+void TMainForm::ListOlex2OpenedFiles() {
+  loadedFiles.Clear();
+  QueryParams q(GetHWND(), GetFileQueryEvtId());
+  EnumDesktopWindows(0, &TMainForm::QueryOlex2Windows, (LPARAM)&q);
+}
+#endif //_WIN32
+//..............................................................................
+size_t TMainForm::LoadedFileIdx(const olxstr& fn_) {
+#ifndef _WIN32
+  return InvalidIndex;
+#else
+  olxstr ext = TEFile::ExtractFileExt(fn_).ToLowerCase();
+  if (ext != "ins" && ext != "res") {
+    return InvalidIndex;
+  }
+  const olxstr fn = TEFile::ChangeFileExt(fn_, EmptyString()).ToLowerCase();
+  for (size_t i = 0; i < loadedFiles.Count(); i++) {
+    olxstr ext = TEFile::ExtractFileExt(loadedFiles[i]).ToLowerCase();
+    if (ext != "ins" && ext != "res") {
+      continue;
+    }
+    if (fn == TEFile::ChangeFileExt(loadedFiles[i], EmptyString()).ToLowerCase()) {
+      return i;
+    }
+  }
+  return InvalidIndex;
+#endif
 }
 //..............................................................................

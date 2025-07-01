@@ -865,9 +865,12 @@ olxstr TEFile::CurrentDir()  {
   
 #else
   char *Dp = getcwd(NULL, MAX_PATH);
-  olxstr Dir = olxstr::FromCStr(Dp);
-  free(Dp);
-  return Dir;
+  if (Dp != 0) {
+    olxstr Dir = olxstr::FromCStr(Dp);
+    free(Dp);
+    return Dir;
+  }
+  return EmptyString();
 #endif
 }
 //..............................................................................
@@ -1116,32 +1119,36 @@ olxstr TEFile::ExpandRelativePath(const olxstr& path, const olxstr& _base) {
   if (path.IsEmpty()) {
     return path;
   }
-  if (!path.StartsFrom('.')) {
+  if (!path.StartsFrom('.') && !path.Contains("..")) {
     if (!IsAbsolutePath(path) && !_base.IsEmpty()) {
       return AddPathDelimeter(_base) << path;
     }
     return OLX_OS_PATH(path);
   }
-  olxstr base = OLX_OS_PATH(_base);
-  if (base.IsEmpty()) {
-    base = TBasicApp::GetBaseDir();
+  TStrList toks;
+  bool unc = false;
+  if (!IsAbsolutePath(path)) {
+    olxstr base = OLX_OS_PATH(_base);
+    if (base.IsEmpty()) {
+      base = TBasicApp::GetBaseDir();
+    }
+    toks = TStrList(OLX_OS_PATH(base), OLX_PATH_DEL);
+    unc = base.StartsFrom(OLX_PATH_DEL);
   }
-  TStrList baseToks(base, OLX_PATH_DEL),
-    pathToks(OLX_OS_PATH(path), OLX_PATH_DEL);
-  for (size_t i = 0; i < pathToks.Count(); i++) {
-    if (pathToks[i] == "..") {
-      baseToks.Delete(baseToks.Count() - 1);
+  toks.AddAll(TStrList(OLX_OS_PATH(path), OLX_PATH_DEL));
+  for (size_t i = 0; i < toks.Count(); i++) {
+    if (toks[i] == ".." && i > 1) {
+      toks.Delete(--i);
+      toks.Delete(i--);
     }
-    else if (pathToks[i] == '.') {
-      ;
-    }
-    else {
-      baseToks.Add(pathToks[i]);
+    else if (toks[i] == '.') {
+      toks.Delete(i);
+      i--;
     }
   }
-  olxstr res = baseToks.Text(OLX_PATH_DEL);
+  olxstr res = toks.Text(OLX_PATH_DEL);
   // make sure absolute paths stay absolute...
-  if (base.StartsFrom(OLX_PATH_DEL)) {
+  if (unc) {
 #ifdef __WIN32__
     res = olxstr(OLX_PATH_DEL) << OLX_PATH_DEL << res;
 #else

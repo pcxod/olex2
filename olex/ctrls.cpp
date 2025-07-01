@@ -70,7 +70,7 @@ int TDialog::ShowModalEx(bool manage_parent) {
 //..............................................................................
 //..............................................................................
 bool olxCommandAction::Run() {
-  TStrList toks(cmd, ">>");
+  TStrList toks = TParamList::StrtokLines(cmd, ">>");
   olex2::IOlex2Processor *ip = olex2::IOlex2Processor::GetInstance();
   for (size_t i = 0; i < toks.Count(); i++) {
     if (!ip->processMacro(toks[i])) {

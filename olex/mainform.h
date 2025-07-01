@@ -327,6 +327,16 @@ protected:
   // tries to expand the command and returns the success status
   bool ProcessTab();
   TPtrList<olxCommandEvent> PostponedEvents;
+#ifdef _WIN32
+  TStringToList<olxstr, HWND> loadedFiles;
+  WXLRESULT MSWWindowProc(WXUINT nMsg, WXWPARAM wParam, WXLPARAM lParam);
+  static BOOL CALLBACK QueryOlex2Windows(HWND w, LPARAM p);
+  void ListOlex2OpenedFiles();
+  static const olxstr& GetFileQueryEvtName();
+  static const olxstr& GetFileQueryFileName();
+  static UINT GetFileQueryEvtId();
+#endif
+  size_t LoadedFileIdx(const olxstr& fn);
 private:
   // macro functions
   DefMacro(Reap)

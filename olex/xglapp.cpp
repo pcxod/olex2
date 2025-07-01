@@ -97,6 +97,42 @@ public:
   }
 };
 
+#ifdef _WIN32
+struct FileQuery {
+  TStrList and_toks, or_toks;
+  HWND wnd;
+
+  FileQuery(const TStrList& and_toks, const TStrList or_toks)
+  : and_toks(and_toks), or_toks(or_toks), wnd(0)
+  {}
+};
+
+BOOL CALLBACK EnumWindowsFunc(HWND w, LPARAM p) {
+  size_t max_sz = 256;
+  olx_array_ptr<wchar_t> title(max_sz);
+  int sz = GetWindowText(w, &title, max_sz - 1);
+  FileQuery* q = (FileQuery*)p;
+  if (sz >= 0) {
+    olxstr t = olxstr::FromExternal(title.release(), sz, max_sz);
+    for (size_t i = 0; i < q->and_toks.Count(); i++) {
+      if (!t.Containsi(q->and_toks[i])) {
+        return TRUE;
+      }
+    }
+    if (q->or_toks.IsEmpty()) {
+      q->wnd = w;
+      return FALSE;
+    }
+    for (size_t i = 0; i < q->or_toks.Count(); i++) {
+      if (t.Containsi(q->or_toks[i])) {
+        q->wnd = w;
+        return FALSE;
+      }
+    }
+  }
+  return TRUE;
+}
+#endif
 
 //----------------------------------------------------------------------------//
 // TGlApp function bodies
@@ -176,6 +212,20 @@ bool TGlXApp::OnInit() {
       return false;
     }
   }
+#ifdef WIN32
+  if (XApp->GetArguments().Count() >= 2) {
+    if (!XApp->GetArguments().GetLastString().EndsWith(".py") &&
+      !XApp->GetArgOptions().GetBoolOption("-new"))
+    {
+      HWND wnd = FindWindow("Olex2", XApp->GetArguments().Text(' ', 1));
+      if (wnd != 0) {
+        TGlXApp::ActivateWindow(wnd);
+        OnExit();
+        return false;
+      }
+    }
+  }
+#endif
   MainForm = new TMainForm(this);
   XApp->InitOlex2App();
   /* This generic progress box requires more thinking in particular considering
@@ -362,5 +412,25 @@ void TGlXApp::MacOpenFile(const wxString &fileName) {
     TBasicApp::NewLogEntry(logException) << e;
   }
 }
+//..............................................................................
+#ifdef _WIN32
+HWND TGlXApp::FindWindow(const TStrList& and_toks, const TStrList& or_toks) {
+  FileQuery qp(and_toks, or_toks);
+  EnumDesktopWindows(0, &EnumWindowsFunc, (LPARAM)&qp);
+  return qp.wnd;
+}
+//..............................................................................
+bool TGlXApp::ActivateWindow(HWND wnd) {
+  if (IsIconic(wnd)) {
+    // OpenIcon changes the window size to "normal" even if it was maximized before
+    //if (!OpenIcon(wnd)) {
+    //  return false;
+    //}
+    // force maximized as there seems to be no way to restore it properly
+    ShowWindow(wnd, SW_MAXIMIZE);
+  }
+  return SetForegroundWindow(wnd);
+}
+#endif
 
 IMPLEMENT_APP(TGlXApp)

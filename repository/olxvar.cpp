@@ -11,7 +11,6 @@
 #include "egc.h"
 #include "efile.h"
 
-TOlxVars* TOlxVars::Instance = 0;
 #ifdef _PYTHON
 #include "pyext.h"
 char TOlxPyVar::svmn[] = "setValue";
@@ -224,7 +223,7 @@ void TOlxPyVar::Set(const olxstr& str) {
 //.............................................................................
 const olxstr& TOlxVars::GetVarStr(size_t index) {
   volatile olx_scope_cs cs(CS());
-  TOlxPyVar& oo = Instance->Vars.GetValue(index);
+  TOlxPyVar& oo = GetInstance().Vars.GetValue(index);
   if (oo.GetStr() != 0) {
     return *oo.GetStr();
   }
@@ -244,10 +243,6 @@ const olxstr& TOlxVars::GetVarStr(size_t index) {
 }
 //.............................................................................
 TOlxVars::TOlxVars() {
-  if (Instance != 0) {
-    throw TFunctionFailedException(__OlxSourceInfo, "singleton");
-  }
-  Instance = this;
   OnVarChange = &Actions.New("OnVarChange");
   // we cannot do this, as Pyhon might be Finalised beforehand!!!
   //  TEGC::AddP(this);
@@ -268,8 +263,9 @@ void olxvar_funGetVar(const TStrObjList& Params, TMacroData &E)  {
         "Could not locate specified variable: ").quote() << Params[0];
     }
   }
-  else
+  else {
     E.SetRetVal(TOlxVars::GetVarStr(ind));
+  }
 }
 void olxvar_funSetVar(const TStrObjList& Params, TMacroData &E) {
   TOlxVars::SetVar(Params[0], Params[1]);

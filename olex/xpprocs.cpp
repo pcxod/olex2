@@ -2749,14 +2749,8 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
     return;
   }
   TStopWatch sw(__FUNC__);
-  olxstr cmdl_fn = TOlxVars::FindValue("olx_reap_cmdl");
-  if (!cmdl_fn.IsEmpty()) {
-    TOlxVars::UnsetVar("olx_reap_cmdl");
-    if (TEFile::Exists(cmdl_fn)) {
-      Cmds.Clear();
-      Cmds << cmdl_fn;
-    }
-  }
+  bool CheckLoaded = Options.GetBoolOption("check_loaded", false, true);
+  bool CheckCrashed = Options.GetBoolOption("check_crashed", false, true);
   // check if crashed last time
   {
     TStrList pid_files;
@@ -2790,7 +2784,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
         del_cnt++;
       }
     }
-    if (del_cnt != 0) {
+    if (del_cnt != 0 && CheckCrashed) {
       TBasicApp::NewLogEntry(logError) << "It appears that Olex2 has crashed "
         "last time: skip loading of the last file. Please contact "
         "Olex2 team if the problem persists";
@@ -3012,8 +3006,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
       else {
         file_n.file_name = TEFile::ChangeFileExt(file_n.file_name, "ins");
       }
-    }
-    // and of p4p files
+    } // and of hkl files
     if (TEFile::ExtractFileExt(file_n.file_name).Equalsi("p4p")) {
       olxstr ins_fn = TEFile::ChangeFileExt(file_n.file_name, "ins");
       if (TEFile::Exists(ins_fn)) {
@@ -3031,6 +3024,32 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
       return;
     }
     try {
+      if (CheckLoaded) {
+#ifdef _WIN32
+        ListOlex2OpenedFiles();
+        size_t idx = LoadedFileIdx(file_n.file_name);
+        if (idx != InvalidIndex) {
+          olxstr res = TdlgMsgBox::Execute(this, olxstr("The file \n'") <<
+            TEFile::ChangeFileExt(file_n.file_name, EmptyString())
+            << '\'' <<
+            "\nhas been loaded in another instance of Olex2."
+            "\nWould you like to open it in a this instance of Olex2?"
+            "\n(Press 'No' to switch to the existing window)"
+            ,
+            EmptyString(),
+            "Remember my decision",
+            wxYES_NO | wxCANCEL | wxICON_QUESTION,
+            false);
+          if (res == 'C') {
+            return;
+          }
+          if (res == 'N') {
+            TGlXApp::ActivateWindow(loadedFiles.GetObject(idx));
+            return;
+          }
+        }
+#endif
+      }
       bool update_vfs =
         TEFile::ExtractFilePath(FXApp->XFile().GetFileName()) !=
         TEFile::ExtractFilePath(file_n.file_name);
@@ -3277,7 +3296,8 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
     FXApp->Draw();
     olxstr title = "Olex2";
     if (FXApp->XFile().HasLastLoader()) {
-      title << ": " << TEFile::ExtractFileName(FXApp->XFile().GetFileName());
+      title << ": " << TEFile::ExtractFileName(FXApp->XFile().GetFileName())
+        << ", " << FXApp->XFile().GetFileName();
     }
     this->SetTitle(title.u_str());
   }
@@ -3877,30 +3897,31 @@ void TMainForm::macPatt(TStrObjList &Cmds, const TParamList &Options, TMacroData
   FXApp->XFile().UpdateAsymmUnit();  // update the last loader RM
 }
 //..............................................................................
-void TMainForm::funAlert(const TStrObjList& Params, TMacroData &E) {
-  olxstr msg( Params[1] );
+void TMainForm::funAlert(const TStrObjList& Params, TMacroData& E) {
+  olxstr msg(Params[1]);
   msg.Replace("\\n", "\n");
-  if( Params.Count() == 2 )  {
-    E.SetRetVal( TdlgMsgBox::Execute(this, msg, Params[0]) );
+  if (Params.Count() == 2) {
+    E.SetRetVal(TdlgMsgBox::Execute(this, msg, Params[0]));
   }
-  else if( Params.Count() == 3 || Params.Count() == 4 )  {
+  else if (Params.Count() == 3 || Params.Count() == 4) {
     int flags = 0;
-    bool showCheckBox=false;
-    for( size_t i=0; i < Params[2].Length(); i++ )  {
-      if( Params[2].CharAt(i) == 'Y' )  flags |= wxYES;
-      else if( Params[2].CharAt(i) == 'N' )  flags |= wxNO;
-      else if( Params[2].CharAt(i) == 'C' )  flags |= wxCANCEL;
-      else if( Params[2].CharAt(i) == 'O' )  flags |= wxOK;
-      else if( Params[2].CharAt(i) == 'X' )  flags |= wxICON_EXCLAMATION;
-      else if( Params[2].CharAt(i) == 'H' )  flags |= wxICON_HAND;
-      else if( Params[2].CharAt(i) == 'E' )  flags |= wxICON_ERROR;
-      else if( Params[2].CharAt(i) == 'I' )  flags |= wxICON_INFORMATION;
-      else if( Params[2].CharAt(i) == 'Q' )  flags |= wxICON_QUESTION;
-      else if( Params[2].CharAt(i) == 'R' )  showCheckBox = true;
+    bool showCheckBox = false;
+    for (size_t i = 0; i < Params[2].Length(); i++) {
+      if (Params[2].CharAt(i) == 'Y')  flags |= wxYES;
+      else if (Params[2].CharAt(i) == 'N')  flags |= wxNO;
+      else if (Params[2].CharAt(i) == 'C')  flags |= wxCANCEL;
+      else if (Params[2].CharAt(i) == 'O')  flags |= wxOK;
+      else if (Params[2].CharAt(i) == 'X')  flags |= wxICON_EXCLAMATION;
+      else if (Params[2].CharAt(i) == 'H')  flags |= wxICON_HAND;
+      else if (Params[2].CharAt(i) == 'E')  flags |= wxICON_ERROR;
+      else if (Params[2].CharAt(i) == 'I')  flags |= wxICON_INFORMATION;
+      else if (Params[2].CharAt(i) == 'Q')  flags |= wxICON_QUESTION;
+      else if (Params[2].CharAt(i) == 'R')  showCheckBox = true;
     }
     olxstr tickBoxMsg;
-    if( Params.Count() == 4 )
+    if (Params.Count() == 4) {
       tickBoxMsg = Params[3];
+    }
     E.SetRetVal(TdlgMsgBox::Execute(this, msg, Params[0], tickBoxMsg, flags, showCheckBox));
   }
   FGlCanvas->SetFocus();
@@ -5983,28 +6004,31 @@ void TMainForm::macElevate(TStrObjList &Cmds, const TParamList &Options, TMacroD
 void TMainForm::macRestart(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
   olxstr cd = TEFile::CurrentDir();
   TEFile::ChangeDir(TBasicApp::GetBaseDir());
-  bool update = Options.GetBoolOption('u');
   olxstr en;
-  if (!update) {
-    en = TBasicApp::GetModuleName();
-  }
-  else {
 #if defined(__WIN32__)
-    en = TEFile::ChangeFileExt(TBasicApp::GetModuleName(), "exe");
+  en = TEFile::ChangeFileExt(TBasicApp::GetModuleName(), "exe");
+  olxstr restart_ss = "restart.bat";
 #elif defined(__MAC__)
-    en = TBasicApp::GetBaseDir() + "olex2";
+  olxstr restart_ss = "restart-mac.sh";
+  en = TEFile::ExpandRelativePath(TBasicApp::GetBaseDir() + "../..");
 #else
-    en = TBasicApp::GetBaseDir() + "start";
+  en = TBasicApp::GetBaseDir() + "start";
+  olxstr restart_ss = "restart.sh";
 #endif
-  }
-  if (TEFile::Exists(en)) {
-    wxExecute(en.u_str());
+  
+  restart_ss = TEFile::JoinPath(
+    TStrList() << TBasicApp::GetBaseDir() << "etc" << "bin" << restart_ss);
+  if (TEFile::Exists(en) && TEFile::Exists(restart_ss)) {
+    unsigned pid = wxGetProcessId();
+    olxstr cmd = (olxstr(restart_ss) << ' ' << pid << " \"" << en << '"');
+    wxExecute(cmd.u_str());
     FXApp->UpdateOption("confirm_on_close", FalseString());
     Close(false);
   }
   else {
-    E.ProcessingError(__OlxSrcInfo, "Could not locate the required file: ")
-      .quote() << en;
+    E.ProcessingError(__OlxSrcInfo, "Could not locate the required file(s): ")
+      .quote() << en  << ", " << restart_ss;
+    TEFile::ChangeDir(cd);
   }
 }
 //..............................................................................

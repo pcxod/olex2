@@ -1944,6 +1944,7 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
     latt.UpdateConnectivity();
     RefinementModel &rm = XApp.XFile().GetRM();
     TXlConGen xlConGen(rm);
+    olxset<TAfixGroup*, TPointerComparator> current_afixes;
     bool apply_tc = Options.GetBoolOption('t', false, true);
     if (apply_tc) {
       xlConGen.ApplyCorrection(xlConGen.GetTempCorrection());
@@ -1951,6 +1952,9 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
     xlConGen.SetUseRestrains(Options.GetBoolOption('r'));
     xlConGen.Options = Options;
     if (use_neut) {
+      for (size_t i = 0; i < rm.AfixGroups.Count(); i++) {
+        current_afixes.Add(&rm.AfixGroups[i]);
+      }
       TStrList files;
       files << TEFile::JoinPath(TStrList() << XApp.GetBaseDir() << "etc" << "neutron.dist");
       files << TEFile::JoinPath(TStrList() << XApp.GetSharedDir() << "neutron.dist");
@@ -2117,6 +2121,18 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
           }
         }
       }
+    }
+    if (use_neut) {
+      for (size_t i = 0; i < rm.AfixGroups.Count(); i++) {
+        if (current_afixes.Contains(rm.AfixGroups[i]) || rm.AfixGroups[i].Count() == 0) {
+          continue;
+        }
+        double d = rm.aunit.Orthogonalise(rm.AfixGroups[i].GetPivot().ccrd())
+          .DistanceTo(
+            rm.aunit.Orthogonalise(rm.AfixGroups[i][0].ccrd()));
+        rm.AfixGroups[i].SetD(d);
+      }
+
     }
   }
   catch(const TExceptionBase& e)  {
