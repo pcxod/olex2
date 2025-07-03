@@ -20,8 +20,7 @@ std::string PreprocessHtml(const std::string& html)
 {
     const olxstr s(html);
     THtmlPreprocessor htmlp;
-    htmlp.Preprocess(s);
-    const olxch* data = s.raw_str();
+    const olxch* data = htmlp.Preprocess(s).raw_str();
     const size_t length = s.Length();
     return {data, data + length};
 }

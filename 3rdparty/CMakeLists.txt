@@ -28,7 +28,7 @@ if(wxWidgetsSource_ADDED)
       --with-gtk=3
       --with-libjpeg=builtin
       --with-libtiff=builtin
-      BUILD_COMMAND make -j
+      BUILD_COMMAND make -j${EXTERNAL_JOBS}
       INSTALL_COMMAND make install
       LOG_CONFIGURE ON
       LOG_BUILD ON
@@ -152,4 +152,12 @@ if(wxWidgetsSource_ADDED)
 
 else()
   message(FATAL_ERROR "Failed to download wxWidgets source using CPM.")
+endif()
+
+if("${EXTERNAL_PYTHON_BINDINGS}")
+CPMAddPackage(
+    NAME nanobind
+    GITHUB_REPOSITORY "wjakob/nanobind"
+    GIT_TAG "v2.7.0"
+)
 endif()

@@ -203,6 +203,9 @@ endif()
 # Add runtime bitmap validation
 target_compile_definitions(olex2 PRIVATE _PYTHON _OPENSSL  _DEBUG_DEFINITIONS)
 target_compile_definitions(unirun PRIVATE _PYTHON _OPENSSL _DEBUG_DEFINITIONS)
+#if("${EXTERNAL_PYTHON_BINDINGS}")
+#    add_subdirectory(nanobind)
+#endif()
 if (COPY_GUI_FILES)
   add_custom_command(TARGET olex2 POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
