@@ -1,5 +1,5 @@
-set(wxVERSION_FAMILY "3.1")
-set(wxVERSION "${wxVERSION_FAMILY}.7")
+set(wxVERSION_FAMILY "3.2")
+set(wxVERSION "${wxVERSION_FAMILY}.5")
 CPMAddPackage(
     NAME wxWidgetsSource
     VERSION "${wxVERSION}"
@@ -25,6 +25,7 @@ if(wxWidgetsSource_ADDED)
       --enable-unicode
       --enable-html
       --disable-sys-libs
+      --with-gtk=3
       --with-libjpeg=builtin
       --with-libtiff=builtin
       BUILD_COMMAND make -j
