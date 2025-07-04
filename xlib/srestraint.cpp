@@ -209,7 +209,7 @@ void TSimpleRestraint::FromDataItem(const TDataItem& item) {
 }
 //..............................................................................
 IXVarReferencerContainer& TSimpleRestraint::GetParentContainer() const {
-  return (IXVarReferencerContainer&)parent;
+  return dynamic_cast<IXVarReferencerContainer&>(parent);
 }
 //..............................................................................
 olxstr TSimpleRestraint::GetIdName() const {

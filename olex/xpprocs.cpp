@@ -6021,7 +6021,7 @@ void TMainForm::macRestart(TStrObjList &Cmds, const TParamList &Options, TMacroD
   if (TEFile::Exists(en) && TEFile::Exists(restart_ss)) {
     unsigned pid = wxGetProcessId();
     olxstr cmd = (olxstr(restart_ss) << ' ' << pid << " \"" << en << '"');
-    wxExecute(cmd.u_str());
+    wxExecute(cmd.u_str(), wxEXEC_ASYNC | wxEXEC_HIDE_CONSOLE);
     FXApp->UpdateOption("confirm_on_close", FalseString());
     Close(false);
   }
