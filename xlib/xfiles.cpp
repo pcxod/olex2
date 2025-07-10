@@ -462,10 +462,9 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
       GetRM().SetReflections(TRefList());
       try {
         TCif& cif = GetLastLoader<TCif>();
-        cif_dp::cetTable* hklLoop = cif.FindLoop("_refln");
+        cif_dp::cetTable* hklLoop = cif.FindLoop("_diffrn_refln");
         if (hklLoop == 0) {
-          // sorting out tonto loop
-          hklLoop = cif.FindLoop("_diffrn_refln");
+          hklLoop = cif.FindLoop("_refln");
         }
         if (hklLoop != 0) {
           try {

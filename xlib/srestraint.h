@@ -204,13 +204,13 @@ public:
     if (!vr.Is<TSimpleRestraint>()) {
       throw TInvalidArgumentException(__OlxSourceInfo, "var referencer");
     }
-    return ((TSimpleRestraint&)vr).GetReleasableId();
+    return dynamic_cast<const TSimpleRestraint&>(vr).GetReleasableId();
   }
   virtual size_t GetPersistentIdOf(const IXVarReferencer& vr) const {
     return GetIdOf(vr);
   }
   virtual IXVarReferencer& GetReferencer(size_t id) const {
-    return (IXVarReferencer&)GetItem(id);
+    return dynamic_cast<IXVarReferencer&>(GetItem(id));
   }
   virtual size_t ReferencerCount() const { return items.Count(); }
   //
