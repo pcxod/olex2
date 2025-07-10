@@ -5807,10 +5807,10 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options,
   */
   olx_object_ptr<CifBlockIndexReverter> cbi_reverter;
   TCif *cif = 0;
-  bool export_metacif = false, export_ed = false;
+  bool export_metacif = false, export_cif_od = false;
   if (use_items) {
     export_metacif = items_file.Equalsi("metacif");
-    export_ed = items_file.Equalsi("ed");
+    export_cif_od = items_file.Equalsi("cif_od");
   }
   else {
     export_metacif = true;
@@ -5910,7 +5910,7 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options,
     }
   }
 
-  if (export_metacif || export_ed) {
+  if (export_metacif || export_cif_od) {
     TTypeList<Wildcard> to_extract, to_skip;
       olxstr CifCustomisationFN = xapp.GetCifTemplatesDir() +
         (export_metacif ? "customisation.xlt" : "cif_od.xlt");
@@ -5918,7 +5918,7 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options,
       try {
         TDataFile df;
         if (!df.LoadFromXLFile(CifCustomisationFN)) {
-          E.ProcessingError(__OlxSrcInfo, "falied to load ") << CifCustomisationFN;
+          E.ProcessingError(__OlxSrcInfo, "failed to load ") << CifCustomisationFN;
           return;
         }
         df.Include(0);
@@ -5947,7 +5947,7 @@ void XLibMacros::macCifExtract(TStrObjList &Cmds, const TParamList &Options,
     }
     try {
       TCif mcf;
-      mcf.SetCurrentBlock(export_ed ? olxstr("xcalibur") : cif->GetDataName(), true);
+      mcf.SetCurrentBlock(export_cif_od ? olxstr("xcalibur") : cif->GetDataName(), true);
       const CifBlock &cb = cif->GetBlock(cif->GetBlockIndex());
       for (size_t i = 0; i < cb.params.Count(); i++) {
         bool skip = false;
@@ -10313,17 +10313,11 @@ void XLibMacros::macExport(TStrObjList& Cmds, const TParamList& Options,
       cf.SaveToFile(TEFile::ChangeFileExt(hkl_name, "sqf"));
     }
   }
-  // deal with ED data  
-  {
-    cif_dp::cetTable* dyn_f = C.FindLoop("_diffrn_frame");
-    if (dyn_f != 0) {
-      cif_dp::cetTable* dyn_r = C.FindLoop("_refln");
-      if (dyn_r != 0 && dyn_r->ColIndex("_refln_diffraction_start_angle") != -1) {
-        olex2::IOlex2Processor* op = olex2::IOlex2Processor::GetInstance();
-        if (op != 0) {
-          op->processMacro("CifExtract -i=ed");
-        }
-      }
+  // deal with ED data / CAP
+  if (C.GetParamAsString("_computing_data_reduction").StartsFrom("CrysAlisPro")) {
+    olex2::IOlex2Processor* op = olex2::IOlex2Processor::GetInstance();
+    if (op != 0) {
+      op->processMacro("CifExtract -i=cif_od");
     }
   }
   // check if the res file is there
