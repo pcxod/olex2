@@ -224,7 +224,7 @@ public:
     TPtrList<PyObject>& atoms, TPtrList<PyObject>& equiv);
 #endif
   // auto selects which format to use based on 'n' field
-  void FromDataItem(TDataItem& item);
+  void FromDataItem(TDataItem& item, bool clear=true);
 private:
   void FromDataItem_HRF(TDataItem& item);
   void FromDataItem_(TDataItem& item, size_t n);

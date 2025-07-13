@@ -2783,23 +2783,21 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     //if( processed != NULL )
     //  processed->equations.Add( &rm.Vars.GetEquation(i) );
   }
-  // save implicit SAME only if no using explicit SADI notation
-  if (!TXApp::DoUseExplicitSAME()) {
-    for (size_t i = 0; i < rm.rSAME.Count(); i++) {
-      rm.rSAME[i].GetAtoms().UpdateResi();
-      if (!rm.rSAME[i].GetAtoms().IsExplicit()) {
-        olxstr& l = SL.Add("SAME");
-        if (!rm.rSAME[i].GetAtoms().GetResi().IsEmpty()) {
-          l << '_' << rm.rSAME[i].GetAtoms().GetResi();
-        }
-        if (rm.DoShowRestraintDefaults() || !rm.IsDefaultRestraint(rm.rSAME[i])) {
-          l << ' ' << rm.rSAME[i].Esd12 << ' ' << rm.rSAME[i].Esd13;
-        }
-        l << ' ' << rm.rSAME[i].GetAtoms().GetExpression();
-        if (processed != 0) {
-          processed->Add(rm.rSAME[i]);
-        }
-      }
+  for (size_t i = 0; i < rm.rSAME.Count(); i++) {
+    rm.rSAME[i].GetAtoms().UpdateResi();
+    if (rm.rSAME[i].GetAtoms().IsExplicit()) {
+      continue;
+    }
+    olxstr& l = SL.Add("SAME");
+    if (!rm.rSAME[i].GetAtoms().GetResi().IsEmpty()) {
+      l << '_' << rm.rSAME[i].GetAtoms().GetResi();
+    }
+    if (rm.DoShowRestraintDefaults() || !rm.IsDefaultRestraint(rm.rSAME[i])) {
+      l << ' ' << rm.rSAME[i].Esd12 << ' ' << rm.rSAME[i].Esd13;
+    }
+    l << ' ' << rm.rSAME[i].GetAtoms().GetExpression();
+    if (processed != 0) {
+      processed->Add(rm.rSAME[i]);
     }
   }
   SL.Add(EmptyString());
@@ -3058,7 +3056,9 @@ void TIns::ParseHeader(const TStrList& in) {
   included.Clear();
   Skipped.Clear();
   Title.SetLength(0);
-  GetRM().Clear(rm_clear_DEF);
+  uint32_t cf = (TXApp::DoUseExplicitSAME() ||
+    TXApp::DoUseExternalExplicitSAME()) ? rm_clear_ESAME : 0;
+  GetRM().Clear(rm_clear_DEF | cf | rm_clear_ISAME);
   GetAsymmUnit().ClearMatrices();
   // end clear, start parsing
   TStrList toks, lst(in);

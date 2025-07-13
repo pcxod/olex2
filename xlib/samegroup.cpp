@@ -758,8 +758,10 @@ TPtrList<PyObject>::const_list_type TSameGroupList::PyExportAsSADI(
 }
 #endif
 //.............................................................................
-void TSameGroupList::FromDataItem(TDataItem& item) {
-  Clear();
+void TSameGroupList::FromDataItem(TDataItem& item, bool clear) {
+  if (clear) {
+    Clear();
+  }
   olxstr n = item.FindField('n');
   if (n.IsEmpty()) {
     FromDataItem_HRF(item);
