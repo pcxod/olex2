@@ -1465,7 +1465,7 @@ bool TXApp::DoUseExplicitSAME() {
   }
   else {
     a.explicit_same = TBasicApp::GetInstance().GetOptions()
-      .FindValue("explicit_same", TrueString()).ToBool();
+      .FindValue("explicit_same", FalseString()).ToBool();
     return *a.explicit_same;
   }
 }

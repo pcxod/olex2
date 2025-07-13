@@ -120,17 +120,26 @@ void RefinementModel::Clear(uint32_t clear_mask) {
     rcRegister.GetValue(i)->Clear();
   }
   if ((clear_mask & rm_clear_SAME) != 0) {
-    rSAME.Clear();
-  }
-  else if ((clear_mask & rm_clear_ISAME) != 0) {
-    TPtrList<TSameGroup> to_del;
-    for (size_t i = 0; i < rSAME.Count(); i++) {
-      if (!rSAME[i].GetAtoms().IsExplicit()) {
-        to_del << rSAME[i];
-      }
+    if ((clear_mask & rm_clear_SAME) == rm_clear_SAME) {
+      rSAME.Clear();
     }
-    if (!to_del.IsEmpty()) {
-      rSAME.Delete(to_del);
+    else {
+      TPtrList<TSameGroup> to_del;
+      for (size_t i = 0; i < rSAME.Count(); i++) {
+        if ((clear_mask& rm_clear_SAME) == rm_clear_ESAME) {
+          if (rSAME[i].GetAtoms().IsExplicit()) {
+            to_del << rSAME[i];
+          }
+        }
+        else {
+          if (!rSAME[i].GetAtoms().IsExplicit()) {
+            to_del << rSAME[i];
+          }
+        }
+      }
+      if (!to_del.IsEmpty()) {
+        rSAME.Delete(to_del);
+      }
     }
   }
   InfoTables.Clear();
@@ -2779,7 +2788,11 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
       ri.AddItem("item", rl[i]);
     }
     if (explicit_same && rSAME.Count() > 0) {
-      rSAME.ToDataItem_HRF(ri.AddItem("SAME"));
+      TDataItem& si = ri.AddItem("SAME");
+      rSAME.ToDataItem_HRF(si);
+      if (si.ItemCount() == 0) {
+        ri.DeleteItem(&si);
+      }
     }
   }
   rl.Clear();
@@ -2892,7 +2905,8 @@ void RefinementModel::ReadInsExtras(const TStrList &items) {
     for (size_t i = 0; i < restraints->ItemCount(); i++) {
       TDataItem& item = restraints->GetItemByIndex(i);
       if (item.GetName() == "SAME") {
-        rSAME.FromDataItem(item);
+        // do not clear implicit ones!
+        rSAME.FromDataItem(item, false);
         continue;
       }
       TStrList toks(item.GetValue(), ' ');
