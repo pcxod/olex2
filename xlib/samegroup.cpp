@@ -925,7 +925,9 @@ void TSameGroupList::Analyse() {
     }
     size_t nulled = 0;
     for (size_t i = 0; i < items.Count(); i++) {
-      if (items[i].GetParentGroup() == 0 && items[i].DependentCount() == 0) {
+      if (items[i].GetParentGroup() == 0 && items[i].DependentCount() == 0 &&
+        items[i].GetAtoms().IsExplicit())
+      {
         items.NullItem(i);
         nulled++;
       }
