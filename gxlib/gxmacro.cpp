@@ -464,7 +464,8 @@ void GXLibMacros::Export(TLibrary& lib) {
       "type-object type [diff], rmsd&;"
       "r-reset the object style&;"
       "n-[udiff] collection name&;"
-      "c-[true] center the object for 2 atoms&;",
+      "c-[true] center the object for 2 atoms&;"
+      "f-file with the same model to show difference for&;",
       fpAny,
       "Renders a difference between two sets of ADPs")
   );
@@ -6274,42 +6275,103 @@ void GXLibMacros::macUdiff(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
   TGXApp &app = TGXApp::GetInstance();
-  TXAtomPList xatoms = app.FindXAtoms(Cmds, true, true);
-  for (size_t i = 0; i < xatoms.Count(); i++) {
-    if (xatoms[i]->GetEllipsoid() == 0) {
-      xatoms[i] = 0;
+  olxstr fname = Options.FindValue('f');
+  TSAtomPList satoms;
+  if (!fname.IsEmpty()) {
+    TIObjectProvider<TSAtom> &xas = app.XFile().GetLattice().GetObjects().atoms;
+    for (size_t i = 0; i < xas.Count(); i++) {
+      if (xas[i].GetEllipsoid() == 0) {
+        continue;
+      }
+      satoms.Add(xas[i]);
     }
   }
-  xatoms.Pack();
-  if (xatoms.Count() != 2 &&
-    (xatoms.Count() < 6 || (xatoms.Count() % 2) != 0))
-  {
-    Error.ProcessingError(__OlxSrcInfo,
-      "at least 3 pairs of anisotropic atoms expected");
-    return;
+  else {
+    satoms = app.FindSAtoms(Cmds, true, true);
+    for (size_t i = 0; i < satoms.Count(); i++) {
+      if (satoms[i]->GetEllipsoid() == 0) {
+        satoms[i] = 0;
+      }
+    }
   }
-  size_t aag = xatoms.Count() / 2;
-  vec3f_alist crds(aag);
-  TTypeList<olx_pair_t<TSAtom*, TSAtom*> > satomp(aag);
-  TEllpPList u_from(aag), u_to(aag);
-  for (size_t i = 0; i < aag; i++) {
-    satomp[i].a = xatoms[i];
-    crds[i] = xatoms[i]->crd();
-    satomp[i].b = xatoms[i + aag];
-    u_from[i] = xatoms[i]->GetEllipsoid();
-    u_to[i] = new TEllipsoid(*xatoms[i + aag]->GetEllipsoid());
+  satoms.Pack();
+  TEllpPList u_to;
+  if (fname.IsEmpty()) {
+    if (satoms.Count() != 2 &&
+      (satoms.Count() < 6 || (satoms.Count() % 2) != 0))
+    {
+      Error.ProcessingError(__OlxSrcInfo,
+        "At least 3 pairs of anisotropic atoms expected");
+      return;
+    }
   }
-  if (xatoms.Count() > 2) {
-    TNetwork::AlignInfo rv = TNetwork::GetAlignmentRMSD(satomp, false,
-      TSAtom::weight_unit);
-    mat3d m;
-    QuaternionToMatrix(rv.align_out.quaternions[0], m);
+  else {
+    TBasicCFile* l_ = app.XFile().FindFormat(TEFile::ExtractFileExt(fname));
+    if (l_ == 0) {
+      Error.ProcessingError(__OlxSrcInfo,
+        "Could not locate a file loader");
+      return;
+    }
+    olx_object_ptr<TBasicCFile> l = dynamic_cast<TBasicCFile*>(l_->Replicate());
+    l->LoadFromFile(fname);
+    olx_object_ptr<TXFile> xf = (new SObjectProvider())->CreateXFile();
+    xf->GetRM().Assign(l->GetRM(), true);
+    TLattice::GrowInfo* gi = app.XFile().GetLattice().GetGrowInfo();
+    if ( gi != 0) {
+      xf->GetLattice().SetGrowInfo(gi);
+    }
+    xf->GetLattice().Init();
+    TLattice& latt = xf->GetLattice();
+    for (size_t i = 0; i < latt.GetObjects().atoms.Count(); i++) {
+      TSAtom& a = latt.GetObjects().atoms[i];
+      if (a.GetEllipsoid() == 0) {
+        continue;
+      }
+      u_to.Add(new TEllipsoid(*a.GetEllipsoid()));
+    }
+    if (u_to.Count() != satoms.Count()) {
+      Error.ProcessingError(__OlxSrcInfo,
+        "Missmatching number of atoms");
+      u_to.DeleteItems(false);
+      return;
+    }
+  }
+  vec3f_alist crds;
+  TEllpPList u_from;
+  if (u_to.IsEmpty()) {
+    size_t aag = satoms.Count() / 2;
+    crds.SetCount(aag);
+    u_from.SetCount(aag);
+    u_to.SetCount(aag);
+    TTypeList<olx_pair_t<TSAtom*, TSAtom*> > satomp(aag);
     for (size_t i = 0; i < aag; i++) {
-      u_to[i]->Mult(m);
+      satomp[i].a = satoms[i];
+      crds[i] = satoms[i]->crd();
+      satomp[i].b = satoms[i + aag];
+      u_from[i] = satoms[i]->GetEllipsoid();
+      u_to[i] = new TEllipsoid(*satoms[i + aag]->GetEllipsoid());
+    }
+    if (satoms.Count() > 2) {
+      TNetwork::AlignInfo rv = TNetwork::GetAlignmentRMSD(satomp, false,
+        TSAtom::weight_unit);
+      mat3d m;
+      QuaternionToMatrix(rv.align_out.quaternions[0], m);
+      for (size_t i = 0; i < aag; i++) {
+        u_to[i]->Mult(m);
+      }
+    }
+    else if (Options.GetBoolOption('c')) { // center the object between the atoms
+      crds[0] = (satoms[0]->crd() + satoms[1]->crd()) / 2;
     }
   }
-  else if (Options.GetBoolOption('c')) { // center the object between the atoms
-    crds[0] = (xatoms[0]->crd() + xatoms[1]->crd()) / 2;
+  else {
+    crds.SetCount(satoms.Count());
+    u_from.SetCount(satoms.Count());
+    u_to.SetCount(satoms.Count());
+    for (size_t i = 0; i < satoms.Count(); i++) {
+      crds[i] = satoms[i]->crd();
+      u_from[i] = satoms[i]->GetEllipsoid();
+    }
   }
   int q = Options.FindValue("quality", "5").ToUInt();
   if (q > 7) {
