@@ -61,6 +61,8 @@
 #endif
 #include "atomlegend.h"
 #include "olxvar.h"
+#include "oxmfile.h"
+
 #define ConeStipple  6.0
 #define LineStipple  0xf0f0
 
@@ -5953,6 +5955,62 @@ void TGXApp::SaveModel(const olxstr& fileName) const {
   }
   catch(const TExceptionBase& e)  {
     throw TFunctionFailedException(__OlxSourceInfo, e);
+  }
+#else
+  throw TNotImplementedException(__OlxSourceInfo);
+#endif
+}
+//..............................................................................
+olx_object_ptr<TXFile> TGXApp::LoadMainModel(const olxstr& fileName) const {
+#ifdef __WXWIDGETS__
+  TEFile::CheckFileExists(__OlxSourceInfo, fileName);
+  wxFileInputStream fis(fileName.u_str());
+  char sig[3];
+  wxZipInputStream zin(fis);
+  fis.Read(sig, 3);
+  if (olxstr::o_memcmp(sig, "oxm", 3) != 0) {
+    throw TFunctionFailedException(__OlxSourceInfo, "invalid file signature");
+  }
+
+  wxZipEntry* model = 0, * zen;
+  olxstr entryModel("model");
+
+  while ((zen = zin.GetNextEntry()) != 0) {
+    if (entryModel == zen->GetName()) {
+      model = zen;
+    }
+    else {
+      delete zen;
+    }
+  }
+  if (model == 0) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      "invalid model file description");
+  }
+  zin.OpenEntry(*model);
+  size_t contentLen = zin.GetLength();
+  olx_array_ptr<unsigned char> bf = new unsigned char[contentLen + 1];
+  zin.Read(bf, contentLen);
+  TEMemoryInputStream ms(bf, contentLen);
+  TDataFile df;
+  df.LoadFromTextStream(ms);
+  bf = 0;
+  try {
+    olx_object_ptr<TXFile> rv = (new SObjectProvider())->CreateXFile();
+    rv->RegisterFileFormat(new TOXMFile_simple(), "oxm");
+    const TDataItem& item = df.Root().GetItemByName("olex_model");
+    TDataItem* xfiles = item.FindItem("XFiles");
+    if (xfiles == 0) {
+      rv->FromDataItem(item.GetItemByName("XFile"));
+    }
+    else if (xfiles->ItemCount() > 0) {
+      rv->FromDataItem(xfiles->GetItemByIndex(0));
+    }
+    return rv;
+  }
+  catch (const TExceptionBase& exc) {
+    TBasicApp::NewLogEntry(logException) << exc;
+    return 0;
   }
 #else
   throw TNotImplementedException(__OlxSourceInfo);

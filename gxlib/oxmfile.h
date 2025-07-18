@@ -48,5 +48,30 @@ public:
   virtual IOlxObject* Replicate() const {  return new TOXMFile(gxapp);  }
 };
 
+class TOXMFile_simple : public TBasicCFile {
+public:
+  TOXMFile_simple()  {}
+  virtual ~TOXMFile_simple() {}
+
+  virtual void SaveToStrings(TStrList&) {
+    throw TNotImplementedException(__OlxSourceInfo);
+  }
+  virtual void LoadFromStrings(const TStrList&) {
+    throw TNotImplementedException(__OlxSourceInfo);
+  }
+  virtual bool IsNative() const { return true; }
+  virtual bool Adopt(TXFile& f, int) {
+    RefMod.Assign(f.GetRM(), true);
+    return true;
+  }
+  virtual void LoadFromFile(const olxstr& fn) {
+    throw TNotImplementedException(__OlxSourceInfo);
+  }
+  virtual void SaveToFile(const olxstr& fn) {
+    throw TNotImplementedException(__OlxSourceInfo);
+  }
+  virtual IOlxObject* Replicate() const { return new TOXMFile_simple(); }
+};
+
 EndGxlNamespace()
 #endif

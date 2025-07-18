@@ -6308,14 +6308,23 @@ void GXLibMacros::macUdiff(TStrObjList &Cmds, const TParamList &Options,
   else {
     TBasicCFile* l_ = app.XFile().FindFormat(TEFile::ExtractFileExt(fname));
     if (l_ == 0) {
-      Error.ProcessingError(__OlxSrcInfo,
-        "Could not locate a file loader");
+      Error.ProcessingError(__OlxSrcInfo, "Could not locate a file loader");
       return;
     }
-    olx_object_ptr<TBasicCFile> l = dynamic_cast<TBasicCFile*>(l_->Replicate());
-    l->LoadFromFile(fname);
-    olx_object_ptr<TXFile> xf = (new SObjectProvider())->CreateXFile();
-    xf->GetRM().Assign(l->GetRM(), true);
+    olx_object_ptr<TXFile> xf;
+    if (l_->IsNative()) {
+      xf = app.LoadMainModel(fname);
+      if (!xf.ok()) {
+        Error.ProcessingError(__OlxSrcInfo, "Failed to load the model");
+        return;
+      }
+    }
+    else {
+      olx_object_ptr<TBasicCFile> l = dynamic_cast<TBasicCFile*>(l_->Replicate());
+      l->LoadFromFile(fname);
+      xf = (new SObjectProvider())->CreateXFile();
+      xf->GetRM().Assign(l->GetRM(), true);
+    }
     TLattice::GrowInfo* gi = app.XFile().GetLattice().GetGrowInfo();
     if ( gi != 0) {
       xf->GetLattice().SetGrowInfo(gi);
@@ -6330,8 +6339,7 @@ void GXLibMacros::macUdiff(TStrObjList &Cmds, const TParamList &Options,
       u_to.Add(new TEllipsoid(*a.GetEllipsoid()));
     }
     if (u_to.Count() != satoms.Count()) {
-      Error.ProcessingError(__OlxSrcInfo,
-        "Missmatching number of atoms");
+      Error.ProcessingError(__OlxSrcInfo, "Missmatching number of atoms");
       u_to.DeleteItems(false);
       return;
     }

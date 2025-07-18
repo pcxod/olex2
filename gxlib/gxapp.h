@@ -734,6 +734,8 @@ public:
   void SaveModel(const olxstr& file_name) const;
   void LoadModel(const olxstr& file_name);
 
+  olx_object_ptr<TXFile> LoadMainModel(const olxstr& file_name) const;
+
   const_strlist ToPov() const;
   const_strlist ToWrl() const;
   //..............................................................................
