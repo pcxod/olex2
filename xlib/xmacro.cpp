@@ -3182,6 +3182,19 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg,
     const mat3d hklf_mat = tm_t * xapp.XFile().LastLoader()->GetRM().GetHKLF_mat();
     xapp.XFile().LastLoader()->GetRM().SetHKLF_mat(hklf_mat);
   }
+  const vec3i_list &omits = xapp.XFile().GetRM().GetOmits();
+  if (!omits.IsEmpty()) {
+    vec3i_list new_omits(olx_reserve(omits.Count()));
+    for (size_t i = 0; i < xapp.XFile().GetRM().OmittedCount(); i++) {
+      vec3d h_d = tm_t * vec3d(xapp.XFile().GetRM().GetOmitted(i)),
+        h_i = h_d.Round<int>();
+      if (h_d.DistanceTo(h_i) > 1e-3) {
+        continue;
+      }
+      new_omits.AddCopy(h_i);
+    }
+    xapp.XFile().GetRM().SetOmits(new_omits);
+  }
   au.ChangeSpaceGroup(new_sg);
   au.InitMatrices();
   xapp.XFile().LastLoaderChanged();

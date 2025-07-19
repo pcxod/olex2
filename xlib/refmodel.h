@@ -270,6 +270,9 @@ public:
   void ClearOmits() { Omits.Clear(); }
   void ClearOmit() { OMIT_set = false; }
   const vec3i_list& GetOmits() const {  return Omits;  }
+  void SetOmits(const vec3i_list& omits) {
+    Omits = omits;
+  }
   void AddOMIT(const TStrList& omit);
   void DelOMIT(const TStrList& omit, bool all);
   const AtomRefList &OmittedAtoms() const { return Omitted; }
