@@ -153,11 +153,3 @@ if(wxWidgetsSource_ADDED)
 else()
   message(FATAL_ERROR "Failed to download wxWidgets source using CPM.")
 endif()
-
-if("${EXTERNAL_PYTHON_BINDINGS}")
-CPMAddPackage(
-    NAME nanobind
-    GITHUB_REPOSITORY "wjakob/nanobind"
-    GIT_TAG "v2.7.0"
-)
-endif()
