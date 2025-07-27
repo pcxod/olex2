@@ -1346,7 +1346,7 @@ void TMainForm::StartupInit() {
   for (size_t i = 0; i < gls.FontCount(); i++) {
     gls._GetFont(i).SetMaterial(glm);
   }
-  
+
 
   olxstr T(FXApp->GetConfigDir());
   T << FLastSettingsFile;
@@ -1764,6 +1764,7 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
       time_t FileT = TEFile::FileAge(FListenFile);
       if (FileMT != FileT) {
         FObjectUnderMouse = 0;
+        processMacro(olxstr(TEFile::ReadCLines(FListenFile)[0]), "OnListen");
         processMacro((olxstr("reap_listen \"") << FListenFile) + '\"', "OnListen");
         FileMT = FileT;
       }
