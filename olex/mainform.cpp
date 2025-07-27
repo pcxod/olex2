@@ -499,6 +499,10 @@ void TMainForm::XApp(Olex2App *XA)  {
     "Listens for changes in a file provided as argument. If the file content "
     "changes it is automatically reloaded in Olex2. If no arguments provided "
     "prints current status of the mode");
+  this_InitMacroD(ListenCmd, EmptyString(), fpAny,
+    "Listens for changes in a file provided as argument. If the file content "
+    "changes its first line is ran as a command. If no arguments provided "
+    "prints current status of the mode");
   #ifdef __WIN32__
   this_InitMacroD(WindowCmd, EmptyString(), fpAny^(fpNone|fpOne),
     "Windows specific command which send a command to a process with GUI "
@@ -1764,8 +1768,16 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
       time_t FileT = TEFile::FileAge(FListenFile);
       if (FileMT != FileT) {
         FObjectUnderMouse = 0;
-        processMacro(olxstr(TEFile::ReadCLines(FListenFile)[0]), "OnListen");
         processMacro((olxstr("reap_listen \"") << FListenFile) + '\"', "OnListen");
+        FileMT = FileT;
+      }
+    }
+    if ((FMode & mListen) != 0 && TEFile::Exists(FListenCmdFile)) {
+      static time_t FileMT = TEFile::FileAge(FListenCmdFile);
+      time_t FileT = TEFile::FileAge(FListenCmdFile);
+      if (FileMT != FileT) {
+        FObjectUnderMouse = 0;
+        processMacro(olxstr(TEFile::ReadCLines(FListenCmdFile)[0]), "OnListen");
         FileMT = FileT;
       }
     }

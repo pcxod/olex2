@@ -350,6 +350,7 @@ private:
   DefMacro(Clear)
   DefMacro(Rota)
   DefMacro(Listen)
+  DefMacro(ListenCmd)
   DefMacro(WindowCmd)
   DefMacro(ProcessCmd)
   DefMacro(Wait)
@@ -566,6 +567,8 @@ private:
   vec3d FFadeVector; // stores: current position, end and increment
 
   olxstr FListenFile;
+
+  olxstr FListenCmdFile; // file to listen for commands
 
   TStringToList<olxstr,wxMenuItem*> FRecentFiles;
   olxstr_dict<olxstr,true> Bindings;
