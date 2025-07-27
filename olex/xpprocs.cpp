@@ -975,6 +975,22 @@ void TMainForm::macListen(TStrObjList& Cmds, const TParamList& Options, TMacroDa
   }
 }
 //..............................................................................
+void TMainForm::macListenCmd(TStrObjList& Cmds, const TParamList& Options, TMacroData& Error) {
+  if (!Cmds.IsEmpty()) {
+    FMode |= mListen;
+    FListenCmdFile = TEFile::OSPath(Cmds.Text(' '));
+    TBasicApp::NewLogEntry() << "Listening for: '" << FListenCmdFile << '\'';
+  }
+  else {
+    if (FMode & mListen) {
+      TBasicApp::NewLogEntry() << "Listening for: '" << FListenCmdFile << '\'';
+    }
+    else {
+      TBasicApp::NewLogEntry() << "Not in a listening mode";
+    }
+  }
+}
+//..............................................................................
 #ifdef __WIN32__
 void TMainForm::macWindowCmd(TStrObjList &Cmds, const TParamList &Options, TMacroData &Error)  {
   for( size_t i=1; i < Cmds.Count(); i++ )  {
@@ -5598,7 +5614,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
         a->SetOccu(fau.GetAtom(j).GetOccu());
         au.GetRefMod()->Vars.FixParam(*a, catom_var_name_Sof);
       }
-      
+
     }
     FXApp->XFile().EndUpdate();
     return;
@@ -6015,7 +6031,7 @@ void TMainForm::macRestart(TStrObjList &Cmds, const TParamList &Options, TMacroD
   en = TBasicApp::GetBaseDir() + "start";
   olxstr restart_ss = "restart.sh";
 #endif
-  
+
   restart_ss = TEFile::JoinPath(
     TStrList() << TBasicApp::GetBaseDir() << "etc" << "bin" << restart_ss);
   if (TEFile::Exists(en) && TEFile::Exists(restart_ss)) {
