@@ -1,5 +1,5 @@
 set(wxVERSION_FAMILY "3.2")
-set(wxVERSION "${wxVERSION_FAMILY}.5")
+set(wxVERSION "${wxVERSION_FAMILY}.8.1")
 CPMAddPackage(
     NAME wxWidgetsSource
     VERSION "${wxVERSION}"
