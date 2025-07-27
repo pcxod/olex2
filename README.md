@@ -14,10 +14,7 @@ Remember to replace everything between <> with the equivalent names for your env
 ```bash
 mkdir build && cd build
 cmake .. -GNinja \
-          -DPYTHON_LIBRARY=<conda_home>/envs/<python3.8_environment>/lib/libpython3.8.so.1.0 \
-          -DPYTHON_INCLUDE_DIR=<conda_home>/envs/<python3.8_environment>/include/python3.8 \
-          -DPYTHON_ROOT_DIR=<conda_home>/envs/<python3.8_environment> \
-          -DPython3_FIND_STRATEGY="LOCATION"
+          -DPython_EXECUTABLE=<conda_home>/envs/<python3.8_environment>/bin/python
 ```
 If everything goes right, you can build it:
 ```bash
@@ -26,10 +23,7 @@ ninja -j
 If you want to test your modifications with every build, you can use:
 ```bash
 cmake .. -GNinja \
-          -DPYTHON_LIBRARY=<conda_home>/envs/<python3.8_environment>/lib/libpython3.8.so.1.0 \
-          -DPYTHON_INCLUDE_DIR=<conda_home>/envs/<python3.8_environment>/include/python3.8 \
-          -DPYTHON_ROOT_DIR=<conda_home>/envs/<python3.8_environment> \
-          -DPython3_FIND_STRATEGY="LOCATION" \
+          -DPython_EXECUTABLE=<conda_home>/envs/<python3.8_environment>/bin/python
           -DCOPY_GUI_FILES=ON \
           -DOLEX2_GUI_DIRECTORY=<YOUR_OLEX2_GUI_DIRECTORY>
 ```

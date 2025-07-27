@@ -10,11 +10,7 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/CPM.cmake")
 add_subdirectory(3rdparty EXCLUDE_FROM_ALL)
 
 # Example to get it working with Anaconda or Miniforge. Should work similarly with other environments:
-# -DPYTHON_LIBRARY=<conda_home>/envs/<python3.8 environment>/lib/libpython3.8.so.1.0
-# -DPYTHON_INCLUDE_DIR=<conda_home>/envs/<python3.8 environment>/include/python3.8
-# -DPYTHON_ROOT_DIR=<conda_home>/envs/<python3.8 environment>
-# -DPython3_FIND_STRATEGY=LOCATION
-
+# -DPython_EXECUTABLE=<conda_home>/envs/<python3.8 environment>/bin/python
 # finding the python version
 execute_process(
     COMMAND "${Python_EXECUTABLE}" -V
