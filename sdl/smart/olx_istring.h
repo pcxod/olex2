@@ -208,7 +208,7 @@ public:
   TTSString(const std::string &v) {
     T::Append(v.c_str(), v.length());
   }
-  template <typename AC> TTSString(const AC& v)
+  template <typename AC> TTSString(AC v)
     : T(v)
   {}
   //...........................................................................
@@ -1727,8 +1727,8 @@ public:
       for (size_t i = 0, dest = 0; i < whr_len; i++, dest++) {
         if (i + wht_len > whr_len) {
           if (dest != i) {
-            for (; i < whr_len; i++) {
-              whr[dest++] = whr[i];
+            for (; i < whr_len; i++, dest++) {
+              whr[dest] = whr[i];
             }
           }
           return cnt;

@@ -9,6 +9,7 @@
 
 #ifndef __olx_sdl_wstr_H
 #define __olx_sdl_wstr_H
+#include "olx_istring.h"
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -65,7 +66,8 @@ protected:
   //..............................................................................
 #if defined(_UNICODE)
   inline void setObjValue(const IOlxObject &v) {
-    Assign(v.ToString());
+    auto v_str = v.ToString();
+    Assign(v_str);
   }
   struct t_constructor {
     TWString& str;
@@ -73,7 +75,7 @@ protected:
       : str(str)
     {}
     template <typename type_t>
-    void p_functor(const type_t& v) const {
+    void p_functor(type_t v) const {
       str.setTypeValue(printFormat(v), v);
     }
     template <class type_t>
@@ -142,7 +144,7 @@ public:
   //..........................................................................................
   TWString(const TTIString<char>& str);
   // primitive Type constructors
-  template <typename T> TWString(const T& v) {
+  template <typename T> TWString(T v) {
 #if defined(_UNICODE)
     primitive_type_splitter::make(t_constructor(*this)).call(v);
 #else

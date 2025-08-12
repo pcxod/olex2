@@ -50,14 +50,15 @@ const olxstr &esdl::FalseString()  { return CFalseString();  }
 #endif
 //..............................................................................
 struct olx_print_i_cont {
+  virtual ~olx_print_i_cont() = default;
   virtual olxstr ToString() = 0;
 };
 //..............................................................................
 template <typename T>
 struct olx_print_cont : public olx_print_i_cont {
-  const T &value;
-  olx_print_cont(const T &value)
-    : value(value)
+  const T value;
+  olx_print_cont(const T &v)
+    : value(v)
   {}
   virtual olxstr ToString() {
     return olxstr(value);
@@ -66,7 +67,7 @@ struct olx_print_cont : public olx_print_i_cont {
 //..............................................................................
 template <typename T>
 struct olx_print_cont_f : public olx_print_i_cont {
-  const T &value;
+  const T value;
   int fp_cnt;
   bool expf, trim;
   olx_print_cont_f(const T &v, int fp_cnt, bool expf, bool trim)

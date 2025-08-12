@@ -25,20 +25,20 @@ namespace esdl {
       void call(const x_t& v) const {
         functor.c_functor(v);
       }
-      void call(const bool& v) const { functor.p_functor(v); }
-      void call(const char& v) const { functor.p_functor(v); }
-      void call(const short& v) const { functor.p_functor(v); }
-      void call(const int& v) const { functor.p_functor(v); }
-      void call(const long& v) const { functor.p_functor(v); }
-      void call(const long long& v) const { functor.p_functor(v); }
-      void call(const unsigned char& v) const { functor.p_functor(v); }
-      void call(const unsigned short& v) const { functor.p_functor(v); }
-      void call(const unsigned int& v) const { functor.p_functor(v); }
-      void call(const unsigned long& v) const { functor.p_functor(v); }
-      void call(const unsigned long long& v) const { functor.p_functor(v); }
-      void call(const float& v) const { functor.p_functor(v); }
-      void call(const double& v) const { functor.p_functor(v); }
-      void call(const long double& v) const { functor.p_functor(v); }
+      void call(bool v) const { functor.p_functor(v); }
+      void call(char v) const { functor.p_functor(v); }
+      void call(short v) const { functor.p_functor(v); }
+      void call(int v) const { functor.p_functor(v); }
+      void call(long v) const { functor.p_functor(v); }
+      void call(long long v) const { functor.p_functor(v); }
+      void call(unsigned char v) const { functor.p_functor(v); }
+      void call(unsigned short v) const { functor.p_functor(v); }
+      void call(unsigned int v) const { functor.p_functor(v); }
+      void call(unsigned long v) const { functor.p_functor(v); }
+      void call(unsigned long long v) const { functor.p_functor(v); }
+      void call(float v) const { functor.p_functor(v); }
+      void call(double v) const { functor.p_functor(v); }
+      void call(long double v) const { functor.p_functor(v); }
     };
 
     template <class functor_t>

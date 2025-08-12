@@ -191,7 +191,7 @@ TARGET_LINK_LIBRARIES(olex2 PRIVATE
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWXDEBUG_LEVEL=2 -D__WXDEBUG__ -DDEBUG_BITMAP_OPERATIONS")
     # Add memory debugging
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -g")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -g -Wno-c++11-narrowing")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
     set(_DEBUG_DEFINITIONS ${DEBUG_BITMAP_OPERATIONS} ${__WXDEBUG__})
 endif()
