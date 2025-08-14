@@ -388,7 +388,7 @@ void XLibMacros::Export(TLibrary& lib)  {
  );
   xlib_InitMacro(SGInfo,
     "c-include lattice centering matrices&;"
-    "i - include inversion generated matrices if any&;"
+    "i-include inversion generated matrices if any&;"
     "s-print ShelX compatible LATT/SYMM cards",
     fpNone|fpOne,
     "Prints space group information.");
