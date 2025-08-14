@@ -140,7 +140,7 @@ public:
     else if( frag_id == frag_id_cp_star )  {
       const double l = 0.5*1.42/cos(54*M_PI/180);
       GenerateRegularRing(5, l, rv);
-      GenerateRegularRing(5, l+1.063, rv);
+      GenerateRegularRing(5, l+1.42*1.063, rv);
     }
     else {
       throw TInvalidArgumentException(
