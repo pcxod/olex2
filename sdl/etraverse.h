@@ -71,33 +71,44 @@ public:
 
 template <class TreeToTraverseClass> class TBTreeTraverser  {
 template <class Traverser>
-  static bool TraverseLeft(const typename TreeToTraverseClass::Entry* en, Traverser& traverser)  {
-    if( !traverser.OnItem(en) )  return false;
-    const typename TreeToTraverseClass::Entry* nxt = en->next;
-    while( nxt )  {
-      if( !traverser.OnItem(nxt) )  return false;
-      nxt = nxt->next;
+static bool TraverseLeft(const typename TreeToTraverseClass::entry_t* en, Traverser& traverser) {
+  if (!traverser.OnItem(en))  return false;
+  const typename TreeToTraverseClass::entry_t* nxt = en->next;
+  while (nxt != 0) {
+    if (!traverser.OnItem(nxt)) {
+      return false;
     }
-    while( en )  {
-      if( en->right )  TraverseLeft(en->right, traverser);
-      if( en->left )  {
-        if( !traverser.OnItem(en->left) )  return false;
-        nxt = en->left->next;
-        while( nxt )  {
-          if( !traverser.OnItem(nxt) )  return false;
-          nxt = nxt->next;
-        }
-        en = en->left;
-      }
-      else
-        return true;
-    }
-    return true;
+    nxt = nxt->next;
   }
+  while (en) {
+    if (en->right) {
+      TraverseLeft(en->right, traverser);
+    }
+    if (en->left != 0) {
+      if (!traverser.OnItem(en->left)) {
+        return false;
+      }
+      nxt = en->left->next;
+      while (nxt != 0) {
+        if (!traverser.OnItem(nxt)) {
+          return false;
+        }
+        nxt = nxt->next;
+      }
+      en = en->left;
+    }
+    else {
+      return true;
+    }
+  }
+  return true;
+}
 public:
   template <class Traverser>
     static bool Traverse(const TreeToTraverseClass& tree, Traverser& traverser)  {
-      if( tree.Count() == 0 )  return true;
+      if (tree.Count() == 0) {
+        return true;
+      }
       return TraverseLeft(tree.GetRoot(), traverser);
     }
 

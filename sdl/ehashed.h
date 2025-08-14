@@ -10,6 +10,7 @@
 #pragma once
 #include "eset.h"
 #include "edict.h"
+#include "ebtree.h"
 
 BeginEsdlNamespace();
 /*
@@ -303,6 +304,38 @@ struct MapFactory {
   }
 };
 
+template <typename key_t, class comparator_t>
+struct BTSetFactory {
+  typedef TreeSetEntry<key_t> value_t;
+  typedef BTEntry<value_t> entry_t;
+  typedef BTree<entry_t, comparator_t> basket_t;
+  comparator_t cmp;
+  BTSetFactory() {}
+  BTSetFactory(const comparator_t& cmp)
+    : cmp(cmp)
+  {}
+
+  basket_t* new_basket() const {
+    return new basket_t(cmp);
+  }
+};
+
+template <typename key_t, typename item_t, class comparator_t>
+struct BTMapFactory {
+  typedef TreeMapEntry<key_t, item_t> value_t;
+  typedef BTEntry<value_t> entry_t;
+  typedef BTree<entry_t, comparator_t> basket_t;
+  comparator_t cmp;
+  BTMapFactory() {}
+  BTMapFactory(const comparator_t& cmp)
+    : cmp(cmp)
+  {}
+
+  basket_t* new_basket() const {
+    return new basket_t(cmp);
+  }
+};
+
 template <typename item_t, class comparator_t,
   uint32_t N = 64, uint32_t L = 2>
 class TEHashSet : public TEHashed<SetFactory<item_t, comparator_t>, N, L> {
@@ -357,9 +390,50 @@ public:
   {}
 
   template <typename T>
-  item_t& Add(const T& key, const item_t &value) {
+  item_t& Add(const T& key, const item_t& value) {
     return parent_t::GetBasket(key).Add(key, value);
   }
+};
 
+template <typename key_t, class comparator_t,
+  uint32_t N = 64, uint32_t L = 2>
+class TEHashTreeSet : public TEHashed<BTSetFactory<key_t, comparator_t>, N, L> {
+  typedef TEHashed<BTSetFactory<key_t, comparator_t>, N, L> parent_t;
+  BTSetFactory<key_t, comparator_t> factory;
+public:
+  typedef typename parent_t::Iterator iterator_t;
+  typedef typename parent_t::basket_t basket_t;
+
+  TEHashTreeSet() {}
+
+  TEHashTreeSet(const comparator_t& cmp)
+    : factory(cmp)
+  {}
+
+  template <typename T> void Add(const T& key) {
+    parent_t::GetBasket(key).Add(key);
+  }
+};
+
+template <typename key_t, typename item_t, class comparator_t,
+  uint32_t N = 64, uint32_t L = 2>
+class TEHashTreeMap : public TEHashed<BTMapFactory<key_t, item_t, comparator_t>, N, L> {
+  typedef TEHashed<BTMapFactory<key_t, item_t, comparator_t>, N, L> parent_t;
+  typedef BTMapFactory<key_t, item_t, comparator_t> factory_t;
+  factory_t factory;
+public:
+  typedef typename parent_t::Iterator iterator_t;
+  typedef typename parent_t::basket_t basket_t;
+
+  TEHashTreeMap() {}
+
+  TEHashTreeMap(const comparator_t& cmp)
+    : factory(cmp)
+  {}
+
+  template <typename T>
+  void Add(const T& key, const item_t& value) {
+    parent_t::GetBasket(key).Add(factory_t::value_t(key, value));
+  }
 };
 EndEsdlNamespace();

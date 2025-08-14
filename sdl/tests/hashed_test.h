@@ -10,6 +10,8 @@
 #include "ehashed.h"
 #include "encodings.h"
 #include "etime.h"
+#include "ebtree.h"
+#include "estopwatch.h"
 
 namespace test {
 
@@ -71,7 +73,7 @@ namespace test {
     return rv;
   }
   void perf_test(OlxTests& t) {
-    size_t max_str_c = 450000;
+    size_t max_str_c = 500000;
     bool test_binary = max_str_c < 1000000; // takes too long with > 1m recs
     TStrList strings(max_str_c);
     for (size_t i = 0; i < max_str_c; i++) {
@@ -80,45 +82,76 @@ namespace test {
 
     olxstr_set<> binary_set(olx_reserve(test_binary ? max_str_c : 1));
     typedef TEHashSet<olxstr, olxstrComparator<false>, 4, 4> set_t;
+    typedef BTEntry<TreeSetEntry<olxstr> > bt_entry_t;
+    typedef TEHashTreeSet<olxstr, olxstrComparator<false>, 4, 4> hbt_t;
+    typedef BTree<bt_entry_t, olxstrComparator<false> > bt_t;
+    bt_t bt;
     set_t hash_set;
-
-    size_t bin_st = TETime::msNow();
+    hbt_t hbt;
+    olxstr ns = "do you have me??";
+    TStopWatch sw(__FUNC__);
+    sw.start("Binary set building");
     if (test_binary) {
       for (size_t i = 0; i < max_str_c; i++) {
         binary_set.Add(strings[i]);
       }
     }
-    size_t hash_st = TETime::msNow();
+    sw.start("Hash set building");
     for (size_t i = 0; i < max_str_c; i++) {
       hash_set.Add(strings[i]);
     }
-    size_t hash_end = TETime::msNow();
-    // hash set is about 20 times faster
-    TBasicApp::NewLogEntry() << "Binary set building time (ms): " <<
-      hash_st - bin_st;
-    TBasicApp::NewLogEntry() << "Hash set building time (ms): " <<
-      hash_end - hash_st;
+    sw.start("Binary tree building");
+    for (size_t i = 0; i < max_str_c; i++) {
+      bt.Add(bt_t::value_t(strings[i]));
+    }
 
-    bin_st = TETime::msNow();
+    sw.start("Hash binary tree building");
+    for (size_t i = 0; i < max_str_c; i++) {
+      hbt.Add(strings[i]);
+    }
+
+    sw.start("Binary set contains");
     if (test_binary) {
       for (size_t i = 0; i < max_str_c; i++) {
         if (!binary_set.Contains(strings[i])) {
           throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
         }
       }
+      if (binary_set.Contains(ns)) {
+        throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
+      }
     }
-    hash_st = TETime::msNow();
+
+    sw.start("Hash set contains");
     for (size_t i = 0; i < max_str_c; i++) {
       if (!hash_set.Contains(strings[i])) {
         throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
       }
     }
-    hash_end = TETime::msNow();
-    // hash set is about 3 times faster for 64/2, 32/3
-    TBasicApp::NewLogEntry() << "Binary set contains time (ms): " <<
-      hash_st - bin_st;
-    TBasicApp::NewLogEntry() << "Hash set contains time (ms): " <<
-      hash_end - hash_st;
+    if (hash_set.Contains(ns)) {
+      throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
+    }
+
+    sw.start("Binary tree contains");
+    for (size_t i = 0; i < max_str_c; i++) {
+      if (bt.Contains(strings[i]) == 0) {
+        throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
+      }
+    }
+    if (bt.Contains(ns)) {
+      throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
+    }
+
+    sw.start("Hash binary tree contains");
+    for (size_t i = 0; i < max_str_c; i++) {
+      if (hbt.Find(strings[i]) == 0) {
+        throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
+      }
+    }
+    if (hbt.Contains(ns)) {
+      throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
+    }
+    sw.stop();
 
     olx_pdict<size_t,size_t> stats = hash_set.get_stats();
     TArrayList<olx_pair_t<size_t, size_t> > rv_stats(stats.Count());

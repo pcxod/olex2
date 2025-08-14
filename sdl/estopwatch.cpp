@@ -9,7 +9,6 @@
 
 #include "estopwatch.h"
 
-TStopWatchManager::Record *TStopWatchManager::current = NULL;
 //.............................................................................
 const_strlist TStopWatchManager::Record::prepareList(size_t level)  {
   volatile olx_scope_cs cs_(GetCriticalSection());
@@ -35,31 +34,35 @@ const_strlist TStopWatchManager::Record::prepareList(size_t level)  {
 //.............................................................................
 void TStopWatchManager::print() {
   volatile olx_scope_cs cs_(GetCriticalSection());
-  if (!TBasicApp::GetInstance().IsProfiling()) return;
+  if (!TBasicApp::GetInstance().IsProfiling()) {
+    return;
+  }
   TBasicApp::NewLogEntry(logInfo) << NewLineSequence() <<
-    current->prepareList(1) << NewLineSequence();
+    current_()->prepareList(1) << NewLineSequence();
 }
 //.............................................................................
 TStopWatchManager::Record &TStopWatchManager::Push(
   const olxstr &functionName)
 {
   volatile olx_scope_cs cs_(GetCriticalSection());
-  if (current == NULL)
-    return *(current = new Record(NULL, functionName));
-  return *(current = &current->New(functionName));
+  if (current_() == 0) {
+    return *(current_() = new Record(0, functionName));
+  }
+  return *(current_() = &current_()->New(functionName));
 }
 //.............................................................................
 void TStopWatchManager::Pop() {
   volatile olx_scope_cs cs_(GetCriticalSection());
-  if (current == NULL)
+  if (current_() == 0) {
     throw TFunctionFailedException(__OlxSourceInfo, "current==NULL");
-  if (current->parent == NULL) {
+  }
+  if (current_()->parent == 0) {
     print();
-    delete current;
-    current = NULL;
+    delete current_();
+    current_() = 0;
   }
   else {
-    current = current->parent;
+    current_() = current_()->parent;
   }
 }
 //.............................................................................
