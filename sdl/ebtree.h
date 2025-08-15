@@ -50,30 +50,36 @@ struct TreeMapEntry {
   }
 };
 
-template <class value_tt>
-struct BTEntry {
+template <class actual, typename value_tt>
+struct ABTreeEntry {
   typedef value_tt value_t;
   typedef typename value_t::key_t key_t;
   value_t value;
-  size_t height;
-  BTEntry* left, * right;
-  BTEntry* next, * last;  // linked list of items with equal key
+  actual* left, * right;
 
-  BTEntry()
-    : height(1), left(0), right(0),
-    next(0), last(0)
+  ABTreeEntry()
+    : left(0), right(0)
   {}
 
-  BTEntry(const value_t& value)
-    : value(value), height(1),
-    left(0), right(0),
-    next(0), last(0)
+  ABTreeEntry(const value_t& value)
+    : value(value),
+    left(0), right(0)
   {}
 
-  ~BTEntry() {
-    olx_del_obj(next);
-    olx_del_obj(left);
+  virtual ~ABTreeEntry() {
     olx_del_obj(right);
+    olx_del_obj(left);
+  }
+
+  virtual void Clear() {
+    if (right != 0) {
+      delete right;
+      right = 0;
+    }
+    if (left != 0) {
+      delete left;
+      left = 0;
+    }
   }
 
   template <class cmp_t>
@@ -86,55 +92,163 @@ struct BTEntry {
     return value.cmp(k, comparator);
   }
 
-  static size_t get_height(const BTEntry* e) {
+  virtual actual* rotate_left() {
+    actual* r = right;
+    right = r->left;
+    r->left = (actual*)(this);
+    return update(r);
+  }
+
+  virtual actual* rotate_right() {
+    actual* l = left;
+    left = l->right;
+    l->right = (actual*)(this);
+    return update(l);
+  }
+
+  virtual bool AddSame(const value_t& v) {
+    return false;
+  }
+
+  virtual actual* update(actual* e) = 0;
+};
+
+template <class actual, typename value_tt>
+struct ARBTreeEntry_ : public ABTreeEntry <actual, value_tt >{
+  typedef ABTreeEntry <actual, value_tt> parent_t;
+  typedef value_tt value_t;
+  typedef typename value_t::key_t key_t;
+  actual* parent;
+  char color;
+
+  ARBTreeEntry_() : parent(0), color('R')
+  {}
+
+  ARBTreeEntry_(const value_t& value)
+    : parent(0), color('R'),
+    parent_t(value)
+  {}
+
+  virtual actual* rotate_left() {
+    parent = this->right;
+    if (this->left != 0) {
+      this->left->parent = this->right;
+    }
+    return parent_t::rotate_left();
+  }
+
+  virtual actual* rotate_right() {
+    parent = this->left;
+    if (this->right != 0) {
+      this->right->parent = this->left;
+    }
+    return parent_t::rotate_right();
+  }
+};
+
+template <class actual, class value_tt>
+struct AVLBTEntry_ : public ABTreeEntry<actual, value_tt > {
+  typedef ABTreeEntry<actual, value_tt > parent_t;
+  typedef value_tt value_t;
+  typedef typename value_t::key_t key_t;
+  size_t height;
+
+  AVLBTEntry_()
+    : height(1)
+  {}
+
+  AVLBTEntry_(const value_t& value)
+    : parent_t(value), height(1)
+  {}
+
+  static size_t get_height(const actual* e) {
     return e == 0 ? 0 : e->height;
   }
 
   void update_height() {
-    height = olx_max(get_height(left), get_height(right)) + 1;
+    height = olx_max(get_height(this->left), get_height(this->right)) + 1;
   }
 
   int get_bf() const {
-    return (int)get_height(left) - (int)get_height(right);
+    return (int)get_height(this->left) - (int)get_height(this->right);
   }
 
-  BTEntry* rotate_left() {
-    BTEntry* r = right;
-    right = r->left;
-    r->left = this;
+  virtual actual* update(actual* e) {
     this->update_height();
-    r->update_height();
-    return r;
+    e->update_height();
+    return e;
   }
+};
+template <class value_tt>
+struct AVLTreeEntry : public AVLBTEntry_<AVLTreeEntry<value_tt>, value_tt> {
+  typedef AVLBTEntry_<AVLTreeEntry<value_tt>, value_tt> parent_t;
+  AVLTreeEntry()
+  {}
 
-  BTEntry* rotate_right() {
-    BTEntry* l = left;
-    left = l->right;
-    l->right = this;
-    this->update_height();
-    l->update_height();
-    return l;
+  AVLTreeEntry(const value_tt& value)
+    : parent_t(value)
+  {}
+};
+
+template <class actual, class value_tt>
+struct RBTreeEntry_ : public ARBTreeEntry_<actual, value_tt> {
+  typedef ARBTreeEntry_<actual, value_tt> parent_t;
+  RBTreeEntry_() {}
+
+  RBTreeEntry_(const value_tt& value)
+    : parent_t(value)
+  {}
+
+  virtual actual* update(actual* e) {
+    return e;
+  }
+};
+
+template <class value_tt>
+struct RBTreeEntry : public RBTreeEntry_<RBTreeEntry<value_tt>, value_tt> {
+  typedef value_tt value_t;
+  typedef RBTreeEntry_<RBTreeEntry<value_tt>, value_tt> parent_t;
+  RBTreeEntry()
+  {}
+
+  RBTreeEntry(const value_t& value)
+    : parent_t(value)
+  {}
+};
+
+
+template <class value_tt>
+struct AVLEntryEx : public AVLBTEntry_<AVLEntryEx<value_tt>, value_tt> {
+  typedef AVLBTEntry_<AVLEntryEx<value_tt>, value_tt > parent_t;
+  typedef AVLEntryEx<value_tt> actual;
+  typedef value_tt value_t;
+  typedef typename value_t::key_t key_t;
+  AVLEntryEx* next, * last;  // linked list of items with equal key
+
+  AVLEntryEx()
+    : next(0), last(0)
+  {}
+
+  AVLEntryEx(const value_t& value)
+    : parent_t(value),
+    next(0), last(0)
+  {}
+
+  ~AVLEntryEx() {
+    olx_del_obj(next);
   }
 
   void Clear() {
+    parent_t::Clear();
     if (next != 0) {
       delete next;
       next = 0;
     }
-    if (right != 0) {
-      delete right;
-      right = 0;
-    }
-    if (left != 0) {
-      delete left;
-      left = 0;
-    }
   }
 };
 
-
 template <class entry_tt, class Comparator=TComparableComparator>
-class BTree {
+class BTree_ {
 protected:
   entry_tt *Root;
   size_t _Count, _LeafCount;
@@ -143,11 +257,11 @@ public:
   typedef entry_tt entry_t;
   typedef typename entry_t::value_t value_t;
   typedef typename entry_t::key_t key_t;
-  BTree(const Comparator &cmp= Comparator())
+  BTree_(const Comparator &cmp= Comparator())
     : Root(0), _Count(0), _LeafCount(0), cmp(cmp)
   {}
 
-  ~BTree() { olx_del_obj(Root); }
+  ~BTree_() { olx_del_obj(Root); }
 
   void Clear() {
     if (Root != 0) {
@@ -163,19 +277,19 @@ public:
   size_t LeafCount() const { return _LeafCount; }
 
   olx_pair_t<entry_t*, int> find_semi(const key_t& key) const {
-    int cmp_v = Root->cmp(key, cmp);
+    int cmp_v = this->Root->cmp(key, cmp);
     if (cmp_v < 0) {
-      if (Root->left != 0) {
-        return go_left(Root->left, key);
+      if (this->Root->left != 0) {
+        return go_left(this->Root->left, key);
       }
     }
     else if (cmp_v > 0) {
-      if (Root->right != 0) {
-        return go_right(Root->right, key);
+      if (this->Root->right != 0) {
+        return go_right(this->Root->right, key);
       }
-      return Root;
+      return this->Root;
     }
-    return olx_pair_t<entry_t*, int>(Root, 0);
+    return olx_pair_t<entry_t*, int>(this->Root, 0);
   }
 
   olx_pair_t<entry_t*, int> find_recursive(entry_t*e, const key_t& key) const {
@@ -225,58 +339,7 @@ public:
     return Root = insert_recursive(Root, e);
   }
 
-  entry_t* insert_recursive(entry_t* node, const value_t &e) {
-    if (node == 0) {
-      node = new entry_t(e);
-      _LeafCount++;
-      _Count++;
-      if (Root == 0) {
-        Root = node;
-      }
-      return node;
-    }
-    int cmp_v = node->cmp(e, cmp);
-    if (cmp_v < 0) {
-      node->left = insert_recursive(node->left, e);
-    }
-    else if (cmp_v > 0) {
-      node->right = insert_recursive(node->right, e);
-    }
-    else {
-      if (node->last != 0) {
-        node->last->next = new entry_t(e);
-        node->last = node->last->next;
-      }
-      else {
-        node->last = node->next = new entry_t(e);
-      }
-      _Count++;
-      return node;
-    }
-    node->update_height();
-    int bf = node->get_bf();
-    if (bf > 1 || bf < -1) {
-      int l_cmp;
-      if (bf > 1 && (l_cmp = node->left->cmp(e, cmp)) < 0) {
-        return node->rotate_right();
-      }
-      int r_cmp;
-      if (bf < -1 && (r_cmp= node->right->cmp(e, cmp)) > 0) {
-        return node->rotate_left();
-      }
-
-      if (bf > 1 && l_cmp > 0) {
-        node->left = node->left->rotate_left();
-        return node->rotate_right();
-      }
-
-      if (bf < -1 && r_cmp < 0) {
-        node->right = node->right->rotate_right();
-        return node->rotate_left();
-      }
-    }
-    return node;
-  }
+  virtual entry_t* insert_recursive(entry_t* node, const value_t& e) = 0;
 
   entry_t* Find(const key_t& key) const {
     if (_Count == 0) {
@@ -294,19 +357,204 @@ public:
     return Find(key) != 0;
   }
 
-  static TBTreeTraverser< BTree<entry_t, Comparator> > Traverser;
+  static TBTreeTraverser< BTree_<entry_t, Comparator> > Traverser;
+};
+
+template <class entry_tt, class Comparator = TComparableComparator>
+class AVLTree : public BTree_<entry_tt, Comparator> {
+public:
+  typedef entry_tt entry_t;
+  typedef typename entry_t::value_t value_t;
+  typedef typename entry_t::key_t key_t;
+  AVLTree(const Comparator& cmp = Comparator())
+    : BTree_<entry_tt, Comparator>(cmp)
+  {}
+
+  entry_t* insert_recursive(entry_t* node, const value_t &e) {
+    if (node == 0) {
+      node = new entry_t(e);
+      this->_LeafCount++;
+      this->_Count++;
+      if (this->Root == 0) {
+        this->Root = node;
+      }
+      return node;
+    }
+    int cmp_v = node->cmp(e, this->cmp);
+    if (cmp_v < 0) {
+      node->left = insert_recursive(node->left, e);
+    }
+    else if (cmp_v > 0) {
+      node->right = insert_recursive(node->right, e);
+    }
+    else {
+      if (node->AddSame(e)) {
+        this->_Count++;
+      }
+      return node;
+    }
+    node->update_height();
+    int bf = node->get_bf();
+    if (bf > 1 || bf < -1) {
+      int l_cmp;
+      if (bf > 1 && (l_cmp = node->left->cmp(e, this->cmp)) < 0) {
+        return node->rotate_right();
+      }
+      int r_cmp;
+      if (bf < -1 && (r_cmp= node->right->cmp(e, this->cmp)) > 0) {
+        return node->rotate_left();
+      }
+
+      if (bf > 1 && l_cmp > 0) {
+        node->left = node->left->rotate_left();
+        return node->rotate_right();
+      }
+
+      if (bf < -1 && r_cmp < 0) {
+        node->right = node->right->rotate_right();
+        return node->rotate_left();
+      }
+    }
+    return node;
+  }
+
+};
+
+/*
+https://www.geeksforgeeks.org/dsa/insertion-in-red-black-tree/
+*/
+
+template <class entry_tt, class Comparator = TComparableComparator>
+class RBTree : public BTree_<entry_tt, Comparator> {
+public:
+  typedef entry_tt entry_t;
+  typedef typename entry_t::value_t value_t;
+  typedef typename entry_t::key_t key_t;
+  bool ll, lr, rr, rl;
+
+  RBTree() {
+    ll= lr = rr = rl = false;
+  }
+
+  entry_t* insert_recursive(entry_t* node, const value_t& v) {
+    bool check = false;
+    if (node == 0) {
+      this->_Count++;
+      this->_LeafCount++;
+      node = new entry_t(v);
+      if (this->Root == 0) {
+        this->Root = node;
+      }
+      return node;
+    }
+    int cmp_v = node->cmp(v, this->cmp);
+    if (cmp_v < 0) {
+      node->left = insert_recursive(node->left, v);
+      node->left->parent = node;
+      if (node != this->Root) {
+        if (node->color == 'R' && node->left->color == 'R') {
+          check = true;
+        }
+      }
+    }
+    else if (cmp_v > 0) {
+      node->right = insert_recursive(node->right, v);
+      node->right->parent = node;
+      if (node != this->Root) {
+        if (node->color == 'R' && node->right->color == 'R') {
+          check = true;
+        }
+      }
+    }
+    else {
+      if (node->AddSame(v)) {
+        this->_Count++;
+      }
+      return node;
+    }
+
+    // Perform rotations
+    if (ll) {
+      node = node->rotate_left();
+      node->color = 'B';
+      node->left->color = 'R';
+      ll = false;
+    }
+    else if (rr) {
+      node = node->rotate_right();
+      node->color = 'B';
+      node->right->color = 'R';
+      rr = false;
+    }
+    else if (rl) {
+      node->right = node->right->rotate_right();
+      node->right->parent = node;
+      node = node->rotate_left();
+      node->color = 'B';
+      node->left->color = 'R';
+      rl = false;
+    }
+    else if (lr) {
+      node->left = node->left->rotate_left();
+      node->left->parent = node;
+      node = node->rotate_right();
+      node->color = 'B';
+      node->right->color = 'R';
+      lr = false;
+    }
+
+    // Handle RED-RED conflicts
+    if (check) {
+      if (node->parent->right == node) {
+        if (node->parent->left == 0 || node->parent->left->color == 'B') {
+          if (node->left != 0 && node->left->color == 'R') {
+            rl = true;
+          }
+          else if (node->right != 0 && node->right->color == 'R') {
+            ll = true;
+          }
+        }
+        else {
+          node->parent->left->color = 'B';
+          node->color = 'B';
+          if (node->parent != this->Root) {
+            node->parent->color = 'R';
+          }
+        }
+      }
+      else {
+        if (node->parent->right == 0 || node->parent->right->color == 'B') {
+          if (node->left != 0 && node->left->color == 'R') {
+            rr = true;
+          }
+          else if (node->right != 0 && node->right->color == 'R') {
+            lr = true;
+          }
+        }
+        else {
+          node->parent->right->color = 'B';
+          node->color = 'B';
+          if (node->parent != this->Root) {
+            node->parent->color = 'R';
+          }
+        }
+      }
+    }
+    return node;
+  }
+
 };
 
 template <class entry_t, class Comparator>
-  TBTreeTraverser< BTree<entry_t, Comparator> >
-    BTree<entry_t, Comparator>::Traverser;
+  TBTreeTraverser<BTree_<entry_t, Comparator> >
+    BTree_<entry_t, Comparator>::Traverser;
 
 template <typename C, typename O>  class BTree2 {
 public:
   typedef TreeMapEntry<C, O> entry_t;
-  typedef BTree<entry_t, TPrimitiveComparator> XTree;
+  typedef AVLTree<entry_t, TPrimitiveComparator> XTree;
   typedef TreeMapEntry<C, XTree*> entry_t1;
-  typedef BTree<entry_t1, TPrimitiveComparator> YTree;
+  typedef AVLTree<entry_t1, TPrimitiveComparator> YTree;
   typedef typename YTree::Entry YEntry;
   typedef typename XTree::Entry XEntry;
 private:
@@ -382,14 +630,14 @@ public:
   static Tree2Traverser Traverser;
 };
 
-template <typename C, typename O>
-typename BTree2<C,O>::Tree2Traverser BTree2<C,O>::Traverser;
+template <class entry_t, class cmp_t>
+typename BTree2<entry_t, cmp_t>::Tree2Traverser BTree2<entry_t, cmp_t>::Traverser;
 
 template <typename C, typename O>  class BTree3 {
 public:
   typedef BTree2<C, O> XYTree;
   typedef TreeMapEntry<C, XYTree*> entry_t2;
-  typedef BTree<entry_t2, TPrimitiveComparator> ZTree;
+  typedef AVLTree<entry_t2, TPrimitiveComparator> ZTree;
   typedef typename XYTree::YEntry XYEntry;
   typedef typename ZTree::Entry ZEntry;
 private:

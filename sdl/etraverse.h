@@ -72,7 +72,9 @@ public:
 template <class TreeToTraverseClass> class TBTreeTraverser  {
 template <class Traverser>
 static bool TraverseLeft(const typename TreeToTraverseClass::entry_t* en, Traverser& traverser) {
-  if (!traverser.OnItem(en))  return false;
+  if (!traverser.OnItem(en)) {
+    return false;
+  }
   const typename TreeToTraverseClass::entry_t* nxt = en->next;
   while (nxt != 0) {
     if (!traverser.OnItem(nxt)) {

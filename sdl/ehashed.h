@@ -307,8 +307,8 @@ struct MapFactory {
 template <typename key_t, class comparator_t>
 struct BTSetFactory {
   typedef TreeSetEntry<key_t> value_t;
-  typedef BTEntry<value_t> entry_t;
-  typedef BTree<entry_t, comparator_t> basket_t;
+  typedef AVLEntryEx<value_t> entry_t;
+  typedef AVLTree<entry_t, comparator_t> basket_t;
   comparator_t cmp;
   BTSetFactory() {}
   BTSetFactory(const comparator_t& cmp)
@@ -323,8 +323,8 @@ struct BTSetFactory {
 template <typename key_t, typename item_t, class comparator_t>
 struct BTMapFactory {
   typedef TreeMapEntry<key_t, item_t> value_t;
-  typedef BTEntry<value_t> entry_t;
-  typedef BTree<entry_t, comparator_t> basket_t;
+  typedef AVLEntryEx<value_t> entry_t;
+  typedef AVLTree<entry_t, comparator_t> basket_t;
   comparator_t cmp;
   BTMapFactory() {}
   BTMapFactory(const comparator_t& cmp)

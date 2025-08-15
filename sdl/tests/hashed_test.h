@@ -12,6 +12,7 @@
 #include "etime.h"
 #include "ebtree.h"
 #include "estopwatch.h"
+#include <set>
 
 namespace test {
 
@@ -77,15 +78,22 @@ namespace test {
     bool test_binary = max_str_c < 1000000; // takes too long with > 1m recs
     TStrList strings(max_str_c);
     for (size_t i = 0; i < max_str_c; i++) {
-      strings[i] = rnd_str_85();
+      strings[i] = rnd_str_85(256);
     }
 
     olxstr_set<> binary_set(olx_reserve(test_binary ? max_str_c : 1));
     typedef TEHashSet<olxstr, olxstrComparator<false>, 4, 4> set_t;
-    typedef BTEntry<TreeSetEntry<olxstr> > bt_entry_t;
     typedef TEHashTreeSet<olxstr, olxstrComparator<false>, 4, 4> hbt_t;
-    typedef BTree<bt_entry_t, olxstrComparator<false> > bt_t;
+
+    typedef AVLTreeEntry<TreeSetEntry<olxstr> > avlt_entry_t;
+    typedef AVLTree<avlt_entry_t, olxstrComparator<false> > bt_t;
+
+    typedef RBTreeEntry<TreeSetEntry<olxstr> > rb_entry_t;
+    typedef RBTree<rb_entry_t, olxstrComparator<false> > rbt_t;
+
+    std::set<olxstr> std_set;
     bt_t bt;
+    rbt_t rbt;
     set_t hash_set;
     hbt_t hbt;
     olxstr ns = "do you have me??";
@@ -96,13 +104,21 @@ namespace test {
         binary_set.Add(strings[i]);
       }
     }
+    sw.start("std::set building");
+    for (size_t i = 0; i < max_str_c; i++) {
+      std_set.insert(strings[i]);
+    }
     sw.start("Hash set building");
     for (size_t i = 0; i < max_str_c; i++) {
       hash_set.Add(strings[i]);
     }
-    sw.start("Binary tree building");
+    sw.start("AVL binary tree building");
     for (size_t i = 0; i < max_str_c; i++) {
       bt.Add(bt_t::value_t(strings[i]));
+    }
+    sw.start("RB binary tree building");
+    for (size_t i = 0; i < max_str_c; i++) {
+      rbt.Add(bt_t::value_t(strings[i]));
     }
 
     sw.start("Hash binary tree building");
@@ -122,6 +138,16 @@ namespace test {
       }
     }
 
+    sw.start("std::set contains");
+    for (size_t i = 0; i < max_str_c; i++) {
+      if (std_set.find(strings[i]) == std_set.end()) {
+        throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
+      }
+    }
+    if (std_set.find(ns) != std_set.end()) {
+      throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
+    }
+
     sw.start("Hash set contains");
     for (size_t i = 0; i < max_str_c; i++) {
       if (!hash_set.Contains(strings[i])) {
@@ -132,9 +158,9 @@ namespace test {
       throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
     }
 
-    sw.start("Binary tree contains");
+    sw.start("AVL binary tree contains");
     for (size_t i = 0; i < max_str_c; i++) {
-      if (bt.Contains(strings[i]) == 0) {
+      if (!bt.Contains(strings[i])) {
         throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
       }
     }
@@ -142,9 +168,19 @@ namespace test {
       throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
     }
 
+    sw.start("RB binary tree contains");
+    for (size_t i = 0; i < max_str_c; i++) {
+      if (!rbt.Contains(strings[i])) {
+        throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
+      }
+    }
+    if (rbt.Contains(ns)) {
+      throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
+    }
+
     sw.start("Hash binary tree contains");
     for (size_t i = 0; i < max_str_c; i++) {
-      if (hbt.Find(strings[i]) == 0) {
+      if (!hbt.Contains(strings[i])) {
         throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
       }
     }
