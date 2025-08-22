@@ -71,10 +71,11 @@ namespace test {
     for (size_t i = 0; i < l; i++) {
       rv << b85[rand() % 85];
     }
-    return rv;
+    return olxstr("my bad start") << rv;
+    //return rv;
   }
   void perf_test(OlxTests& t) {
-    size_t max_str_c = 500000;
+    size_t max_str_c = 100000;
     bool test_binary = max_str_c < 1000000; // takes too long with > 1m recs
     TStrList strings(max_str_c);
     for (size_t i = 0; i < max_str_c; i++) {
@@ -83,7 +84,7 @@ namespace test {
 
     olxstr_set<> binary_set(olx_reserve(test_binary ? max_str_c : 1));
     typedef TEHashSet<olxstr, olxstrComparator<false>, 4, 4> set_t;
-    typedef TEHashTreeSet<olxstr, olxstrComparator<false>, 4, 4> hbt_t;
+    typedef TEHashTreeSet<olxstr, olxstrComparator<false> > hbt_t;
 
     typedef AVLTreeEntry<TreeSetEntry<olxstr> > avlt_entry_t;
     typedef AVLTree<avlt_entry_t, olxstrComparator<false> > bt_t;
@@ -185,6 +186,22 @@ namespace test {
       }
     }
     if (hbt.Contains(ns)) {
+      throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
+    }
+
+    sw.start("AVL binary tree remove");
+    for (size_t i = 0; i < max_str_c; i++) {
+      bt.Remove(strings[i]);
+    }
+    if (bt.Count() != 0) {
+      throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
+    }
+    
+    sw.start("RB binary tree remove");
+    for (size_t i = 0; i < max_str_c; i++) {
+      rbt.Remove(strings[i]);
+    }
+    if (rbt.Count() != 0) {
       throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
     }
     sw.stop();

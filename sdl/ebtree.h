@@ -12,11 +12,6 @@
 #include "esort.h"
 
 BeginEsdlNamespace()
-/*
-* inspired by 
-* https://en.wikipedia.org/wiki/AVL_tree
-* https://www.geeksforgeeks.org/dsa/insertion-in-an-avl-tree/
-*/
 
 template <typename key_tt>
 struct TreeSetEntry {
@@ -32,6 +27,7 @@ struct TreeSetEntry {
   int cmp(const key_t& k, const cmp_t& comparator) const {
     return comparator.Compare(key, k);
   }
+
 };
 
 template <typename key_tt, typename value_t>
@@ -110,40 +106,17 @@ struct ABTreeEntry {
     return false;
   }
 
+  void copy_from(const ABTreeEntry& e) {
+    value = e.value;
+    left = e.left;
+    right = e.right;
+  }
+
+  void clear() {
+    left = right = 0;
+  }
+
   virtual actual* update(actual* e) = 0;
-};
-
-template <class actual, typename value_tt>
-struct ARBTreeEntry_ : public ABTreeEntry <actual, value_tt >{
-  typedef ABTreeEntry <actual, value_tt> parent_t;
-  typedef value_tt value_t;
-  typedef typename value_t::key_t key_t;
-  actual* parent;
-  char color;
-
-  ARBTreeEntry_() : parent(0), color('R')
-  {}
-
-  ARBTreeEntry_(const value_t& value)
-    : parent(0), color('R'),
-    parent_t(value)
-  {}
-
-  virtual actual* rotate_left() {
-    parent = this->right;
-    if (this->left != 0) {
-      this->left->parent = this->right;
-    }
-    return parent_t::rotate_left();
-  }
-
-  virtual actual* rotate_right() {
-    parent = this->left;
-    if (this->right != 0) {
-      this->right->parent = this->left;
-    }
-    return parent_t::rotate_right();
-  }
 };
 
 template <class actual, class value_tt>
@@ -178,7 +151,13 @@ struct AVLBTEntry_ : public ABTreeEntry<actual, value_tt > {
     e->update_height();
     return e;
   }
+
+  void copy_from(const AVLBTEntry_& e) {
+    parent_t::copy_from(e);
+    height = e.height;
+  }
 };
+
 template <class value_tt>
 struct AVLTreeEntry : public AVLBTEntry_<AVLTreeEntry<value_tt>, value_tt> {
   typedef AVLBTEntry_<AVLTreeEntry<value_tt>, value_tt> parent_t;
@@ -186,32 +165,6 @@ struct AVLTreeEntry : public AVLBTEntry_<AVLTreeEntry<value_tt>, value_tt> {
   {}
 
   AVLTreeEntry(const value_tt& value)
-    : parent_t(value)
-  {}
-};
-
-template <class actual, class value_tt>
-struct RBTreeEntry_ : public ARBTreeEntry_<actual, value_tt> {
-  typedef ARBTreeEntry_<actual, value_tt> parent_t;
-  RBTreeEntry_() {}
-
-  RBTreeEntry_(const value_tt& value)
-    : parent_t(value)
-  {}
-
-  virtual actual* update(actual* e) {
-    return e;
-  }
-};
-
-template <class value_tt>
-struct RBTreeEntry : public RBTreeEntry_<RBTreeEntry<value_tt>, value_tt> {
-  typedef value_tt value_t;
-  typedef RBTreeEntry_<RBTreeEntry<value_tt>, value_tt> parent_t;
-  RBTreeEntry()
-  {}
-
-  RBTreeEntry(const value_t& value)
     : parent_t(value)
   {}
 };
@@ -245,6 +198,16 @@ struct AVLEntryEx : public AVLBTEntry_<AVLEntryEx<value_tt>, value_tt> {
       next = 0;
     }
   }
+  void copy_from(const AVLEntryEx& e) {
+    parent_t::copy_from(e);
+    next = e.next;
+    last = e.last;
+  }
+
+  void clear() {
+    parent_t::clear();
+    this->left = this->right = 0;
+  }
 };
 
 template <class entry_tt, class Comparator=TComparableComparator>
@@ -276,35 +239,14 @@ public:
   size_t Count() const { return _Count; }
   size_t LeafCount() const { return _LeafCount; }
 
-  olx_pair_t<entry_t*, int> find_semi(const key_t& key) const {
-    int cmp_v = this->Root->cmp(key, cmp);
-    if (cmp_v < 0) {
-      if (this->Root->left != 0) {
-        return go_left(this->Root->left, key);
-      }
+  entry_t* leftmost(entry_t *e) {
+    if (e->left == 0) {
+      return e;
     }
-    else if (cmp_v > 0) {
-      if (this->Root->right != 0) {
-        return go_right(this->Root->right, key);
-      }
-      return this->Root;
+    while (e->left != 0) {
+      e = e->left;
     }
-    return olx_pair_t<entry_t*, int>(this->Root, 0);
-  }
-
-  olx_pair_t<entry_t*, int> find_recursive(entry_t*e, const key_t& key) const {
-    int cmp_v = e->cmp(key, cmp);
-    if (cmp_v < 0) {
-      if (e->left != 0) {
-        return find_recursive(e->left, key);
-      }
-    }
-    else if (cmp_v > 0) {
-      if (e->right != 0) {
-        return find_recursive(e->right, key);
-      }
-    }
-    return olx_pair_t<entry_t*, int>(e, cmp_v);
+    return e;
   }
 
   olx_pair_t<entry_t*, int> go_left(entry_t*en, const key_t& key) const {
@@ -335,18 +277,15 @@ public:
     return olx_pair_t<entry_t*, int>(en, cmp_v1);
   }
   
-  entry_t* Add(const value_t &e) {
-    return Root = insert_recursive(Root, e);
+  bool Add(const value_t &e) {
+    return insert_(e);
   }
-
-  virtual entry_t* insert_recursive(entry_t* node, const value_t& e) = 0;
 
   entry_t* Find(const key_t& key) const {
     if (_Count == 0) {
       return 0;
     }
-    //olx_pair_t<Entry*, int> r = find_recurive(Root, key);
-    olx_pair_t<entry_t*, int> r = find_semi(key);
+    olx_pair_t<entry_t*, int> r = find_node(key);
     if (r.b == 0) {
       return r.a;
     }
@@ -357,8 +296,55 @@ public:
     return Find(key) != 0;
   }
 
+  bool Remove(const key_t& key) {
+    if (_Count == 0) {
+      return false;
+    }
+    return delete_(key);
+  }
+
+protected:
+  olx_pair_t<entry_t*, int> find_node(const key_t& key) const {
+    entry_t* tmp = Root;
+    int cmp_v = 0;
+    while (tmp != 0) {
+      cmp_v = tmp->cmp(key, this->cmp);
+      if (cmp_v < 0) {
+        if (tmp->left == 0) {
+          break;
+        }
+        else {
+          tmp = tmp->left;
+        }
+      }
+      else if (cmp_v == 0) {
+        break;
+      }
+      else {
+        if (tmp->right == 0) {
+          break;
+        }
+        else {
+          tmp = tmp->right;
+        }
+      }
+    }
+    return olx_pair::make(tmp, cmp_v);
+  }
+
+  virtual bool insert_(const value_t& e) = 0;
+  virtual bool delete_(const key_t& e) = 0;
+
+  public:
   static TBTreeTraverser< BTree_<entry_t, Comparator> > Traverser;
 };
+
+/*
+* inspired by
+* https://en.wikipedia.org/wiki/AVL_tree
+* https://www.geeksforgeeks.org/dsa/insertion-in-an-avl-tree/
+* https://www.geeksforgeeks.org/dsa/deletion-in-an-avl-tree/
+*/
 
 template <class entry_tt, class Comparator = TComparableComparator>
 class AVLTree : public BTree_<entry_tt, Comparator> {
@@ -366,9 +352,52 @@ public:
   typedef entry_tt entry_t;
   typedef typename entry_t::value_t value_t;
   typedef typename entry_t::key_t key_t;
+  typedef BTree_<entry_tt, Comparator> parent_t;
   AVLTree(const Comparator& cmp = Comparator())
     : BTree_<entry_tt, Comparator>(cmp)
   {}
+
+  entry_t* rebalance_i(entry_t *node, const value_t& e) {
+    int bf = node->get_bf();
+    if (bf > 1 || bf < -1) {
+      int l_cmp;
+      if (bf > 1 && (l_cmp = node->left->cmp(e, this->cmp)) < 0) {
+        return node->rotate_right();
+      }
+      int r_cmp;
+      if (bf < -1 && (r_cmp = node->right->cmp(e, this->cmp)) > 0) {
+        return node->rotate_left();
+      }
+
+      if (bf > 1 && l_cmp > 0) {
+        node->left = node->left->rotate_left();
+        return node->rotate_right();
+      }
+
+      if (bf < -1 && r_cmp < 0) {
+        node->right = node->right->rotate_right();
+        return node->rotate_left();
+      }
+    }
+    return node;
+  }
+
+  entry_t* rebalance_d(entry_t* node) {
+    int bf = node->get_bf();
+    if (bf > 1) {
+      if (node->left->get_bf() < 0) {
+        node->left = node->left->rotate_left();
+      }
+      return node->rotate_right();
+    }
+    if (bf < -1) {
+      if (node->right->get_bf() > 0) {
+        node->right = node->right->rotate_right();
+      }
+      return node->rotate_left();
+    }
+    return node;
+  }
 
   entry_t* insert_recursive(entry_t* node, const value_t &e) {
     if (node == 0) {
@@ -394,35 +423,205 @@ public:
       return node;
     }
     node->update_height();
-    int bf = node->get_bf();
-    if (bf > 1 || bf < -1) {
-      int l_cmp;
-      if (bf > 1 && (l_cmp = node->left->cmp(e, this->cmp)) < 0) {
-        return node->rotate_right();
+    return rebalance_i(node, e);
+  }
+  
+  entry_t* delete_recursive(entry_t* node, const key_t& key) {
+    if (node == 0) {
+      return 0;
+    }
+    int cmp_v = node->cmp(key, this->cmp);
+    if (cmp_v < 0) {
+      node->left = delete_recursive(node->left, key);
+    }
+    else if (cmp_v > 0) {
+      node->right = delete_recursive(node->right, key);
+    }
+    else {
+      if (node->left == 0 || node->right == 0) {
+        entry_t* e = node->left == 0 ? node->right : node->left;
+        if (e == 0) {
+          e = node;
+          node = 0;
+        }
+        else {
+          node->copy_from(*e);
+          e->clear();
+        }
+        delete e;
+        this->_LeafCount--;
+        this->_Count--;
       }
-      int r_cmp;
-      if (bf < -1 && (r_cmp= node->right->cmp(e, this->cmp)) > 0) {
-        return node->rotate_left();
+      else {
+        entry_t* e = parent_t::leftmost(node->right);
+        node->value.key = e->value.key;
+        node->right = delete_recursive(node->right, node->value.key);
       }
+      return node;
+    }
+    if (node == 0) {
+      return 0;
+    }
+    node->update_height();
+    return rebalance_d(node);
+  }
 
-      if (bf > 1 && l_cmp > 0) {
-        node->left = node->left->rotate_left();
-        return node->rotate_right();
-      }
+  virtual bool insert_(const value_t& e) {
+    size_t lc = this->_LeafCount;
+    this->Root = insert_recursive(this->Root, e);
+    return this->_LeafCount > lc;
+  }
 
-      if (bf < -1 && r_cmp < 0) {
-        node->right = node->right->rotate_right();
-        return node->rotate_left();
+  virtual bool delete_(const key_t& key) {
+    size_t lc = this->_LeafCount;
+    this->Root = delete_recursive(this->Root, key);
+    return this->_LeafCount < lc;
+  }
+};
+
+/*
+* inspired by
+https://www.geeksforgeeks.org/dsa/insertion-in-red-black-tree/
+https://www.geeksforgeeks.org/dsa/deletion-in-red-black-tree/
+*/
+
+/******************************************************************************/
+/********************RB TREE***************************************************/
+/******************************************************************************/
+template <class actual, typename value_tt>
+struct ARBTreeEntry_ : public ABTreeEntry <actual, value_tt > {
+  typedef ABTreeEntry <actual, value_tt> parent_t;
+  typedef value_tt value_t;
+  typedef typename value_t::key_t key_t;
+  actual* parent;
+  char color;
+
+  ARBTreeEntry_()
+    : parent(0), color('R')
+  {}
+
+  ARBTreeEntry_(const value_t& value)
+    : parent(0), color('R'),
+    parent_t(value)
+  {}
+
+  virtual actual* rotate_left() {
+    if (parent != 0) {
+      if (parent->left == (actual*)this) {
+        parent->left = this->right;
+      }
+      else {
+        parent->right = this->right;
       }
     }
-    return node;
+    this->right->parent = parent;
+    this->parent = this->right;
+    actual* r = this->right;
+    if ((this->right = r->left) != 0) {
+      this->right->parent = (actual*)(this);
+    }
+    r->left = (actual*)(this);
+    return this->parent;
+  }
+
+  virtual actual* rotate_right() {
+    if (parent != 0) {
+      if (parent->left == (actual*)this) {
+        parent->left = this->left;
+      }
+      else {
+        parent->right = this->left;
+      }
+    }
+    this->left->parent = parent;
+    this->parent = this->left;
+    actual* l = this->left;
+    if ((this->left = l->right) != 0) {
+      this->left->parent = (actual*)(this);
+    }
+    l->right = (actual*)(this);
+    return this->parent;
+  }
+
+  actual* successor() {
+    actual* tmp = (actual*)this;
+    while (tmp->left != 0) {
+      tmp = tmp->left;
+    }
+    return tmp;
+  }
+
+  actual* replacement() {
+    if (this->left != 0 && this->right != 0) {
+      return this->right->successor();
+    }
+
+    if (this->left == 0 && this->right == 0) {
+      return 0;
+    }
+
+    if (this->left != 0) {
+      return this->left;
+    }
+    else {
+      return this->right;
+    }
+  }
+
+  bool is_left() const {
+    return parent != 0 && parent->left == (actual*)this;
+  }
+
+  actual* uncle() const {
+    if (parent == 0 || parent->parent == 0) {
+      return 0;
+    }
+    if (parent->is_left()) {
+      return parent->parent->right;
+    }
+    return parent->parent->left;
+  }
+
+  actual* sibling() const {
+    if (parent == 0) {
+      return 0;
+    }
+    return is_left() ? parent->right : parent->left;
+  }
+
+  bool has_reds() const {
+    return (this->left != 0 && this->left->color == 'R') ||
+      (this->right != 0 && this->right->color == 'R');
   }
 
 };
 
-/*
-https://www.geeksforgeeks.org/dsa/insertion-in-red-black-tree/
-*/
+template <class actual, class value_tt>
+struct RBTreeEntry_ : public ARBTreeEntry_<actual, value_tt> {
+  typedef ARBTreeEntry_<actual, value_tt> parent_t;
+  RBTreeEntry_() {}
+
+  RBTreeEntry_(const value_tt& value)
+    : parent_t(value)
+  {
+  }
+
+  virtual actual* update(actual* e) {
+    return e;
+  }
+};
+
+template <class value_tt>
+struct RBTreeEntry : public RBTreeEntry_<RBTreeEntry<value_tt>, value_tt> {
+  typedef value_tt value_t;
+  typedef RBTreeEntry_<RBTreeEntry<value_tt>, value_tt> parent_t;
+  RBTreeEntry()
+  {}
+
+  RBTreeEntry(const value_t& value)
+    : parent_t(value)
+  {}
+};
 
 template <class entry_tt, class Comparator = TComparableComparator>
 class RBTree : public BTree_<entry_tt, Comparator> {
@@ -430,118 +629,258 @@ public:
   typedef entry_tt entry_t;
   typedef typename entry_t::value_t value_t;
   typedef typename entry_t::key_t key_t;
-  bool ll, lr, rr, rl;
+  typedef BTree_<entry_tt, Comparator> parent_t;
 
   RBTree() {
-    ll= lr = rr = rl = false;
   }
 
-  entry_t* insert_recursive(entry_t* node, const value_t& v) {
-    bool check = false;
-    if (node == 0) {
-      this->_Count++;
-      this->_LeafCount++;
-      node = new entry_t(v);
-      if (this->Root == 0) {
-        this->Root = node;
-      }
-      return node;
-    }
-    int cmp_v = node->cmp(v, this->cmp);
-    if (cmp_v < 0) {
-      node->left = insert_recursive(node->left, v);
-      node->left->parent = node;
-      if (node != this->Root) {
-        if (node->color == 'R' && node->left->color == 'R') {
-          check = true;
-        }
-      }
-    }
-    else if (cmp_v > 0) {
-      node->right = insert_recursive(node->right, v);
-      node->right->parent = node;
-      if (node != this->Root) {
-        if (node->color == 'R' && node->right->color == 'R') {
-          check = true;
-        }
-      }
-    }
-    else {
-      if (node->AddSame(v)) {
-        this->_Count++;
-      }
-      return node;
-    }
-
-    // Perform rotations
-    if (ll) {
-      node = node->rotate_left();
-      node->color = 'B';
-      node->left->color = 'R';
-      ll = false;
-    }
-    else if (rr) {
-      node = node->rotate_right();
-      node->color = 'B';
-      node->right->color = 'R';
-      rr = false;
-    }
-    else if (rl) {
-      node->right = node->right->rotate_right();
-      node->right->parent = node;
-      node = node->rotate_left();
-      node->color = 'B';
-      node->left->color = 'R';
-      rl = false;
-    }
-    else if (lr) {
-      node->left = node->left->rotate_left();
-      node->left->parent = node;
-      node = node->rotate_right();
-      node->color = 'B';
-      node->right->color = 'R';
-      lr = false;
-    }
-
-    // Handle RED-RED conflicts
-    if (check) {
-      if (node->parent->right == node) {
-        if (node->parent->left == 0 || node->parent->left->color == 'B') {
-          if (node->left != 0 && node->left->color == 'R') {
-            rl = true;
-          }
-          else if (node->right != 0 && node->right->color == 'R') {
-            ll = true;
-          }
-        }
-        else {
-          node->parent->left->color = 'B';
-          node->color = 'B';
-          if (node->parent != this->Root) {
-            node->parent->color = 'R';
-          }
-        }
+  void delete_node(entry_t* node) {
+    entry_t* u = node->replacement();
+    // True when u and v are both black
+    bool uvBlack = ((u == 0 || u->color == 'B') && (node->color == 'B'));
+    if (u == 0) {
+      // u is NULL therefore v is leaf
+      if (node == this->Root) {
+        // v is root, making root null
+        this->_Count = this->_LeafCount = 0;
+        this->Root = 0;
       }
       else {
-        if (node->parent->right == 0 || node->parent->right->color == 'B') {
-          if (node->left != 0 && node->left->color == 'R') {
-            rr = true;
-          }
-          else if (node->right != 0 && node->right->color == 'R') {
-            lr = true;
-          }
+        if (uvBlack) {
+          fix_bb(node);
         }
         else {
-          node->parent->right->color = 'B';
-          node->color = 'B';
-          if (node->parent != this->Root) {
-            node->parent->color = 'R';
+          // u or v is red
+          if (node->sibling() != 0) {
+            // sibling is not null, make it red"
+            node->sibling()->color = 'R';
+          }
+        }
+        // delete v from the tree
+        entry_t* parent = node->parent;
+        if (parent->left == node) {
+          parent->left = 0;
+        }
+        else {
+          parent->right = 0;
+        }
+      }
+      delete node;
+      return;
+    }
+
+    if (node->left == 0 || node->right == 0) {
+      // ndde has 1 child
+      if (node == this->Root) {
+        // node is root, assign the value of u to v, and delete u
+        node->value = u->value;
+        node->left = node->right = 0;
+        delete u;
+      }
+      else {
+        // Detach v from tree and move u up
+        entry_t* parent = node->parent;
+        if (parent->left == node) {
+          parent->left = u;
+        }
+        else {
+          parent->right = u;
+        }
+        node->left = node->right = 0;
+        delete node;
+        u->parent = parent;
+        if (uvBlack) {
+          // u and v both black, fix double black at u
+          fix_bb(u);
+        }
+        else {
+          // u or v red, color u black
+          u->color = 'B';
+        }
+      }
+      return;
+    }
+
+    // node has 2 children, swap values with successor and recurse
+    olx_swap(u->value, node->value);
+    delete_node(u);
+  }
+
+  bool insert_value(const value_t& v) {
+    entry_t* nn = new entry_t(v);
+    if (this->Root == 0) {
+      nn->color = 'B';
+      this->Root = nn;
+      this->_Count = this->_LeafCount = 1;
+      return true;
+    }
+    olx_pair_t<entry_t*, int> tmp = parent_t::find_node(v.key);
+
+    if (tmp.b == 0) {
+      if (tmp.a->AddSame(v)) {
+        this->_Count++;
+      }
+      return false;
+    }
+    nn->parent = tmp.a;
+    if (tmp.b < 0) {
+      tmp.a->left = nn;
+    }
+    else {
+      tmp.a->right = nn;
+    }
+    fix_rr(nn);
+    this->_Count++;
+    this->_LeafCount++;
+    return true;
+  }
+
+  virtual bool insert_(const value_t& e) {
+    return this->insert_value(e);
+  }
+
+  virtual bool delete_(const key_t& key) {
+    olx_pair_t<entry_t*, int> n = parent_t::find_node(key);
+
+    if (n.b != 0) {
+      return false;
+    }
+    delete_node(n.a);
+    return true;
+  }
+  private:
+    void rt_l(entry_t* node) {
+      if (node == this->Root) {
+        this->Root = node->right;
+      }
+      node->rotate_left();
+    }
+    void rt_r(entry_t* node) {
+      if (node == this->Root) {
+        this->Root = node->left;
+      }
+      node->rotate_right();
+    }
+
+
+    void fix_rr(entry_t* node) {
+      if (node == this->Root) {
+        node->color = 'B';
+        return;
+      }
+      if (node->parent->color != 'B') {
+        entry_t* uncle = node->uncle(),
+          * parent = node->parent,
+          * grandp = parent->parent;
+        if (uncle != 0 && uncle->color == 'R') {
+          // uncle red, perform recoloring and recurse
+          parent->color = 'B';
+          uncle->color = 'B';
+          grandp->color = 'R';
+          fix_rr(grandp);
+        }
+        else {
+          // Else perform LR, LL, RL, RR
+          if (parent->is_left()) {
+            if (node->is_left()) {
+              // for left right
+              olx_swap(parent->color, grandp->color);
+            }
+            else {
+              this->rt_l(parent);
+              olx_swap(node->color, grandp->color);
+            }
+            // for left left and left right
+            this->rt_r(grandp);
+          }
+          else {
+            if (node->is_left()) {
+              // for right left
+              this->rt_r(parent);
+              olx_swap(node->color, grandp->color);
+            }
+            else {
+              olx_swap(parent->color, grandp->color);
+            }
+            // for right right and right left
+            this->rt_l(grandp);
           }
         }
       }
     }
-    return node;
-  }
+
+    void fix_bb(entry_t* node) {
+      if (node == this->Root) {
+        return;
+      }
+
+      entry_t* sibling = node->sibling(), *parent = node->parent;
+      if (sibling == 0) {
+        // No sibling, double black pushed up
+        fix_bb(parent);
+      }
+      else {
+        if (sibling->color == 'R') {
+          // Sibling red
+          parent->color = 'R';
+          sibling->color = 'B';
+          if (sibling->is_left()) {
+            // left case
+            this->rt_r(parent);
+          }
+          else {
+            // right case
+            this->rt_l(parent);
+          }
+          this->fix_bb(node);
+        }
+        else {
+          // Sibling black
+          if (sibling->has_reds()) {
+            // at least 1 red children
+            if (sibling->left != 0 && sibling->left->color == 'R') {
+              if (sibling->is_left()) {
+                // left left
+                sibling->left->color = sibling->color;
+                sibling->color = parent->color;
+                this->rt_r(parent);
+              }
+              else {
+                // right left
+                sibling->left->color = parent->color;
+                this->rt_r(sibling);
+                this->rt_l(parent);
+              }
+            }
+            else {
+              if (sibling->is_left()) {
+                // left right
+                sibling->right->color = parent->color;
+                this->rt_l(sibling);
+                this->rt_r(parent);
+              }
+              else {
+                // right right
+                sibling->right->color = sibling->color;
+                sibling->color = parent->color;
+                this->rt_l(parent);
+              }
+            }
+            parent->color = 'B';
+          }
+          else {
+            // 2 black children
+            sibling->color = 'R';
+            if (parent->color == 'B') {
+              this->fix_bb(parent);
+            }
+            else {
+              parent->color = 'B';
+            }
+          }
+        }
+      }
+    }
 
 };
 
