@@ -1781,7 +1781,11 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
         time_t FileT = TEFile::FileAge(FListenCmdFile);
         if (FileMT != FileT) {
           FObjectUnderMouse = 0;
-          processMacro(olxstr(TEFile::ReadCLines(FListenCmdFile)[0]), "OnListen");
+          const_cstrlist file_lines = TEFile::ReadCLines(FListenCmdFile);
+          if (! file_lines.IsEmpty())
+          {
+            processMacro(olxstr(TEFile::ReadCLines(FListenCmdFile)[0]), "OnListen");
+          }
           FileMT = FileT;
         }
       }
