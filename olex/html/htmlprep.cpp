@@ -76,9 +76,9 @@ void THtmlPreprocessor::CheckForSwitches(THtmlSwitch& Sender, bool isZip) {
       }
     }
     // TRANSLATION END
-    int stm = (Lst[i].TrimWhiteChars().StartsFrom(Tag1) ? 1 : 0);
+    int stm = (Lst[i].TrimWhiteChars(true, false).StartsFrom(Tag1) ? 1 : 0);
     if (stm == 0) {
-      stm = (Lst[i].TrimWhiteChars().StartsFrom(Tag) ? 2 : 0);
+      stm = (Lst[i].TrimWhiteChars(true, false).StartsFrom(Tag) ? 2 : 0);
     }
     if (stm != 0) {
       tmp = Lst[i].SubStringFrom(stm == 1 ? Tag1.Length() : Tag.Length());
