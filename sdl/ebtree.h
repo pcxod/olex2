@@ -9,13 +9,14 @@
 
 #pragma once
 #include "etraverse.h"
-#include "esort.h"
+#include "ellist.h"
 
 BeginEsdlNamespace()
 
 template <typename key_tt>
 struct TreeSetEntry {
   typedef key_tt key_t;
+  typedef key_tt value_t;
 
   key_t key;
   
@@ -27,12 +28,15 @@ struct TreeSetEntry {
   int cmp(const key_t& k, const cmp_t& comparator) const {
     return comparator.Compare(key, k);
   }
-
+  const value_t& get_value() const {
+    return key;
+  }
 };
 
-template <typename key_tt, typename value_t>
+template <typename key_tt, typename value_tt>
 struct TreeMapEntry {
   typedef key_tt key_t;
+  typedef value_tt value_t;
 
   key_t key;
   value_t value;
@@ -44,11 +48,15 @@ struct TreeMapEntry {
   int cmp(const key_t& k, const cmp_t& comparator) const {
     return comparator.Compare(key, k);
   }
+  const value_t& get_value() const {
+    return value;
+  }
 };
 
 template <class actual, typename value_tt>
 struct ABTreeEntry {
   typedef value_tt value_t;
+  typedef typename value_t::value_t val_t;
   typedef typename value_t::key_t key_t;
   value_t value;
   actual* left, * right;
@@ -116,12 +124,178 @@ struct ABTreeEntry {
     left = right = 0;
   }
 
+  const val_t& get_value() const {
+    return value.get_value();
+  }
+
   virtual actual* update(actual* e) = 0;
 };
 
+template <class entry_tt, class Comparator=TComparableComparator>
+class BTree_ {
+protected:
+  entry_tt *Root;
+  size_t _Count, _LeafCount;
+  Comparator cmp;
+public:
+  typedef entry_tt entry_t;
+  typedef typename entry_t::value_t value_t;
+  typedef typename entry_t::key_t key_t;
+  typedef typename entry_t::val_t val_t;
+  BTree_(const Comparator &cmp= Comparator())
+    : Root(0), _Count(0), _LeafCount(0), cmp(cmp)
+  {}
+
+  ~BTree_() { olx_del_obj(Root); }
+
+  void Clear() {
+    if (Root != 0) {
+      delete Root;
+      _LeafCount = _Count = 0;
+      Root = 0;
+    }
+  }
+
+  const entry_t* GetRoot() const { return Root; }
+  entry_t* GetRoot() { return Root; }
+  size_t Count() const { return _Count; }
+  size_t LeafCount() const { return _LeafCount; }
+
+  entry_t* leftmost(entry_t *e) {
+    if (e->left == 0) {
+      return e;
+    }
+    while (e->left != 0) {
+      e = e->left;
+    }
+    return e;
+  }
+
+  bool Add(const value_t &e) {
+    return insert_(e);
+  }
+
+  entry_t* Find(const key_t& key) const {
+    if (_Count == 0) {
+      return 0;
+    }
+    olx_pair_t<entry_t*, int> r = find_node(key);
+    if (r.b == 0) {
+      return r.a;
+    }
+    return 0;
+  }
+
+  bool Contains(const key_t& key) const {
+    return Find(key) != 0;
+  }
+
+  bool Remove(const key_t& key) {
+    if (_Count == 0) {
+      return false;
+    }
+    return delete_(key);
+  }
+
+  // for sets will have keys, for maps - values
+  typename TUDTypeList<val_t>::const_list_type ToValueList() const {
+    TUDTypeList<val_t> l;
+    fill_value_list(Root, l);
+    return l;
+  }
+
+  // identical for sets, for maps will have (key, value)
+  typename TUDTypeList<value_t>::const_list_type ToEntryList() const {
+    TUDTypeList<value_t> l;
+    fill_entry_list(Root, l);
+    return l;
+  }
+
+  struct ValueIterator {
+  private:
+    TUDTypeList<val_t> list;
+    typename TLinkedList<val_t>::Iterator itr;
+  public:
+    ValueIterator(const BTree_&p)
+      : list(p.ToValueList())
+    {
+      itr = list.GetIterator();
+    }
+    bool HasNext() const { return itr.HasNext(); }
+    const val_t& Next() { return itr.Next(); }
+    const val_t& Lookup() const { return itr.Lookup(); }
+    size_t Count() const { return itr.Count(); }
+  };
+
+  ValueIterator GetValueIterator() const {
+    return ValueIterator(*this);
+  }
+protected:
+  void fill_value_list(const entry_t* e, TUDTypeList<val_t>& l) const {
+    if (e->left != 0) {
+      fill_value_list(e->left, l);
+    }
+    l.Add(e->get_value());
+    if (e->right != 0) {
+      fill_value_list(e->right, l);
+    }
+  }
+
+  void fill_entry_list(const entry_t* e, TUDTypeList<value_t>& l) const {
+    if (e->left != 0) {
+      fill_entry_list(e->left, l);
+    }
+    l.Add(e->value);
+    if (e->right != 0) {
+      fill_entry_list(e->right, l);
+    }
+  }
+
+  olx_pair_t<entry_t*, int> find_node(const key_t& key) const {
+    entry_t* tmp = Root;
+    int cmp_v = 0;
+    while (tmp != 0) {
+      cmp_v = tmp->cmp(key, this->cmp);
+      if (cmp_v < 0) {
+        if (tmp->left == 0) {
+          break;
+        }
+        else {
+          tmp = tmp->left;
+        }
+      }
+      else if (cmp_v == 0) {
+        break;
+      }
+      else {
+        if (tmp->right == 0) {
+          break;
+        }
+        else {
+          tmp = tmp->right;
+        }
+      }
+    }
+    return olx_pair::make(tmp, cmp_v);
+  }
+
+  virtual bool insert_(const value_t& e) = 0;
+  virtual bool delete_(const key_t& e) = 0;
+
+  public:
+  static TBTreeTraverser< BTree_<entry_t, Comparator> > Traverser;
+};
+
+/*
+* inspired by
+* https://en.wikipedia.org/wiki/AVL_tree
+* https://www.geeksforgeeks.org/dsa/insertion-in-an-avl-tree/
+* https://www.geeksforgeeks.org/dsa/deletion-in-an-avl-tree/
+*/
+
 template <class actual, class value_tt>
 struct AVLBTEntry_ : public ABTreeEntry<actual, value_tt > {
-  typedef ABTreeEntry<actual, value_tt > parent_t;
+  typedef ABTreeEntry<actual, value_tt> parent_t;
   typedef value_tt value_t;
   typedef typename value_t::key_t key_t;
   size_t height;
@@ -171,23 +345,31 @@ struct AVLTreeEntry : public AVLBTEntry_<AVLTreeEntry<value_tt>, value_tt> {
 
 
 template <class value_tt>
-struct AVLEntryEx : public AVLBTEntry_<AVLEntryEx<value_tt>, value_tt> {
-  typedef AVLBTEntry_<AVLEntryEx<value_tt>, value_tt > parent_t;
-  typedef AVLEntryEx<value_tt> actual;
+struct AVLTreeEntryEx : public AVLBTEntry_<AVLTreeEntryEx<value_tt>, value_tt> {
+  typedef AVLBTEntry_<AVLTreeEntryEx<value_tt>, value_tt > parent_t;
+  typedef AVLTreeEntryEx<value_tt> actual;
   typedef value_tt value_t;
   typedef typename value_t::key_t key_t;
-  AVLEntryEx* next, * last;  // linked list of items with equal key
 
-  AVLEntryEx()
+  struct DuplicateEntry {
+    value_t data;
+    DuplicateEntry* next;
+    DuplicateEntry(const value_t& d)
+      : data(d), next(0)
+    {}
+  };
+  DuplicateEntry* next, * last;  // linked list of items with equal key
+
+  AVLTreeEntryEx()
     : next(0), last(0)
   {}
 
-  AVLEntryEx(const value_t& value)
+  AVLTreeEntryEx(const value_t& value)
     : parent_t(value),
     next(0), last(0)
   {}
 
-  ~AVLEntryEx() {
+  ~AVLTreeEntryEx() {
     olx_del_obj(next);
   }
 
@@ -198,7 +380,7 @@ struct AVLEntryEx : public AVLBTEntry_<AVLEntryEx<value_tt>, value_tt> {
       next = 0;
     }
   }
-  void copy_from(const AVLEntryEx& e) {
+  void copy_from(const AVLTreeEntryEx& e) {
     parent_t::copy_from(e);
     next = e.next;
     last = e.last;
@@ -208,143 +390,18 @@ struct AVLEntryEx : public AVLBTEntry_<AVLEntryEx<value_tt>, value_tt> {
     parent_t::clear();
     this->left = this->right = 0;
   }
+
+  virtual bool AddSame(const value_t& v) {
+    if (last != 0) {
+      last->next = new DuplicateEntry(v);
+      last = last->next;
+    }
+    else {
+      last = next = new DuplicateEntry(v);
+    }
+    return true;
+  }
 };
-
-template <class entry_tt, class Comparator=TComparableComparator>
-class BTree_ {
-protected:
-  entry_tt *Root;
-  size_t _Count, _LeafCount;
-  Comparator cmp;
-public:
-  typedef entry_tt entry_t;
-  typedef typename entry_t::value_t value_t;
-  typedef typename entry_t::key_t key_t;
-  BTree_(const Comparator &cmp= Comparator())
-    : Root(0), _Count(0), _LeafCount(0), cmp(cmp)
-  {}
-
-  ~BTree_() { olx_del_obj(Root); }
-
-  void Clear() {
-    if (Root != 0) {
-      delete Root;
-      _LeafCount = _Count = 0;
-      Root = 0;
-    }
-  }
-
-  const entry_t* GetRoot() const { return Root; }
-  entry_t* GetRoot() { return Root; }
-  size_t Count() const { return _Count; }
-  size_t LeafCount() const { return _LeafCount; }
-
-  entry_t* leftmost(entry_t *e) {
-    if (e->left == 0) {
-      return e;
-    }
-    while (e->left != 0) {
-      e = e->left;
-    }
-    return e;
-  }
-
-  olx_pair_t<entry_t*, int> go_left(entry_t*en, const key_t& key) const {
-    int cmp_v1;
-    while ((cmp_v1 = en->cmp(key, cmp)) < 0) {
-      if (en->left == 0) {
-        return olx_pair_t<entry_t*, int>(en, cmp_v1);
-      }
-      en = en->left;
-    }
-    if (cmp_v1 > 0 && en->right != 0) {
-      return go_right(en->right, key);
-    }
-    return olx_pair_t<entry_t*, int>(en, cmp_v1);
-  }
-
-  olx_pair_t<entry_t*, int> go_right(entry_t* en, const key_t& key) const {
-    int cmp_v1;
-    while ((cmp_v1 = en->cmp(key, cmp)) > 0) {
-      if (en->right == 0) {
-        return olx_pair_t<entry_t*, int>(en, cmp_v1);
-      }
-      en = en->right;
-    }
-    if (cmp_v1 < 0 && en->left != 0) {
-      return go_left(en->left, key);
-    }
-    return olx_pair_t<entry_t*, int>(en, cmp_v1);
-  }
-  
-  bool Add(const value_t &e) {
-    return insert_(e);
-  }
-
-  entry_t* Find(const key_t& key) const {
-    if (_Count == 0) {
-      return 0;
-    }
-    olx_pair_t<entry_t*, int> r = find_node(key);
-    if (r.b == 0) {
-      return r.a;
-    }
-    return 0;
-  }
-
-  bool Contains(const key_t& key) const {
-    return Find(key) != 0;
-  }
-
-  bool Remove(const key_t& key) {
-    if (_Count == 0) {
-      return false;
-    }
-    return delete_(key);
-  }
-
-protected:
-  olx_pair_t<entry_t*, int> find_node(const key_t& key) const {
-    entry_t* tmp = Root;
-    int cmp_v = 0;
-    while (tmp != 0) {
-      cmp_v = tmp->cmp(key, this->cmp);
-      if (cmp_v < 0) {
-        if (tmp->left == 0) {
-          break;
-        }
-        else {
-          tmp = tmp->left;
-        }
-      }
-      else if (cmp_v == 0) {
-        break;
-      }
-      else {
-        if (tmp->right == 0) {
-          break;
-        }
-        else {
-          tmp = tmp->right;
-        }
-      }
-    }
-    return olx_pair::make(tmp, cmp_v);
-  }
-
-  virtual bool insert_(const value_t& e) = 0;
-  virtual bool delete_(const key_t& e) = 0;
-
-  public:
-  static TBTreeTraverser< BTree_<entry_t, Comparator> > Traverser;
-};
-
-/*
-* inspired by
-* https://en.wikipedia.org/wiki/AVL_tree
-* https://www.geeksforgeeks.org/dsa/insertion-in-an-avl-tree/
-* https://www.geeksforgeeks.org/dsa/deletion-in-an-avl-tree/
-*/
 
 template <class entry_tt, class Comparator = TComparableComparator>
 class AVLTree : public BTree_<entry_tt, Comparator> {
@@ -603,8 +660,7 @@ struct RBTreeEntry_ : public ARBTreeEntry_<actual, value_tt> {
 
   RBTreeEntry_(const value_tt& value)
     : parent_t(value)
-  {
-  }
+  {}
 
   virtual actual* update(actual* e) {
     return e;
@@ -631,7 +687,9 @@ public:
   typedef typename entry_t::key_t key_t;
   typedef BTree_<entry_tt, Comparator> parent_t;
 
-  RBTree() {
+  RBTree(const Comparator& cmp = Comparator())
+    : BTree_<entry_tt, Comparator>(cmp)
+  {
   }
 
   void delete_node(entry_t* node) {

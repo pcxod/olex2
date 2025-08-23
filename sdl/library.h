@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2025 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -10,6 +10,7 @@
 #ifndef __olx_sdl_library_H
 #define __olx_sdl_library_H
 #include "function.h"
+//#include "ehashed.h"
 #undef GetObject
 
 BeginEsdlNamespace()
@@ -20,7 +21,12 @@ const uint16_t
   libChain   = 0x0004;
 
 class TLibrary: public IOlxObject, public ABasicLibrary  {
-  sorted::StringAssociation<ABasicFunction*, true> Functions, Macros;
+public:
+  //typedef TEHashTreeMap<olxstr, ABasicFunction* , olxstrComparator<true> >
+  typedef sorted::StringAssociation<ABasicFunction*, true>
+    container_t;
+private:
+  container_t Functions, Macros;
   TTypeList<FunctionChainer> Chains;
   olxstr LibraryName;
   olxstr_dict<TLibrary*, true> Libraries;
@@ -44,7 +50,7 @@ protected:
   the previous function will be copied to
   */
   ABasicFunction *Register(
-    sorted::StringAssociation<ABasicFunction*, true> &container,
+    container_t &container,
     ABasicFunction* fm,
     uint16_t flags);
 public:
@@ -71,7 +77,7 @@ public:
   }
 
   TLibrary* AddLibrary(const olxstr& name, ALibraryContainer* owner = NULL);
-  // not that the library will be deleted upon destruction
+  // note that the library will be deleted upon destruction
   void AttachLibrary(TLibrary* lib);
 
   size_t LibraryCount() const {  return Libraries.Count();  }

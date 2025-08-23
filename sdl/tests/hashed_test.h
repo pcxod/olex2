@@ -35,7 +35,7 @@ namespace test {
     if (!test.Remove(test_set[2])) {
       throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
     }
-    set_t::iterator_t itr = test.Iterate();
+    set_t::BasketIterator itr = test.IterateBaskets();
     set_t::basket_t* b;
     size_t cnt = 0;
     while ((b = itr.Next()) != 0) {
@@ -43,6 +43,11 @@ namespace test {
     }
     if (cnt != 3) {
       throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
+    }
+
+    set_t::FullIterator fitr = test.Iterate();
+    while (fitr.HasNext()) {
+      TBasicApp::NewLogEntry() << fitr.Next();
     }
 
   }
@@ -169,6 +174,18 @@ namespace test {
       throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
     }
 
+    sw.start("AVL tree to linked list and check the list is sorted");
+    typedef TLinkedList<bt_t::val_t> ll_t;
+    bt_t::ValueIterator itr = bt.GetValueIterator();
+    while (itr.HasNext()) {
+      const olxstr &s = itr.Next();
+      if (itr.HasNext()) {
+        if (s.Compare(itr.Lookup()) <= 0) {
+          throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
+        }
+      }
+    }
+
     sw.start("RB binary tree contains");
     for (size_t i = 0; i < max_str_c; i++) {
       if (!rbt.Contains(strings[i])) {
@@ -186,6 +203,17 @@ namespace test {
       }
     }
     if (hbt.Contains(ns)) {
+      throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
+    }
+
+    sw.start("Hash binary tree iteration");
+    hbt_t::iterator_t full_itr = hbt.Iterate();
+    size_t full_cnt = 0;
+    while (full_itr.HasNext()) {
+      const hbt_t::value_t& v = full_itr.Next();
+      full_cnt++;
+    }
+    if (full_cnt != bt.Count()) {
       throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
     }
 

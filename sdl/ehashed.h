@@ -26,6 +26,7 @@ template <class basket_factory_t,
 class TEHashed {
 public:
   typedef typename basket_factory_t::basket_t basket_t;
+  typedef typename basket_factory_t::value_t value_t;
 private:
   struct entry_array_base_t {
     void** data;
@@ -60,11 +61,11 @@ private:
 
   basket_factory_t basket_factory;
   entry_array_t data;
-  size_t basket_n;
+  size_t basket_n, count;
 #ifdef _DEBUG
   size_t entry_n;
   void init() {
-    entry_n = basket_n = 0;
+    count = entry_n = basket_n = 0;
   }
 #else
   void init() {
@@ -108,7 +109,9 @@ protected:
 
   template<class T>
   void Add(const T& item) {
-    GetAddBasket(item).Add(item);
+    if (GetAddBasket(item).Add(item)) {
+      count++;
+    }
   }
 
 public:
@@ -122,11 +125,9 @@ public:
   {
     init();
   }
-  
 
   virtual ~TEHashed() {
   }
-
 
   template<class T>
   basket_t *Find(const T &key) const {
@@ -158,16 +159,30 @@ public:
     if (b == 0) {
       return false;
     }
-    return b->Remove(key);
+    if (b->Remove(key)) {
+      count--;
+      return true;
+    }
+    return false;
   }
 
-  class Iterator {
-    size_t current[L+1] = { 0 };
+  size_t Count() const {
+    return count;
+  }
+
+  size_t size() {
+    return count;
+  }
+
+  class BasketIterator {
+    olx_array_ptr<size_t> current;
     const entry_array_t &data;
   public:
-    Iterator(const entry_array_t& data)
-      : data(data)
+    BasketIterator(const entry_array_t& data)
+      : current(L+1),
+      data(data)
     {
+      memset(&current, 0, sizeof(size_t) * (L + 1));
       current[L] = -1;
     }
 
@@ -251,9 +266,49 @@ public:
 
   };
 
-  Iterator Iterate() const {
-    return Iterator(this->data);
+  struct FullIterator {
+    basket_factory_t basket_factory;
+    BasketIterator bi;
+    typedef typename basket_factory_t::value_iterator_t ValueIterator;
+    olx_object_ptr<ValueIterator> vi;
+    FullIterator(const BasketIterator& basketIterator, const basket_factory_t& basket_factory)
+      : bi(basketIterator),
+      basket_factory(basket_factory)
+    {}
+
+    bool HasNext() {
+      if (!vi.ok()) {
+        if (bi.Next() == 0) {
+          return false;
+        }
+        vi = basket_factory.new_iterator(bi.get_current());
+      }
+      if (vi->HasNext()) {
+        return true;
+      }
+      while (!vi->HasNext()) {
+        if (bi.Next() == 0) {
+          return false;
+        }
+        vi = basket_factory.new_iterator(bi.get_current());
+      }
+      return true;
+    }
+
+    const value_t& Next() {
+      return vi->Next();
+    }
+
+  };
+
+  BasketIterator IterateBaskets() const {
+    return BasketIterator(this->data);
   }
+
+  FullIterator Iterate() {
+    return FullIterator(BasketIterator(this->data), basket_factory);
+  }
+
 
 #ifdef _DEBUG
   size_t mem_usage() const {
@@ -264,7 +319,7 @@ public:
 #endif
   // collects stats N of items in baskets vs basket N
   olx_pdict<size_t, size_t>::const_dict_type get_stats() {
-    Iterator itr = Iterate();
+    BasketIterator itr = IterateBaskets();
     basket_t* b;
     olx_pdict<size_t, size_t> rv;
     while ((b = itr.Next()) != 0) {
@@ -274,9 +329,46 @@ public:
   }
 };
 
+struct MDValueAccessor {
+  template <typename item_t, class comparator_t>
+  static const item_t& get(const olxset<item_t, comparator_t>& s, size_t idx) {
+    return s[idx];
+  }
+  template <typename key_t, typename item_t, class comparator_t>
+  static const item_t& get(const olxdict<key_t, item_t, comparator_t>& d, size_t idx) {
+    return d.GetValue(idx);
+  }
+};
+
+template <class container_t, typename value_t>
+struct IndexableIterator {
+  size_t idx;
+  container_t* basket;
+
+  IndexableIterator(container_t* b)
+    : idx(InvalidIndex), basket(b)
+  {}
+
+  bool HasNext() const {
+    return (idx + 1) < olx_ref::get(basket).Count();
+  }
+
+  const value_t& Next() {
+    idx++;
+    size_t cnt = olx_ref::get(basket).Count();
+    if (idx >= cnt) {
+      throw TIndexOutOfRangeException(__OlxSourceInfo, idx, 0, cnt);
+    }
+    return MDValueAccessor::get(*basket, idx);
+  }
+};
+
+
 template <typename item_t, class comparator_t>
 struct SetFactory {
   typedef olxset<item_t, comparator_t> basket_t;
+  typedef item_t value_t;
+  typedef IndexableIterator<basket_t, value_t> value_iterator_t;
   comparator_t cmp;
   SetFactory() {}
   SetFactory(const comparator_t& cmp)
@@ -287,11 +379,16 @@ struct SetFactory {
     return new basket_t(cmp);
     //return new basket_t(cmp, olx_reserve(1));
   }
+  value_iterator_t* new_iterator(basket_t* b) {
+    return new value_iterator_t(b);
+  }
 };
 
 template <typename key_t, typename item_t, class comparator_t>
 struct MapFactory {
   typedef olxdict<key_t, item_t, comparator_t> basket_t;
+  typedef item_t value_t;
+  typedef IndexableIterator<basket_t, value_t> value_iterator_t;
   comparator_t cmp;
   MapFactory() {}
   MapFactory(const comparator_t& cmp)
@@ -302,13 +399,20 @@ struct MapFactory {
     return new basket_t(cmp);
     //return new basket_t(cmp, olx_reserve(1));
   }
+  value_iterator_t* new_iterator(basket_t* b) {
+    return new value_iterator_t(b);
+  }
 };
 
 template <typename key_t, class comparator_t>
 struct BTSetFactory {
-  typedef TreeSetEntry<key_t> value_t;
-  typedef AVLEntryEx<value_t> entry_t;
-  typedef AVLTree<entry_t, comparator_t> basket_t;
+  typedef TreeSetEntry<key_t> value_tt;
+  //typedef AVLTreeEntry<value_tt> entry_t;
+  //typedef AVLTree<entry_t, comparator_t> basket_t;
+  typedef RBTreeEntry<value_tt> entry_t;
+  typedef RBTree<entry_t, comparator_t> basket_t;
+  typedef key_t value_t;
+  typedef typename basket_t::ValueIterator value_iterator_t;
   comparator_t cmp;
   BTSetFactory() {}
   BTSetFactory(const comparator_t& cmp)
@@ -318,13 +422,21 @@ struct BTSetFactory {
   basket_t* new_basket() const {
     return new basket_t(cmp);
   }
+
+  value_iterator_t* new_iterator(basket_t* b) {
+    return new value_iterator_t(*b);
+  }
 };
 
 template <typename key_t, typename item_t, class comparator_t>
 struct BTMapFactory {
-  typedef TreeMapEntry<key_t, item_t> value_t;
-  typedef AVLEntryEx<value_t> entry_t;
-  typedef AVLTree<entry_t, comparator_t> basket_t;
+  typedef TreeMapEntry<key_t, item_t> value_tt;
+  //typedef AVLTreeEntry<value_tt> entry_t;
+  //typedef AVLTree<entry_t, comparator_t> basket_t;
+  typedef RBTreeEntry<value_tt> entry_t;
+  typedef RBTree<entry_t, comparator_t> basket_t;
+  typedef item_t value_t;
+  typedef typename basket_t::ValueIterator value_iterator_t;
   comparator_t cmp;
   BTMapFactory() {}
   BTMapFactory(const comparator_t& cmp)
@@ -334,6 +446,9 @@ struct BTMapFactory {
   basket_t* new_basket() const {
     return new basket_t(cmp);
   }
+  value_iterator_t* new_iterator(basket_t* b) {
+    return new value_iterator_t(*b);
+  }
 };
 
 template <typename item_t, class comparator_t,
@@ -342,7 +457,7 @@ class TEHashSet : public TEHashed<SetFactory<item_t, comparator_t>, N, L> {
   typedef TEHashed<SetFactory<item_t, comparator_t>, N, L> parent_t;
   SetFactory<item_t, comparator_t> factory;
 public:
-  typedef typename parent_t::Iterator iterator_t;
+  typedef typename parent_t::FullIterator iterator_t;
   typedef typename parent_t::basket_t basket_t;
 
   TEHashSet() {}
@@ -380,7 +495,7 @@ class TEHashMap : public TEHashed<MapFactory<key_t, item_t, comparator_t>, N, L>
   typedef TEHashed<MapFactory<key_t, item_t, comparator_t>, N, L> parent_t;
   MapFactory<key_t, item_t, comparator_t> factory;
 public:
-  typedef typename parent_t::Iterator iterator_t;
+  typedef typename parent_t::FullIterator iterator_t;
   typedef typename parent_t::basket_t basket_t;
 
   TEHashMap() {}
@@ -401,7 +516,7 @@ class TEHashTreeSet : public TEHashed<BTSetFactory<key_t, comparator_t>, N, L> {
   typedef TEHashed<BTSetFactory<key_t, comparator_t>, N, L> parent_t;
   BTSetFactory<key_t, comparator_t> factory;
 public:
-  typedef typename parent_t::Iterator iterator_t;
+  typedef typename parent_t::FullIterator iterator_t;
   typedef typename parent_t::basket_t basket_t;
 
   TEHashTreeSet() {}
@@ -422,7 +537,7 @@ class TEHashTreeMap : public TEHashed<BTMapFactory<key_t, item_t, comparator_t>,
   typedef BTMapFactory<key_t, item_t, comparator_t> factory_t;
   factory_t factory;
 public:
-  typedef typename parent_t::Iterator iterator_t;
+  typedef typename parent_t::FullIterator iterator_t;
   typedef typename parent_t::basket_t basket_t;
 
   TEHashTreeMap() {}
