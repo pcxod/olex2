@@ -4367,7 +4367,8 @@ BOOL CALLBACK TMainForm::QueryOlex2Windows(HWND w, LPARAM p) {
     olxstr t = olxstr::FromExternal(title.release(), sz, max_sz);
     QueryParams* q = (QueryParams*)p;
     if (t.StartsFrom("Olex2") && q->hwnd != w) {
-      SendMessage(w, q->evt, (WPARAM)q->hwnd, 0);
+      SendMessageTimeout(w, q->evt, (WPARAM)q->hwnd, 0,
+        SMTO_ABORTIFHUNG, 1000, 0); // 1 sec timeout
     }
   }
   return TRUE;
