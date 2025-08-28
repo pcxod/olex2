@@ -5218,7 +5218,7 @@ void CifMerge_UpdateAtomLoop(TCif &Cif) {
           {
             if (tab->GetData()[ri][occu_ind] != 0) {
               TEValueD occu(tab->Get(ri, occu_ind).ToString());
-              occu /= a.GetDegeneracy();
+              occu /= (double)a.GetDegeneracy();
               tab->Set(ri, occu_ind, new cetString(occu.ToString()));
               tab->Set(ri, st_order_ind, new cetString(1));
             }
@@ -9504,7 +9504,7 @@ void XLibMacros::macDfix(TStrObjList& Cmds, const TParamList& Options,
     olxdict<int, list_t, TPrimitiveComparator> groups;
     for (size_t i = 0; i < Atoms.Count(); i += 2) {
       TEValueD cb = tls.BondCorrect(*Atoms[i], *Atoms[i + 1]);
-      int v = cb.GetV() * 1000;
+      int v = (int)(cb.GetV() * 1000);
       groups.Add(v).AddNew(Atoms[i], Atoms[i + 1]);
     }
     for (size_t i = 0; i < groups.Count(); i++) {
@@ -12877,7 +12877,7 @@ void XLibMacros::macWigl(TStrObjList& Cmds, const TParamList& Options,
   if (Cmds.Count() > 1) {
     dU = Cmds[1].ToDouble();
   }
-  srand(TETime::msNow());
+  srand((uint32_t)TETime::msNow());
   TXApp& app = TXApp::GetInstance();
   TAsymmUnit& au = app.XFile().GetAsymmUnit();
   for (size_t i = 0; i < au.AtomCount(); i++) {

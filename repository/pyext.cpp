@@ -679,23 +679,28 @@ void ExportLib(const olxstr &_root, const TLibrary& Lib,
       out.Write(olxcstr("from ") << ln << " import " << lib.GetName() << '\n');
     }
   }
-  for (size_t i = 0; i < Lib.FunctionCount(); i++) {
-    ABasicFunction* fun = Lib.GetFunctionByIndex(i);
-    olxstr pyName = fun->GetName();
-    pyName.Replace('@', "At");
-    out.Write(PyFuncBody(fun->GetQualifiedName(), pyName, ',', module_name)
-      << '\n');
-  }
-
-  for (size_t i = 0; i < Lib.MacroCount(); i++) {
-    ABasicFunction* fun = Lib.GetMacroByIndex(i);
-    if (dynamic_cast<macrolib::TEMacro*>(fun) != 0) {
-      continue;
+  {
+    TLibrary::container_t::iterator_t itr = Lib.IterateFunctions();
+    while (itr->HasNext()) {
+      ABasicFunction* fun = itr->Next();
+      olxstr pyName = fun->GetName();
+      pyName.Replace('@', "At");
+      out.Write(PyFuncBody(fun->GetQualifiedName(), pyName, ',', module_name)
+        << '\n');
     }
-    olxstr pyName = fun->GetName();
-    pyName.Replace('@', "At");
-    out.Write(PyFuncBody(fun->GetQualifiedName(), pyName, ' ', module_name)
-      << '\n');
+  }
+  {
+    TLibrary::container_t::iterator_t itr = Lib.IterateMacros();
+    while (itr->HasNext()) {
+      ABasicFunction* fun = itr->Next();
+      if (dynamic_cast<macrolib::TEMacro*>(fun) != 0) {
+        continue;
+      }
+      olxstr pyName = fun->GetName();
+      pyName.Replace('@', "At");
+      out.Write(PyFuncBody(fun->GetQualifiedName(), pyName, ' ', module_name)
+        << '\n');
+    }
   }
   for (size_t i = 0; i < Lib.LibraryCount(); i++) {
     TLibrary &lib = *Lib.GetLibraryByIndex(i);

@@ -185,7 +185,7 @@ public:
     }
   }
   ~TObjectList()  {  list.DeleteItems();  }
-  void TakeOver(TObjectList &l, bool do_delete=false)  {
+  void TakeOver(TObjectList& l, bool do_delete = false) {
     list.TakeOver(l.list);
     if (do_delete) {
       delete& l;
@@ -247,7 +247,9 @@ public:
   SortedObjectList(const ConstSortedObjectList<ObjectClass,Comparator>& l)
     : _parent_t(l.obj().cmp)
   {
-    _parent_t::TakeOver(l.Release(), true);
+    SortedObjectList& t = l.Release();
+    _parent_t::TakeOver(t);
+    delete& t;
   }
   SortedObjectList& operator = (const SortedObjectList& l)  {
     _parent_t::operator = (l);
@@ -256,8 +258,9 @@ public:
   SortedObjectList& operator = (
     const ConstSortedObjectList<ObjectClass,Comparator>& l)
   {
-    _parent_t::TakeOver(l.Release, true);
-    return *this;
+    SortedObjectList& t = l.Release();
+    _parent_t::TakeOver(t);
+    delete& t;
   }
   template <class LT> static
     ConstSortedObjectList<ObjectClass, Comparator> FromList(const LT &l)
@@ -273,7 +276,9 @@ public:
   {
     SortedObjectList rv;
     rv.SetCapacity(l.Count());
-    for (size_t i=0; i < l.Count(); i++) rv.Add(accessor(l[i]));
+    for (size_t i = 0; i < l.Count(); i++) {
+      rv.Add(accessor(l[i]));
+    }
     return rv;
   }
   static ConstSortedObjectList<ObjectClass, Comparator>
@@ -304,29 +309,31 @@ class SortedPointerList
     _parent_t;
 public:
   SortedPointerList() {}
-  SortedPointerList(const Comparator &cmp)
+  SortedPointerList(const Comparator& cmp)
     : _parent_t(cmp)
-  {}
+  {
+  }
   SortedPointerList(const SortedPointerList& l)
     : _parent_t(l)
-  {}
-  SortedPointerList(const ConstSortedPointerList<ObjectClass,Comparator>& l)
-  : _parent_t(l.obj().cmp)
+  {
+  }
+  SortedPointerList(const ConstSortedPointerList<ObjectClass, Comparator>& l)
+    : _parent_t(l.obj().cmp)
   {
     _parent_t::TakeOver(l.Release(), true);
   }
-  SortedPointerList& operator = (const SortedPointerList& l)  {
+  SortedPointerList& operator = (const SortedPointerList& l) {
     _parent_t::operator = (l);
     return *this;
   }
   SortedPointerList& operator = (
-    const ConstSortedPointerList<ObjectClass,Comparator>& l)
+    const ConstSortedPointerList<ObjectClass, Comparator>& l)
   {
     _parent_t::TakeOver(l.Release(), true);
     return *this;
   }
   template <class LT> static
-    ConstSortedPointerList<ObjectClass, Comparator> FromList(const LT &l)
+    ConstSortedPointerList<ObjectClass, Comparator> FromList(const LT& l)
   {
     SortedPointerList rv;
     rv.SetCapacity(l.Count());
@@ -336,8 +343,8 @@ public:
     return rv;
   }
   template <class LT, class accessor_t> static
-    ConstSortedPointerList<ObjectClass, Comparator> FromList(const LT &l,
-    const accessor_t &accessor, const Comparator &cmp)
+    ConstSortedPointerList<ObjectClass, Comparator> FromList(const LT& l,
+      const accessor_t& accessor, const Comparator& cmp)
   {
     SortedPointerList rv(cmp);
     rv.SetCapacity(l.Count());
@@ -347,18 +354,18 @@ public:
     return rv;
   }
   template <class LT, class accessor_t> static
-    ConstSortedPointerList<ObjectClass, Comparator> FromList(const LT &l,
-    const accessor_t &accessor)
+    ConstSortedPointerList<ObjectClass, Comparator> FromList(const LT& l,
+      const accessor_t& accessor)
   {
-      SortedPointerList rv;
-      rv.SetCapacity(l.Count());
-      for (size_t i = 0; i < l.Count(); i++) {
-        rv.Add(accessor(l[i]));
-      }
-      return rv;
+    SortedPointerList rv;
+    rv.SetCapacity(l.Count());
+    for (size_t i = 0; i < l.Count(); i++) {
+      rv.Add(accessor(l[i]));
     }
+    return rv;
+  }
 public:
-  typedef ObjectClass *list_item_type;
+  typedef ObjectClass* list_item_type;
 };
 
 // ConstSortedObjectList
@@ -406,13 +413,13 @@ namespace sorted {
     typedef SortedObjectList<obj_t, TPrimitiveComparator> parent_t;
   public:
     ObjectPrimitive() {}
-    ObjectPrimitive(const ObjectPrimitive &l)
+    ObjectPrimitive(const ObjectPrimitive& l)
       : parent_t(l)
     {}
-    ObjectPrimitive(const ConstSortedObjectList<obj_t, TPrimitiveComparator> &l)
+    ObjectPrimitive(const ConstSortedObjectList<obj_t, TPrimitiveComparator>& l)
       : parent_t(l)
     {}
-    ObjectPrimitive & operator = (const ObjectPrimitive &l) {
+    ObjectPrimitive& operator = (const ObjectPrimitive& l) {
       parent_t::operator = (l);
       return *this;
     }
@@ -423,11 +430,13 @@ namespace sorted {
     typedef SortedObjectList<obj_t, TComparableComparator> parent_t;
   public:
     ObjectComparable() {}
-    ObjectComparable(const ConstSortedObjectList<obj_t, TComparableComparator> &l)
+    ObjectComparable(const ConstSortedObjectList<obj_t, TComparableComparator>& l)
       : parent_t(l)
     {}
-    ObjectComparable(const ObjectComparable &l) : parent_t(l) {}
-    ObjectComparable & operator = (const ObjectComparable &l) {
+    ObjectComparable(const ObjectComparable& l)
+      : parent_t(l)
+    {}
+    ObjectComparable& operator = (const ObjectComparable& l) {
       parent_t::operator = (l);
       return *this;
     }
@@ -439,11 +448,11 @@ namespace sorted {
     typedef SortedPointerList<ptr_t, TPointerComparator> parent_t;
   public:
     PointerPointer() {}
-    PointerPointer(const PointerPointer &l) : parent_t(l) {}
-    PointerPointer(const ConstSortedPointerList<ptr_t, TPointerComparator> &l)
+    PointerPointer(const PointerPointer& l) : parent_t(l) {}
+    PointerPointer(const ConstSortedPointerList<ptr_t, TPointerComparator>& l)
       : parent_t(l)
     {}
-    PointerPointer & operator = (const PointerPointer &l) {
+    PointerPointer& operator = (const PointerPointer& l) {
       parent_t::operator = (l);
       return *this;
     }
@@ -455,11 +464,11 @@ namespace sorted {
     typedef SortedPointerList<ptr_t, TComparableComparator> parent_t;
   public:
     PointerComparable() {}
-    PointerComparable(const PointerComparable &l) : parent_t(l) {}
-    PointerComparable(const ConstSortedPointerList<ptr_t, TComparableComparator> &l)
+    PointerComparable(const PointerComparable& l) : parent_t(l) {}
+    PointerComparable(const ConstSortedPointerList<ptr_t, TComparableComparator>& l)
       : parent_t(l)
     {}
-    PointerComparable & operator = (const PointerComparable &l) {
+    PointerComparable& operator = (const PointerComparable& l) {
       parent_t::operator = (l);
       return *this;
     }
@@ -471,17 +480,17 @@ namespace sorted {
     typedef SortedPointerList<ptr_t, TPrimitiveComparator> parent_t;
   public:
     PointerPrimitive() {}
-    PointerPrimitive(const PointerPrimitive &l) : parent_t(l) {}
-    PointerPrimitive(const ConstSortedPointerList<ptr_t, TPrimitiveComparator> &l)
+    PointerPrimitive(const PointerPrimitive& l) : parent_t(l) {}
+    PointerPrimitive(const ConstSortedPointerList<ptr_t, TPrimitiveComparator>& l)
       : parent_t(l)
     {}
-    PointerPrimitive & operator = (const PointerPrimitive &l) {
+    PointerPrimitive& operator = (const PointerPrimitive& l) {
       parent_t::operator = (l);
       return *this;
     }
   };
 
-}
+} // namespace sorted
 
 EndEsdlNamespace()
 #endif

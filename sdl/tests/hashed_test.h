@@ -49,7 +49,11 @@ namespace test {
     while (fitr.HasNext()) {
       TBasicApp::NewLogEntry() << fitr.Next();
     }
-
+    double h1 = normalise_float(0.0001, 0xFFFFFFFF / 2);
+    double h2 = normalise_float(0.001, 0xFFFFFFFF / 2);
+    double h3 = normalise_float(0.01, 0xFFFFFFFF / 2);
+    double h4 = normalise_float(1, 0xFFFFFFFF / 2);
+    double h5 = normalise_float(10, 0xFFFFFFFF / 2);
   }
   //...........................................................................................
   void basic_dict_test(OlxTests& t) {
@@ -80,7 +84,7 @@ namespace test {
     //return rv;
   }
   void perf_test(OlxTests& t) {
-    size_t max_str_c = 100000;
+    size_t max_str_c = 250000;
     bool test_binary = max_str_c < 1000000; // takes too long with > 1m recs
     TStrList strings(max_str_c);
     for (size_t i = 0; i < max_str_c; i++) {
@@ -88,8 +92,8 @@ namespace test {
     }
 
     olxstr_set<> binary_set(olx_reserve(test_binary ? max_str_c : 1));
-    typedef TEHashSet<olxstr, olxstrComparator<false>, 4, 4> set_t;
-    typedef TEHashTreeSet<olxstr, olxstrComparator<false> > hbt_t;
+    typedef TEHashSet<olxstr, olxstrComparator<false>, 16, 4> set_t;
+    typedef TEHashTreeSet<olxstr, olxstrComparator<false>, 16, 4> hbt_t;
 
     typedef AVLTreeEntry<TreeSetEntry<olxstr> > avlt_entry_t;
     typedef AVLTree<avlt_entry_t, olxstrComparator<false> > bt_t;
@@ -207,10 +211,10 @@ namespace test {
     }
 
     sw.start("Hash binary tree iteration");
-    hbt_t::iterator_t full_itr = hbt.Iterate();
+    hbt_t::iterator_t full_itr = hbt.iterate();
     size_t full_cnt = 0;
-    while (full_itr.HasNext()) {
-      const hbt_t::value_t& v = full_itr.Next();
+    while (full_itr->HasNext()) {
+      const hbt_t::value_t& v = full_itr->Next();
       full_cnt++;
     }
     if (full_cnt != bt.Count()) {
@@ -228,6 +232,14 @@ namespace test {
     sw.start("RB binary tree remove");
     for (size_t i = 0; i < max_str_c; i++) {
       rbt.Remove(strings[i]);
+    }
+    if (rbt.Count() != 0) {
+      throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
+    }
+
+    sw.start("Hash binary tree remove");
+    for (size_t i = 0; i < max_str_c; i++) {
+      hbt.Remove(strings[i]);
     }
     if (rbt.Count() != 0) {
       throw TFunctionFailedException(__OlxSourceInfo, "unexpected");

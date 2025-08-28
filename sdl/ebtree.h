@@ -53,6 +53,15 @@ struct TreeMapEntry {
   }
 };
 
+template <typename value_t>
+struct DuplicateTreeEntry {
+  value_t data;
+  DuplicateTreeEntry* next;
+  DuplicateTreeEntry(const value_t& d)
+    : data(d), next(0)
+  {}
+};
+
 template <class actual, typename value_tt>
 struct ABTreeEntry {
   typedef value_tt value_t;
@@ -96,21 +105,7 @@ struct ABTreeEntry {
     return value.cmp(k, comparator);
   }
 
-  virtual actual* rotate_left() {
-    actual* r = right;
-    right = r->left;
-    r->left = (actual*)(this);
-    return update(r);
-  }
-
-  virtual actual* rotate_right() {
-    actual* l = left;
-    left = l->right;
-    l->right = (actual*)(this);
-    return update(l);
-  }
-
-  virtual bool AddSame(const value_t& v) {
+  virtual bool AddSame(const val_t& v) {
     return false;
   }
 
@@ -120,19 +115,21 @@ struct ABTreeEntry {
     right = e.right;
   }
 
-  void clear() {
-    left = right = 0;
-  }
-
   const val_t& get_value() const {
     return value.get_value();
   }
 
-  virtual actual* update(actual* e) = 0;
+  IIterator<val_t>* iterate() const {
+    return 0;
+  }
+
+  virtual size_t Count() const { return 1; }
 };
 
 template <class entry_tt, class Comparator=TComparableComparator>
-class BTree_ {
+class BTree_ :
+public AIterable<typename entry_tt::val_t>
+{
 protected:
   entry_tt *Root;
   size_t _Count, _LeafCount;
@@ -142,6 +139,7 @@ public:
   typedef typename entry_t::value_t value_t;
   typedef typename entry_t::key_t key_t;
   typedef typename entry_t::val_t val_t;
+
   BTree_(const Comparator &cmp= Comparator())
     : Root(0), _Count(0), _LeafCount(0), cmp(cmp)
   {}
@@ -211,7 +209,7 @@ public:
     return l;
   }
 
-  struct ValueIterator {
+  struct ValueIterator : public IIterator<val_t> {
   private:
     TUDTypeList<val_t> list;
     typename TLinkedList<val_t>::Iterator itr;
@@ -230,12 +228,24 @@ public:
   ValueIterator GetValueIterator() const {
     return ValueIterator(*this);
   }
+
+  IIterator<val_t>* iterate() const {
+    return new ValueIterator(*this);
+  }
+
 protected:
   void fill_value_list(const entry_t* e, TUDTypeList<val_t>& l) const {
     if (e->left != 0) {
       fill_value_list(e->left, l);
     }
     l.Add(e->get_value());
+    IIterator<val_t> *itr =  e->iterate();
+    if (itr != 0) {
+      while (itr->HasNext()) {
+        l.Add(itr->Next());
+      }
+      delete itr;
+    }
     if (e->right != 0) {
       fill_value_list(e->right, l);
     }
@@ -280,6 +290,7 @@ protected:
   }
 
   virtual bool insert_(const value_t& e) = 0;
+  // must update _Count!
   virtual bool delete_(const key_t& e) = 0;
 
   public:
@@ -320,7 +331,21 @@ struct AVLBTEntry_ : public ABTreeEntry<actual, value_tt > {
     return (int)get_height(this->left) - (int)get_height(this->right);
   }
 
-  virtual actual* update(actual* e) {
+  actual* rotate_left() {
+    actual* r = this->right;
+    this->right = r->left;
+    r->left = (actual*)(this);
+    return update(r);
+  }
+
+  actual* rotate_right() {
+    actual* l = this->left;
+    this->left = l->right;
+    l->right = (actual*)(this);
+    return update(l);
+  }
+
+  actual* update(actual* e) {
     this->update_height();
     e->update_height();
     return e;
@@ -329,6 +354,10 @@ struct AVLBTEntry_ : public ABTreeEntry<actual, value_tt > {
   void copy_from(const AVLBTEntry_& e) {
     parent_t::copy_from(e);
     height = e.height;
+  }
+
+  void clear_siblings() {
+    this->left = this->right = 0;
   }
 };
 
@@ -345,20 +374,18 @@ struct AVLTreeEntry : public AVLBTEntry_<AVLTreeEntry<value_tt>, value_tt> {
 
 
 template <class value_tt>
-struct AVLTreeEntryEx : public AVLBTEntry_<AVLTreeEntryEx<value_tt>, value_tt> {
+struct AVLTreeEntryEx :
+  public AVLBTEntry_<AVLTreeEntryEx<value_tt>, value_tt>,
+  public AIterable<typename value_tt::value_t>
+{
   typedef AVLBTEntry_<AVLTreeEntryEx<value_tt>, value_tt > parent_t;
   typedef AVLTreeEntryEx<value_tt> actual;
   typedef value_tt value_t;
   typedef typename value_t::key_t key_t;
+  typedef typename value_t::value_t val_t;
+  typedef DuplicateTreeEntry<val_t> duplicate_value_t;
 
-  struct DuplicateEntry {
-    value_t data;
-    DuplicateEntry* next;
-    DuplicateEntry(const value_t& d)
-      : data(d), next(0)
-    {}
-  };
-  DuplicateEntry* next, * last;  // linked list of items with equal key
+  duplicate_value_t* next, * last;
 
   AVLTreeEntryEx()
     : next(0), last(0)
@@ -386,20 +413,47 @@ struct AVLTreeEntryEx : public AVLBTEntry_<AVLTreeEntryEx<value_tt>, value_tt> {
     last = e.last;
   }
 
-  void clear() {
-    parent_t::clear();
-    this->left = this->right = 0;
-  }
-
-  virtual bool AddSame(const value_t& v) {
+  virtual bool AddSame(const val_t& v) {
     if (last != 0) {
-      last->next = new DuplicateEntry(v);
+      last->next = new duplicate_value_t(v);
       last = last->next;
     }
     else {
-      last = next = new DuplicateEntry(v);
+      last = next = new duplicate_value_t(v);
     }
     return true;
+  }
+
+  struct Itr : public IIterator<val_t> {
+    duplicate_value_t* nxt;
+    Itr(duplicate_value_t* nxt)
+      : nxt(nxt)
+    {}
+
+    bool HasNext() const { return nxt != 0; }
+
+    const val_t& Next() {
+      if (nxt == 0) {
+        return 0;
+      }
+      duplicate_value_t* rv = nxt;
+      nxt = nxt->next;
+      return rv->data;
+    }
+  };
+
+  IIterator<val_t>* iterate() const {
+    return new Itr(next);
+  }
+
+  size_t Count() const { 
+    size_t cnt = 1;
+    duplicate_value_t* nxt = next;
+    while (nxt != 0) {
+      cnt++;
+      nxt = nxt->next;
+    }
+    return cnt;
   }
 };
 
@@ -474,7 +528,7 @@ public:
       node->right = insert_recursive(node->right, e);
     }
     else {
-      if (node->AddSame(e)) {
+      if (node->AddSame(e.get_value())) {
         this->_Count++;
       }
       return node;
@@ -497,17 +551,20 @@ public:
     else {
       if (node->left == 0 || node->right == 0) {
         entry_t* e = node->left == 0 ? node->right : node->left;
+        size_t rc;
         if (e == 0) {
           e = node;
+          rc = e->Count();
           node = 0;
         }
         else {
+          rc = e->Count();
           node->copy_from(*e);
-          e->clear();
+          e->clear_siblings();
         }
         delete e;
         this->_LeafCount--;
-        this->_Count--;
+        this->_Count -= rc;
       }
       else {
         entry_t* e = parent_t::leftmost(node->right);
@@ -562,7 +619,7 @@ struct ARBTreeEntry_ : public ABTreeEntry <actual, value_tt > {
     parent_t(value)
   {}
 
-  virtual actual* rotate_left() {
+  actual* rotate_left() {
     if (parent != 0) {
       if (parent->left == (actual*)this) {
         parent->left = this->right;
@@ -581,7 +638,7 @@ struct ARBTreeEntry_ : public ABTreeEntry <actual, value_tt > {
     return this->parent;
   }
 
-  virtual actual* rotate_right() {
+  actual* rotate_right() {
     if (parent != 0) {
       if (parent->left == (actual*)this) {
         parent->left = this->left;
@@ -662,9 +719,6 @@ struct RBTreeEntry_ : public ARBTreeEntry_<actual, value_tt> {
     : parent_t(value)
   {}
 
-  virtual actual* update(actual* e) {
-    return e;
-  }
 };
 
 template <class value_tt>
@@ -679,6 +733,95 @@ struct RBTreeEntry : public RBTreeEntry_<RBTreeEntry<value_tt>, value_tt> {
   {}
 };
 
+template <class value_tt>
+struct RBTreeEntryEx :
+  public RBTreeEntry_<RBTreeEntryEx<value_tt>, value_tt>,
+  public AIterable<typename value_tt::value_t> 
+{
+  typedef RBTreeEntry_<RBTreeEntryEx<value_tt>, value_tt > parent_t;
+  typedef RBTreeEntryEx<value_tt> actual;
+  typedef value_tt value_t;
+  typedef typename value_t::key_t key_t;
+  typedef typename value_t::value_t val_t;
+  typedef DuplicateTreeEntry<val_t> duplicate_value_t;
+
+  duplicate_value_t* next, * last;
+
+  RBTreeEntryEx()
+    : next(0), last(0)
+  {}
+
+  RBTreeEntryEx(const value_t& value)
+    : parent_t(value),
+    next(0), last(0)
+  {}
+
+  ~RBTreeEntryEx() {
+    olx_del_obj(next);
+  }
+
+  virtual bool AddSame(const val_t& v) {
+    if (last != 0) {
+      last->next = new duplicate_value_t(v);
+      last = last->next;
+    }
+    else {
+      last = next = new duplicate_value_t(v);
+    }
+    return true;
+  }
+
+  struct Itr : public IIterator<val_t> {
+    duplicate_value_t* nxt;
+    Itr(duplicate_value_t* nxt)
+      : nxt(nxt)
+    {}
+
+    bool HasNext() const { return nxt != 0; }
+
+    const val_t& Next() {
+#ifdef OLX_DEBUG
+      if (nxt == 0) {
+        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "no more data");
+      }
+#endif
+      duplicate_value_t* rv = nxt;
+      nxt = nxt->next;
+      return rv->data;
+    }
+  };
+
+  IIterator<val_t>* iterate() const {
+    return new Itr(next);
+  }
+
+  size_t Count() const {
+    size_t cnt = 1;
+    duplicate_value_t* nxt = next;
+    while (nxt != 0) {
+      cnt++;
+      nxt = nxt->next;
+    }
+    return cnt;
+  }
+
+  bool replace(const val_t & o, const val_t& n) {
+    if (o == this->value.value) {
+      this->value.value = n;
+      return true;
+    }
+    duplicate_value_t* nxt = next;
+    while (nxt != 0) {
+      if (nxt->data == o) {
+        nxt->data = n;
+        return true;
+      }
+      nxt = nxt->next;
+    }
+    return false;
+  }
+};
+
 template <class entry_tt, class Comparator = TComparableComparator>
 class RBTree : public BTree_<entry_tt, Comparator> {
 public:
@@ -689,8 +832,7 @@ public:
 
   RBTree(const Comparator& cmp = Comparator())
     : BTree_<entry_tt, Comparator>(cmp)
-  {
-  }
+  {}
 
   void delete_node(entry_t* node) {
     entry_t* u = node->replacement();
@@ -775,8 +917,9 @@ public:
     olx_pair_t<entry_t*, int> tmp = parent_t::find_node(v.key);
 
     if (tmp.b == 0) {
-      if (tmp.a->AddSame(v)) {
+      if (tmp.a->AddSame(v.get_value())) {
         this->_Count++;
+        return true;
       }
       return false;
     }
@@ -799,10 +942,11 @@ public:
 
   virtual bool delete_(const key_t& key) {
     olx_pair_t<entry_t*, int> n = parent_t::find_node(key);
-
     if (n.b != 0) {
       return false;
     }
+    this->_Count -= n.a->Count();
+    this->_LeafCount -= 1;
     delete_node(n.a);
     return true;
   }

@@ -10,19 +10,15 @@
 #include "library.h"
 UseEsdlNamespace()
 
-TLibrary::TLibrary(const olxstr& libraryName, ALibraryContainer* owner)  {
-  LibraryName  = libraryName;
+TLibrary::TLibrary(const olxstr& libraryName, ALibraryContainer* owner) {
+  LibraryName = libraryName;
   LibraryOwner = owner;
   ParentLibrary = 0;
 }
 //..............................................................................
 TLibrary::~TLibrary()  {
-  for (size_t i = 0; i < Functions.Count(); i++) {
-    delete Functions.GetValue(i);
-  }
-  for (size_t i = 0; i < Macros.Count(); i++) {
-    delete Macros.GetValue(i);
-  }
+  Functions.ForEach(olx_obj_deleter());
+  Macros.ForEach(olx_obj_deleter());
   for (size_t i = 0; i < Libraries.Count(); i++) {
     delete Libraries.GetValue(i);
   }
@@ -51,110 +47,122 @@ void TLibrary::AttachLibrary(TLibrary* lib) {
 }
 //..............................................................................
 ABasicFunction* TLibrary::Register(
-  sorted::StringAssociation<ABasicFunction*, true>& container,
+  container_t& container,
   ABasicFunction* fm,
   uint16_t flags)
 {
-  TSizeList list;
+  container_t::entry_t* fs = container.Find(fm->GetName());
   ABasicFunction* rv = 0;
-  container.GetIndices(fm->GetName(), list);
   if (fm->GetArgStateMask() == uint32_t(~0)) {
-    if (list.Count() > 1)
+    if (fs != 0 && fs->Count() > 1)
       throw TInvalidArgumentException(__OlxSourceInfo, "ambiguous replacement");
   }
-  if (!list.IsEmpty()) {
-    ABasicFunction* src = container.GetValue(list[0]);
+  fm->SetParentLibrary(*this);
+  if (fs != 0) {
+    ABasicFunction* src = fs->get_value();
     fm->SetArgStateMask(fm->GetArgStateMask() | src->GetArgStateMask());
     if (src->HasOptions()) {
       olxstr_dict<olxstr> options = src->GetOptions();
       options.Merge(fm->GetOptions());
       fm->SetOptions(options);
     }
-  }
-  fm->SetParentLibrary(*this);
-  for (size_t i = 0; i < list.Count(); i++) {
-    ABasicFunction* f = container.GetValue(list[i]);
-    if ((fm->GetArgStateMask() & f->GetArgStateMask()) != 0) {
-      if ((flags & libReplace) != 0) {
-        if (fm->GetDescription().IsEmpty()) {
-          fm->SetDescription(f->GetDescription());
-        }
-        if ((flags & libReturn) != 0) {
-          rv = f;
-        }
-        else {
-          delete f;
-        }
-        container.Delete(list[i]);
-        break;
-      }
-      else if ((flags & libChain) != 0) {
-        if (dynamic_cast<AMacro*>(f) != 0) {
-          TMacro<FunctionChainer>* fcm =
-            dynamic_cast<TMacro<FunctionChainer>*>(f);
-          FunctionChainer* fc = 0;
-          if (fcm == 0) {
-            fc = &Chains.AddNew();
-            fc->Add(f);
-            fcm = new TMacro<FunctionChainer>(fc, &FunctionChainer::RunMacro,
-              f->GetName(), EmptyString(), 0);
-            fcm->SetParentLibrary(*this);
-            container.GetValue(list[i]) = fcm;
+    IteratorJ<ABasicFunction*> itr(&fs->get_value(), fs->Iterate());
+    while (itr.HasNext()) {
+      ABasicFunction* f = itr.Next();
+      if ((fm->GetArgStateMask() & f->GetArgStateMask()) != 0) {
+        if ((flags & libReplace) != 0) {
+          if (fm->GetDescription().IsEmpty()) {
+            fm->SetDescription(f->GetDescription());
+          }
+          fs->replace(f, fm);
+          if ((flags & libReturn) != 0) {
+            rv = f;
           }
           else {
-            fc = &fcm->GetBaseInstance();
+            delete f;
           }
-          fc->Add(fm).Update(fcm);
+          return rv;
         }
-        else if (dynamic_cast<AFunction*>(f) != 0) {
-          TFunction<FunctionChainer>* fcm =
-            dynamic_cast<TFunction<FunctionChainer>*>(f);
-          FunctionChainer* fc = 0;
-          if (fcm == 0) {
-            fc = &Chains.AddNew();
-            fc->Add(f);
-            fcm = new TFunction<FunctionChainer>(fc, &FunctionChainer::RunFunction,
-              f->GetName(), 0);
-            fcm->SetParentLibrary(*this);
-            container.GetValue(list[i]) = fcm;
+        else if ((flags & libChain) != 0) {
+          if (dynamic_cast<AMacro*>(f) != 0) {
+            TMacro<FunctionChainer>* fcm =
+              dynamic_cast<TMacro<FunctionChainer>*>(f);
+            FunctionChainer* fc = 0;
+            if (fcm == 0) {
+              fc = &Chains.AddNew();
+              fc->Add(f);
+              fcm = new TMacro<FunctionChainer>(fc, &FunctionChainer::RunMacro,
+                f->GetName(), EmptyString(), 0);
+              fcm->SetParentLibrary(*this);
+              fs->replace(f, fcm);
+            }
+            else {
+              fc = &fcm->GetBaseInstance();
+            }
+            fc->Add(fm).Update(fcm);
           }
-          else {
-            fc = &fcm->GetBaseInstance();
+          else if (dynamic_cast<AFunction*>(f) != 0) {
+            TFunction<FunctionChainer>* fcm =
+              dynamic_cast<TFunction<FunctionChainer>*>(f);
+            FunctionChainer* fc = 0;
+            if (fcm == 0) {
+              fc = &Chains.AddNew();
+              fc->Add(f);
+              fcm = new TFunction<FunctionChainer>(fc, &FunctionChainer::RunFunction,
+                f->GetName(), 0);
+              fcm->SetParentLibrary(*this);
+              fs->replace(f, fcm);
+            }
+            else {
+              fc = &fcm->GetBaseInstance();
+            }
+            fc->Add(fm).Update(fcm);
           }
-          fc->Add(fm).Update(fcm);
+          return 0;
         }
-        return 0;
+        throw TDuplicateEntry(__OlxSourceInfo,
+          olxstr("macro/function (same number of args) ").quote() <<
+          fm->GetName(),
+          "static macro");
       }
-      throw TDuplicateEntry(__OlxSourceInfo,
-        olxstr("macro/function (same number of args) ").quote() <<
-        fm->GetName(),
-        "static macro");
     }
+    fs->AddSame(fm);
   }
-  container.Add(fm->GetName(), fm);
+  else {
+    container.Add(fm->GetName(), fm);
+  }
   return rv;
 }
 //..............................................................................
 size_t TLibrary::LocateLocalFunctions(const olxstr& name, TBasicFunctionPList& store) {
-  TSizeList list;
-  Functions.GetIndices(name, list);
-  for (size_t i = 0; i < list.Count(); i++) {
-    store.Add(Functions.GetValue(list[i]));
+  container_t::entry_t *e = Functions.Find(name);
+  if (e == 0) {
+    return 0;
   }
-  return list.Count();
+  size_t cnt = store.Count();
+  container_t::entry_t::iterator_t i = e->iterate();
+  while (i->HasNext()) {
+    store.Add(i->Next());
+  }
+  return store.Count() - cnt;
 }
 //..............................................................................
 size_t TLibrary::LocateLocalMacros(const olxstr& name, TBasicFunctionPList& store) {
-  TSizeList list;
-  Functions.GetIndices(name, list);
-  for (size_t i = 0; i < list.Count(); i++) {
-    store.Add(Macros.GetValue(list[i]));
+  container_t::entry_t* e = Macros.Find(name);
+  if (e == 0) {
+    return 0;
   }
-  return list.Count();
+  size_t cnt = store.Count();
+  container_t::entry_t::iterator_t i = e->iterate();
+  while (i->HasNext()) {
+    store.Add(i->Next());
+  }
+  return store.Count() - cnt;
 }
 //..............................................................................
 size_t TLibrary::LocateFunctions(const olxstr& name, TBasicFunctionPList& store) {
   size_t retVal = LocateLocalFunctions(name, store);
+  
   for (size_t i = 0; i < Libraries.Count(); i++) {
     retVal += GetLibraryByIndex(i)->LocateFunctions(name, store);
   }
@@ -170,25 +178,28 @@ size_t TLibrary::LocateMacros(const olxstr& name, TBasicFunctionPList& store) {
 }
 //..............................................................................
 ABasicFunction* TLibrary::LocateFunction(const olxstr& name, uint32_t argc) {
+  container_t::entry_t* m = Functions.Find(name);
+  if (m == 0) {
+    return 0;
+  }
   if (argc == 0) {
-    const size_t index = Functions.IndexOf(name);
-    return (index != InvalidIndex) ? Functions.GetValue(index) : 0;
+    return m->get_value();
   }
   else {
-    TSizeList list;
-    Functions.GetIndices(name, list);
-    for (size_t i = 0; i < list.Count(); i++) {
+    container_t::entry_t::iterator_t i = m->iterate();
+    while (i->HasNext()) {
+      ABasicFunction* f = i->Next();
       if (argc >= 10) {
-        uint32_t mm = Macros.GetValue(list[i])->GetArgStateMask();
+        uint32_t mm = f->GetArgStateMask();
         uint32_t im = (fpAny ^ (1 << 10));
         // any or any but not fewer than
         if (mm == fpAny || mm > im) {
-          return Macros.GetValue(list[i]);
+          return f;
         }
         continue;
       }
-      if (Functions.GetValue(list[i])->GetArgStateMask() & (1 << argc)) {
-        return Functions.GetValue(list[i]);
+      if (f->GetArgStateMask() & (1 << argc)) {
+        return f;
       }
     }
     return 0;
@@ -196,25 +207,28 @@ ABasicFunction* TLibrary::LocateFunction(const olxstr& name, uint32_t argc) {
 }
 //..............................................................................
 ABasicFunction* TLibrary::LocateMacro(const olxstr& name, uint32_t argc) {
+  container_t::entry_t* m = Macros.Find(name);
+  if (m == 0) {
+    return 0;
+  }
   if (argc == 0) {
-    const size_t index = Macros.IndexOf(name);
-    return (index != InvalidIndex) ? Macros.GetValue(index) : 0;
+    return m->get_value();
   }
   else {
-    TSizeList list;
-    Macros.GetIndices(name, list);
-    for (size_t i = 0; i < list.Count(); i++) {
+    IteratorJ<ABasicFunction*> i(&m->get_value(), m->Iterate());
+    while (i.HasNext()) {
+      ABasicFunction* f = i.Next();
       if (argc >= 10) {
-        uint32_t mm = Macros.GetValue(list[i])->GetArgStateMask();
+        uint32_t mm = f->GetArgStateMask();
         uint32_t im = (fpAny ^ (1 << 10));
         // any or any but not fewer than
         if (mm == fpAny || mm > im) {
-          return Macros.GetValue(list[i]);
+          return f;
         }
         continue;
       }
-      if (Macros.GetValue(list[i])->GetArgStateMask() & (1 << argc)) {
-        return Macros.GetValue(list[i]);
+      if (f->GetArgStateMask() & (1 << argc)) {
+        return f;
       }
     }
     return 0;
@@ -250,11 +264,12 @@ ABasicFunction* TLibrary::FindMacro(const olxstr& name, uint32_t argc) {
     }
     for (size_t i = 0; i < libPath.Count() - 1; i++) {
       searchLib = searchLib->GetLibraryByName(libPath[i]);
-      if (!searchLib) {
+      if (searchLib == 0) {
         break;
       }
     }
-    return (searchLib) ? searchLib->LocateMacro(libPath.GetLastString(), argc) : 0;
+    return (searchLib != 0)
+      ? searchLib->LocateMacro(libPath.GetLastString(), argc) : 0;
   }
   else {
     return this->LocateMacro(name, argc);
@@ -263,9 +278,11 @@ ABasicFunction* TLibrary::FindMacro(const olxstr& name, uint32_t argc) {
 //..............................................................................
 size_t TLibrary::LocateSimilarFunctions(const olxstr& name, TBasicFunctionPList& store) {
   const size_t cnt = store.Count();
-  for (size_t i = 0; i < Functions.Count(); i++) {
-    if (Functions.GetKey(i).StartsFromi(name)) {
-      store.Add(Functions.GetValue(i));
+  container_t::iterator_t fi = Functions.iterate();
+  while (fi->HasNext()) {
+    ABasicFunction* f = fi->Next();
+    if (f->GetName().StartsFromi(name)) {
+      store.Add(f);
     }
   }
   return store.Count() - cnt;
@@ -273,9 +290,11 @@ size_t TLibrary::LocateSimilarFunctions(const olxstr& name, TBasicFunctionPList&
 //..............................................................................
 size_t TLibrary::LocateSimilarMacros(const olxstr& name, TBasicFunctionPList& store) {
   const size_t cnt = store.Count();
-  for (size_t i = 0; i < Macros.Count(); i++) {
-    if (Macros.GetKey(i).StartsFromi(name)) {
-      store.Add(Macros.GetValue(i));
+  container_t::iterator_t fi = Macros.iterate();
+  while (fi->HasNext()) {
+    ABasicFunction* f = fi->Next();
+    if (f->GetName().StartsFromi(name)) {
+      store.Add(f);
     }
   }
   return store.Count() - cnt;
@@ -307,10 +326,11 @@ size_t TLibrary::FindSimilarFunctions(const olxstr& name, TBasicFunctionPList& s
     }
     if (searchLib != 0) {
       if (name.EndsWith('.')) {
-        for (size_t i = 0; i < searchLib->FunctionCount(); i++) {
-          store.Add(searchLib->GetFunctionByIndex(i));
+        TLibrary::container_t::iterator_t itr = searchLib->IterateFunctions();
+        while (itr->HasNext()) {
+          store.Add(itr->Next());
         }
-        return searchLib->LibraryCount();
+        return searchLib->FunctionCount();
       }
       return searchLib->LocateSimilarFunctions(libPath.GetLastString(), store);
     }
@@ -337,8 +357,9 @@ size_t TLibrary::FindSimilarMacros(const olxstr& name, TBasicFunctionPList& stor
     }
     if (searchLib != 0) {
       if (name.EndsWith('.')) {
-        for (size_t i = 0; i < searchLib->MacroCount(); i++) {
-          store.Add(searchLib->GetMacroByIndex(i));
+        TLibrary::container_t::iterator_t itr = searchLib->IterateMacros();
+        while (itr->HasNext()) {
+          store.Add(itr->Next());
         }
         return searchLib->MacroCount();
       }
@@ -378,8 +399,9 @@ bool TLibrary::CheckProgramState(uint32_t state)  {
 }
 //..............................................................................
 void TLibrary::ListAllFunctions(TBasicFunctionPList& store) {
-  for (size_t i = 0; i < Functions.Count(); i++) {
-    store.Add(Functions.GetValue(i));
+  container_t::iterator_t fi = Functions.iterate();
+  while (fi->HasNext()) {
+    store.Add(fi->Next());
   }
   for (size_t i = 0; i < Libraries.Count(); i++) {
     GetLibraryByIndex(i)->ListAllFunctions(store);
@@ -387,8 +409,9 @@ void TLibrary::ListAllFunctions(TBasicFunctionPList& store) {
 }
 //..............................................................................
 void TLibrary::ListAllMacros(TBasicFunctionPList& store) {
-  for (size_t i = 0; i < Macros.Count(); i++) {
-    store.Add(Macros.GetValue(i));
+  container_t::iterator_t fi = Macros.iterate();
+  while (fi->HasNext()) {
+    store.Add(fi->Next());
   }
   for (size_t i = 0; i < Libraries.Count(); i++) {
     GetLibraryByIndex(i)->ListAllMacros(store);

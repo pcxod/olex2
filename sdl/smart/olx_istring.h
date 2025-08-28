@@ -373,7 +373,8 @@ public:
     return (ch >='a' && ch <= 'z') ? (ch + 'A'-'a') : ch;
   }
   // for latin letetrs only
-  static char o_ltolower(char ch)  {
+  template <typename ch_t>
+  static char o_ltolower(ch_t ch)  {
     return (ch >='A' && ch <= 'Z') ? (ch + 'a'-'A') : ch;
   }
   static char o_toupper(char ch)  {  return toupper(ch);  }
@@ -2469,16 +2470,20 @@ public:
     return ch == a || ch == b;
   }
 
-  // Java-compatible string hash code
-  template <typename AC>
-  static int32_t o_hashcode(const AC *data, size_t len) {
-    int32_t h=0;
-    for (size_t i=0; i < len; i++) {
-      h = 31*h + data[i];
+  template <typename AC, bool lc>
+  static int32_t o_hashcode(const AC* data, size_t len) {
+    int32_t h = 0;
+    for (size_t i = 0; i < len; i++) {
+      h = 31 * h + (lc ? o_ltolower(data[i]) : data[i]);
     }
     return h;
   }
-  int32_t HashCode() const { return o_hashcode(T::Data(), T::_Length); }
+
+
+  template <bool lc>
+  int32_t HashCode() const { return o_hashcode<TC, lc>(T::Data(), T::_Length); }
+  // Java-compatible string hash code
+  int32_t HashCode() const { return o_hashcode<TC, false>(T::Data(), T::_Length); }
 
   template <class list_t, typename accessor_t>
   static TTSString Join(const list_t &l, const accessor_t &accessor,

@@ -44,8 +44,9 @@ struct DictEntry {
   };
 };
 
-template <typename KType, typename VType, class Comparator> class olxdict
-  : protected SortedObjectList<
+template <typename KType, typename VType, class Comparator> class olxdict :
+  public AIterable<VType>,
+  protected SortedObjectList<
       DictEntry<KType, VType, Comparator>,
       typename DictEntry<KType, VType, Comparator>::Comparator>
 {
@@ -90,7 +91,9 @@ public:
   olxdict(const const_olxdict<KType, VType, Comparator>& ad)
     : SortedL(ad.obj().cmp)
   {
-    SortedL::TakeOver(ad.Release(), true);
+    olxdict & d = ad.Release();
+    SortedL::TakeOver(d);
+    delete& d;
   }
   void TakeOver(olxdict& d) { SortedL::TakeOver(d); }
   olxdict& operator = (const olxdict& ad) {
@@ -98,7 +101,9 @@ public:
     return *this;
   }
   olxdict& operator = (const const_olxdict<KType, VType, Comparator>& ad) {
-    SortedL::TakeOver(ad.Release(), true);
+    olxdict& d = ad.Release();
+    SortedL::TakeOver(d);
+    delete& d;
     return *this;
   }
   template <class T> VType& Get(const T& key) const {
@@ -144,8 +149,8 @@ public:
     return SortedL::Contains(key);
   }
 
-  void AddListItem(const EntryType& e) {
-    SortedL::AddUnique(e.key);
+  bool Add(const EntryType& e) {
+    return SortedL::AddUnique(e.key).b;
   }
 
   template <typename T>
@@ -213,6 +218,14 @@ public:
         GetValue(idx) = d.GetValue(idx);
       }
     }
+  }
+  struct ValueAccessor {
+    static const VType& get(const olxdict& s, size_t idx) {
+      return s.GetValue(idx);
+    }
+  };
+  IIterator<VType>* iterate() const {
+    return new IndexableIterator<olxdict, ValueAccessor, VType>(this);
   }
 public:
   typedef KType key_item_type;

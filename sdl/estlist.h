@@ -317,8 +317,9 @@ namespace sorted {
   };
 
   template <typename obj_t, bool caseinsensitive=false>
-  class StringAssociation
-    : public TSTypeList<olxstr, obj_t, olxstrComparator<caseinsensitive> >
+  class StringAssociation :
+    public TSTypeList<olxstr, obj_t, olxstrComparator<caseinsensitive> >,
+    public AIterable<obj_t>
   {
     typedef TSTypeList<olxstr, obj_t, olxstrComparator<caseinsensitive> >
       parent_t;
@@ -328,6 +329,15 @@ namespace sorted {
     StringAssociation &operator = (const StringAssociation& l) {
       parent_t::operator = (l);
       return *this;
+    }
+
+    struct ValueAccessor {
+      static const obj_t& get(const StringAssociation& s, size_t idx) {
+        return s.GetValue(idx);
+      }
+    };
+    IIterator<obj_t>* iterate() const {
+      return new IndexableIterator< StringAssociation, ValueAccessor, obj_t>(this);
     }
   };
 }

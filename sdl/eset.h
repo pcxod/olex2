@@ -14,8 +14,9 @@ BeginEsdlNamespace()
 
 template <typename, typename> class const_olxset;
 
-template <typename object_t, class cmp_t> class olxset
-: protected SortedObjectList<object_t, cmp_t>
+template <typename object_t, class cmp_t> class olxset :
+  public AIterable<object_t>,
+  protected SortedObjectList<object_t, cmp_t>
 {
   typedef SortedObjectList<object_t, cmp_t> list_t;
 public:
@@ -86,7 +87,7 @@ public:
     return list_t::AddUnique(obj).b;
   }
 
-  bool AddListItem(const object_t& obj) {
+  bool Add(const object_t& obj) {
     return list_t::AddUnique(obj).b;
   }
 
@@ -184,6 +185,15 @@ public:
 
   void SetIncrement(size_t v) { list_t::SetIncrement(v); }
   void SetCapacity(size_t v) { list_t::SetCapacity(v); }
+
+  struct ValueAccessor {
+    static const object_t& get(const olxset& s, size_t idx) {
+      return s.Get(idx);
+    }
+  };
+  IIterator<object_t>* iterate() const {
+    return new IndexableIterator<olxset, ValueAccessor, object_t>(this);
+  }
 public:
   typedef object_t list_item_type;
   typedef object_t set_item_type;

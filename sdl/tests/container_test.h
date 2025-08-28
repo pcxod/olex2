@@ -14,6 +14,7 @@
 #include "../talist.h"
 #include "../bitarray.h"
 #include "../eset.h"
+#include "../ebtree.h"
 
 namespace test {
 
@@ -332,17 +333,58 @@ void BitArrayTest(OlxTests& t)  {
   }
 }
 //.........................................................................
+void BTreeTest(OlxTests& t) {
+  t.description = __FUNC__;
+  typedef TreeMapEntry<size_t, olxstr> value_tt;
+  typedef RBTreeEntryEx<value_tt> entry_t;
+  typedef RBTree<entry_t, TPrimitiveComparator> tree_t;
+
+  tree_t t1;
+  t1.Add(value_tt(0, "0"));
+  t1.Add(value_tt(-1, "-1"));
+  t1.Add(value_tt(1, "1"));
+  t1.Add(value_tt(1, "1a"));
+  t1.Add(value_tt(1, "1b"));
+
+  tree_t::ValueIterator itr = t1.GetValueIterator();
+  if (itr.Count() != 5) {
+    throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
+  }
+  tree_t::entry_t* e = t1.Find(1);
+  if (e == 0) {
+    throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
+  }
+  tree_t::entry_t::iterator_t ei = e->Iterate();
+  if (!ei.ok()) {
+    throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
+  }
+  size_t cnt = 0;
+  while (ei->HasNext()) {
+    ei->Next();
+    cnt ++;
+  }
+  if (cnt != 2) {
+    throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
+  }
+  t1.Remove(1);
+  if (t1.Count() != 2) {
+    throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
+  }
+}
+//.........................................................................
 void ContainerTests(OlxTests& t)  {
   t.Add(&test::ListTests<TArrayList<int> >)
     .Add(&test::ListTests<TTypeList<int> >)
     .Add(&test::DirectionalListTest)
-    .Add(&test::LinkedlListTest).
-    Add(&test::QueueTest).
-    Add(&test::StackTest).
-    Add(&test::SharedListTest).
-    Add(new ConstListTest, &ConstListTest::ContainerTests).
-    Add(&test::BitArrayTest).
-    Add(&test::SetTest);
+    .Add(&test::LinkedlListTest)
+    .Add(&test::QueueTest)
+    .Add(&test::StackTest)
+    .Add(&test::SharedListTest)
+    .Add(new ConstListTest, &ConstListTest::ContainerTests)
+    .Add(&test::BitArrayTest)
+    .Add(&test::SetTest)
+    .Add(&test::BTreeTest)
+    ;
 }
 //.........................................................................
 };  // namespace test
