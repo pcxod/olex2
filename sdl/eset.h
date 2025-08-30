@@ -10,6 +10,7 @@
 #ifndef __olx_sdl_set_H
 #define __olx_sdl_set_H
 #include "sortedlist.h"
+#include "ebtree.h"
 BeginEsdlNamespace()
 
 template <typename, typename> class const_olxset;
@@ -273,6 +274,23 @@ public:
   const_olxset&operator = (const const_olxset &s) {
     parent_t::operator = (s);
     return *this;
+  }
+};
+
+
+template <typename item_t, class cmp_t=TComparableComparator>
+class olxtree_set :
+  public RBTree<RBTreeEntry<TreeSetEntry<item_t> >, cmp_t>
+{
+public:
+  typedef RBTree<RBTreeEntry<TreeSetEntry<item_t> >, cmp_t> parent_t;
+  olxtree_set(const cmp_t & cmp=cmp_t())
+  : parent_t(cmp)
+  {}
+
+  template <typename T>
+  bool Add(const T &v) {
+    return parent_t::Add(TreeSetEntry<item_t>(v));
   }
 };
 

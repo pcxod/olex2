@@ -108,6 +108,14 @@ private:
         }
       }
     }
+    void clear() {
+      for (size_t i = 0; i < N; i++) {
+        if (this->data[i] != 0) {
+          delete (entry_array_t*)this->data[i];
+          this->data[i] = 0;
+        }
+      }
+    }
   };
 
   struct basket_array_t : public entry_array_base_t {
@@ -189,6 +197,10 @@ public:
     : basket_factory(basket_factory)
   {
     init();
+  }
+
+  void Clear() {
+    data.clear();
   }
 
   virtual ~TEHashed() {
@@ -605,6 +617,7 @@ class TEHashTreeMap : public TEHashed<BTMapFactory<key_t, item_t, comparator_t>,
   factory_t factory;
 public:
   typedef typename parent_t::basket_t basket_t;
+  typedef typename factory_t::entry_t entry_t;
 
   TEHashTreeMap() {}
 
@@ -614,7 +627,16 @@ public:
 
   template <typename T>
   void Add(const T& key, const item_t& value) {
-    parent_t::Add(factory_t::value_tt(key, value));
+    parent_t::Add(typename factory_t::value_tt(key, value));
+  }
+
+  template<class T>
+  entry_t* Find(const T& key) const {
+    basket_t* b = parent_t::Find(key);
+    if (b == 0) {
+      return 0;
+    }
+    return b->Find(key);
   }
 };
 
@@ -638,6 +660,7 @@ public:
   void Add(const T& key, const item_t& value) {
     parent_t::Add(typename factory_t::value_tt(key, value));
   }
+
   template<class T>
   entry_t* Find(const T& key) const {
     basket_t *b = parent_t::Find(key);

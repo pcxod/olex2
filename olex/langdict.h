@@ -10,10 +10,12 @@
 #ifndef __olx_langdict_H
 #define __olx_langdict_H
 #include "estlist.h"
-#include "estrlist.h"
+#include "ehashed.h"
 
 class TLangDict  {
-  olxstr_dict<olxstr*, true> Records;
+  typedef TEHashTreeMap<olxstr, olxstr*, olxstrComparator<true> >
+    map_t;
+  map_t Records;
   olxstr CurrentLanguage, CurrentLanguageEncodingStr;
   size_t CurrentLanguageIndex;
 protected:

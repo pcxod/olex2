@@ -10,6 +10,7 @@
 #ifndef __olx_sdl_dict_H
 #define __olx_sdl_dict_H
 #include "sortedlist.h"
+#include "ebtree.h"
 BeginEsdlNamespace()
 
 template <typename, typename, typename> class const_olxdict;
@@ -320,6 +321,61 @@ public:
   const_olxdict &operator = (const const_olxdict &d) {
     parent_t::operator = (d);
     return *this;
+  }
+};
+
+template <typename key_t, typename item_t, class cmp_t = TComparableComparator>
+class olxtree_map :
+  public RBTree<RBTreeEntry<TreeMapEntry<key_t, item_t> >, cmp_t>
+{
+public:
+  typedef RBTree<RBTreeEntry<TreeMapEntry<key_t, item_t> >, cmp_t> parent_t;
+  olxtree_map(const cmp_t& cmp = cmp_t())
+    : parent_t(cmp)
+  {}
+
+  template <typename k_t, typename v_t>
+  bool Add(const k_t& k, const v_t& v) {
+    return parent_t::Add(TreeMapEntry<key_t, item_t>(k, v));
+  }
+
+  template <typename k_t>
+  typename parent_t::entry_t* Find(const k_t& k) const {
+    return parent_t::Find(k);
+  }
+
+  template <typename k_t>
+  const item_t& Find(const k_t& key, const item_t& def) const {
+    typename parent_t::entry_t* e = parent_t::Find(key);
+    return e == 0 ? def : e->get_value();
+  }
+};
+
+// allows for duplicate values
+template <typename key_t, typename item_t, class cmp_t = TComparableComparator>
+class olxtree_map_ex :
+  public RBTree<RBTreeEntryEx<TreeMapEntry<key_t, item_t> >, cmp_t>
+{
+public:
+  typedef RBTree<RBTreeEntryEx<TreeMapEntry<key_t, item_t> >, cmp_t> parent_t;
+  olxtree_map_ex(const cmp_t& cmp = cmp_t())
+    : parent_t(cmp)
+  {}
+
+  template <typename k_t, typename v_t>
+  bool Add(const k_t& k, const v_t& v) {
+    return parent_t::Add(TreeMapEntry<key_t, item_t>(k, v));
+  }
+
+  template <typename k_t>
+  typename parent_t::entry_t* Find(const k_t& k) const {
+    return parent_t::Find(k);
+  }
+
+  template <typename k_t>
+  const item_t& Find(const k_t& key, const item_t& def) const {
+    typename parent_t::entry_t* e = parent_t::Find(key);
+    return e == 0 ? def : e->get_value();
   }
 };
 

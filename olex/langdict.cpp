@@ -26,9 +26,7 @@ TLangDict::~TLangDict() {
 }
 //..............................................................................
 void TLangDict::Clear() {
-  for (size_t i = 0; i < Records.Count(); i++) {
-    delete Records.GetValue(i);
-  }
+  Records.ForEach(olx_obj_deleter());
   Records.Clear();
 }
 //..............................................................................
@@ -36,8 +34,8 @@ const olxstr& TLangDict::Translate(const olxstr& Phrase) const {
   if (CurrentLanguageIndex == 0) {
     return Phrase;
   }
-  size_t ind = Records.IndexOf(Phrase);
-  return (ind == InvalidIndex ? Phrase : *Records.GetValue(ind));
+  map_t::entry_t *e = Records.Find(Phrase);
+  return e == 0 ? Phrase : *e->get_value();
 }
 //..............................................................................
 void TLangDict::SetCurrentLanguage(const olxstr& fileName, const olxstr& lang) {
@@ -73,7 +71,6 @@ void TLangDict::SetCurrentLanguage(const olxstr& fileName, const olxstr& lang) {
   TTBuffer<wchar_t> wc_bf(4096);
 #endif
   size_t cc = toks.Count();
-  Records.SetCapacity(sl.Count());
   for (size_t i = 2; i < sl.Count(); i++) {
     if (sl[i].IsEmpty()) {
       continue;
@@ -115,12 +112,12 @@ void TLangDict::SetCurrentLanguage(const olxstr& fileName, const olxstr& lang) {
 #endif
     }
     if (str.ok()) {
-      size_t idx = Records.IndexOf(*str);
-      if (idx == InvalidIndex) {
+      map_t::entry_t* e = Records.Find(toks[0]);
+      if (e == 0) {
         Records.Add(toks[0], str.release());
       }
       else {
-        *Records.GetValue(idx) = *str;
+        *(e->value.value) = *str;
       }
     }
   }

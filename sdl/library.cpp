@@ -19,13 +19,11 @@ TLibrary::TLibrary(const olxstr& libraryName, ALibraryContainer* owner) {
 TLibrary::~TLibrary()  {
   Functions.ForEach(olx_obj_deleter());
   Macros.ForEach(olx_obj_deleter());
-  for (size_t i = 0; i < Libraries.Count(); i++) {
-    delete Libraries.GetValue(i);
-  }
+  Libraries.ForEach(olx_obj_deleter());
 }
 //..............................................................................
 TLibrary* TLibrary::AddLibrary(const olxstr& name, ALibraryContainer* owner) {
-  if (Libraries.IndexOf(name) != InvalidIndex) {
+  if (Libraries.Contains(name)) {
     throw TDuplicateEntry(__OlxSourceInfo, name, "library");
   }
   TLibrary* lib = new TLibrary(name, owner);
@@ -38,7 +36,7 @@ TLibrary* TLibrary::AddLibrary(const olxstr& name, ALibraryContainer* owner) {
 }
 //..............................................................................
 void TLibrary::AttachLibrary(TLibrary* lib) {
-  if (Libraries.IndexOf(lib->GetName()) != InvalidIndex) {
+  if (Libraries.Contains(lib->GetName())) {
     throw TDuplicateEntry(__OlxSourceInfo, lib->GetName(), "library");
   }
   Libraries.Add(lib->GetName(), lib);
@@ -162,17 +160,18 @@ size_t TLibrary::LocateLocalMacros(const olxstr& name, TBasicFunctionPList& stor
 //..............................................................................
 size_t TLibrary::LocateFunctions(const olxstr& name, TBasicFunctionPList& store) {
   size_t retVal = LocateLocalFunctions(name, store);
-  
-  for (size_t i = 0; i < Libraries.Count(); i++) {
-    retVal += GetLibraryByIndex(i)->LocateFunctions(name, store);
+  lib_container_t::iterator_t i = Libraries.iterate();
+  while (i->HasNext()) {
+    retVal += i->Next()->LocateFunctions(name, store);
   }
   return retVal;
 }
 //..............................................................................
 size_t TLibrary::LocateMacros(const olxstr& name, TBasicFunctionPList& store) {
   size_t retVal = LocateLocalMacros(name, store);
-  for (size_t i = 0; i < Libraries.Count(); i++) {
-    retVal += GetLibraryByIndex(i)->LocateMacros(name, store);
+  lib_container_t::iterator_t i = Libraries.iterate();
+  while (i->HasNext()) {
+    retVal += i->Next()->LocateMacros(name, store);
   }
   return retVal;
 }
@@ -302,9 +301,11 @@ size_t TLibrary::LocateSimilarMacros(const olxstr& name, TBasicFunctionPList& st
 //..............................................................................
 size_t TLibrary::LocateSimilarLibraries(const olxstr& name, TBasicLibraryPList& store) {
   const size_t cnt = store.Count();
-  for (size_t i = 0; i < Libraries.Count(); i++) {
-    if (Libraries.GetKey(i).StartsFromi(name)) {
-      store.Add(Libraries.GetValue(i));
+  lib_container_t::iterator_t i = Libraries.iterate();
+  while (i->HasNext()) {
+    TLibrary* lib = i->Next();
+    if (lib->GetName().StartsFromi(name)) {
+      store.Add(lib);
     }
   }
   return store.Count() - cnt;
@@ -384,8 +385,9 @@ size_t TLibrary::FindSimilarLibraries(const olxstr& name, TBasicLibraryPList& st
       searchLib = lib;
     }
     // must be '.' ending string - get all libs
-    for (size_t i = 0; i < searchLib->LibraryCount(); i++) {
-      store.Add(searchLib->GetLibraryByIndex(i));
+    lib_container_t::iterator_t li = searchLib->IterateLibs();
+    while (li->HasNext()) {
+      store.Add(li->Next());
     }
     return searchLib->LibraryCount();
   }
@@ -403,8 +405,9 @@ void TLibrary::ListAllFunctions(TBasicFunctionPList& store) {
   while (fi->HasNext()) {
     store.Add(fi->Next());
   }
-  for (size_t i = 0; i < Libraries.Count(); i++) {
-    GetLibraryByIndex(i)->ListAllFunctions(store);
+  lib_container_t::iterator_t li = Libraries.iterate();
+  while (li->HasNext()) {
+    li->Next()->ListAllFunctions(store);
   }
 }
 //..............................................................................
@@ -413,8 +416,9 @@ void TLibrary::ListAllMacros(TBasicFunctionPList& store) {
   while (fi->HasNext()) {
     store.Add(fi->Next());
   }
-  for (size_t i = 0; i < Libraries.Count(); i++) {
-    GetLibraryByIndex(i)->ListAllMacros(store);
+  lib_container_t::iterator_t li = Libraries.iterate();
+  while (li->HasNext()) {
+    li->Next()->ListAllMacros(store);
   }
 }
 //..............................................................................

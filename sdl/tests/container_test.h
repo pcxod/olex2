@@ -335,16 +335,15 @@ void BitArrayTest(OlxTests& t)  {
 //.........................................................................
 void BTreeTest(OlxTests& t) {
   t.description = __FUNC__;
-  typedef TreeMapEntry<size_t, olxstr> value_tt;
-  typedef RBTreeEntryEx<value_tt> entry_t;
-  typedef RBTree<entry_t, TPrimitiveComparator> tree_t;
-
+  typedef olxtree_map_ex<int, olxstr, TPrimitiveComparator> tree_t;
+  typedef olxtree_set<olxstr> set_t;
+  set_t s1;
   tree_t t1;
-  t1.Add(value_tt(0, "0"));
-  t1.Add(value_tt(-1, "-1"));
-  t1.Add(value_tt(1, "1"));
-  t1.Add(value_tt(1, "1a"));
-  t1.Add(value_tt(1, "1b"));
+  t1.Add(0, "0");
+  t1.Add(-1, "-1");
+  t1.Add(1, "1a");
+  t1.Add(1, "1");
+  t1.Add(1, "1b");
 
   tree_t::ValueIterator itr = t1.GetValueIterator();
   if (itr.Count() != 5) {
@@ -370,6 +369,7 @@ void BTreeTest(OlxTests& t) {
   if (t1.Count() != 2) {
     throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
   }
+  s1.Add("a");
 }
 //.........................................................................
 void ContainerTests(OlxTests& t)  {

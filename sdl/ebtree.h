@@ -198,6 +198,9 @@ public:
   // for sets will have keys, for maps - values
   typename TUDTypeList<val_t>::const_list_type ToValueList() const {
     TUDTypeList<val_t> l;
+    if (Root == 0) {
+      return l;
+    }
     fill_value_list(Root, l);
     return l;
   }
@@ -205,6 +208,9 @@ public:
   // identical for sets, for maps will have (key, value)
   typename TUDTypeList<value_t>::const_list_type ToEntryList() const {
     TUDTypeList<value_t> l;
+    if (Root == 0) {
+      return l;
+    }
     fill_entry_list(Root, l);
     return l;
   }

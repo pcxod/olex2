@@ -25,11 +25,13 @@ public:
   typedef TEHashTreeMapEx<olxstr, ABasicFunction* , olxstrComparator<true> >
   //typedef sorted::StringAssociation<ABasicFunction*, true>
     container_t;
+  typedef olxtree_map<olxstr, TLibrary*, olxstrComparator<true> >
+    lib_container_t;
 private:
   container_t Functions, Macros;
   TTypeList<FunctionChainer> Chains;
   olxstr LibraryName;
-  olxstr_dict<TLibrary*, true> Libraries;
+  lib_container_t Libraries;
   ALibraryContainer* LibraryOwner;
   TLibrary* ParentLibrary;
 protected:
@@ -75,14 +77,8 @@ public:
   }
 
   size_t FunctionCount() const { return Functions.Count(); }
-  //ABasicFunction* GetFunctionByIndex(size_t i)  const {
-  //  return Functions.GetValue(i);
-  //}
 
   size_t MacroCount() const { return Macros.Count(); }
-  //ABasicFunction* GetMacroByIndex(size_t i) const {
-  //  return Macros.GetValue(i);
-  //}
 
   TLibrary* AddLibrary(const olxstr& name, ALibraryContainer* owner = 0);
   // note that the library will be deleted upon destruction
@@ -93,12 +89,8 @@ public:
     return Libraries.Find(name, 0);
   }
 
-  olx_object_ptr<IIterator<TLibrary*> > IteratelLibs() {
+  olx_object_ptr<IIterator<TLibrary*> > IterateLibs() const {
     return Libraries.Iterate();
-  }
-
-  TLibrary* GetLibraryByIndex(size_t index) const {
-    return Libraries.GetValue(index);
   }
 
   ABasicFunction* Register(
@@ -146,12 +138,13 @@ public:
 
   bool IsEmpty() const {
     if (Macros.Count() == 0 && Functions.Count() == 0) {
-      for (size_t i = 0; i < LibraryCount(); i++) {
-        if (!GetLibraryByIndex(i)->IsEmpty()) {
+      lib_container_t::iterator_t i = Libraries.iterate();
+      while (i->HasNext()) {
+        if (!i->Next()->IsEmpty()) {
           return false;
         }
-        return true;
       }
+      return true;
     }
     return false;
   }

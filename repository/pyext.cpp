@@ -673,8 +673,9 @@ void ExportLib(const olxstr &_root, const TLibrary& Lib,
   else {
     ln = olxcstr(py_module_name) << "." << ln;
   }
-  for (size_t i = 0; i < Lib.LibraryCount(); i++) {
-    TLibrary &lib = *Lib.GetLibraryByIndex(i);
+  TLibrary::lib_container_t::iterator_t li = Lib.IterateLibs();
+  while (li->HasNext()) {
+    TLibrary &lib = *li->Next();
     if (!lib.IsEmpty()) {
       out.Write(olxcstr("from ") << ln << " import " << lib.GetName() << '\n');
     }
@@ -702,8 +703,9 @@ void ExportLib(const olxstr &_root, const TLibrary& Lib,
         << '\n');
     }
   }
-  for (size_t i = 0; i < Lib.LibraryCount(); i++) {
-    TLibrary &lib = *Lib.GetLibraryByIndex(i);
+  li = Lib.IterateLibs();
+  while (li->HasNext()) {
+    TLibrary &lib = *li->Next();
     ExportLib(root + lib.GetName(), lib, module_name, py_module_name);
   }
 }
