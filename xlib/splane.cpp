@@ -161,25 +161,40 @@ olxstr TSPlane::StrRepr() const {
   return rv << " = 0";
 }
 //..............................................................................
-vec3d TSPlane::GetCrystallographicDirection() const {
+vec3d TSPlane::GetCrystallographicDirection(bool reciprocal, bool exact) const {
+  const TAsymmUnit& au = GetNetwork().GetLattice().GetAsymmUnit();
+  if (exact) {
+    return GetCrystallographicDirection(
+      reciprocal ? au.GetCellToCartesian() : au.GetCartesianToCell(),
+      GetNormal(), GetCenter());
+  }
   return GetCrystallographicDirection(
-    GetNetwork().GetLattice().GetAsymmUnit().GetCellToCartesian(),
-    GetNormal(),
-    GetCenter());
+     reciprocal ? au.GetCellToCartesian() : au.GetCartesianToCell(),
+     GetNormal());
 }
 //..............................................................................
-vec3d TSPlane::GetCrystallographicDirection(const mat3d &m,
-  const vec3d &n, const vec3d &p)
+vec3d TSPlane::GetCrystallographicDirection(const mat3d &M,
+  const vec3d &N)
 {
-  vec3d hkl;
+  vec3d hkl = (M * N).Normalise();
+  double min_v = 100;
+  for (int i=0; i < 3; i++) {
+    double av = olx_abs(hkl[i]);
+    if (av > 1e-3 && av < min_v) {
+      min_v = av;
+    }
+  }
+  return hkl / min_v;
+}
+//..............................................................................
+vec3d TSPlane::GetCrystallographicDirection(const mat3d& m,
+  const vec3d& n, const vec3d& p)
+{
   double d = n.DotProd(p);
   if (olx_abs(d) < 1e-3) {
-    return hkl;
+    return vec3d();
   }
-  for (int i=0; i < 3; i++) {
-    hkl[i] = n.DotProd(m[i])/d;
-  }
-  return hkl;
+  return (m * n) / d;
 }
 //..............................................................................
 //..............................................................................

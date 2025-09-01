@@ -2179,9 +2179,13 @@ void GXLibMacros::macMpln(TStrObjList & Cmds, const TParamList & Options,
         tab.CreateTXTList(olxstr("Atom-to-plane distances for ") << planeName,
         true, false, " | ");
       TBasicApp::NewLogEntry() << "Plane equation: " << plane->StrRepr();
-      TBasicApp::NewLogEntry() << "Plane centroid: " << plane->GetCenter().ToString();
-      TBasicApp::NewLogEntry() << "HKL direction: " <<
-        plane->GetCrystallographicDirection().ToString();
+      TBasicApp::NewLogEntry() << "Plane centroid: "
+        << strof(plane->GetCenter()) << ", f:"
+        << strof(au.Fractionalise(plane->GetCenter()));
+      TBasicApp::NewLogEntry() << "Direction abc: "
+        << strof(plane->GetCrystallographicDirection(false, false));
+      TBasicApp::NewLogEntry() << "Direction a*b*c*: "
+        << strof(plane->GetCrystallographicDirection(true, false));
       if (weightExtent != 0) {
         TBasicApp::NewLogEntry() << "Weighted RMSD/A: " <<
           olxstr::FormatFloat(3, plane->GetWeightedRMSD());
@@ -3399,66 +3403,61 @@ void GXLibMacros::macCalcVoid(TStrObjList &Cmds, const TParamList &Options,
   //E.SetRetVal(XLibMacros::NAString());
 }
 //.............................................................................
-void GXLibMacros::macDirection(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &E)
+void GXLibMacros::macDirection(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& E)
 {
   const mat3d Basis = app.GetRenderer().GetBasis().GetMatrix();
   const vec3d Z(Basis[0][2], Basis[1][2], Basis[2][2]);
-  if( app.XFile().HasLastLoader() )  {
-    TAsymmUnit &au = app.XFile().GetAsymmUnit();
-    mat3d m = au.GetCellToCartesian();
-    vec3d fZ = au.Fractionalise(Z).Normalise();
-    double min_v = 100;
-    for (int i=0; i < 3; i++) {
-      if (fZ[i] != 0 && olx_abs(fZ[i]) < min_v)
-        min_v = olx_abs(fZ[i]);
-    }
-    if (min_v >= 1e-4)
-      fZ /= min_v;
-    olxstr Tmp =  "Direction: (";
-    Tmp << olxstr::FormatFloat(3, fZ[0]) << "*A, " <<
-      olxstr::FormatFloat(3, fZ[1]) << "*B, " <<
-      olxstr::FormatFloat(3, fZ[2]) << "*C)";
-    TBasicApp::NewLogEntry() << Tmp;
-    const char *Dir[] = {"000", "100", "010", "001", "110", "101", "011", "111"};
+  if (app.XFile().HasLastLoader()) {
+    TAsymmUnit& au = app.XFile().GetAsymmUnit();
+    vec3d dir_d = TSPlane::GetCrystallographicDirection(
+      au.GetCartesianToCell(), Z);
+    vec3d rep_d = TSPlane::GetCrystallographicDirection(
+      au.GetCellToCartesian(), Z);
+    TBasicApp::NewLogEntry() << "Direction, abc: " << strof(dir_d) ;
+    TBasicApp::NewLogEntry() << "Direction, a*b*c*: " << strof(rep_d);
+
+    const char* Dir[] = { "000", "100", "010", "001", "110", "101", "011", "111" };
     TTypeList<vec3d> Points;
-    Points.AddNew();
-    Points.AddCopy(m[0]);
-    Points.AddCopy(m[1]);
-    Points.AddCopy(m[2]);
-    Points.AddCopy(m[0] + m[1]);
-    Points.AddCopy(m[0] + m[2]);
-    Points.AddCopy(m[1] + m[2]);
-    Points.AddCopy(m[0] + m[1] + m[2]);
-    for( size_t i=0; i < Points.Count(); i++ )  {
-      for( size_t j=i+1; j < Points.Count(); j++ )  {
-        double d = (Points[j]-Points[i]).Normalise().DistanceTo(Z)/2;
+    {
+      mat3d m = au.GetCellToCartesian();
+      Points.AddNew();
+      Points.AddCopy(m[0]);
+      Points.AddCopy(m[1]);
+      Points.AddCopy(m[2]);
+      Points.AddCopy(m[0] + m[1]);
+      Points.AddCopy(m[0] + m[2]);
+      Points.AddCopy(m[1] + m[2]);
+      Points.AddCopy(m[0] + m[1] + m[2]);
+    }
+    for (size_t i = 0; i < Points.Count(); i++) {
+      for (size_t j = i + 1; j < Points.Count(); j++) {
+        double d = (Points[j] - Points[i]).Normalise().DistanceTo(Z) / 2;
         if (d < 0.05) {
-          Tmp = "View along ";
-          Tmp << Dir[i] <<  '-' <<  Dir[j] << ' ' << '(' <<
-            "normalised deviation: " <<  olxstr::FormatFloat(3, d) << "A)";
-          TBasicApp::NewLogEntry() << Tmp;
+          TBasicApp::NewLogEntry()<< "View along "
+            << Dir[i] << '-' << Dir[j] << ' ' << '(' <<
+            "normalised deviation: " << olxstr::FormatFloat(3, d) << "A)";
         }
       }
     }
-    if( !app.XGrid().IsEmpty() && app.XGrid().IsVisible() &&
-      (app.XGrid().GetRenderMode()&(planeRenderModeContour|planeRenderModePlane)) != 0 )
+    if (!app.XGrid().IsEmpty() && app.XGrid().IsVisible() &&
+      (app.XGrid().GetRenderMode() & (planeRenderModeContour | planeRenderModePlane)) != 0)
     {
-      const vec3d center(app.GetRenderer().GetBasis().GetCenter());
       vec3d p(0, 0, app.XGrid().GetDepth());
-      p = au.Fractionalise(Basis*p - center);
-      olxstr Tmp =  "Grid center: (";
+      vec3d center(app.GetRenderer().GetBasis().GetCenter());
+      p = au.Fractionalise(Basis * p - center);
+      olxstr Tmp = "Grid center: (";
       Tmp << olxstr::FormatFloat(3, p[0]) << "*A, " <<
-             olxstr::FormatFloat(3, p[1]) << "*B, " <<
-             olxstr::FormatFloat(3, p[2]) << "*C)";
+        olxstr::FormatFloat(3, p[1]) << "*B, " <<
+        olxstr::FormatFloat(3, p[2]) << "*C)";
       TBasicApp::NewLogEntry() << Tmp;
     }
   }
-  else  {
-    olxstr Tmp =  "Normal: (";
+  else {
+    olxstr Tmp = "Normal: (";
     Tmp << olxstr::FormatFloat(3, Z[0]) << ", " <<
-           olxstr::FormatFloat(3, Z[1]) << ", " <<
-           olxstr::FormatFloat(3, Z[2]) << ')';
+      olxstr::FormatFloat(3, Z[1]) << ", " <<
+      olxstr::FormatFloat(3, Z[2]) << ')';
     TBasicApp::NewLogEntry() << Tmp;
   }
 }

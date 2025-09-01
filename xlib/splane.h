@@ -91,13 +91,19 @@ public:
     QuickSorter::Sort(Crds,
       ComplexComparator::Make(AtomTagAccessor(), TPrimitiveComparator()));
   }
-  /* returns inverse intersects with the lattice vectors, the vector is divided
-  by modulus of the smallest non-zero value. Takes the orthogonalisation matrix
-  plane normal and a point on the plane
+  /* Z = M * HKL, HKL = M^-1 * Z,
+  * pass CartToCell/HklToCartesianMatrix gives value in abc basis,
+  CellToCartesian - in a*b*c* basis
   */
-  static vec3d GetCrystallographicDirection(const mat3d& m,
-    const vec3d& n, const vec3d& p);
-  vec3d GetCrystallographicDirection() const;
+  static vec3d GetCrystallographicDirection(const mat3d& M,
+    const vec3d& Z);
+  /* exact value for p - point on the plane could return (000)
+  * if the n.p == 0
+  */
+  static vec3d GetCrystallographicDirection(const mat3d& M,
+    const vec3d& N, const vec3d &p);
+
+  vec3d GetCrystallographicDirection(bool reciprocal, bool exact=false) const;
   // returns sqrt(smallest eigen value/point.Count())
   static double CalcRMSD(const TSAtomPList& atoms);
   static double CalcRMSD(const TAtomEnvi& atoms);

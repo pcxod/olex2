@@ -1314,8 +1314,8 @@ olxstr TGXApp::GetObjectInfoAt(int x, int y) const {
     rv = TSymmParser::MatrixToSymmEx(((TXGrowPoint*)G)->GetTransform());
   }
   else if (G->Is<TXPlane>()) {
-    rv << "HKL direction: " <<
-      ((TXPlane*)G)->GetCrystallographicDirection().ToString();
+    rv << "Direction abc: " <<
+      strof(((TXPlane*)G)->GetCrystallographicDirection(false));
   }
   else if (G->Is<TDUserObj>()) {
     TDUserObj &o = *(TDUserObj*)G;
