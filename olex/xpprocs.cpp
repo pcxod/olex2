@@ -977,12 +977,12 @@ void TMainForm::macListen(TStrObjList& Cmds, const TParamList& Options, TMacroDa
 //..............................................................................
 void TMainForm::macListenCmd(TStrObjList& Cmds, const TParamList& Options, TMacroData& Error) {
   if (!Cmds.IsEmpty()) {
-    FMode |= mListen;
+    FMode |= mListenCmd;
     FListenCmdFile = TEFile::OSPath(Cmds.Text(' '));
     TBasicApp::NewLogEntry() << "Listening for: '" << FListenCmdFile << '\'';
   }
   else {
-    if (FMode & mListen) {
+    if (FMode & mListenCmd) {
       TBasicApp::NewLogEntry() << "Listening for: '" << FListenCmdFile << '\'';
     }
     else {
@@ -1065,11 +1065,18 @@ void TMainForm::macSilent(TStrObjList &Cmds, const TParamList &Options,
 }
 //..............................................................................
 void TMainForm::macStop(TStrObjList &Cmds, const TParamList &Options, TMacroData &Error)  {
-  if (Cmds[0] == "listen") {
+  if (Cmds[0].Equalsi("listen")) {
     if (FMode & mListen) {
       FMode ^= mListen;
       TBasicApp::NewLogEntry() << "Listen mode is off";
       FListenFile.SetLength(0);
+    }
+  }
+  else if (Cmds[0].Equalsi("listencmd")) {
+    if (FMode & mListenCmd) {
+      FMode ^= mListenCmd;
+      TBasicApp::NewLogEntry() << "ListenCmd mode is off";
+      FListenCmdFile.SetLength(0);
     }
   }
   else if (Cmds[0] == "logging") {
@@ -4411,6 +4418,28 @@ comp_t calc_d(size_t i, double v, const TVector<comp_t>& p) {
 }
 
 void TMainForm::macTest(TStrObjList &Cmds, const TParamList &Options, TMacroData &Error)  {
+  //{
+  //  typedef AVLTreeEntry<TreeSetEntry<olxstr> > avlt_entry_t;
+  //  typedef AVLTree<avlt_entry_t, olxstrComparator<false> > bt_t;
+
+  //  typedef RBTreeEntry<TreeSetEntry<olxstr> > rb_entry_t;
+  //  typedef RBTree<rb_entry_t, olxstrComparator<false> > rbt_t;
+  //  bt_t bt;
+  //  rbt_t rbt;
+  //  for (char i = 'a'; i <= 'z'; i++) {
+  //    bt.Add(bt_t::value_t(i));
+  //  }
+  //  for (char i = 'a'; i <= 'z'; i++) {
+  //    rbt.Add(rbt_t::value_t(i));
+  //  }
+  //  for (char i = 'a'; i <= 'z'; i++) {
+  //    bt.Remove(bt_t::key_t(i));
+  //  }
+  //  for (char i = 'a'; i <= 'z'; i++) {
+  //    rbt.Remove(rbt_t::key_t(i));
+  //  }
+  //  return;
+  //}
   //typedef std::complex<double> comp_t;
   TGXApp &app = TGXApp::GetInstance();
   const mat3d hkl2c = app.XFile().GetAsymmUnit().GetHklToCartesian();

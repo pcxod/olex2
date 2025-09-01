@@ -179,11 +179,12 @@ enum  {
 const unsigned short
   mListen = 0x0001,    // modes
   mSilent = 0x0002,  // silent mode
-  mPick   = 0x0020,  // pick mode, for a future use
-  mFade   = 0x0080,  // structure fading ..
-  mRota   = 0x0100,  // rotation
-  mSolve  = 0x0200,  // structure solution
-  mSGDet  = 0x0400;  // space group determination
+  mPick = 0x0020,  // pick mode, for a future use
+  mFade = 0x0080,  // structure fading ..
+  mRota = 0x0100,  // rotation
+  mSolve = 0x0200,  // structure solution
+  mSGDet = 0x0400,  // space group determination
+  mListenCmd = 0x0800;    // listen to cmds file
 
 // persistence level
 const short

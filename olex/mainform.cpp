@@ -1763,31 +1763,26 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
     RunWhenVisibleTasks.DeleteItems().Clear();
     // end tasks ...
     FTimer->OnTimer.SetEnabled(true);
-    if ((FMode & mListen) != 0)
-    {
-      if (TEFile::Exists(FListenFile))
-      {
-        static time_t FileMT = TEFile::FileAge(FListenFile);
-        time_t FileT = TEFile::FileAge(FListenFile);
-        if (FileMT != FileT)
-        {
-          FObjectUnderMouse = 0;
-          processMacro((olxstr("reap_listen \"") << FListenFile) + '\"', "OnListen");
-          FileMT = FileT;
-        }
+    if ((FMode & mListen) != 0 && TEFile::Exists(FListenFile)) {
+      static time_t FileMT = TEFile::FileAge(FListenFile);
+      time_t FileT = TEFile::FileAge(FListenFile);
+      if (FileMT != FileT) {
+        FObjectUnderMouse = 0;
+        processMacro((olxstr("reap_listen \"") << FListenFile) + '\"', "OnListen");
+        FileMT = FileT;
       }
-      if (TEFile::Exists(FListenCmdFile)) {
-        static time_t FileMT = TEFile::FileAge(FListenCmdFile);
-        time_t FileT = TEFile::FileAge(FListenCmdFile);
-        if (FileMT != FileT) {
-          FObjectUnderMouse = 0;
-          const_cstrlist file_lines = TEFile::ReadCLines(FListenCmdFile);
-          if (! file_lines.IsEmpty())
-          {
-            processMacro(olxstr(TEFile::ReadCLines(FListenCmdFile)[0]), "OnListen");
-          }
-          FileMT = FileT;
+    }
+    if ((FMode & mListenCmd) != 0 && TEFile::Exists(FListenCmdFile)) {
+      static time_t FileMT = TEFile::FileAge(FListenCmdFile);
+      time_t FileT = TEFile::FileAge(FListenCmdFile);
+      if (FileMT != FileT) {
+        FObjectUnderMouse = 0;
+        const_cstrlist file_lines = TEFile::ReadCLines(FListenCmdFile);
+        if (!file_lines.IsEmpty()) {
+          processMacro(file_lines[0], "OnCmdListen");
+          FXApp->Draw();
         }
+        FileMT = FileT;
       }
     }
     if ((FMode & mRota) != 0) {
