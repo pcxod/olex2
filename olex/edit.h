@@ -22,4 +22,16 @@ public:
   olxstr GetText();
   TWindowInterface WI;
 };
+
+class TdlgStyledEdit: public wxDialog  {
+private:
+  wxStyledTextCtrl *Text;
+  TMainFrame *FParent;
+public:
+  TdlgStyledEdit(TMainFrame *ParentFrame, bool MultiLine);
+  ~TdlgStyledEdit();
+  void SetText(const olxstr& Text);
+  olxstr GetText();
+  TWindowInterface WI;
+};
 #endif
