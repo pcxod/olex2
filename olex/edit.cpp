@@ -10,7 +10,6 @@
 #include "edit.h"
 #include <wx/font.h>
 
-#include "../cmake-build-debug-gcc/3rdparty/wxwidgets/include/wx-3.2/wx/stc/stc.h"
 
 // edit text dialog dialog
 TdlgEdit::TdlgEdit(TMainFrame *ParentFrame, bool MultiLine):
