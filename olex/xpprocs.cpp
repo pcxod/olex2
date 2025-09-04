@@ -4330,6 +4330,19 @@ void TMainForm::funGetUserInput(const TStrObjList& Params, TMacroData &E) {
   dlg->Destroy();
 }
 //..............................................................................
+void TMainForm::funGetUserStyledInput(const TStrObjList& Params, TMacroData &E) {
+  bool MultiLine = Params[0].ToInt() != 1;
+  auto *dlg = new TdlgStyledEdit(this, MultiLine);
+  dlg->SetTitle(Params[1].u_str());
+  dlg->SetText(Params[2]);
+  dlg->SetLexer(Params[3].ToInt());
+  if( dlg->ShowModal() == wxID_OK )
+    E.SetRetVal(dlg->GetText());
+  else
+    E.SetRetVal(EmptyString());
+  dlg->Destroy();
+}
+//..............................................................................
 void TMainForm::funTranslatePhrase(const TStrObjList& Params, TMacroData &E) {
   E.SetRetVal(FXApp->TranslatePhrase(Params[0]));
 }

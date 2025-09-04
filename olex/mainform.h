@@ -495,6 +495,7 @@ private:
   DefFunc(ValidatePlugin)
   DefFunc(IsPluginInstalled)
   DefFunc(GetUserInput)
+  DefFunc(GetUserStyledInput)
   DefFunc(TranslatePhrase)
   DefFunc(IsCurrentLanguage)
   DefFunc(CurrentLanguageEncoding)

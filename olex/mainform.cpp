@@ -869,6 +869,7 @@ void TMainForm::XApp(Olex2App *XA)  {
 
   // number of lines, caption, def value
   this_InitFunc(GetUserInput, fpThree);
+  this_InitFunc(GetUserStyledInput, fpThree);
 
   this_InitFuncD(TranslatePhrase, fpOne,
 "Translates provided phrase into current language");
@@ -4114,6 +4115,30 @@ PyObject* pyGetUserInput(PyObject* self, PyObject* args) {
   return rv;
 }
 //..............................................................................
+PyObject* pyGetUserStyledInput(PyObject* self, PyObject* args) {
+  olxstr title, str;
+  int lexer_code;
+  int flags = 0;
+  if (!PythonExt::ParseTuple(args, "iwwi", &flags, &title, &str, &lexer_code)) {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "iwwi");
+  }
+  const bool MultiLine = (flags != 1);
+  auto* dlg = new TdlgStyledEdit(TGlXApp::GetMainForm(), MultiLine);
+  dlg->SetTitle(title.u_str());
+  dlg->SetText(str);
+  dlg->SetLexer(lexer_code);
+
+  PyObject* rv;
+  if (dlg->ShowModal() == wxID_OK)
+    rv = PythonExt::BuildString(dlg->GetText());
+  else {
+    rv = Py_None;
+    Py_IncRef(rv);
+  }
+  dlg->Destroy();
+  return rv;
+}
+//..............................................................................
 PyObject* pyPPI(PyObject* self, PyObject* args) {
   wxWindowDC wx_dc(TGlXApp::GetMainForm());
   wxSize ppi = wx_dc.GetPPI();
@@ -4156,6 +4181,11 @@ static PyMethodDef CORE_Methods[] = {
   {"GetUserInput", pyGetUserInput, METH_VARARGS,
   "Shows a dialog, where user can type some text. Takes three agruments: flags"
   ", title and content. If flags not equal to 1, a muliline dialog sis created"
+  },
+    {"GetUserStyledInput", pyGetUserStyledInput, METH_VARARGS,
+  "Shows a dialog, where user can type some text. Takes four agruments: flags"
+  ", title, content and lexer_code. If flags not equal to 1, a muliline dialog sis created. lexer_code defines the "
+  "programming language. It uses wxSTC_LEX compatible ones."
   },
   {"IsControl", pyIsControl, METH_VARARGS,
   "Takes HTML element name and optionaly popup name. Returns true/false if "
