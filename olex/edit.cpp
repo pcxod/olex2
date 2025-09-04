@@ -72,8 +72,13 @@ TdlgStyledEdit::TdlgStyledEdit(TMainFrame *ParentFrame, bool MultiLine):
     height = 350;
   }
   Text = new wxStyledTextCtrl(this, -1, wxDefaultPosition, wxSize(width, height));
-  wxFont fnt(fontSize, wxMODERN, wxNORMAL, wxNORMAL);
-  Text->SetFont(fnt);
+  const wxFont fnt(wxFontInfo(fontSize)
+      .Family(wxFONTFAMILY_MODERN)
+      .Style(wxFONTSTYLE_NORMAL)
+      .Weight(wxFONTWEIGHT_NORMAL));
+
+  Text->StyleSetFont(wxSTC_STYLE_DEFAULT, fnt);
+  Text->SetMarginWidth(1, 0);
 
   wxBoxSizer *GlobalSizer = new wxBoxSizer(wxVERTICAL );
   GlobalSizer->Add(Text, 1, wxEXPAND | wxALL, 3);

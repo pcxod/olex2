@@ -207,3 +207,5 @@ if (COPY_GUI_FILES)
     COMMENT "Copying files to build directory"
   )
 endif ()
+
+install(TARGETS olex2 DESTINATION .)
