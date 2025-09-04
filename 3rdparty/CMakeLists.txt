@@ -102,30 +102,33 @@ if(wxWidgetsSource_ADDED)
 
 
   set(WX_LIBRARIES
-      ${wxWidgets_INSTALL_DIR}/lib/libwx_gtk3u_gl-${wxVERSION_FAMILY}.a
-      ${wxWidgets_INSTALL_DIR}/lib/libwx_gtk3u_core-${wxVERSION_FAMILY}.a
-      ${wxWidgets_INSTALL_DIR}/lib/libwx_gtk3u_aui-${wxVERSION_FAMILY}.a
-      ${wxWidgets_INSTALL_DIR}/lib/libwx_gtk3u_adv-${wxVERSION_FAMILY}.a
-      ${wxWidgets_INSTALL_DIR}/lib/libwx_gtk3u_html-${wxVERSION_FAMILY}.a
-      ${wxWidgets_INSTALL_DIR}/lib/libwx_gtk3u_propgrid-${wxVERSION_FAMILY}.a
-      ${wxWidgets_INSTALL_DIR}/lib/libwx_gtk3u_qa-${wxVERSION_FAMILY}.a
-      ${wxWidgets_INSTALL_DIR}/lib/libwx_gtk3u_ribbon-${wxVERSION_FAMILY}.a
-      ${wxWidgets_INSTALL_DIR}/lib/libwx_gtk3u_richtext-${wxVERSION_FAMILY}.a
+      # Order matters - more specific libraries first, then base libraries
       ${wxWidgets_INSTALL_DIR}/lib/libwx_gtk3u_stc-${wxVERSION_FAMILY}.a
       ${wxWidgets_INSTALL_DIR}/lib/libwx_gtk3u_xrc-${wxVERSION_FAMILY}.a
+      ${wxWidgets_INSTALL_DIR}/lib/libwx_gtk3u_html-${wxVERSION_FAMILY}.a
+      ${wxWidgets_INSTALL_DIR}/lib/libwx_gtk3u_qa-${wxVERSION_FAMILY}.a
+      ${wxWidgets_INSTALL_DIR}/lib/libwx_gtk3u_adv-${wxVERSION_FAMILY}.a
+      ${wxWidgets_INSTALL_DIR}/lib/libwx_gtk3u_core-${wxVERSION_FAMILY}.a
+      ${wxWidgets_INSTALL_DIR}/lib/libwx_baseu-${wxVERSION_FAMILY}.a
+      ${wxWidgets_INSTALL_DIR}/lib/libwx_baseu_xml-${wxVERSION_FAMILY}.a
+      ${wxWidgets_INSTALL_DIR}/lib/libwx_baseu_net-${wxVERSION_FAMILY}.a
 
-      ${wxWidgets_INSTALL_DIR}/lib/libwxregexu-${wxVERSION_FAMILY}.a
+      # Additional component libraries
+      ${wxWidgets_INSTALL_DIR}/lib/libwx_gtk3u_gl-${wxVERSION_FAMILY}.a
+      ${wxWidgets_INSTALL_DIR}/lib/libwx_gtk3u_aui-${wxVERSION_FAMILY}.a
+      ${wxWidgets_INSTALL_DIR}/lib/libwx_gtk3u_propgrid-${wxVERSION_FAMILY}.a
+      ${wxWidgets_INSTALL_DIR}/lib/libwx_gtk3u_ribbon-${wxVERSION_FAMILY}.a
+      ${wxWidgets_INSTALL_DIR}/lib/libwx_gtk3u_richtext-${wxVERSION_FAMILY}.a
+
+      # Support libraries
       ${wxWidgets_INSTALL_DIR}/lib/libwxscintilla-${wxVERSION_FAMILY}.a
+      ${wxWidgets_INSTALL_DIR}/lib/libwxregexu-${wxVERSION_FAMILY}.a
 
+      # Image libraries
       ${wxWidgets_INSTALL_DIR}/lib/libwxjpeg-${wxVERSION_FAMILY}.a
       ${wxWidgets_INSTALL_DIR}/lib/libwxpng-${wxVERSION_FAMILY}.a
       ${wxWidgets_INSTALL_DIR}/lib/libwxtiff-${wxVERSION_FAMILY}.a
       ${wxWidgets_INSTALL_DIR}/lib/libwxzlib-${wxVERSION_FAMILY}.a
-
-      ${wxWidgets_INSTALL_DIR}/lib/libwx_baseu_net-${wxVERSION_FAMILY}.a
-      ${wxWidgets_INSTALL_DIR}/lib/libwx_baseu_xml-${wxVERSION_FAMILY}.a
-      ${wxWidgets_INSTALL_DIR}/lib/libwx_baseu-${wxVERSION_FAMILY}.a
-
   )
   set(WX_LIBRARIES ${WX_LIBRARIES} PARENT_SCOPE)
   set(WX_SYSTEM_LIBS

@@ -31,6 +31,7 @@ public:
   TdlgStyledEdit(TMainFrame *ParentFrame, bool MultiLine);
   ~TdlgStyledEdit();
   void SetText(const olxstr& Text);
+  void SetLexer(int style);
   olxstr GetText();
   TWindowInterface WI;
 };

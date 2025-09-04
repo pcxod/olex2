@@ -108,5 +108,34 @@ void TdlgStyledEdit::SetText(const olxstr& text)  {
   Text->SetValue(text.u_str());
 }
 //..............................................................................
+void TdlgStyledEdit::SetLexer(int style)
+{
+  Text->SetLexer(style);
+  if (style == wxSTC_LEX_PYTHON)
+  {
+    Text->SetKeyWords(0, wxT("and as assert break class continue def del elif else except exec finally for from global if import in is lambda not or pass print raise return try while with yield"));
+    // Comments
+    Text->StyleSetSpec(wxSTC_P_COMMENTLINE, "fore:#007F00");
+    Text->StyleSetSpec(wxSTC_P_COMMENTBLOCK, "fore:#007F00");
+    // Numbers
+    Text->StyleSetSpec(wxSTC_P_NUMBER, "fore:#007F7F");
+    // Strings
+    Text->StyleSetSpec(wxSTC_P_STRING, "fore:#7F007F");
+    Text->StyleSetSpec(wxSTC_P_CHARACTER, "fore:#7F007F");
+    // Keywords
+    Text->StyleSetSpec(wxSTC_P_WORD, "fore:#00007F,bold");
+    // Triple quotes
+    Text->StyleSetSpec(wxSTC_P_TRIPLE, "fore:#7F0000");
+    Text->StyleSetSpec(wxSTC_P_TRIPLEDOUBLE, "fore:#7F0000");
+    // Class and function definitions
+    Text->StyleSetSpec(wxSTC_P_CLASSNAME, "fore:#0000FF,bold");
+    Text->StyleSetSpec(wxSTC_P_DEFNAME, "fore:#007F7F,bold");
+    // Operators
+    Text->StyleSetSpec(wxSTC_P_OPERATOR, "bold");
+    Text->StyleSetSpec(wxSTC_P_STRINGEOL, "fore:#000000,back:#E0C0E0,eolfilled");
+  }
+
+}
+//..............................................................................
 olxstr TdlgStyledEdit::GetText()  {  return Text->GetValue();  }
 //..............................................................................
