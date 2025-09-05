@@ -3414,8 +3414,9 @@ void TMainForm::macPopup(TStrObjList& Cmds, const TParamList& Options, TMacroDat
 //..............................................................................
 void TMainForm::macPython(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
   if( Options.Contains('i') || Options.Contains('l') )  {
-    TdlgEdit *dlg = new TdlgEdit(this, true);
+    auto *dlg = new TdlgStyledEdit(this, true);
     dlg->SetTitle( wxT("Python script editor") );
+    dlg->SetLexer(wxSTC_LEX_PYTHON);
     if( Options.Contains('l') )  {
       olxstr FN = PickFile("Open File",
         olxstr("Python scripts (*.py)|*.py")  <<
