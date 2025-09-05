@@ -1,5 +1,11 @@
-set(wxVERSION_FAMILY "3.2")
-set(wxVERSION "${wxVERSION_FAMILY}.5")
+# Make wxWidgets version configurable with default value
+set(wxVERSION "3.2.5" CACHE STRING "wxWidgets version to use")
+# Extract the family version (major.minor) from the full version
+string(REGEX MATCH "^([0-9]+\\.[0-9]+)" wxVERSION_FAMILY "${wxVERSION}")
+if(NOT wxVERSION_FAMILY)
+    message(FATAL_ERROR "Invalid wxVERSION format: ${wxVERSION}. Expected format: X.Y.Z")
+endif()
+
 CPMAddPackage(
     NAME wxWidgetsSource
     VERSION "${wxVERSION}"
