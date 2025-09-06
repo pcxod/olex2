@@ -10,7 +10,7 @@
 #ifndef __olx_sdl_strbuf_H
 #define __olx_sdl_strbuf_H
 // no namespace - to be included into
-/* string buffer, reuses memory allocated by any posted TCString entry */
+/* string buffer, reuses memory allocated by any posted olxstr entry */
 template <typename char_t, class str_t>
 class TTStrBuffer {
   struct Entry {
@@ -22,31 +22,33 @@ class TTStrBuffer {
   Entry *Head, *Tail;
   void _Clear() {
     Entry* en = Head;
-    while (en != NULL) {
+    while (en != 0) {
       Head = en->Next;
-      if (--en->Data->RefCnt == 0)
+      if (--en->Data->RefCnt == 0) {
         delete en->Data;
+      }
       delete en;
       en = Head;
     }
   }
 
 public:
-  TTStrBuffer()  {
-    Tail = Head = NULL;
+  TTStrBuffer() {
+    Tail = Head = 0;
     _Length = 0;
   }
-  TTStrBuffer(const str_t& v)  {
-    Tail = Head = new Entry;
+
+  TTStrBuffer(const str_t& v) {
+    Tail = Head = new Entry();
     Tail->Data = v.Data_();
     Tail->Start = v.Start_();
     _Length = Tail->Length = v.Length();
-    Tail->Next = NULL;
+    Tail->Next = 0;
     Tail->Data->RefCnt++;
   }
 
   TTStrBuffer(const TTStrBuffer& v) {
-    Tail = Head = NULL;
+    Tail = Head = 0;
     _Length = 0;
     this->operator << (v);
   }
@@ -55,55 +57,58 @@ public:
 
   void Clear()  {
     _Clear();
-    Head = Tail = NULL;
+    Head = Tail = 0;
     _Length = 0;
   }
 
-  TTStrBuffer& operator << (const str_t& v)  {
-    if( v.Data_() == NULL )  return *this;
-    if( Head == NULL )  {
+  TTStrBuffer& operator << (const str_t& v) {
+    if (v.Data_() == 0) {
+      return *this;
+    }
+    if (Head == 0) {
       Tail = Head = new Entry;
     }
-    else  {
+    else {
       Tail->Next = new Entry;
       Tail = Tail->Next;
-      Tail->Next = NULL;
+      Tail->Next = 0;
     }
     Tail->Data = v.Data_();
     Tail->Start = v.Start_();
     _Length += (Tail->Length = v.Length());
-    Tail->Next = NULL;
+    Tail->Next = 0;
     Tail->Data->RefCnt++;
     return *this;
   }
 
   TTStrBuffer& operator << (const TTStrBuffer& v) {
     Entry *en = v.Head;
-    while (en != NULL) {
-      if (Head == NULL)
+    while (en != 0) {
+      if (Head == 0)
         Tail = Head = new Entry;
       else {
         Tail->Next = new Entry;
         Tail = Tail->Next;
-        Tail->Next = NULL;
+        Tail->Next = 0;
       }
       Tail->Data = en->Data;
       Tail->Start = en->Start;
       _Length += (Tail->Length = en->Length);
       en = en->Next;
-      Tail->Next = NULL;
+      Tail->Next = 0;
       Tail->Data->RefCnt++;
     }
     return *this;
   }
   // writes the EOL - size of v should be Length()+1
-  char_t *Read(char_t *v) const {
-    if( Head == NULL )
+  char_t* Read(char_t* v) const {
+    if (Head == 0) {
       v[0] = L'\0';
-    else  {
+    }
+    else {
       Entry* en = Head;
       size_t read = 0;
-      while( en != NULL )  {
+      while (en != 0) {
         olx_memcpy(&v[read], &en->Data->Data[en->Start], en->Length);
         read += en->Length;
         en = en->Next;
@@ -113,13 +118,14 @@ public:
     return v;
   }
   // writes the EOL - size of v should be CalcSize()+1
-  char_t *ReverseRead(char_t *v) const {
-    if( Head != NULL )  {
+  char_t* ReverseRead(char_t* v) const {
+    if (Head != 0) {
       Entry* en = Head;
-      size_t x = _Length-1;
-      while( en != NULL )  {
-        for( size_t i=en->Length; i != 0; i--, x-- )
-          v[x] = en->Data->Data[en->Start+i-1];
+      size_t x = _Length - 1;
+      while (en != 0) {
+        for (size_t i = en->Length; i != 0; i--, x--) {
+          v[x] = en->Data->Data[en->Start + i - 1];
+        }
         en = en->Next;
       }
     }
@@ -130,5 +136,14 @@ public:
   bool IsEmpty() const { return _Length == 0; }
   Entry *GetHead() {  return Head;  }
   const Entry *GetHead() const {  return Head;  }
+  // tries to decrease the length of the last entry by inc
+  TTStrBuffer& TrimTail(size_t inc = 1) {
+    if (Tail != 0) {
+      if (Tail->Length >= inc) {
+        Tail->Length -= inc;
+      }
+    }
+    return *this;
+  }
 };
 #endif
