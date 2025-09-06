@@ -2857,12 +2857,28 @@ void TMainForm::SaveSettings(const olxstr& FN) {
   I->AddField("ThreadCount", FXApp->GetMaxThreadCount());
 
   I = &DF.Root().AddItem("Recent_files");
-  for (size_t i = 0; i < olx_min(FRecentFilesToShow, FRecentFiles.Count()); i++) {
-    olxstr x = TEFile::CreateRelativePath(FRecentFiles[i]);
-    if (x.Length() > FRecentFiles[i].Length()) {
-      x = FRecentFiles[i];
+  size_t files_added = 0;
+  for (size_t i = 0; i < FRecentFiles.Count(); i++) {
+    olxstr y = TEFile::ExpandRelativePath(FRecentFiles[i]);
+    olxstr ext = TEFile::ExtractFileExt(y);
+    if (ext.IsEmpty()) {
+      if (!TEFile::Exists(y + ".res") &&
+        !TEFile::Exists(y + ".ins"))
+      {
+        continue;
+      }
     }
-    I->AddField(olxstr("file") << i, olxstr().quote('"') << x);
+    else if (!TEFile::Exists(y)) {
+      continue;
+    }
+    olxstr x = TEFile::CreateRelativePath(y);
+    if (x.Length() >= y.Length()) {
+      x = y;
+    }
+    I->AddField(olxstr("file") << i, x);
+    if (++files_added >= FRecentFilesToShow) {
+      break;
+    }
   }
 
   I = &DF.Root().AddItem("Stored_params");
@@ -3014,23 +3030,14 @@ void TMainForm::LoadSettings(const olxstr& FN) {
   I = DF.Root().FindItem("Recent_files");
   if (I != 0) {
     MenuFile->AppendSeparator();
-    int i = 0;
-    TStrList uniqNames;
-    olxstr T = TEFile::ExpandRelativePath(I->FindField(olxstr("file") << i));
-    while (!T.IsEmpty()) {
-      if (T.EndsWithi(".ins") || T.EndsWithi(".res")) {
-        T = TEFile::ChangeFileExt(T, EmptyString());
+    olxtree_set<olxstr> uniq;
+    for (size_t i = 0; i < I->FieldCount(); i++) {
+      olxstr fn = I->GetFieldByIndex(i);
+      if (!uniq.Add(fn)) {
+        continue;
       }
-      TEFile::OSPathI(T);
-      if (uniqNames.IndexOf(T) == InvalidIndex)
-        uniqNames.Add(T);
-      i++;
-      T = I->FindField(olxstr("file") << i);
-    }
-    for (size_t j = 0; j < olx_min(uniqNames.Count(), FRecentFilesToShow); j++) {
-      processFunction(uniqNames[j]);
-      MenuFile->AppendCheckItem((int)(ID_FILE0 + j), uniqNames[j].u_str());
-      FRecentFiles.Add(uniqNames[j],
+      MenuFile->AppendCheckItem((int)(ID_FILE0 + FRecentFiles.Count()), fn.u_str());
+      FRecentFiles.Add(fn,
         MenuFile->FindItemByPosition(MenuFile->GetMenuItemCount() - 1));
     }
   }
@@ -3146,7 +3153,7 @@ void TMainForm::LoadSettings(const olxstr& FN) {
   }
 }
 //..............................................................................
-void TMainForm::UpdateRecentFile(const olxstr& fn)  {
+void TMainForm::UpdateRecentFile(const olxstr& fn) {
   if (fn.IsEmpty()) {
     for (size_t i = 0; i < FRecentFiles.Count(); i++) { // change item captions
       FRecentFiles.GetObject(i)->Check(false);
@@ -3154,50 +3161,54 @@ void TMainForm::UpdateRecentFile(const olxstr& fn)  {
     return;
   }
   TPtrList<wxMenuItem> Items;
-  olxstr FN = (fn.EndsWithi(".ins") || fn.EndsWithi(".res")) ?
-    TEFile::ChangeFileExt(fn, EmptyString()) : fn;
+  olxstr FN = (fn.EndsWithi(".ins") || fn.EndsWithi(".res"))
+    ? TEFile::ChangeFileExt(fn, EmptyString()) : fn;
   TEFile::OSPathI(FN);
   olxstr x = TEFile::CreateRelativePath(FN);
   if (x.Length() < FN.Length()) {
     FN = x;
   }
   size_t index = FRecentFiles.IndexOf(FN);
-  wxMenuItem* mi=NULL;
-  if( index == InvalidIndex )  {
-    if( (FRecentFiles.Count()+1) < FRecentFilesToShow )  {
-      for( size_t i=0; i < MenuFile->GetMenuItemCount(); i++ )  {
+  wxMenuItem* mi = 0;
+  if (index == InvalidIndex) {
+    if ((FRecentFiles.Count() + 1) < FRecentFilesToShow) {
+      for (size_t i = 0; i < MenuFile->GetMenuItemCount(); i++) {
         wxMenuItem* item = MenuFile->FindItemByPosition(i);
-          if( item->GetId() >= ID_FILE0 && item->GetId() <= (ID_FILE0+FRecentFilesToShow))
-            index = i;
+        if (item->GetId() >= ID_FILE0 && item->GetId() <= (ID_FILE0 + FRecentFilesToShow)) {
+          index = i;
+        }
       }
-      if( index != InvalidIndex ) {
+      if (index != InvalidIndex) {
         mi = MenuFile->InsertCheckItem(index + 1,
-          (int)(ID_FILE0+FRecentFiles.Count()), wxT("tmp"));
+          (int)(ID_FILE0 + FRecentFiles.Count()), wxT("tmp"));
       }
       else {
         mi = MenuFile->AppendCheckItem(
-          (int)(ID_FILE0+FRecentFiles.Count()), wxT("tmp"));
+          (int)(ID_FILE0 + FRecentFiles.Count()), wxT("tmp"));
       }
       FRecentFiles.Insert(0, FN, mi);
     }
-    else  {
+    else {
       FRecentFiles.Insert(0, FN, FRecentFiles.GetLast().Object);
-      FRecentFiles.Delete(FRecentFiles.Count()-1);
+      FRecentFiles.Delete(FRecentFiles.Count() - 1);
     }
   }
-  else
+  else {
     FRecentFiles.Move(index, 0);
+  }
 
-  for( size_t i=0; i < FRecentFiles.Count(); i++ )
-    Items.Add( FRecentFiles.GetObject(i) );
-  for( size_t i=0; i < FRecentFiles.Count(); i++ )  { // put items in the right position
-    FRecentFiles.GetObject(Items[i]->GetId()-ID_FILE0) = Items[i];
-    Items[i]->SetItemLabel(FRecentFiles[Items[i]->GetId()-ID_FILE0].u_str());
+  for (size_t i = 0; i < FRecentFiles.Count(); i++) {
+    Items.Add(FRecentFiles.GetObject(i));
+  }
+  for (size_t i = 0; i < FRecentFiles.Count(); i++) { // put items in the right position
+    FRecentFiles.GetObject(Items[i]->GetId() - ID_FILE0) = Items[i];
+    Items[i]->SetItemLabel(FRecentFiles[Items[i]->GetId() - ID_FILE0].u_str());
     Items[i]->Check(false);
   }
-  FRecentFiles.GetObject(0)->Check( true );
-  if( FRecentFiles.Count() >= FRecentFilesToShow )
+  FRecentFiles.GetObject(0)->Check(true);
+  if (FRecentFiles.Count() >= FRecentFilesToShow) {
     FRecentFiles.SetCount(FRecentFilesToShow);
+  }
 }
 //..............................................................................
 bool TMainForm::UpdateRecentFilesTable(bool TableDef)  {
@@ -3217,9 +3228,10 @@ bool TMainForm::UpdateRecentFilesTable(bool TableDef)  {
   Table.CreateHTMLList(Output, EmptyString(), false, false, false);
   olxcstr cst = TUtf8::Encode(Output.Text('\n'));
   TFileHandlerManager::AddMemoryBlock(RecentFilesFile, cst.c_str(), cst.Length(), plGlobal);
-  if( TEFile::Exists(FXApp->GetInstanceDir()+RecentFilesFile) )
-    TEFile::DelFile(FXApp->GetInstanceDir()+RecentFilesFile);
-  //TUtf8File::WriteLines( RecentFilesFile, Output, false );
+  if (TEFile::Exists(FXApp->GetInstanceDir() + RecentFilesFile)) {
+    TEFile::DelFile(FXApp->GetInstanceDir() + RecentFilesFile);
+    //TUtf8File::WriteLines( RecentFilesFile, Output, false );
+  }
   return true;
 }
 //..............................................................................
