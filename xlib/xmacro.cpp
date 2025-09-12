@@ -2624,6 +2624,9 @@ void XLibMacros::macFree(TStrObjList &Cmds, const TParamList &Options,
     RefinementModel& rm = xapp.XFile().GetRM();
     rm.aunit.GetAtoms().ForEach(ACollectionItem::TagSetter(0));
     for (size_t i = 0; i < atoms.Count(); i++) {
+      if (atoms[i]->CAtom().GetType() < 0) {
+        continue;
+      }
       if (!atoms[i]->CAtom().GetDisp().ok()) {
         rm.InitDisp(atoms[i]->CAtom());
       }

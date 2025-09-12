@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2014 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2025 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -36,21 +36,23 @@ public:
     : mu(0), wt(0), r(0), source(NULL), Label(lbl), set_items(0)
   {}
   // creates scatterer from the library
-  XScatterer(const cm_Element& src, double energy)
+  XScatterer(const cm_Element& src, double energy, bool neut=false)
     : mu(0), set_items(0)
   {
-    SetSource(src, energy);
+    SetSource(src, energy, neut);
   }
   /* searches for the scatterer in the library and initialises data. If
   scatterer no found, throws exception
   */
-  XScatterer(const olxstr& lbl, double energy) : mu(0), set_items(0) {
+  XScatterer(const olxstr& lbl, double energy, bool neut=false)
+    : mu(0), set_items(0)
+  {
     const cm_Element* src = XElementLib::FindBySymbol(lbl);
     if (src == 0) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         olxstr("unknown scatterer symbol: ").quote() << lbl);
     }
-    SetSource(*src, energy);
+    SetSource(*src, energy, neut);
   }
   // copy constructor
   XScatterer(const XScatterer& sc)
@@ -64,7 +66,7 @@ public:
     set_items(sc.set_items)
   {}
   // initialises data from the provided library element
-  void SetSource(const cm_Element& src, double energy);
+  void SetSource(const cm_Element& src, double energy, bool neut);
   // updates a scetterer info
   void Merge(const XScatterer& sc);
   XScatterer& operator = (const XScatterer& sc);

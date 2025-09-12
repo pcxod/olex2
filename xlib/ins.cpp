@@ -436,6 +436,9 @@ bool TIns::_ParseIns(RefinementModel& rm, const TStrList& Toks) {
   else if (Toks[0].Equalsi("MERG") && Toks.Count() == 2) {
     rm.SetMERG(Toks[1].ToInt());
   }
+  else if (Toks[0].Equalsi("NEUT")) {
+    rm.expl.SetRadiationType(radiaotion_type_neut);
+  }
   else if (Toks[0].Equalsi("EXTI")) {
     TEValueD ev;
     if (Toks.Count() > 1) {
@@ -2928,7 +2931,7 @@ TStrList::const_list_type TIns::SaveHeader(TStrList& SL,
   SL.Add(_CellToString());
   SL.Add(_ZerrToString());
   _SaveSymm(SL);
-  if (FindIns("NEUT") != 0) {
+  if (GetRM().expl.GetRadiationType() == radiaotion_type_neut) {
     SL.Add("NEUT");
   }
   SL.Add(EmptyString());

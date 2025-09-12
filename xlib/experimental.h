@@ -22,14 +22,23 @@
 
 BeginXlibNamespace()
 
+enum {
+  radiaotion_type_xray = 1,
+  radiaotion_type_ed = 2,
+  radiaotion_type_neut = 3,
+};
+
 class ExperimentalDetails : public IOlxObject {
   double Radiation, RadiationEnergy;
   TEValueD TempValue;  // always in C
   vec3d CrystalSize;
+  int RadiationType;
   bool SetSize(const olxstr& t);
   bool SetWL(const olxstr& t);
 public:
-  ExperimentalDetails() : TempValue(-1000) {
+  ExperimentalDetails()
+    : TempValue(-1000), RadiationType(radiaotion_type_xray)
+  {
     SetRadiation(0.71073);
   }
   ExperimentalDetails(const ExperimentalDetails& ed)  {
@@ -39,6 +48,7 @@ public:
     SetRadiation(ed.Radiation);
     TempValue = ed.TempValue;
     CrystalSize = ed.CrystalSize;
+    RadiationType = ed.RadiationType;
     return *this;
   }
   double GetRadiation() const {  return Radiation;  }
@@ -50,15 +60,17 @@ public:
   bool IsTemperatureSet() const {  return TempValue.GetV() >= -273.15;  }
   // checks for scale type {F,C,K}
   bool SetTemp(const olxstr& t);
-  DefPropC(TEValueD, TempValue)
-  DefPropC(vec3d, CrystalSize)
-  void SetCrystalSize(double x, double y, double z)  {
-    CrystalSize = vec3d(x,y,z);
+  DefPropC(TEValueD, TempValue);
+  DefPropC(vec3d, CrystalSize);
+  DefPropC(int, RadiationType);
+  void SetCrystalSize(double x, double y, double z) {
+    CrystalSize = vec3d(x, y, z);
   }
   void Clear() {
     SetRadiation(0.71073);
     CrystalSize.Null();
     TempValue = -1000;
+    RadiationType = radiaotion_type_xray;
   }
   void ToDataItem(class TDataItem& item) const;
 #ifdef _PYTHON

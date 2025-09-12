@@ -137,7 +137,7 @@ void TCif::_LoadCurrent() {
   Initialize();
 }
 //..............................................................................
-void TCif::SaveToStrings(TStrList& Strings)  {
+void TCif::SaveToStrings(TStrList& Strings) {
   TStopWatch sw(__FUNC__);
   static olxstr def_pivots(
     "_audit_creation,_publ,_chemical_name,_chemical_formula,_chemical,_atom_type,"
@@ -300,9 +300,14 @@ void TCif::Initialize() {
         t_v.V() -= 273.15;
         GetRM().expl.SetTempValue(t_v);
       }
-      const olxstr radiation = GetParamAsString("_diffrn_radiation_wavelength");
-      if (!radiation.IsEmpty() && radiation != '?')
-        GetRM().expl.SetRadiation(radiation.ToDouble());
+      olxstr tmp = GetParamAsString("_diffrn_radiation_wavelength");
+      if (tmp.IsNumber()) {
+        GetRM().expl.SetRadiation(tmp.ToDouble());
+      }
+      tmp = GetParamAsString("_diffrn_radiation_type");
+      if (tmp.Containsi("neutrons")) {
+        GetRM().expl.SetRadiationType(radiaotion_type_neut);
+      }
     }
     catch (...) {}
     EValue = GetParamAsString("_cell_length_a");
@@ -1132,6 +1137,9 @@ bool TCif::Adopt(TXFile& XF, int flags) {
   SetParam("_diffrn_ambient_temperature",
     XF.GetRM().expl.IsTemperatureSet() ? temp_v.ToString() : olxstr('?'), false);
   SetParam("_diffrn_radiation_wavelength", XF.GetRM().expl.GetRadiation(), false);
+  if (XF.GetRM().expl.GetRadiationType() == radiaotion_type_neut) {
+    SetParam("_diffrn_radiation_type", "neutrons", false);
+  }
   if (XF.GetRM().expl.GetCrystalSize().QLength() > 1.e-6) {
     SetParam("_exptl_crystal_size_max", XF.GetRM().expl.GetCrystalSize()[0], false);
     SetParam("_exptl_crystal_size_mid", XF.GetRM().expl.GetCrystalSize()[1], false);
