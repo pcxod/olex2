@@ -2923,7 +2923,14 @@ void RefinementModel::ReadInsExtras(const TStrList &items) {
       TStrList toks(constraint.GetValue(), ' ');
       IConstraintContainer *cc = rcRegister.Find(toks[0], 0);
       if (cc != 0) {
-        cc->FromToks(toks.SubListFrom(1), *this);
+        try {
+          cc->FromToks(toks.SubListFrom(1), *this);
+        }
+        catch (const TBasicException &e) {
+          TBasicApp::NewLogEntry(logWarning) << "Skipping invalid constraint, "
+            << constraint.GetValue() << ": " << e.GetError();
+          continue;
+        }
       }
       else if (toks[0] == "olex2.constraint.u_proxy") {
         TCAtom *ca = aunit.FindCAtom(toks[1]);

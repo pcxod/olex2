@@ -604,6 +604,9 @@ olxstr TCAtom::GetResiLabel(bool add_part) const {
   }
   if (add_part && GetPart() != 0) {
     rv << '^' << (olxch)('a' + olx_abs(GetPart()) - 1);
+    if (GetPart() < 0) {
+      rv << '*';
+    }
   }
   return rv;
 }

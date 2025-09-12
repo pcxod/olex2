@@ -264,6 +264,10 @@ void adirection::FromToks(AReleasableContainer<adirection>& to,
     TCAtomGroup agroup;
     size_t atomAGroup;
     aref.Expand(rm, agroup, EmptyString(), atomAGroup);
+    if (agroup.Count() < 2) {
+      TBasicApp::NewLogEntry(logError) << "Too few atoms for direction";
+      return;
+    }
     new direction(to, toks[1], agroup, type);
   }
   catch (const TExceptionBase& ex) {
@@ -341,13 +345,13 @@ PyObject* direction::PyExport() const {
 #endif
 //.............................................................................
 olxstr static_direction::ToInsStr(const RefinementModel& rm) const {
-  return olxstr("", 64).stream(' ') << GetName()
+  return olxstr(olx_reserve(64)).stream(' ') << GetName()
     << adirection::EncodeType(direction_static)
     << id << value[0] << value[1] << value[2];
 }
 //.............................................................................
 olxstr direction::ToInsStr(const RefinementModel& rm) const {
-  olxstr rv("", 64);
+  olxstr rv(olx_reserve(64));
   rv.stream(' ') << GetName() << adirection::EncodeType(type) << id;
   for (size_t i = 0; i < atoms.Count(); i++) {
     if (atoms[i].GetAtom()->IsDeleted()) {

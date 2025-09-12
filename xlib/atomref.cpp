@@ -147,7 +147,11 @@ size_t TAtomReference::_Expand(RefinementModel& rm, TCAtomGroup& atoms,
   size_t part_ind = lexp.IndexOf('^');
   if (part_ind != InvalidIndex) {
     if (lexp.Length() > part_ind) {
-      part = lexp.SubStringFrom(part_ind+1).ToLowerCase().CharAt(0) - 'a' + 1;
+      olxstr t = lexp.SubStringFrom(part_ind + 1).ToLowerCase();
+      part = t.CharAt(0) - 'a' + 1;
+      if (t.Length() > 1 && t.CharAt(1) == '*') {
+        part = -part;
+      }
     }
     lexp = lexp.SubStringTo(part_ind);
   }

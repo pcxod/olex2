@@ -533,8 +533,11 @@ TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi) const {
   size_t p_idx = Label.IndexOf('^');
   if (p_idx != InvalidIndex) {
     olxstr sfx = Label.SubStringFrom(p_idx + 1);
-    if (sfx.Length() == 1) {
+    if (sfx.Length() >= 1) {
       part = olxstr::o_tolower(sfx.CharAt(0)) - 'a' + 1;
+      if (sfx.Length() > 1 && sfx.CharAt(1) == '*') {
+        part = -part;
+      }
     }
     lb = Label.SubStringTo(p_idx);
   }
@@ -587,7 +590,7 @@ TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi) const {
       if (!resi->GetAtom(i).IsDeleted() &&
         resi->GetAtom(i).GetLabel().Equalsi(lb))
       {
-        if (part == DefNoPart || olx_abs(resi->GetAtom(i).GetPart()) == part) {
+        if (part == DefNoPart || resi->GetAtom(i).GetPart() == part) {
           return &resi->GetAtom(i);
         }
       }

@@ -894,7 +894,20 @@ void TCif::Initialize() {
       const size_t ind_s = ALoop->ColIndex("_atom_type_symbol");
       const size_t ind_r = ALoop->ColIndex("_atom_type_scat_dispersion_real");
       const size_t ind_i = ALoop->ColIndex("_atom_type_scat_dispersion_imag");
-      if ((ind_s | ind_r | ind_i) != InvalidIndex) {
+      const size_t ind_l = ALoop->ColIndex("_atom_type_scat_length_neutron");
+
+      if ((ind_s | ind_l) != InvalidIndex) {
+        for (size_t i = 0; i < ALoop->RowCount(); i++) {
+          const CifRow& r = (*ALoop)[i];
+          XScatterer* sc = new XScatterer(r[ind_s]->GetStringValue());
+          cm_Gaussians g;
+          g.c = r[ind_l]->GetStringValue().ToDouble();
+          sc->SetGaussians(g);
+          sc->SetFpFdp(0);
+          GetRM().AddSfac(*sc);
+        }
+      }
+      else if ((ind_s | ind_r | ind_i) != InvalidIndex) {
         for (size_t i = 0; i < ALoop->RowCount(); i++) {
           const CifRow& r = (*ALoop)[i];
           XScatterer* sc = new XScatterer(r[ind_s]->GetStringValue());
