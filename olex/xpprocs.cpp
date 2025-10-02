@@ -1539,6 +1539,12 @@ void TMainForm::macSave(TStrObjList &Cmds, const TParamList &Options,
   }
 }
 //..............................................................................
+void load_scene(Olex2App& app, TDataItem& root) {
+  app.GetRenderer().GetScene().FromDataItem(root);
+  app.GetRenderer().InitLights();
+  app.UpdateLabels();
+}
+
 void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
@@ -1548,7 +1554,9 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
       FN = PickFile("Load drawing style", "Drawing styles|*.glds",
         StylesDir, EmptyString(), true);
     }
-    if (FN.IsEmpty()) return;
+    if (FN.IsEmpty()) {
+      return;
+    }
     olxstr Tmp = TEFile::ExtractFilePath(FN);
     if (!Tmp.IsEmpty()) {
       if (!StylesDir.Equalsi(Tmp)) {
@@ -1558,16 +1566,18 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
       }
     }
     else {
-      if (!StylesDir.IsEmpty())
+      if (!StylesDir.IsEmpty()) {
         Tmp = StylesDir;
-      else
+      }
+      else {
         Tmp = FXApp->GetBaseDir();
+      }
       FN = TEFile::AddPathDelimeterI(Tmp) << FN;
     }
     FN = TEFile::ChangeFileExt(FN, "glds");
     TEFile::CheckFileExists(__OlxSourceInfo, FN);
     TDataFile F;
-    F.LoadFromXLFile(FN, NULL);
+    F.LoadFromXLFile(FN, 0);
     FXApp->GetRenderer().ClearSelection();
     bool clear = Options.GetBoolOption('c', false, true);
     const vec3d mid = FXApp->GetRenderer().MinDim();
@@ -1577,7 +1587,7 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
       FXApp->GetRenderer().GetStyles().FromDataItem(
         *F.Root().FindItem("style"), false);
     }
-    catch(const TExceptionBase &e) {
+    catch (const TExceptionBase& e) {
       FXApp->GetRenderer().GetStyles().Clear();
       TBasicApp::NewLogEntry(logError) << "Failed to load given style";
       TBasicApp::NewLogEntry(logExceptionTrace) << e;
@@ -1595,22 +1605,30 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
     }
     FN = FXApp->GetRenderer().GetStyles().GetLinkFile();
     if (!FN.IsEmpty()) {
-      if( TEFile::Exists(FN) )  {
-        F.LoadFromXLFile(FN, NULL);
-        FXApp->GetRenderer().GetScene().FromDataItem(F.Root());
+      processFunction(FN);
+      if (!TEFile::IsAbsolutePath(FN)) {
+        FN = TEFile::ExpandRelativePath(FN);
       }
-      else
+      if (TEFile::Exists(FN)) {
+        F.LoadFromXLFile(FN, 0);
+        load_scene(*FXApp, F.Root());
+        FBgColor = FXApp->GetRenderer().LightModel.GetClearColor();
+      }
+      else {
         TBasicApp::NewLogEntry(logError, false, __OlxSrcInfo) <<
-        (olxstr("link file does not exist: ").quote() << FN);
+          (olxstr("link file does not exist: ").quote() << FN);
+      }
     }
   }
-  else if( Cmds[0].Equalsi("scene") )  {
+  else if (Cmds[0].Equalsi("scene")) {
     olxstr FN = Cmds.Text(' ', 1);
     if (FN.IsEmpty()) {
       FN = PickFile("Load scene parameters", "Scene parameters|*.glsp",
         ScenesDir, EmptyString(), true);
     }
-    if (FN.IsEmpty()) return;
+    if (FN.IsEmpty()) {
+      return;
+    }
     olxstr Tmp = TEFile::ExtractFilePath(FN);
     if (!Tmp.IsEmpty()) {
       if (!ScenesDir.Equalsi(Tmp)) {
@@ -1618,21 +1636,20 @@ void TMainForm::macLoad(TStrObjList &Cmds, const TParamList &Options,
       }
     }
     else {
-      if (!ScenesDir.IsEmpty())
+      if (!ScenesDir.IsEmpty()) {
         Tmp = ScenesDir;
-      else
+      }
+      else {
         Tmp = FXApp->GetBaseDir();
+      }
       FN = TEFile::AddPathDelimeterI(Tmp) << FN;
     }
     FN = TEFile::ChangeFileExt(FN, "glsp");
     TEFile::CheckFileExists(__OlxSourceInfo, FN);
     TDataFile DF;
-    DF.LoadFromXLFile(FN, NULL);
-    AGlScene &sc = FXApp->GetRenderer().GetScene();
-    sc.FromDataItem(DF.Root());
+    DF.LoadFromXLFile(FN, 0);
+    load_scene(*FXApp, DF.Root());
     FBgColor = FXApp->GetRenderer().LightModel.GetClearColor();
-    FXApp->GetRenderer().InitLights();
-    FXApp->UpdateLabels();
   }
   else if (Cmds[0].Equalsi("view")) {
     olxstr FN = Cmds.Text(' ', 1);
@@ -3412,30 +3429,31 @@ void TMainForm::macPopup(TStrObjList& Cmds, const TParamList& Options, TMacroDat
   }
 }
 //..............................................................................
-void TMainForm::macPython(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
-  if( Options.Contains('i') || Options.Contains('l') )  {
-    auto *dlg = new TdlgStyledEdit(this, true);
-    dlg->SetTitle( wxT("Python script editor") );
+void TMainForm::macPython(TStrObjList& Cmds, const TParamList& Options, TMacroData& E) {
+  if (Options.Contains('i') || Options.Contains('l')) {
+    TdlgStyledEdit* dlg = new TdlgStyledEdit(this, true);
+    dlg->SetTitle(wxT("Python script editor"));
     dlg->SetLexer(wxSTC_LEX_PYTHON);
-    if( Options.Contains('l') )  {
+    if (Options.Contains('l')) {
       olxstr FN = PickFile("Open File",
-        olxstr("Python scripts (*.py)|*.py")  <<
-        "|Text files (*.txt)|*.txt"  <<
+        olxstr("Python scripts (*.py)|*.py") <<
+        "|Text files (*.txt)|*.txt" <<
         "|All files (*.*)|*.*",
         TBasicApp::GetBaseDir(), EmptyString(), true);
-      if( !FN.IsEmpty() && TEFile::Exists(FN) )  {
+      if (!FN.IsEmpty() && TEFile::Exists(FN)) {
         dlg->SetText(TEFile::ReadLines(FN).Text('\n'));
       }
     }
     else
       dlg->SetText(wxT("import olex\n"));
-    if( dlg->ShowModal() == wxID_OK )
+    if (dlg->ShowModal() == wxID_OK) {
       PythonExt::GetInstance()->RunPython(dlg->GetText());
+    }
     dlg->Destroy();
   }
   olxstr tmp = Cmds.Text(' ');
   tmp.Replace("\\n", "\n");
-  if( !tmp.EndsWith('\n') )  tmp << '\n';
+  if (!tmp.EndsWith('\n'))  tmp << '\n';
   PythonExt::GetInstance()->RunPython(tmp);
 }
 //..............................................................................

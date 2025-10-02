@@ -13,7 +13,8 @@
 // edit text dialog dialog
 TdlgEdit::TdlgEdit(TMainFrame *ParentFrame, bool MultiLine):
   //TDialog(ParentFrame, -1, wxT("Edit"), wxT("dlgEdit"))
-  wxDialog(ParentFrame, -1,  wxT("Edit"), wxPoint(0, 0), wxDefaultSize, wxMAXIMIZE_BOX | wxRESIZE_BORDER | wxDEFAULT_DIALOG_STYLE, wxT("dlgEdit")), WI(this)
+  wxDialog(ParentFrame, -1,  wxT("Edit"), wxPoint(0, 0), wxDefaultSize,
+    wxMAXIMIZE_BOX | wxRESIZE_BORDER | wxDEFAULT_DIALOG_STYLE, wxT("dlgEdit")), WI(this)
 {
   int fontSize = 12, charNumber = 75;
   FParent = ParentFrame;
@@ -60,27 +61,28 @@ void TdlgEdit::SetText(const olxstr& text)  {
 olxstr TdlgEdit::GetText()  {  return Text->GetValue();  }
 //..............................................................................
 // Styled edit dialog
-TdlgStyledEdit::TdlgStyledEdit(TMainFrame *ParentFrame, bool MultiLine):
-  wxDialog(ParentFrame, -1,  wxT("Edit"), wxPoint(0, 0), wxDefaultSize, wxMAXIMIZE_BOX | wxRESIZE_BORDER | wxDEFAULT_DIALOG_STYLE, wxT("dlgEdit")), WI(this)
+TdlgStyledEdit::TdlgStyledEdit(TMainFrame* ParentFrame, bool MultiLine) :
+  wxDialog(ParentFrame, -1, wxT("Edit"), wxPoint(0, 0), wxDefaultSize,
+    wxMAXIMIZE_BOX | wxRESIZE_BORDER | wxDEFAULT_DIALOG_STYLE, wxT("dlgEdit")), WI(this)
 {
   int fontSize = 12, charNumber = 75;
   FParent = ParentFrame;
 
-  int height = 25, width = fontSize*charNumber;
-  if( MultiLine )  {
+  int height = 25, width = fontSize * charNumber;
+  if (MultiLine) {
     height = 350;
   }
   Text = new wxStyledTextCtrl(this, -1, wxDefaultPosition, wxSize(width, height));
   wxFont fnt(fontSize, wxMODERN, wxNORMAL, wxNORMAL);
   Text->SetFont(fnt);
 
-  wxBoxSizer *GlobalSizer = new wxBoxSizer(wxVERTICAL );
+  wxBoxSizer* GlobalSizer = new wxBoxSizer(wxVERTICAL);
   GlobalSizer->Add(Text, 1, wxEXPAND | wxALL, 3);
 
-  wxBoxSizer *ButtonsSizer = new wxBoxSizer( wxHORIZONTAL );
-  ButtonsSizer->Add( new wxButton( this, wxID_OK, wxT("OK") ), 0, wxALL, 3);
-  ButtonsSizer->Add( new wxButton( this, wxID_CANCEL, wxT("Cancel") ), 0, wxALL, 3);
-  GlobalSizer->Add(ButtonsSizer,0, wxALL, 3);
+  wxBoxSizer* ButtonsSizer = new wxBoxSizer(wxHORIZONTAL);
+  ButtonsSizer->Add(new wxButton(this, wxID_OK, wxT("OK")), 0, wxALL, 3);
+  ButtonsSizer->Add(new wxButton(this, wxID_CANCEL, wxT("Cancel")), 0, wxALL, 3);
+  GlobalSizer->Add(ButtonsSizer, 0, wxALL, 3);
 
 
   SetSizer(GlobalSizer);
