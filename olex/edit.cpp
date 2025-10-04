@@ -10,6 +10,7 @@
 #include "edit.h"
 #include <wx/font.h>
 
+
 // edit text dialog dialog
 TdlgEdit::TdlgEdit(TMainFrame *ParentFrame, bool MultiLine):
   //TDialog(ParentFrame, -1, wxT("Edit"), wxT("dlgEdit"))
@@ -73,8 +74,13 @@ TdlgStyledEdit::TdlgStyledEdit(TMainFrame* ParentFrame, bool MultiLine) :
     height = 350;
   }
   Text = new wxStyledTextCtrl(this, -1, wxDefaultPosition, wxSize(width, height));
-  wxFont fnt(fontSize, wxMODERN, wxNORMAL, wxNORMAL);
-  Text->SetFont(fnt);
+  const wxFont fnt(wxFontInfo(fontSize)
+      .Family(wxFONTFAMILY_MODERN)
+      .Style(wxFONTSTYLE_NORMAL)
+      .Weight(wxFONTWEIGHT_NORMAL));
+
+  Text->StyleSetFont(wxSTC_STYLE_DEFAULT, fnt);
+  Text->SetMarginWidth(1, 0);
 
   wxBoxSizer* GlobalSizer = new wxBoxSizer(wxVERTICAL);
   GlobalSizer->Add(Text, 1, wxEXPAND | wxALL, 3);
@@ -126,7 +132,16 @@ void TdlgStyledEdit::SetLexer(int style)
     Text->StyleSetSpec(wxSTC_P_OPERATOR, "bold");
     Text->StyleSetSpec(wxSTC_P_STRINGEOL, "fore:#000000,back:#E0C0E0,eolfilled");
   }
-
+  else if (style == wxSTC_LEX_PROPERTIES) // Use for TOML
+  {
+    // Basic styling for TOML-like syntax
+    Text->StyleSetSpec(wxSTC_PROPS_DEFAULT, "fore:#000000");
+    Text->StyleSetSpec(wxSTC_PROPS_COMMENT, "fore:#007F00");
+    Text->StyleSetSpec(wxSTC_PROPS_SECTION, "fore:#0000FF,bold"); // [section]
+    Text->StyleSetSpec(wxSTC_PROPS_ASSIGNMENT, "fore:#FF0000");   // =
+    Text->StyleSetSpec(wxSTC_PROPS_DEFVAL, "fore:#7F007F");       // values
+    Text->StyleSetSpec(wxSTC_PROPS_KEY, "fore:#000080,bold");     // keys
+  }
 }
 //..............................................................................
 olxstr TdlgStyledEdit::GetText()  {  return Text->GetValue();  }
