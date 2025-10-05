@@ -7,12 +7,16 @@ if(NOT wxVERSION_FAMILY)
 endif()
 
 CPMAddPackage(
+  NAME Ccache.cmake
+  GITHUB_REPOSITORY TheLartians/Ccache.cmake
+  VERSION 1.2.5
+)
+CPMAddPackage(
     NAME wxWidgetsSource
     VERSION "${wxVERSION}"
     URL "https://github.com/wxWidgets/wxWidgets/releases/download/v${wxVERSION}/wxWidgets-${wxVERSION}.tar.bz2"
     DOWNLOAD_ONLY YES
 )
-
 include(ExternalProject)
 if(wxWidgetsSource_ADDED)
   message(STATUS "wxWidgets source downloaded to: ${wxWidgetsSource_SOURCE_DIR}")
@@ -28,7 +32,7 @@ if(wxWidgetsSource_ADDED)
       --disable-shared
       --prefix=${CMAKE_BINARY_DIR}/3rdparty/wxwidgets
       --enable-aui
-      --enable-unicode
+      $<$<VERSION_LESS:${wxVERSION},3.3.0>:--enable-unicode>
       --enable-html
       --disable-sys-libs
       --with-gtk=3
