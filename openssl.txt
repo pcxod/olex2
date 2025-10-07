@@ -1,0 +1,4 @@
+- install raspberry perl and NASM, make sure nasm.exe is on the system PATH
+- cd openssl GIT and mkdir 'build'
+- cd build, perl Configure --prefix=. VC-WIN64A
+- nmake, nmake test, nmake install
