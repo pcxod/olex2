@@ -280,7 +280,12 @@ bool THtml::UpdatePage(bool update_indices) {
   TEFile::ChangeDir(WebFolder);
   if (update_indices) { // reload switches
     for (size_t i = 0; i < Root->SwitchCount(); i++) {
-      Root->GetSwitch(i).UpdateFileIndex();
+      try {
+        Root->GetSwitch(i).UpdateFileIndex();
+      }
+      catch (const TExceptionBase& e) {
+        TBasicApp::NewLogEntry(logException) << e;
+      }
     }
   }
 
