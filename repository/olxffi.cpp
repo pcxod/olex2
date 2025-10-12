@@ -20,7 +20,11 @@ lib_ffi::lib_ffi() :
   paths << TEFile::JoinPath(
     TStrList() << olx_getenv("PYTHONHOME") << "DLLs");
 #else
+#if defined(__MAC__)
+  olxstr ext = "dylib";
+#else
   olxstr ext = "so";
+#endif
   paths << TEFile::JoinPath(
     TStrList() << TBasicApp::GetBaseDir() << "lib");
 #endif
