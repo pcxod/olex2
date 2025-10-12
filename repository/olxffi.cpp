@@ -16,14 +16,14 @@ lib_ffi::lib_ffi() :
 {
   TStrList paths;
 #ifdef __WIN32__
-  olxstr ext = "dll";
+  olxstr ext = "dll", sep = "-";
   paths << TEFile::JoinPath(
     TStrList() << olx_getenv("PYTHONHOME") << "DLLs");
 #else
 #if defined(__MAC__)
-  olxstr ext = "dylib";
+  olxstr ext = "dylib", sep = ".";
 #else
-  olxstr ext = "so";
+  olxstr ext = "so", sep = "-";
 #endif
   paths << TEFile::JoinPath(
     TStrList() << TBasicApp::GetBaseDir() << "lib");
@@ -34,8 +34,8 @@ lib_ffi::lib_ffi() :
   olxstr path = olx_getenv("PATH");
   paths.AddAll(TStrList(path, TEFile::GetEnviPathDelimeter()));
   
-  while (vp != 0) {
-    dll = TEFile::Which(olxstr("libffi-") << *vp << '.' << ext, paths);
+  while (*vp != 0) {
+    dll = TEFile::Which(olxstr("libffi") << sep << *vp << '.' << ext, paths);
     if (!dll.IsEmpty()) {
       break;
     }
