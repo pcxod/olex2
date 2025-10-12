@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2025 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -21,28 +21,25 @@ inline size_t olx_PyUnicode_Length(PyObject* pobj) { return PyUnicode_GetLength(
  { return PythonExt::init_module(#m_name, m_def); }
 
 #ifdef _LIBFFI
-#include <ffi.h>
+#include "olxffi.h"
+
 class LibFFI_Func_Closure {
+  olx_object_ptr<lib_ffi> FFI;
   ABasicFunction* func;
   olxcstr name, description;
   olx_object_ptr<ffi_cif> cif;
   ffi_closure* closure;
   void* executable_func_ptr;
-  static ffi_type** arg_types() {
-    static ffi_type* args[] = {
-      &ffi_type_pointer, &ffi_type_pointer,
-      &ffi_type_pointer, &ffi_type_pointer };
-    return &args[0];
-  }
+  static ffi_type** arg_types();
   static PyObject* processor(ABasicFunction* f,
     PyObject* self, PyObject* args, PyObject* kwds);
 public:
   typedef PyObject* (*closure_fn_t)(PyObject*, PyObject*);
 
-  LibFFI_Func_Closure(ABasicFunction* f);
+  LibFFI_Func_Closure(olx_object_ptr<lib_ffi> FFI, ABasicFunction* f);
   ~LibFFI_Func_Closure() {
     if (closure != 0) {
-      ffi_closure_free(closure);
+      FFI->ffi_closure_free(closure);
     }
   }
 
@@ -57,6 +54,7 @@ public:
 };
 
 class LibFFI_Lib_Closure {
+  olx_object_ptr<lib_ffi> FFI;
   TLibrary* lib;
   olxcstr name;
   olx_object_ptr<ffi_cif> cif;
@@ -68,10 +66,11 @@ class LibFFI_Lib_Closure {
 public:
   typedef PyObject* (*closure_fn_t)();
 
-  LibFFI_Lib_Closure(TLibrary* lib, const olxcstr &name_prefix);
+  LibFFI_Lib_Closure(olx_object_ptr<lib_ffi> FFI,
+    TLibrary* lib, const olxcstr &name_prefix);
   ~LibFFI_Lib_Closure() {
     if (closure != 0) {
-      ffi_closure_free(closure);
+      FFI->ffi_closure_free(closure);
     }
   }
 
@@ -213,7 +212,13 @@ public:
   void CheckInitialised();
 
 #ifdef _LIBFFI
+  // initialises the pointer below!
   void ExportDirect(const olxcstr& name);
+  static olx_object_ptr<lib_ffi>& get_ffi() {
+    static olx_object_ptr<lib_ffi> FFI;
+    return FFI;
+  }
+
 #endif
 
   static PythonExt* GetInstance() {

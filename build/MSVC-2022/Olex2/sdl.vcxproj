@@ -547,6 +547,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\sdl\actions.h" />
+    <ClInclude Include="..\..\..\sdl\aligned.h" />
     <ClInclude Include="..\..\..\sdl\arrays.h" />
     <ClInclude Include="..\..\..\sdl\association.h" />
     <ClInclude Include="..\..\..\sdl\bapp.h" />

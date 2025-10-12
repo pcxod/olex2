@@ -8,6 +8,7 @@
 ******************************************************************************/
 #pragma once
 #include "efile.h"
+#include "eutf8.h"
 
 #ifndef __WIN32__
 #include <dlfcn.h>
@@ -50,15 +51,19 @@ struct OlxDll : public IOlxObject {
   bool ok() const { return handle != 0; }
   
   template <typename func_t>
-  func_t get(const olxcstr& fn) const {
+  func_t get(const olxcstr& fn, bool throw_null=false) const {
     if (handle == 0) {
       throw TFunctionFailedException(__OlxSourceInfo, "uninitialised");
     }
 #ifdef __WIN32__
-    return (func_t)GetProcAddress(handle, fn.c_str());
+    func_t rv = (func_t)GetProcAddress(handle, fn.c_str());
 #else
-    return (func_t)dlsym(handle, fn.c_str());
+    func_t rv = (func_t)dlsym(handle, fn.c_str());
 #endif
+    if (throw_null && rv == 0) {
+      throw TFunctionFailedException(__OlxSourceInfo, "resource could not be located");
+    }
+    return rv;
   }
 
 };

@@ -376,8 +376,9 @@ PyObject* runOlexMacro(PyObject* self, PyObject* args)  {
 PyObject* runOlexFunction(PyObject* self, PyObject* args) {
   IOlex2Processor* o_r = PythonExt::GetInstance()->GetOlexProcessor();
   olxstr functionName;
-  if (!PythonExt::ParseTuple(args, "w", &functionName))
+  if (!PythonExt::ParseTuple(args, "w", &functionName)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
+  }
   olxstr retValue = functionName;
   bool res = o_r->processFunction(retValue);
   if (res) {
@@ -572,6 +573,8 @@ PythonExt::~PythonExt() {
     GetModuleRegistry().Clear();
 #ifdef _LIBFFI
     GetLibraryMap().Clear();
+    lib_closures.Clear();
+    get_ffi() = 0;
 #endif
   }
   Instance() = 0;
@@ -976,7 +979,8 @@ PyObject* PythonExt::ToPython(const TDataItem &di, PyObject* to) {
 void ExportLibsDirect(const olxcstr& prefix, TLibrary& Lib,
   TTypeList<LibFFI_Lib_Closure>& closures)
 {
-  closures.Add(new LibFFI_Lib_Closure(&Lib, prefix));
+
+  closures.Add(new LibFFI_Lib_Closure(PythonExt::get_ffi(),  &Lib, prefix));
   TLibrary::lib_container_t::iterator_t li = Lib.IterateLibs();
   while (li->HasNext()) {
     TLibrary& lib = *li->Next();
@@ -989,6 +993,15 @@ void PythonExt::ExportDirect(const olxcstr & name) {
   if (o_r == 0) {
     return;
   }
+  try {
+    get_ffi() = new lib_ffi();
+  }
+  catch (const TExceptionBase& e) {
+    TBasicApp::NewLogEntry(logError) << "Could not initialise LIBFFI: "
+      << e.GetException()->GetError();
+    return;
+  }
+  
   ExportLibsDirect(name, o_r->GetLibrary(), lib_closures);
   typedef olx_pair_t<LibFFI_Lib_Closure*, PyObject*> cl_t;
   olxdict<const TLibrary*, cl_t, TPointerComparator>& map = GetLibraryMap();
@@ -999,23 +1012,24 @@ void PythonExt::ExportDirect(const olxcstr & name) {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-LibFFI_Func_Closure::LibFFI_Func_Closure(ABasicFunction * f)
-  : func(f),
+LibFFI_Func_Closure::LibFFI_Func_Closure(olx_object_ptr<lib_ffi> FFI,
+  ABasicFunction * f)
+  : FFI(FFI), func(f),
   cif(new ffi_cif),
   closure(0), executable_func_ptr(0)
 {
-  if (ffi_prep_cif(&cif, FFI_DEFAULT_ABI,
-    f->HasOptions() ? 3 : 2, &ffi_type_pointer, arg_types()) != FFI_OK)
+  if (FFI->ffi_prep_cif(&cif, FFI_DEFAULT_ABI,
+    f->HasOptions() ? 3 : 2, FFI->ffi_type_pointer, arg_types()) != FFI_OK)
   {
     throw TFunctionFailedException(__OlxSourceInfo, "");
   }
 
-  closure = (ffi_closure*)ffi_closure_alloc(sizeof(ffi_closure), &executable_func_ptr);
+  closure = (ffi_closure*)FFI->ffi_closure_alloc(sizeof(ffi_closure), &executable_func_ptr);
   if (closure == 0) {
     throw TFunctionFailedException(__OlxSourceInfo, "");
   }
-  if (ffi_prep_closure_loc(closure, &cif, &closure_handler, f, executable_func_ptr) != FFI_OK) {
-    ffi_closure_free(closure);
+  if (FFI->ffi_prep_closure_loc(closure, &cif, &closure_handler, f, executable_func_ptr) != FFI_OK) {
+    FFI->ffi_closure_free(closure);
     throw TFunctionFailedException(__OlxSourceInfo, "");
   }
   name = f->GetName();
@@ -1023,6 +1037,11 @@ LibFFI_Func_Closure::LibFFI_Func_Closure(ABasicFunction * f)
   //(*get_ptr())(0, 0);
 }
 //..............................................................................
+ffi_type** LibFFI_Func_Closure::arg_types() {
+  static lib_ffi::ffi_type_pointer_t pt = PythonExt::get_ffi()->ffi_type_pointer;
+  static ffi_type* args[] = { pt, pt, pt, pt};
+  return &args[0];
+}
 PyObject* LibFFI_Func_Closure::processor(ABasicFunction *f,
   PyObject* self, PyObject *args, PyObject* kwds)
 {
@@ -1072,24 +1091,25 @@ void LibFFI_Func_Closure::closure_handler(ffi_cif * cif,
     target_args[3] = args[2];
   }
   ffi_cif target_cif;
-  if (ffi_prep_cif(&target_cif, FFI_DEFAULT_ABI,
-    4, &ffi_type_pointer, arg_types()) != FFI_OK)
+  if (PythonExt::get_ffi()->ffi_prep_cif(&target_cif, FFI_DEFAULT_ABI,
+    4, PythonExt::get_ffi()->ffi_type_pointer, arg_types()) != FFI_OK)
   {
     throw TFunctionFailedException(__OlxSourceInfo, "");
   }
-  ffi_call(&target_cif, FFI_FN(&processor), ret, target_args);
+  PythonExt::get_ffi()->ffi_call(&target_cif, FFI_FN(&processor), ret, target_args);
 }
 //..............................................................................
 //..............................................................................
 //..............................................................................
 PyObject* LibFFI_Lib_Closure::do_register() {
   TLibrary::container_t::iterator_t itr = lib->IterateFunctions();
+  olx_object_ptr<lib_ffi> ffi = PythonExt::get_ffi();
   while (itr->HasNext()) {
-    closures.Add(new LibFFI_Func_Closure(itr->Next()));
+    closures.Add(new LibFFI_Func_Closure(ffi, itr->Next()));
   }
   itr = lib->IterateMacros();
   while (itr->HasNext()) {
-    closures.Add(new LibFFI_Func_Closure(itr->Next()));
+    closures.Add(new LibFFI_Func_Closure(ffi, itr->Next()));
   }
   size_t sz = closures.Count();
   funcs = new PyMethodDef[sz + 1];
@@ -1129,8 +1149,9 @@ PyObject* LibFFI_Lib_Closure::do_register() {
   return pmod;
 }
 //..............................................................................
-LibFFI_Lib_Closure::LibFFI_Lib_Closure(TLibrary* lib, const olxcstr& name_prefix)
-  : lib(lib),
+LibFFI_Lib_Closure::LibFFI_Lib_Closure(olx_object_ptr<lib_ffi> FFI,
+  TLibrary* lib, const olxcstr& name_prefix)
+  : FFI(FFI), lib(lib),
   cif(new ffi_cif),
   closure(0), executable_func_ptr(0)
 {
@@ -1141,17 +1162,17 @@ LibFFI_Lib_Closure::LibFFI_Lib_Closure(TLibrary* lib, const olxcstr& name_prefix
   else {
     name = olxcstr(name_prefix) << '.' << qn;
   }
-  if (ffi_prep_cif(&cif, FFI_DEFAULT_ABI, 0, &ffi_type_pointer, 0) != FFI_OK) {
+  if (FFI->ffi_prep_cif(&cif, FFI_DEFAULT_ABI, 0, FFI->ffi_type_pointer, 0) != FFI_OK) {
     throw TFunctionFailedException(__OlxSourceInfo, "");
   }
-  closure = (ffi_closure*)ffi_closure_alloc(sizeof(ffi_closure), &executable_func_ptr);
+  closure = (ffi_closure*)FFI->ffi_closure_alloc(sizeof(ffi_closure), &executable_func_ptr);
   if (closure == 0) {
     throw TFunctionFailedException(__OlxSourceInfo, "");
   }
-  if (ffi_prep_closure_loc(closure, &cif, &closure_handler,
+  if (FFI->ffi_prep_closure_loc(closure, &cif, &closure_handler,
     this, executable_func_ptr) != FFI_OK)
   {
-    ffi_closure_free(closure);
+    FFI->ffi_closure_free(closure);
     throw TFunctionFailedException(__OlxSourceInfo, "");
   }
   PyImport_AppendInittab(name.c_str(), (closure_fn_t)executable_func_ptr);
@@ -1164,15 +1185,15 @@ PyObject* LibFFI_Lib_Closure::do_export(LibFFI_Lib_Closure* cl) {
 void LibFFI_Lib_Closure::closure_handler(ffi_cif* cif, void* ret, void* args_[], void* lib_) {
   void* args[] = { &lib_ };
   ffi_cif target_cif;
-  ffi_type* arg_types[] = { &ffi_type_pointer };
+  ffi_type* arg_types[] = { PythonExt::get_ffi()->ffi_type_pointer };
 
-  if (ffi_prep_cif(&target_cif, FFI_DEFAULT_ABI,
-    1, &ffi_type_pointer, arg_types) != FFI_OK)
+  if (PythonExt::get_ffi()->ffi_prep_cif(&target_cif, FFI_DEFAULT_ABI,
+    1, PythonExt::get_ffi()->ffi_type_pointer, arg_types) != FFI_OK)
   {
     throw TFunctionFailedException(__OlxSourceInfo, "");
   }
 
-  ffi_call(&target_cif, FFI_FN(&do_export), ret, args);
+  PythonExt::get_ffi()->ffi_call(&target_cif, FFI_FN(&do_export), ret, args);
 }
 
 #endif // _LIBFFI
