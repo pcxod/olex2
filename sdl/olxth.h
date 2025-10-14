@@ -30,8 +30,8 @@ template <class T> struct ThreadFunctionConverter  {
 
 class AOlxThread : public APerishable {
 protected:
-  int volatile RetVal;
-  bool volatile Terminate, Detached, Running;
+  OlxVolatileValue<int> RetVal;
+  OlxVolatileValue<bool> Terminate, Detached, Running;
   //...........................................................................
 #ifdef __WIN32__
   struct HandleRemover : public IOlxObject {
@@ -56,7 +56,7 @@ protected:
     th->RetVal = ((AOlxThread*)_instance)->Run();
     // running prevents the object deletion...
     th->Running = false;
-    if (th->Detached) {
+    if (th->Detached()) {
       delete th;
     }
 #ifdef __WIN32__
@@ -86,7 +86,7 @@ public:
   //...........................................................................
   virtual ~AOlxThread() {
     OnTerminate.Execute(this, 0);
-    if (Running) {  // prevent deleting
+    if (Running()) {  // prevent deleting
       Detached = false;
       Terminate = true;
     }
@@ -95,20 +95,20 @@ public:
     it has to be checked if the normal termination procedure was bypassed
     */
 #if defined(__WIN32__) && defined(_DLL)
-    if (Handle != 0 && Running) {
+    if (Handle != 0 && Running()) {
       unsigned long ec = STILL_ACTIVE, rv;
       while (ec == STILL_ACTIVE && (rv = GetExitCodeThread(Handle, &ec)) != 0) {
         if (SwitchToThread() == 0) {
           olx_sleep(5);
         }
-        if (!Running) {
+        if (!Running()) {
           break;
         }
       }
     }
     Running = false;
 #endif
-    while (Running) {
+    while (Running()) {
       Yield();
       olx_sleep(5);
     }
@@ -149,13 +149,13 @@ public:
         "the tread must be started at first");
     }
     Detached = false;
-    if (send_terminate && !Terminate) {
+    if (send_terminate && !Terminate()) {
       SendTerminate();
     }
 #ifdef __WIN32__
     DWORD res;
     while ((res = WaitForSingleObject(Handle, 10))) {
-      if (res == WAIT_OBJECT_0 || res == WAIT_ABANDONED || !Running) {
+      if (res == WAIT_OBJECT_0 || res == WAIT_ABANDONED || !Running()) {
         break;
       }
       if (res != WAIT_TIMEOUT) {
@@ -179,7 +179,7 @@ public:
     OnSendTerminate();
     Terminate = true;
   }
-  bool IsRunning() const { return Running; }
+  bool IsRunning() const { return Running(); }
   //...........................................................................
   /* executes a simplest function thread, the function should not take any
   arguments the return value will be ignored. To be used for global detached
