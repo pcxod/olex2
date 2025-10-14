@@ -397,6 +397,14 @@ void TWinHttpFileSystem::Init() {
   ExtraHeaders = 0;
 }
 //..............................................................................
+bool TWinHttpFileSystem::set_timeout(HINTERNET hInternet, unsigned long tm_) {
+  unsigned long tm = timeout.ok() ? *timeout : tm_;
+  return InternetSetOption(hInternet,
+    INTERNET_OPTION_CONNECT_TIMEOUT,
+    &tm,
+    sizeof(tm));
+}
+//..............................................................................
 // inspired by
 //https://stackoverflow.com/questions/18910463/how-to-send-https-request-using-wininet
 //..............................................................................
@@ -412,6 +420,7 @@ olx_object_ptr<IInputStream> TWinHttpFileSystem::_DoOpenFile(const olxstr& src) 
   if (hInternet.handle == 0) {
     return 0;
   }
+  set_timeout(hInternet.handle, 100);
   INET_CLOSE hConnect = InternetConnect(hInternet.handle,
     Url.GetHost().u_str(),
     INTERNET_DEFAULT_HTTPS_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, 0,
@@ -511,6 +520,7 @@ bool TWinHttpFileSystem::_DoesExist(const olxstr& f, bool forced_check) {
     if (hInternet.handle == 0) {
       return false;
     }
+    set_timeout(hInternet.handle, 100);
     INET_CLOSE hConnect = InternetConnect(hInternet.handle,
       Url.GetHost().u_str(),
       INTERNET_DEFAULT_HTTPS_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, 0,
