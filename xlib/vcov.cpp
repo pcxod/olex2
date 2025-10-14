@@ -93,7 +93,7 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au) {
       continue;
     }
     if (last_atom_name != toks[5]) {
-      atom = au.FindCAtom(toks[5]);
+      atom = au.FindCAtom(toks[5], 0, true);
       last_atom_name = toks[5];
     }
     if (atom == 0) {
