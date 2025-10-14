@@ -216,6 +216,10 @@ class TWinHttpFileSystem : public AFileSystem {
       }
     }
   };
+  olx_object_ptr<unsigned long> timeout;
+  // if the user set timeout (timeout.ok()) - that is used
+  bool set_timeout(HINTERNET hInternet,
+    unsigned long tm = 100);
 protected:
   const TUrl& GetUrl() const { return Url; }
   /* if false returned, the procedure is terminated, true means the the
@@ -244,6 +248,9 @@ public:
   */
   olx_object_ptr<TEFile> OpenFileAsFile(const olxstr& Source) {
     return (TEFile*)OpenFile(Source).release();
+  }
+  void SetTimeout(unsigned long tm) {
+    timeout = tm;
   }
   DefPropP(uint16_t, ExtraHeaders);
 };
