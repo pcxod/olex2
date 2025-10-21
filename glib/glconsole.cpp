@@ -65,12 +65,13 @@ TGlConsole::~TGlConsole()  {
 //..............................................................................
 void TGlConsole::Create(const olxstr& cName) {
   FontIndex = Parent.GetScene().FindFontIndexForType<TGlConsole>(FontIndex);
-  if (!cName.IsEmpty())
+  if (!cName.IsEmpty()) {
     SetCollectionName(cName);
+  }
 
   TGPCollection& GPC = Parent.FindOrCreateCollection(GetCollectionName());
   GPC.AddObject(*this);
-  if( GPC.PrimitiveCount() != 0 )  {
+  if (GPC.PrimitiveCount() != 0) {
     FCursor->Create();
     return;
   }
@@ -78,6 +79,7 @@ void TGlConsole::Create(const olxstr& cName) {
   FLinesToShow = GS.GetParam("LinesToShow", FLinesToShow, true).ToInt();
   FLineSpacing = GS.GetParam("LineSpacing", "0", true).ToDouble();
   PromptStr = InviteStr = GS.GetParam("Prompt", ">>", true);
+  XOffset = GS.GetParam("XOffset", "0", true).ToInt();
   TGlPrimitive& GlP = GPC.NewPrimitive("Text", sgloText);
   GlP.SetProperties(GS.GetMaterial("Text", GetFont().GetMaterial()));
   GlP.Params[0] = -1;  //bitmap; TTF by default
@@ -91,39 +93,49 @@ size_t TGlConsole::CalcScrollDown() const {
   TGlFont& Fnt = GetFont();
   const uint16_t th = Fnt.TextHeight(EmptyString());
   const double Scale = Parent.GetScale(),
-               MaxY = ((double)Parent.GetHeight()/2-Top-th)*Scale,
-               LineSpacer = (0.05+FLineSpacing)*th;
-  const double empty_line_height = th*0.75*(1+FLineSpacing)*Scale;
-  vec3d T(GlLeft*Scale, GlTop*Scale, 0);
-  if( FTxtPos < FBuffer.Count() && FBuffer[FTxtPos].IsEmpty() )
-    T[1] -= 0.5*th*Scale;
+    MaxY = ((double)Parent.GetHeight() / 2 - Top - th) * Scale,
+    LineSpacer = (0.05 + FLineSpacing) * th;
+  const double empty_line_height = th * 0.75 * (1 + FLineSpacing) * Scale;
+  vec3d T(GlLeft * Scale, GlTop * Scale, 0);
+  if (FTxtPos < FBuffer.Count() && FBuffer[FTxtPos].IsEmpty()) {
+    T[1] -= 0.5 * th * Scale;
+  }
   TGlOption CC = Parent.LightModel.GetClearColor();
   size_t lines = 0;
-  if( ShowBuffer() && FLinesToShow != 0 )  {
-    for( size_t i=FTxtPos; i < FBuffer.Count(); i++ )  {
-      if( FBuffer[i].IsEmpty() )  {
+  if (ShowBuffer() && FLinesToShow != 0) {
+    for (size_t i = FTxtPos; i < FBuffer.Count(); i++) {
+      if (FBuffer[i].IsEmpty()) {
         T[1] += empty_line_height;
         lines++;
         continue;
       }
-      if( olx_is_valid_size(FLinesToShow) && lines >= FLinesToShow )  break;
-      if( T[1] > MaxY )  break;
+      if (olx_is_valid_size(FLinesToShow) && lines >= FLinesToShow) {
+        break;
+      }
+      if (T[1] > MaxY) {
+        break;
+      }
       olxstr line = FBuffer[i].SubStringTo(Fnt.LengthForWidth(FBuffer[i],
         Parent.GetWidth()));
       // drawing spaces is not required ...
       size_t stlen = line.Length();
-      while( line.CharAt(stlen-1) == ' ' && stlen > 1 ) stlen--;
+      while (line.CharAt(stlen - 1) == ' ' && stlen > 1) {
+        stlen--;
+      }
       line = line.SubStringTo(stlen);
-      if( stlen == 0 )  {
+      if (stlen == 0) {
         T[1] += empty_line_height;
         lines++;
         continue;
       }
       const TTextRect tr = Fnt.GetTextRect(line);
-      if( tr.top < 0 )
-        T[1] += tr.top*Scale;
-      if( i== 0 )  break;
-      T[1] += (olx_max(tr.height, Fnt.GetMaxHeight())+LineSpacer)*Scale;
+      if (tr.top < 0) {
+        T[1] += tr.top * Scale;
+      }
+      if (i == 0) {
+        break;
+      }
+      T[1] += (olx_max(tr.height, Fnt.GetMaxHeight()) + LineSpacer) * Scale;
       lines++;
     }
   }
@@ -134,74 +146,87 @@ double TGlConsole::GetZ() const {
   return -Parent.CalcRasterZ(0.002);
 }
 //..............................................................................
-bool TGlConsole::Orient(TGlPrimitive& P)  {
+bool TGlConsole::Orient(TGlPrimitive& P) {
   TGlFont& Fnt = GetFont();
   //Fnt->DrawGlText( vec3d(0,0,0), "HELLW_O", true);
   P.SetFont(&Fnt);
-  if( Parent.GetWidth() < 100 )  return true;
+  if (Parent.GetWidth() < 100) {
+    return true;
+  }
   const uint16_t th = Fnt.TextHeight(EmptyString());
   const double Scale = Parent.GetScale(),
-               MaxY = ((double)Parent.GetHeight()/2-Top-th)*Scale,
-               LineSpacer = (0.05+FLineSpacing)*th;
+    MaxY = ((double)Parent.GetHeight() / 2 - Top - th) * Scale,
+    LineSpacer = (0.05 + FLineSpacing) * th;
   const double Z = GetZ();
-  const double empty_line_height = th*0.75*(1+FLineSpacing)*Scale;
-  if( FTxtPos < FBuffer.Count() )  {
-    vec3d T(GlLeft*Scale, GlTop*Scale, Z);
-    if( FBuffer[FTxtPos].IsEmpty() )
-      T[1] -= 0.5*th*Scale;
+  const double empty_line_height = th * 0.75 * (1 + FLineSpacing) * Scale;
+  if (FTxtPos < FBuffer.Count()) {
+    vec3d T(GlLeft * Scale, GlTop * Scale, Z);
+    if (FBuffer[FTxtPos].IsEmpty()) {
+      T[1] -= 0.5 * th * Scale;
+    }
     LinesVisible = 0;
     const TGlMaterial& OGlM = P.GetProperties();
     TGlOption CC = Parent.LightModel.GetClearColor();
-    if( ShowBuffer() && FLinesToShow != 0 )  {
-      for( index_t i=FTxtPos; i >= 0; i-- )  {
-        if( FBuffer[i].IsEmpty() )  {
+    if (ShowBuffer() && FLinesToShow != 0) {
+      for (index_t i = FTxtPos; i >= 0; i--) {
+        if (FBuffer[i].IsEmpty()) {
           T[1] += empty_line_height;
           LinesVisible++;
           continue;
         }
-        if( olx_is_valid_size(FLinesToShow) && LinesVisible >= FLinesToShow )  break;
-        if( T[1] > MaxY )  break;
+        if (olx_is_valid_size(FLinesToShow) && LinesVisible >= FLinesToShow) {
+          break;
+        }
+        if (T[1] > MaxY) {
+          break;
+        }
         olxstr line = FBuffer[i].SubStringTo(Fnt.LengthForWidth(FBuffer[i],
           Parent.GetWidth()));
         // drawing spaces is not required ...
         size_t stlen = line.Length();
-        while( line.CharAt(stlen-1) == ' ' && stlen > 1 ) stlen--;
+        while (line.CharAt(stlen - 1) == ' ' && stlen > 1) stlen--;
         line = line.SubStringTo(stlen);
-        if( stlen == 0 )  {
+        if (stlen == 0) {
           T[1] += empty_line_height;
           LinesVisible++;
           continue;
         }
         TGlMaterial* GlMP = FBuffer.GetObject(i);
-        if( GlMP != NULL )
+        if (GlMP != 0) {
           GlMP->Init(Parent.ForcePlain());
-        else
+        }
+        else {
           OGlM.Init(Parent.ForcePlain());
+        }
         P.SetString(&line);
         const TTextRect tr = Fnt.GetTextRect(line);
-        if( tr.top < 0 )
-          T[1] -= tr.top*Scale;
+        if (tr.top < 0) {
+          T[1] -= tr.top * Scale;
+        }
         Parent.DrawText(P, T[0], T[1], Z);
-        P.SetString(NULL);
-        if( i == 0 )  break;
-        T[1] += (olx_max(tr.height, Fnt.GetMaxHeight())+LineSpacer)*Scale;
+        P.SetString(0);
+        if (i == 0) {
+          break;
+        }
+        T[1] += (olx_max(tr.height, Fnt.GetMaxHeight()) + LineSpacer) * Scale;
         LinesVisible++;
       }
     }
     OGlM.Init(Parent.ForcePlain()); // restore the material properties
   }
-  if( PromptVisible && !FCommand.IsEmpty() )  {
+  if (PromptVisible && !FCommand.IsEmpty()) {
     Fnt.Reset_ATI(Parent.IsATI());
-    const double LineInc = (th*(1+FLineSpacing))*Parent.GetViewZoom();
+    const double LineInc = (th * (1 + FLineSpacing)) * Parent.GetViewZoom();
     short cstate = 0, lstate = 0;
     double line_cnt = 1;
     olxstr tmp = FCommand;
-    while( true )  {
+    while (true) {
       const size_t ml = Fnt.LengthForWidth(tmp, Parent.GetWidth(), lstate);
-      olx_gl::rasterPos(GlLeft*Scale, (GlTop - line_cnt*LineInc)*Scale, Z);
+      olx_gl::rasterPos(GlLeft * Scale, (GlTop - line_cnt * LineInc) * Scale, Z);
       Fnt.DrawRasterText(tmp.SubStringTo(ml), cstate);
-      if( tmp.Length() == ml )
+      if (tmp.Length() == ml) {
         break;
+      }
       tmp = tmp.SubStringFrom(ml);
       line_cnt++;
     }
@@ -209,23 +234,26 @@ bool TGlConsole::Orient(TGlPrimitive& P)  {
   return true;
 }
 //..............................................................................
-bool TGlConsole::WillProcessKey( int Key, short ShiftState )  {
-  if( Key == OLX_KEY_DELETE )  {
-    if( ShiftState == 0 && GetInsertPosition() < FCommand.Length() &&
-         GetInsertPosition() >= PromptStr.Length() )  {
+bool TGlConsole::WillProcessKey(int Key, short ShiftState) {
+  if (Key == OLX_KEY_DELETE) {
+    if (ShiftState == 0 && GetInsertPosition() < FCommand.Length() &&
+      GetInsertPosition() >= PromptStr.Length()) {
       return true;
     }
   }
-  else if( Key == OLX_KEY_BACK && GetInsertPosition() != PromptStr.Length() )
+  else if (Key == OLX_KEY_BACK && GetInsertPosition() != PromptStr.Length()) {
     return true;
+  }
   return false;
 }
 //..............................................................................
-bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
-  if( (Key == OLX_KEY_UP) && IsPromptVisible() && ShiftState == 0 )  {
-    FCmdPos --;
-    if( !olx_is_valid_size(FCmdPos) )  FCmdPos = FCommands.Count()-1;
-    if( olx_is_valid_size(FCmdPos) && FCmdPos < FCommands.Count() )  {
+bool TGlConsole::ProcessKey(int Key, short ShiftState) {
+  if ((Key == OLX_KEY_UP) && IsPromptVisible() && ShiftState == 0) {
+    FCmdPos--;
+    if (!olx_is_valid_size(FCmdPos)) {
+      FCmdPos = FCommands.Count() - 1;
+    }
+    if (olx_is_valid_size(FCmdPos) && FCmdPos < FCommands.Count()) {
       PromptStr = InviteStr;
       olex2::IOlex2Processor::GetInstance()->processFunction(PromptStr);
       FCommand = PromptStr;
@@ -234,10 +262,12 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
     }
     return true;
   }
-  if( (Key == OLX_KEY_DOWN) && IsPromptVisible() && ShiftState == 0 )  {
-    FCmdPos ++;
-    if( FCmdPos >= FCommands.Count() )  FCmdPos = 0;
-    if( olx_is_valid_size(FCmdPos) && FCmdPos < FCommands.Count() )  {
+  if ((Key == OLX_KEY_DOWN) && IsPromptVisible() && ShiftState == 0) {
+    FCmdPos++;
+    if (FCmdPos >= FCommands.Count()) {
+      FCmdPos = 0;
+    }
+    if (olx_is_valid_size(FCmdPos) && FCmdPos < FCommands.Count()) {
       PromptStr = InviteStr;
       olex2::IOlex2Processor::GetInstance()->processFunction(PromptStr);
       FCommand = PromptStr;
@@ -246,99 +276,109 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
     }
     return true;
   }
-  if( (Key == OLX_KEY_LEFT) && IsPromptVisible() &&
-      (GetInsertPosition() > PromptStr.Length()) )
+  if ((Key == OLX_KEY_LEFT) && IsPromptVisible() &&
+    (GetInsertPosition() > PromptStr.Length()))
   {
-    if( ShiftState == 0 )  {
-      SetInsertPosition(GetInsertPosition()-1);
+    if (ShiftState == 0) {
+      SetInsertPosition(GetInsertPosition() - 1);
       return true;
     }
-    else if( ShiftState == sssCtrl  )  {
-      size_t ind = FCommand.LastIndexOf(' ', GetInsertPosition()-1);
-      if( ind != InvalidIndex )
-        SetInsertPosition( ind );
-      else
+    else if (ShiftState == sssCtrl) {
+      size_t ind = FCommand.LastIndexOf(' ', GetInsertPosition() - 1);
+      if (ind != InvalidIndex) {
+        SetInsertPosition(ind);
+      }
+      else {
         SetInsertPosition(PromptStr.Length());
+      }
       return true;
     }
     return false;
   }
-  if( (Key == OLX_KEY_RIGHT) && IsPromptVisible() &&
-      (GetInsertPosition() < FCommand.Length()) )
+  if ((Key == OLX_KEY_RIGHT) && IsPromptVisible() &&
+    (GetInsertPosition() < FCommand.Length()))
   {
-    if( ShiftState == 0 )  {
-      SetInsertPosition(GetInsertPosition()+1);
+    if (ShiftState == 0) {
+      SetInsertPosition(GetInsertPosition() + 1);
       return true;
     }
-    else if( ShiftState == sssCtrl )  {
-      size_t ind = FCommand.FirstIndexOf(' ', GetInsertPosition()+1);
-      if( ind != InvalidIndex )
-        SetInsertPosition( ind );
-      else
+    else if (ShiftState == sssCtrl) {
+      size_t ind = FCommand.FirstIndexOf(' ', GetInsertPosition() + 1);
+      if (ind != InvalidIndex) {
+        SetInsertPosition(ind);
+      }
+      else {
         SetInsertPosition(FCommand.Length());
+      }
       return true;
     }
     return false;
   }
-  if( Key == OLX_KEY_DELETE )  {
-    if( ShiftState == 0 && GetInsertPosition() < FCommand.Length() &&
-         GetInsertPosition() >= PromptStr.Length() )  {
+  if (Key == OLX_KEY_DELETE) {
+    if (ShiftState == 0 && GetInsertPosition() < FCommand.Length() &&
+      GetInsertPosition() >= PromptStr.Length()) {
       FCommand.Delete(GetInsertPosition(), 1);
       UpdateCursorPosition(true);
       return true;
     }
     return false;
   }
-  if( (Key == OLX_KEY_HOME) && !ShiftState  && IsPromptVisible() )  {
+  if ((Key == OLX_KEY_HOME) && !ShiftState && IsPromptVisible()) {
     SetInsertPosition(PromptStr.Length());
     return true;
   }
-  if( (Key == OLX_KEY_END) && !ShiftState  && IsPromptVisible() )  {
+  if ((Key == OLX_KEY_END) && !ShiftState && IsPromptVisible()) {
     SetInsertPosition(FCommand.Length());
     return true;
   }
-  if( (Key == OLX_KEY_PAGEUP || Key == OLX_KEY_PAGEDOWN) &&
-      olx_is_valid_index(LinesVisible) )
+  if ((Key == OLX_KEY_PAGEUP || Key == OLX_KEY_PAGEDOWN) &&
+    olx_is_valid_index(LinesVisible))
   {
-    if( Key == OLX_KEY_PAGEDOWN )  {
+    if (Key == OLX_KEY_PAGEDOWN) {
       const size_t lines = CalcScrollDown();
-      FTxtPos += lines-1;
-      if( FTxtPos >= FBuffer.Count() )
-        FTxtPos = FBuffer.Count()-1;
+      FTxtPos += lines - 1;
+      if (FTxtPos >= FBuffer.Count()) {
+        FTxtPos = FBuffer.Count() - 1;
+      }
     }
-    else if( Key == OLX_KEY_PAGEUP )  {
-      if( FTxtPos < LinesVisible-1 )
+    else if (Key == OLX_KEY_PAGEUP) {
+      if (FTxtPos < LinesVisible - 1) {
         FTxtPos = FBuffer.IsEmpty() ? ~0 : 0;
-      else if( olx_is_valid_index(FTxtPos) )
-        FTxtPos -= (LinesVisible-1);
+      }
+      else if (olx_is_valid_index(FTxtPos)) {
+        FTxtPos -= (LinesVisible - 1);
+      }
     }
     SetInsertPosition(FCommand.Length());
     return true;
   }
-  if( !Key || Key > 255 || (ShiftState & sssCtrl) || (ShiftState & sssAlt))
+  if (!Key || Key > 255 || (ShiftState & sssCtrl) || (ShiftState & sssAlt)) {
     return false;
-  if( !IsPromptVisible() )  return false;
+  }
+  if (!IsPromptVisible()) {
+    return false;
+  }
 
-  if( Key == OLX_KEY_ESCAPE )  {
+  if (Key == OLX_KEY_ESCAPE) {
     PromptStr = InviteStr;
     olex2::IOlex2Processor::GetInstance()->processFunction(PromptStr);
     FCommand = PromptStr;
     SetInsertPosition(FCommand.Length());
     return true;
   }
-  if( Key == OLX_KEY_RETURN )  {
+  if (Key == OLX_KEY_RETURN) {
     FCommand = GetCommand();
-    if( FCommand.Length() )  {
-      if( !FCommands.IsEmpty() && FCommands.GetLastString() == FCommand)  {
+    if (FCommand.Length()) {
+      if (!FCommands.IsEmpty() && FCommands.GetLastString() == FCommand) {
         ;
       }
-      else  {
+      else {
         FCommands.Add(FCommand);
       }
       FCmdPos = FCommands.Count();
     }
     OnCommand.Execute(dynamic_cast<IOlxObject*>((AActionHandler*)this));
-    if( FCommand.IsEmpty() )  {
+    if (FCommand.IsEmpty()) {
       PromptStr = InviteStr;
       olex2::IOlex2Processor::GetInstance()->processFunction(PromptStr);
       FCommand = PromptStr;
@@ -346,26 +386,28 @@ bool TGlConsole::ProcessKey( int Key , short ShiftState)  {
     SetInsertPosition(FCommand.Length());
     return true;
   }
-  if( Key == OLX_KEY_BACK )  {
-    if( FCommand.Length() > PromptStr.Length() )  {
-      if( GetInsertPosition() == FCommand.Length() )  {
-        FCommand.SetLength(FCommand.Length()-1);
+  if (Key == OLX_KEY_BACK) {
+    if (FCommand.Length() > PromptStr.Length()) {
+      if (GetInsertPosition() == FCommand.Length()) {
+        FCommand.SetLength(FCommand.Length() - 1);
         SetInsertPosition(FCommand.Length());
       }
-      else  {  // works like delete
-        if( GetInsertPosition() > PromptStr.Length() )  {
-          FCommand.Delete(GetInsertPosition()-1, 1);
-          SetInsertPosition(GetInsertPosition()-1);
+      else {  // works like delete
+        if (GetInsertPosition() > PromptStr.Length()) {
+          FCommand.Delete(GetInsertPosition() - 1, 1);
+          SetInsertPosition(GetInsertPosition() - 1);
         }
       }
     }
     return true;
   }
-  if( GetInsertPosition() == FCommand.Length() )
+  if (GetInsertPosition() == FCommand.Length()) {
     FCommand << (olxch)Key;
-  else
+  }
+  else {
     FCommand.Insert((olxch)Key, GetInsertPosition());
-  SetInsertPosition(GetInsertPosition()+1);
+  }
+  SetInsertPosition(GetInsertPosition() + 1);
   return true;
 }
 //..............................................................................
@@ -482,58 +524,64 @@ const olxstr& TGlConsole::GetLastCommand(const olxstr &name) const {
   return EmptyString();
 }
 //..............................................................................
-void TGlConsole::ClearBuffer()  {
+void TGlConsole::ClearBuffer() {
   size_t lc = FBuffer.Count();
-  for( size_t i=0; i < lc; i++ )
-    if( FBuffer.GetObject(i) != NULL )
+  for (size_t i = 0; i < lc; i++) {
+    if (FBuffer.GetObject(i) != 0) {
       delete (TGlMaterial*)FBuffer.GetObject(i);
+    }
+  }
   FBuffer.Clear();
   //FCommand = FInviteString;
   FTxtPos = ~0;
 }
 //..............................................................................
-void TGlConsole::KeepSize()  {
+void TGlConsole::KeepSize() {
   const size_t lc = FBuffer.Count();
-  if( lc > FMaxLines )  {
-    for( size_t i = 0; i < lc-FMaxLines; i++ )
-      if( FBuffer.GetObject(i) )
+  if (lc > FMaxLines) {
+    for (size_t i = 0; i < lc - FMaxLines; i++) {
+      if (FBuffer.GetObject(i)) {
         delete FBuffer.GetObject(i);
-    FBuffer.DeleteRange(0, lc-FMaxLines);
+      }
+    }
+    FBuffer.DeleteRange(0, lc - FMaxLines);
   }
 }
 //..............................................................................
-void TGlConsole::UpdateCursorPosition(bool InitCmds)  {
-  if( !IsPromptVisible() || Parent.GetWidth()*Parent.GetHeight() <= 50*50 )
+void TGlConsole::UpdateCursorPosition(bool InitCmds) {
+  if (!IsPromptVisible() || Parent.GetWidth() * Parent.GetHeight() <= 50 * 50) {
     return;
+  }
   TGlFont& Fnt = GetFont();
-  GlLeft = ((double)Left - (double)Parent.GetWidth()/2) + 0.1;
-  GlTop = ((double)Parent.GetHeight()/2 - (Height+Top)) + 0.1;
+  GlLeft = ((double)Left - (double)Parent.GetWidth() / 2) + 0.1;
+  GlTop = ((double)Parent.GetHeight() / 2 - (Height + Top)) + 0.1;
   const double th = Fnt.TextHeight(EmptyString());
-  const double LineInc = (th*(1+FLineSpacing))*Parent.GetViewZoom();
+  const double LineInc = (th * (1 + FLineSpacing)) * Parent.GetViewZoom();
   const double Scale = Parent.GetScale();
   // update cursor position ...
-  if( IsPromptVisible() )   {
+  if (IsPromptVisible()) {
     vec3d T;
-    if( FCommand.IndexOf("\\-") != InvalidIndex )  // got subscript?
-      GlTop += th/4;
+    if (FCommand.IndexOf("\\-") != InvalidIndex) {// got subscript?
+      GlTop += th / 4;
+    }
     T[1] = GlTop;
-    size_t printed_cnt = 0, line_cnt = 0, cursor_line=0;;
+    size_t printed_cnt = 0, line_cnt = 0, cursor_line = 0;;
     short state = 0, cursor_state = 0;
     olxstr tmp = FCommand;
     bool init_x = true;
-    while( true )  {
+    while (true) {
       short _state = state;
       const size_t ml = Fnt.LengthForWidth(tmp, Parent.GetWidth(), state);
       printed_cnt += ml;
-      if( init_x && printed_cnt > GetInsertPosition() )  {
+      if (init_x && printed_cnt > GetInsertPosition()) {
         T[0] = (double)Fnt.TextWidth(
-          tmp.SubStringTo(ml-(printed_cnt-GetInsertPosition())), _state);
+          tmp.SubStringTo(ml - (printed_cnt - GetInsertPosition())), _state);
         cursor_state = _state;
         init_x = false;
         cursor_line = line_cnt;
       }
-      if( tmp.Length() == ml )  {
-        if( init_x )  {
+      if (tmp.Length() == ml) {
+        if (init_x) {
           T[0] = (double)Fnt.TextWidth(tmp, _state);
           init_x = false;
           cursor_line = line_cnt;
@@ -546,10 +594,10 @@ void TGlConsole::UpdateCursorPosition(bool InitCmds)  {
     }
     T[0] += GlLeft;
     T[0] -= Fnt.GetCharHalfWidth(cursor_state);  // move the cursor half a char left
-    T[1] += LineInc*(line_cnt-cursor_line);
+    T[1] += LineInc * (line_cnt - cursor_line);
     T *= Scale;
     FCursor->SetPosition(T[0], T[1], GetZ());
-    GlTop += th*(line_cnt+1);
+    GlTop += th * (line_cnt + 1);
   }
 }
 //..............................................................................
@@ -599,53 +647,63 @@ void TGlConsole::SetInviteString(const olxstr &S)  {
   SetInsertPosition(FCommand.Length());
 }
 //..............................................................................
-void TGlConsole::SetLinesToShow(size_t V)  {
+void TGlConsole::SetLinesToShow(size_t V) {
   FLinesToShow = V;
   GetPrimitives().GetStyle().SetParam("LinesToShow", FLinesToShow, true);
 }
 //..............................................................................
-void TGlConsole::SetLineSpacing(double v)  {
+void TGlConsole::SetLineSpacing(double v) {
   FLineSpacing = olx_max(-0.9, v);
   GetPrimitives().GetStyle().SetParam("LineSpacing", FLineSpacing, true);
 }
 //..............................................................................
-size_t TGlConsole::Write(const void *Data, size_t size)  {
+void TGlConsole::SetXOffset(int v) {
+  XOffset = v < 0 ? 0 : v;
+  GetPrimitives().GetStyle().SetParam("XOffset", v, true);
+}
+//..............................................................................
+size_t TGlConsole::Write(const void* Data, size_t size) {
   throw TNotImplementedException(__OlxSourceInfo);
 }
-size_t TGlConsole::Write(const TTIString<olxch>& str)  {
-  if( IsSkipPosting() )  {
+//..............................................................................
+size_t TGlConsole::Write(const TTIString<olxch>& str) {
+  if (IsSkipPosting()) {
     SetSkipPosting(false);
     return 1;
   }
-  if( FBuffer.IsEmpty() )
-    FBuffer.Add(EmptyString(), PrintMaterial == NULL ? NULL : new TGlMaterial(*PrintMaterial));
-  else  {
-    if( FBuffer.GetLast().Object == NULL )
-      FBuffer.GetLast().Object = (PrintMaterial == NULL ? NULL : new TGlMaterial(*PrintMaterial));
-    else if( FBuffer.GetLastString().IsEmpty() )  {  // reset for empty lines
+  if (FBuffer.IsEmpty()) {
+    FBuffer.Add(EmptyString(), PrintMaterial == 0 ? 0 : new TGlMaterial(*PrintMaterial));
+  }
+  else {
+    if (FBuffer.GetLast().Object == 0) {
+      FBuffer.GetLast().Object = (PrintMaterial == 0 ? 0 : new TGlMaterial(*PrintMaterial));
+    }
+    else if (FBuffer.GetLastString().IsEmpty()) {  // reset for empty lines
       delete FBuffer.GetLast().Object;
-      FBuffer.GetLast().Object = (PrintMaterial == NULL ? NULL : new TGlMaterial(*PrintMaterial));
+      FBuffer.GetLast().Object = (PrintMaterial == 0 ? 0 : new TGlMaterial(*PrintMaterial));
     }
   }
-  if( &str == &NewLineSequence() )  {
-    if( !FBuffer.GetLastString().IsEmpty() )
-      FBuffer.Add(EmptyString(), PrintMaterial == NULL ? NULL : new TGlMaterial(*PrintMaterial));
+  if (&str == &NewLineSequence()) {
+    if (!FBuffer.GetLastString().IsEmpty())
+      FBuffer.Add(EmptyString(), PrintMaterial == 0 ? 0 : new TGlMaterial(*PrintMaterial));
     return 1;
   }
   FBuffer.GetLastString().SetCapacity(FBuffer.GetLastString().Length() + str.Length());
-  for( size_t i=0; i < str.Length(); i++ )  {
-    if( str.CharAt(i) == '\n' )
-      FBuffer.Add(EmptyString(), PrintMaterial == NULL ? NULL : new TGlMaterial(*PrintMaterial));
-    else if( str.CharAt(i) == '\r' )  {
-      if( i+1 < str.Length() && str.CharAt(i+1) != '\n' &&!FBuffer.IsEmpty() )
-        FBuffer.GetLastString()=EmptyString();
+  for (size_t i = 0; i < str.Length(); i++) {
+    if (str.CharAt(i) == '\n') {
+      FBuffer.Add(EmptyString(), PrintMaterial == 0 ? 0 : new TGlMaterial(*PrintMaterial));
     }
-    else
+    else if (str.CharAt(i) == '\r') {
+      if (i + 1 < str.Length() && str.CharAt(i + 1) != '\n' && !FBuffer.IsEmpty())
+        FBuffer.GetLastString() = EmptyString();
+    }
+    else {
       FBuffer.GetLastString() << str.CharAt(i);
+    }
   }
   KeepSize();
-  FTxtPos = FBuffer.Count()-1;
-  PrintMaterial = NULL;
+  FTxtPos = FBuffer.Count() - 1;
+  PrintMaterial = 0;
   return 1;
 }
 //..............................................................................
@@ -665,10 +723,10 @@ void TGlConsole::OnResize() {
 }
 //..............................................................................
 void TGlConsole::Resize(int l, int t, int w, int h) {
-  Left = (uint16_t)l;
-  Top = (uint16_t)t;
-  Width = (uint16_t)w;
-  Height = (uint16_t)h;
+  Left = l + XOffset;
+  Top = t;
+  Width = w - XOffset;
+  Height = h;
   OnResize();
 }
 //..............................................................................
@@ -679,37 +737,44 @@ void TGlConsole::SetCommands(const const_strlist &l) {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-void TGlConsole::LibClear(const TStrObjList& Params, TMacroData& E)  {
+void TGlConsole::LibClear(const TStrObjList& Params, TMacroData& E) {
   ClearBuffer();
 }
 //..............................................................................
-void TGlConsole::LibLines(const TStrObjList& Params, TMacroData& E)  {
-  if( !Params.IsEmpty() )
+void TGlConsole::LibLines(const TStrObjList& Params, TMacroData& E) {
+  if (!Params.IsEmpty()) {
     SetLinesToShow(Params[0].ToInt());
-  else
+  }
+  else {
     E.SetRetVal<olxstr>(FLinesToShow);
+  }
 }
 //..............................................................................
-void TGlConsole::LibShowBuffer(const TStrObjList& Params, TMacroData& E)  {
-  if( !Params.IsEmpty() )
-    ShowBuffer( Params[0].ToBool() );
-  else
+void TGlConsole::LibShowBuffer(const TStrObjList& Params, TMacroData& E) {
+  if (!Params.IsEmpty()) {
+    ShowBuffer(Params[0].ToBool());
+  }
+  else {
     E.SetRetVal<olxstr>(FShowBuffer);
+  }
 }
 //..............................................................................
-void TGlConsole::LibPostText(const TStrObjList& Params, TMacroData& E)  {
-  for( size_t i=0; i < Params.Count(); i++ )
+void TGlConsole::LibPostText(const TStrObjList& Params, TMacroData& E) {
+  for (size_t i = 0; i < Params.Count(); i++) {
     PrintText(Params[i]);
+  }
 }
 //..............................................................................
-void TGlConsole::LibLineSpacing(const TStrObjList& Params, TMacroData& E)  {
-  if( !Params.IsEmpty() )
+void TGlConsole::LibLineSpacing(const TStrObjList& Params, TMacroData& E) {
+  if (!Params.IsEmpty()) {
     SetLineSpacing(Params[0].ToDouble());
-  else
+  }
+  else {
     E.SetRetVal<olxstr>(FLineSpacing);
+  }
 }
 //..............................................................................
-void TGlConsole::LibInviteString(const TStrObjList& Params, TMacroData& E)  {
+void TGlConsole::LibInviteString(const TStrObjList& Params, TMacroData& E) {
   if (!Params.IsEmpty()) {
     olxstr ps = Params[0];
     if (!olex2::IOlex2Processor::GetInstance()->processFunction(
@@ -719,24 +784,39 @@ void TGlConsole::LibInviteString(const TStrObjList& Params, TMacroData& E)  {
         ", resetting to the default one";
       ps = ">>";
     }
-    else
+    else {
       ps = Params[0];
+    }
     SetInviteString(ps);
   }
-  else
+  else {
     E.SetRetVal(InviteStr);
+  }
 }
 //..............................................................................
-void TGlConsole::LibCommand(const TStrObjList& Params, TMacroData& E)  {
-  if( !Params.IsEmpty() )  {
+void TGlConsole::LibCommand(const TStrObjList& Params, TMacroData& E) {
+  if (!Params.IsEmpty()) {
     PromptStr = InviteStr;
     olex2::IOlex2Processor::GetInstance()->processFunction(PromptStr);
     FCommand = PromptStr;
     FCommand << Params[0];
     SetInsertPosition(FCommand.Length());
   }
-  else
+  else {
     E.SetRetVal(FCommand);
+  }
+}
+//..............................................................................
+void TGlConsole::LibXOffset(const TStrObjList& Params, TMacroData& E) {
+  if (!Params.IsEmpty()) {
+    int ov = XOffset;
+    SetXOffset(Params[0].ToInt());
+    Resize(Left - ov, Top, Width + ov, Height);
+    Parent.Draw();
+  }
+  else {
+    E.SetRetVal<olxstr>(XOffset);
+  }
 }
 //..............................................................................
 TLibrary* TGlConsole::ExportLibrary(const olxstr& name)  {
@@ -769,6 +849,10 @@ TLibrary* TGlConsole::ExportLibrary(const olxstr& name)  {
     new TFunction<TGlConsole>(this,  &TGlConsole::LibCommand,
       "Command", fpNone|fpOne,
       "Changes/returns current command"));
+  lib->Register(
+    new TFunction<TGlConsole>(this, &TGlConsole::LibXOffset,
+      "Offset", fpNone | fpOne,
+      "Changes/returns horizontal text offset"));
   AGDrawObject::ExportLibrary(*lib);
   lib->AttachLibrary(FCursor->ExportLibrary());
   return lib;
