@@ -869,7 +869,7 @@ void TMainForm::XApp(Olex2App *XA)  {
 
   // number of lines, caption, def value
   this_InitFunc(GetUserInput, fpThree);
-  this_InitFunc(GetUserStyledInput, fpThree);
+  this_InitFunc(GetUserStyledInput, fpFour);
 
   this_InitFuncD(TranslatePhrase, fpOne,
 "Translates provided phrase into current language");

@@ -4354,10 +4354,12 @@ void TMainForm::funGetUserStyledInput(const TStrObjList& Params, TMacroData &E) 
   dlg->SetTitle(Params[1].u_str());
   dlg->SetText(Params[2]);
   dlg->SetLexer(Params[3].ToInt());
-  if( dlg->ShowModal() == wxID_OK )
+  if (dlg->ShowModal() == wxID_OK) {
     E.SetRetVal(dlg->GetText());
-  else
+  }
+  else {
     E.SetRetVal(EmptyString());
+  }
   dlg->Destroy();
 }
 //..............................................................................
