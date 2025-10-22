@@ -4336,21 +4336,23 @@ void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMac
   }
 }
 //..............................................................................
-void TMainForm::funGetUserInput(const TStrObjList& Params, TMacroData &E) {
+void TMainForm::funGetUserInput(const TStrObjList& Params, TMacroData& E) {
   bool MultiLine = Params[0].ToInt() != 1;
-  TdlgEdit *dlg = new TdlgEdit(this, MultiLine);
+  TdlgEdit* dlg = new TdlgEdit(this, MultiLine);
   dlg->SetTitle(Params[1].u_str());
   dlg->SetText(Params[2]);
-  if( dlg->ShowModal() == wxID_OK )
+  if (dlg->ShowModal() == wxID_OK) {
     E.SetRetVal(dlg->GetText());
-  else
+  }
+  else {
     E.SetRetVal(EmptyString());
+  }
   dlg->Destroy();
 }
 //..............................................................................
 void TMainForm::funGetUserStyledInput(const TStrObjList& Params, TMacroData &E) {
   bool MultiLine = Params[0].ToInt() != 1;
-  auto *dlg = new TdlgStyledEdit(this, MultiLine);
+  TdlgStyledEdit *dlg = new TdlgStyledEdit(this, MultiLine);
   dlg->SetTitle(Params[1].u_str());
   dlg->SetText(Params[2]);
   dlg->SetLexer(Params[3].ToInt());

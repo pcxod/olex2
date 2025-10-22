@@ -173,6 +173,7 @@ public:
   static DefMacro(Adopt)
   static DefMacro(ADPInfo)
   static DefMacro(Wigl)
+  static DefMacro(Copy)
 
   static DefFunc(Lst)
   static DefFunc(FileName)

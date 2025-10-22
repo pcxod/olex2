@@ -832,6 +832,10 @@ void XLibMacros::Export(TLibrary& lib)  {
     EmptyString(),
     fpNone | fpOne | fpTwo | psFileLoaded,
     "'Shakes' the structure as desribed in ShelXl manual");
+  xlib_InitMacro(Copy,
+    "d-locate file format by content rather than extension",
+    fpTwo,
+    "Converts input file into the output");
   //_____________________________________________________________________________
 
   xlib_InitFunc(FileName, fpNone|fpOne,
@@ -12905,5 +12909,48 @@ void XLibMacros::macWigl(TStrObjList& Cmds, const TParamList& Options,
     }
   }
   app.XFile().EndUpdate();
+}
+//..............................................................................
+void XLibMacros::macCopy(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& E)
+{
+  TBasicCFile* ifl = 0;
+  olx_object_ptr<TXFile> xf = dynamic_cast<TXFile*>(
+    TXApp::GetInstance().XFile().Replicate());
+  TBasicCFile* ofl = xf->FindFormat(TEFile::ExtractFileExt(Cmds[1]));
+  if (ofl == 0) {
+    E.ProcessingError(__OlxSrcInfo, "Unknown output file format");
+    return;
+  }
+  if (Options.GetBoolOption('d')) {
+    TStrList lines = TEFile::ReadLines(Cmds[0]);
+
+    for (size_t i = 0; i < lines.Count(); i++) {
+      if (lines[i].StartsFrom('#') || lines[i].StartsFrom("data_")) {
+        ifl = xf->FindFormat("cif");
+        break;
+      }
+      if (lines[i].StartsFromi("CELL ") || lines[i].StartsFromi("REM ")) {
+        ifl = xf->FindFormat("ins");
+        break;
+      }
+    }
+  }
+  else {
+    ifl = xf->FindFormat(TEFile::ExtractFileExt(Cmds[0]));
+  }
+  if (ifl == 0) {
+    E.ProcessingError(__OlxSrcInfo, "Unknown inout file format");
+    return;
+  }
+  ifl->LoadFromFile(Cmds[0]);
+  xf->SetLastLoader(ifl);
+  xf->LastLoaderChanged();
+  ofl->Adopt(xf, 1);
+  //ol->GetRM().Assign(il->GetRM(), true);
+  //if (ol->Is<TCif>()) {
+  //  dynamic_cast<TCif*>(&ol)->GetDataManager().->SetCurrentBlock(0);
+  //}
+  ofl->SaveToFile(Cmds[1]);
 }
 //..............................................................................
