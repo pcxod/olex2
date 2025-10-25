@@ -105,15 +105,18 @@ struct ItemTagHolder {
   }
 
   void restore_all() {
-    for (size_t i = 0; i < data.Count(); i++) {
+    const int dcount = data.Count();
+    for (size_t i = 0; i < dcount; i++) {
       data.GetValue(i)->restore();
+      data.Delete(i);
     }
+    data.Clear();
   }
 
   // empties store without restoring tags
   void clear() {
     for (size_t i = 0; i < data.Count(); i++) {
-      delete data.GetValue(i);
+      data.Delete(i);
     }
     data.Clear();
   }
