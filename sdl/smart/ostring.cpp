@@ -174,8 +174,7 @@ olxstr esdl::olx_print_(const char *format_, va_list argptr) {
               case 'l': { // ll d/u
                 if (++i < format.Length()) {
                   if (format.CharAt(i) == 'd') {
-                    const int temp_varg = va_arg(argptr, long long int);
-                    val = olx_print_makec(temp_varg);
+                    val = olx_print_makec(va_arg(argptr, long long int));
                   }
                   else if (format.CharAt(i) == 'u') {
                     val = olx_print_makec(va_arg(argptr, unsigned long long int));

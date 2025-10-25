@@ -1848,7 +1848,6 @@ void TIns::_SaveAtom(RefinementModel& rm, TCAtom& a, int& part, int& afix,
               SaveSAMEReferences(sl, rm.rSAME[sid]);
               saved_headers.Add(sid);
             }
-            // Some atoms seem to have NULL indexes. Maybe this is the issue?
             _SaveAtom(rm, atoms[i].GetAtom(), part, afix, spec, sfac, sl, index,
               false, checkResi);
           }
