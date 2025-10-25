@@ -4,8 +4,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
 PROJECT(olex2)
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__WXWIDGETS__ -D_UNICODE")
-
+#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__WXWIDGETS__ -D_UNICODE")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/CPM.cmake")
 add_subdirectory(3rdparty EXCLUDE_FROM_ALL)
 
@@ -39,7 +38,7 @@ endif()
 if (DEFINED Python_EXECUTABLE)
   get_filename_component(Python_HOME ${Python_EXECUTABLE} DIRECTORY)
   get_filename_component(Python_HOME ${Python_HOME} DIRECTORY)
-  set(Python_LIBRARY "${Python_HOME}/lib/libpython${Python_VERSION}.so")
+#  set(Python_LIBRARY "${Python_HOME}/lib/libpython${Python_VERSION}.so")
   set(Python_INCLUDE_DIR "${Python_HOME}/include/python${Python_VERSION}")
 endif ()
 find_package(OpenSSL REQUIRED)
@@ -47,7 +46,7 @@ include_directories(${OPENSSL_INCLUDE_DIR})
 
 set(Python_FIND_VIRTUALENV "ONLY")
 set(Python_FIND_STRATEGY "LOCATION")
-find_package(Python ${Python_VERSION} EXACT COMPONENTS ${DEV_MODULE} Interpreter REQUIRED)
+find_package(Python ${Python_VERSION} EXACT COMPONENTS ${DEV_MODULE} Interpreter Development REQUIRED)
 
 if (NOT DEFINED ${Python_INCLUDE_DIRS})
   set(Python_INCLUDE_DIRS ${Python_INCLUDE_DIR})
@@ -61,11 +60,13 @@ endif ()
 message(STATUS "Python libraries: ${Python_LIBRARIES}")
 
 # additional modules
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(PANGOFT2 REQUIRED pangoft2)
-pkg_check_modules(WAYLAND_CLIENT REQUIRED wayland-client)
-pkg_check_modules(WAYLAND_CURSOR REQUIRED wayland-cursor) # Often needed for client apps
-pkg_check_modules(WAYLAND_EGL REQUIRED wayland-egl)
+if (LINUX)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(PANGOFT2 REQUIRED pangoft2)
+    pkg_check_modules(WAYLAND_CLIENT REQUIRED wayland-client)
+    pkg_check_modules(WAYLAND_CURSOR REQUIRED wayland-cursor) # Often needed for client apps
+    pkg_check_modules(WAYLAND_EGL REQUIRED wayland-egl)
+endif ()
 set(OpenGL_GL_PREFERENCE "LEGACY")
 find_package(OpenGL REQUIRED)
 include_directories(${OPENGL_INCLUDE_DIR})
@@ -147,40 +148,18 @@ INCLUDE_DIRECTORIES("${src}/sdl/math")
 #INCLUDE_DIRECTORIES("${wxWidgets_ROOT_DIR}/lib/wx/include/gtk3-unicode-static-3.2")
 #INCLUDE_DIRECTORIES("${wxWidgets_SOURCE_DIR}/interface/wx")
 #INCLUDE_DIRECTORIES("${wxWidgets_SOURCE_DIR}/include/wx")
-ADD_EXECUTABLE(olex2 ${olex2_SRCS} ${all_SRCS} )
-ADD_EXECUTABLE(unirun ${unirun_SRCS} ${all_SRCS})
+ADD_EXECUTABLE(olex2_exe ${olex2_SRCS} ${all_SRCS} )
+ADD_EXECUTABLE(olex2 ${unirun_SRCS} ${all_SRCS})
 
 message(WARNING ${wxWidgets_CXX_FLAGS})
-INCLUDE_DIRECTORIES(
-    ${PANGOFT2_INCLUDE_DIRS}
-    ${WAYLAND_CLIENT_INCLUDE_DIRS}
-    ${WAYLAND_CURSOR_INCLUDE_DIRS}
-    ${WAYLAND_EGL_INCLUDE_DIRS}
-)
-
-TARGET_LINK_LIBRARIES(unirun PRIVATE
-    wx::base
-    wx::core
-    wx::gl
-    wx::net
-    wx::html
-    wx::stc
-    ${OPENGL_LIBRARIES}
-    ${Fontconfig_LIBRARIES}
-    ${EXPAT_LIBRARIES}
-    ${PANGOFT2_LIBRARIES}
-    ${WAYLAND_CLIENT_LIBRARIES}
-    ${WAYLAND_CURSOR_LIBRARIES}
-    EGL
-    ${WAYLAND_EGL_LIBRARIES}
-    GLU
-    ${Python_LIBRARIES}
-    ${OPENSSL_LIBRARIES}
-    -lxkbcommon
-)
-
-
-
+if (LINUX)
+    INCLUDE_DIRECTORIES(
+        ${PANGOFT2_INCLUDE_DIRS}
+        ${WAYLAND_CLIENT_INCLUDE_DIRS}
+        ${WAYLAND_CURSOR_INCLUDE_DIRS}
+        ${WAYLAND_EGL_INCLUDE_DIRS}
+    )
+endif ()
 TARGET_LINK_LIBRARIES(olex2 PRIVATE
     wx::base
     wx::core
@@ -194,31 +173,70 @@ TARGET_LINK_LIBRARIES(olex2 PRIVATE
     ${PANGOFT2_LIBRARIES}
     ${WAYLAND_CLIENT_LIBRARIES}
     ${WAYLAND_CURSOR_LIBRARIES}
-    EGL
+    $<$<NOT:$<PLATFORM_ID:Darwin>>:EGL>
+    $<LINK_LIBRARY:FRAMEWORK,OpenGL>
+    $<LINK_LIBRARY:FRAMEWORK,AGL>
     ${WAYLAND_EGL_LIBRARIES}
-    GLU
-    ${Python_LIBRARIES}
+    $<$<NOT:$<PLATFORM_ID:Darwin>>:GLU>
+#    ${Python_LIBRARIES}
+    Python::Python
     ${OPENSSL_LIBRARIES}
-    -lxkbcommon
+    $<$<NOT:$<PLATFORM_ID:Darwin>>:-lxkbcommon>
+)
+
+
+
+TARGET_LINK_LIBRARIES(olex2_exe PRIVATE
+    wx::base
+    wx::core
+    wx::gl
+    wx::net
+    wx::html
+    wx::stc
+    ${OPENGL_LIBRARIES}
+    ${Fontconfig_LIBRARIES}
+    ${EXPAT_LIBRARIES}
+    ${PANGOFT2_LIBRARIES}
+    ${WAYLAND_CLIENT_LIBRARIES}
+    ${WAYLAND_CURSOR_LIBRARIES}
+    $<$<NOT:$<PLATFORM_ID:Darwin>>:EGL>
+    $<LINK_LIBRARY:FRAMEWORK,OpenGL>
+    $<LINK_LIBRARY:FRAMEWORK,AGL>
+    ${WAYLAND_EGL_LIBRARIES}
+    $<$<NOT:$<PLATFORM_ID:Darwin>>:GLU>
+    Python::Python
+    ${OPENSSL_LIBRARIES}
+    $<$<NOT:$<PLATFORM_ID:Darwin>>:-lxkbcommon>
+
 )
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWXDEBUG_LEVEL=2 -D__WXDEBUG__ -DDEBUG_BITMAP_OPERATIONS")
     # Add memory debugging
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -g")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
-    set(_DEBUG_DEFINITIONS ${DEBUG_BITMAP_OPERATIONS} ${__WXDEBUG__})
+    set(_DEBUG_DEFINITIONS ${DEBUG_BITMAP_OPERATIONS} ${__WXDEBUG__} "_DEBUG" "OLX_DEBUG")
 endif()
 
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-sanitize=all")
 # Add runtime bitmap validation
-target_compile_definitions(olex2 PRIVATE _PYTHON _OPENSSL  _DEBUG_DEFINITIONS)
-target_compile_definitions(unirun PRIVATE _PYTHON _OPENSSL _DEBUG_DEFINITIONS)
+target_compile_definitions(olex2_exe PRIVATE _PYTHON _OPENSSL  _DEBUG_DEFINITIONS __WXWIDGETS__)
+target_compile_definitions(olex2 PRIVATE _PYTHON _OPENSSL _DEBUG_DEFINITIONS __WXWIDGETS__)
+if (APPLE)
+    target_compile_definitions(olex2_exe PRIVATE __MAC__)
+    target_compile_definitions(olex2 PRIVATE __MAC__)
+endif ()
 if (COPY_GUI_FILES)
-  add_custom_command(TARGET olex2 POST_BUILD
+  add_custom_command(TARGET olex2_exe POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
       "${OLEX2_GUI_DIRECTORY}"
       "${CMAKE_CURRENT_BINARY_DIR}"
     COMMENT "Copying files to build directory"
   )
 endif ()
-
-install(TARGETS olex2 DESTINATION .)
+add_custom_target(complete_olex DEPENDS olex2_exe olex2)
+if (APPLE)
+  set(INSTALL_DESTINATION "/Users/lucas/Documents/olex2.app/Contents/MacOS")
+  install(TARGETS olex2_exe RUNTIME DESTINATION ${INSTALL_DESTINATION} RENAME olex2_exe)
+  install(TARGETS olex2 RUNTIME DESTINATION ${INSTALL_DESTINATION} RENAME olex2)
+  message(STATUS "INSTALLED")
+endif ()

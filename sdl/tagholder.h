@@ -107,9 +107,7 @@ struct ItemTagHolder {
   void restore_all() {
     for (size_t i = 0; i < data.Count(); i++) {
       data.GetValue(i)->restore();
-      delete data.GetValue(i);
     }
-    data.Clear();
   }
 
   // empties store without restoring tags

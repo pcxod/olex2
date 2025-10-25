@@ -2519,7 +2519,8 @@ public:
 
   template <class list_t>
   TTSString Join(const list_t &l) const {
-    return Join(l, *this);
+    // return Join(l, *this);
+    return Join(l, DummyAccessor(), *this);
   }
 
   template <class list_t, typename accessor_t>

@@ -55,7 +55,7 @@ struct olx_print_i_cont {
 //..............................................................................
 template <typename T>
 struct olx_print_cont : public olx_print_i_cont {
-  const T &value;
+  const T value;
   olx_print_cont(const T &value)
     : value(value)
   {}
@@ -66,7 +66,7 @@ struct olx_print_cont : public olx_print_i_cont {
 //..............................................................................
 template <typename T>
 struct olx_print_cont_f : public olx_print_i_cont {
-  const T &value;
+  const T value;
   int fp_cnt;
   bool expf, trim;
   olx_print_cont_f(const T &v, int fp_cnt, bool expf, bool trim)
@@ -174,7 +174,8 @@ olxstr esdl::olx_print_(const char *format_, va_list argptr) {
               case 'l': { // ll d/u
                 if (++i < format.Length()) {
                   if (format.CharAt(i) == 'd') {
-                    val = olx_print_makec(va_arg(argptr, long long int));
+                    const int temp_varg = va_arg(argptr, long long int);
+                    val = olx_print_makec(temp_varg);
                   }
                   else if (format.CharAt(i) == 'u') {
                     val = olx_print_makec(va_arg(argptr, unsigned long long int));
