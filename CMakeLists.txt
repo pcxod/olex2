@@ -1,11 +1,11 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.10)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.24)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.8")
 PROJECT(olex2)
-#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__WXWIDGETS__ -D_UNICODE")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__WXWIDGETS__ -D_UNICODE")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/CPM.cmake")
 add_subdirectory(3rdparty EXCLUDE_FROM_ALL)
 
@@ -175,8 +175,8 @@ TARGET_LINK_LIBRARIES(olex2 PRIVATE
     ${WAYLAND_CLIENT_LIBRARIES}
     ${WAYLAND_CURSOR_LIBRARIES}
     $<$<NOT:$<PLATFORM_ID:Darwin>>:EGL>
-    $<$<PLATFORM_ID:Darwin>:LINK_LIBRARY:FRAMEWORK,OpenGL>
-    $<$<PLATFORM_ID:Darwin>:LINK_LIBRARY:FRAMEWORK,AGL>
+    $<$<PLATFORM_ID:Darwin>:$<LINK_LIBRARY:FRAMEWORK,OpenGL>>
+    $<$<PLATFORM_ID:Darwin>:$<LINK_LIBRARY:FRAMEWORK,AGL>>
     ${WAYLAND_EGL_LIBRARIES}
     $<$<NOT:$<PLATFORM_ID:Darwin>>:GLU>
 #    ${Python_LIBRARIES}
@@ -184,8 +184,6 @@ TARGET_LINK_LIBRARIES(olex2 PRIVATE
     ${OPENSSL_LIBRARIES}
     $<$<NOT:$<PLATFORM_ID:Darwin>>:-lxkbcommon>
 )
-
-
 
 TARGET_LINK_LIBRARIES(olex2_exe PRIVATE
     wx::base
@@ -201,8 +199,8 @@ TARGET_LINK_LIBRARIES(olex2_exe PRIVATE
     ${WAYLAND_CLIENT_LIBRARIES}
     ${WAYLAND_CURSOR_LIBRARIES}
     $<$<NOT:$<PLATFORM_ID:Darwin>>:EGL>
-    $<$<PLATFORM_ID:Darwin>:LINK_LIBRARY:FRAMEWORK,OpenGL>
-    $<$<PLATFORM_ID:Darwin>:LINK_LIBRARY:FRAMEWORK,AGL>
+    $<$<PLATFORM_ID:Darwin>:$<LINK_LIBRARY:FRAMEWORK,OpenGL>>
+    $<$<PLATFORM_ID:Darwin>:$<LINK_LIBRARY:FRAMEWORK,AGL>>
     ${WAYLAND_EGL_LIBRARIES}
     $<$<NOT:$<PLATFORM_ID:Darwin>>:GLU>
     Python::Python
@@ -216,13 +214,46 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -g")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
     set(_DEBUG_DEFINITIONS ${DEBUG_BITMAP_OPERATIONS} ${__WXDEBUG__} "_DEBUG" "OLX_DEBUG")
+elseif (CMAKE_BUILD_TYPE STREQUAL "Release")
+    message(WARNING "RELEASE TEST")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g0")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffile-prefix-map=${CMAKE_SOURCE_DIR}=.")
 endif()
-
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-sanitize=all")
 # Add runtime bitmap validation
 target_compile_definitions(olex2_exe PRIVATE _PYTHON _OPENSSL  _DEBUG_DEFINITIONS __WXWIDGETS__)
 target_compile_definitions(olex2 PRIVATE _PYTHON _OPENSSL _DEBUG_DEFINITIONS __WXWIDGETS__)
 if (APPLE)
+    string(REGEX MATCH "^([0-9]+\\.[0-9]+)" Python_VERSION_SHORT "${Python_VERSION}")
+    get_target_property(PYTHON_LIB_LOCATION Python::Python LOCATION)
+    if(NOT PYTHON_LIB_LOCATION)
+        get_target_property(PYTHON_LIB_LOCATION Python::Python INTERFACE_LINK_LIBRARIES)
+    endif()
+    set_target_properties(olex2_exe PROPERTIES
+        MACOSX_RPATH TRUE
+        BUILD_RPATH "@loader_path/lib"
+        INSTALL_RPATH "@loader_path/lib"
+    )
+    set_target_properties(olex2 PROPERTIES
+        MACOSX_RPATH TRUE
+        BUILD_RPATH "@loader_path/lib"
+        INSTALL_RPATH "@loader_path/lib"
+    )
+    add_custom_command(TARGET olex2 POST_BUILD
+        COMMAND install_name_tool -change
+            "${PYTHON_LIB_LOCATION}"
+            "@loader_path/lib/libpython${Python_VERSION_SHORT}.dylib"
+            "$<TARGET_FILE:olex2>"
+        COMMENT "Fixing Python library path for olex2"
+    )
+
+    add_custom_command(TARGET olex2_exe POST_BUILD
+        COMMAND install_name_tool -change
+            "${PYTHON_LIB_LOCATION}"
+            "@loader_path/lib/libpython${Python_VERSION_SHORT}.dylib"
+            "$<TARGET_FILE:olex2_exe>"
+        COMMENT "Fixing Python library path for olex2_exe"
+    )
     target_compile_definitions(olex2_exe PRIVATE __MAC__)
     target_compile_definitions(olex2 PRIVATE __MAC__)
 endif ()
