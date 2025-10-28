@@ -12922,9 +12922,9 @@ void XLibMacros::macCopy(TStrObjList& Cmds, const TParamList& Options,
     E.ProcessingError(__OlxSrcInfo, "Unknown output file format");
     return;
   }
+  TStrList lines;
   if (Options.GetBoolOption('d')) {
-    TStrList lines = TEFile::ReadLines(Cmds[0]);
-
+    lines = TEFile::ReadLines(Cmds[0]);
     for (size_t i = 0; i < lines.Count(); i++) {
       if (lines[i].StartsFrom('#') || lines[i].StartsFrom("data_")) {
         ifl = xf->FindFormat("cif");
@@ -12943,7 +12943,12 @@ void XLibMacros::macCopy(TStrObjList& Cmds, const TParamList& Options,
     E.ProcessingError(__OlxSrcInfo, "Unknown inout file format");
     return;
   }
-  ifl->LoadFromFile(Cmds[0]);
+  if (lines.IsEmpty()) {
+    ifl->LoadFromFile(Cmds[0]);
+  }
+  else {
+    ifl->LoadStrings(lines);
+  }
   xf->SetLastLoader(ifl);
   xf->LastLoaderChanged();
   ofl->Adopt(xf, 1);

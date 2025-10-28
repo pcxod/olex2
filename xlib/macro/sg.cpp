@@ -400,7 +400,8 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options,
     size_t maxElementFound = 0, maxUniqueElementFound = 0;
     bool FilterByElementCount = false;
     for (size_t i = 0; i < sortedSATestResults.Count(); i++) {
-      sgTab[i][0] = sortedSATestResults.GetValue(i)->GetA()->GetObject()->GetName();
+      const TSpaceGroup& sg = *sortedSATestResults.GetValue(i)->GetA()->GetObject();
+      sgTab[i][0] = sg.GetName();
       if (sortedSATestResults.GetValue(i)->GetA()->GetStrongCount() != 0) {
         sgTab[i][1] = olxstr::FormatFloat(2,
           sortedSATestResults.GetValue(i)->GetA()->GetSummStrongI() /
@@ -419,12 +420,10 @@ void XLibMacros::macSG(TStrObjList &Cmds, const TParamList &Options,
         sgTab[i][3] = '-';
       }
       sgTab[i][4] = sortedSATestResults.GetValue(i)->GetA()->GetWeakCount();
-      sgTab[i][5] = sortedSATestResults.GetValue(i)->GetA()->GetObject()
-        ->GetLaueClass().GetBareName();
+      sgTab[i][5] = sg.GetLaueClass().GetBareName();
       if (!PresentElements.IsEmpty()) {
         smatd_list sgMl;
-        sortedSATestResults.GetValue(i)->GetA()->GetObject()->GetMatrices(
-          sgMl, mattAll);
+        sg.GetMatrices(sgMl, mattAll);
         TPtrList<TSymmElement> sgElmAll, sgElmFound;
         TSpaceGroup::SplitIntoElements(sgMl, AllElements, sgElmAll);
         TSpaceGroup::SplitIntoElements(sgMl, PresentElements, sgElmFound);

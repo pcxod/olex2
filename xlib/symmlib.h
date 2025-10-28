@@ -214,20 +214,24 @@ class TSymmElement : public ACollectionItem {
   smatd_list Matrices;
   olxstr Name;
   TSymmElement* SuperElement;
+  olx_object_ptr<TPtrList<TSymmElement> > SubElements;
 public:
   TSymmElement(const olxstr& name, TSpaceGroup* sg);
-  TSymmElement(const olxstr& name) : Name(name), SuperElement(NULL)  {}
-  virtual ~TSymmElement()  {}
+  TSymmElement(const olxstr& name) : Name(name), SuperElement(0)
+  {}
+  virtual ~TSymmElement() {}
 
-  TSymmElement& AddMatrix(const smatd& m)  {
+  TSymmElement& AddMatrix(const smatd& m) {
     Matrices.AddCopy(m);
     return *this;
   }
-  size_t  MatrixCount() const {  return Matrices.Count();  }
-  smatd&  GetMatrix(size_t i) const {  return Matrices[i];  }
-  const olxstr& GetName() const {  return Name;  }
-  TSymmElement* GetSuperElement() const {  return SuperElement;  }
-  friend class TSymmLib;
+  size_t  MatrixCount() const { return Matrices.Count(); }
+  smatd& GetMatrix(size_t i) const { return Matrices[i]; }
+  const olxstr& GetName() const { return Name; }
+  TSymmElement* GetSuperElement() const { return SuperElement; }
+  void AddSubElement(TSymmElement& e);
+  // returns true if all of the sub-elements have matching tag
+  bool AllSubElementsHaveTag(index_t tag) const ;
 };
 
 class TBravaisLattice  {

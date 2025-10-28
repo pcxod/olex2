@@ -111,7 +111,7 @@ public:
   const cm_Gaussians &GetGaussians() const {
     return gaussians;
   }
-  bool IsSet(short what) const { return (set_items&what) != 0; }
+  bool IsSet(short what) const { return (set_items&what) == what; }
   DefPropC(olxstr, Label)
     // return an INS file string representation
     olxstr ToInsString() const;

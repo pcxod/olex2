@@ -18,7 +18,7 @@ TSGTest::TSGTest() : minInd(100, 100, 100), maxInd(-100, -100, -100) {
   // 84.47%, w: 86.32 hkl->MergeInP1<RefMerger::StandardMerger>(Refs);
   // 84.47%, w: 86.32 hkl->MergeInP1<RefMerger::ShelxMerger>(Refs);
   // 84.56%, w: 86.29%
-  TXApp::GetInstance().XFile().GetRM().GetAllP1RefList<RefMerger::UnitMerger>(Refs);
+  TXApp::GetInstance().XFile().GetRM().GetAllP1RefList<RefMerger::StandardMerger>(Refs);
   const size_t ref_cnt = Refs.Count();
   MinI = 1000;
   MaxI = -1000;
@@ -198,11 +198,11 @@ void TSGTest::LatticeSATest(TTypeList<TElementStats<TCLattice*> >& latRes, TType
   NamedSE& Screw61 = SAElements.AddNew<TSymmElement*, TwoDoublesInt*>(
     sgLib.FindSymmElement("61"), new TwoDoublesInt(0.0, 0.0, 0));
 
-  TPtrList<NamedSE> Glide1ExcG;
-  Glide1ExcG.Add(GlideB1);
-  Glide1ExcG.Add(GlideC1);
-  TPtrList<NamedSE> Glide1ExcGD(Glide1ExcG);
-  Glide1ExcGD.Add(GlideN1);
+  //TPtrList<NamedSE> Glide1ExcG;
+  //Glide1ExcG.Add(GlideB1);
+  //Glide1ExcG.Add(GlideC1);
+  //TPtrList<NamedSE> Glide1ExcGD(Glide1ExcG);
+  //Glide1ExcGD.Add(GlideN1);
   TPtrList<NamedSE> Glide1ExcS;
   Glide1ExcS.Add(Screw21b);
   Glide1ExcS.Add(Screw21c);
@@ -388,10 +388,6 @@ void TSGTest::LatticeSATest(TTypeList<TElementStats<TCLattice*> >& latRes, TType
         Screw21a.GetB()->a += ref.GetI();
         Screw21a.GetB()->b += olx_sqr(ref.GetS());
         Screw21a.GetB()->c++;
-
-        Screw42.GetB()->a += ref.GetI();
-        Screw42.GetB()->b += olx_sqr(ref.GetS());
-        Screw42.GetB()->c++;
       }
     }
     if (H == 0 && L == 0) {
