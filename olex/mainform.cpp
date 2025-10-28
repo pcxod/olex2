@@ -2670,6 +2670,10 @@ void TMainForm::OnResize() {
     HtmlManager.main->Update();
     HtmlManager.main->Thaw();
   }
+
+  sf = FGlCanvas->GetContentScaleFactor();
+  w = static_cast<int>(w*sf);
+  h = static_cast<int>(h*sf);
   if (CmdLineVisible) {
     FCmdLine->WI.SetWidth(w);
     FCmdLine->WI.SetLeft(l);
@@ -2683,9 +2687,6 @@ void TMainForm::OnResize() {
   }
   FGlCanvas->SetSize(l, 0, w, h - (CmdLineVisible ? FCmdLine->WI.GetHeight() : 0));
   FGlCanvas->GetClientSize(&w, &h);
-  sf = FGlCanvas->GetContentScaleFactor();
-  w = static_cast<int>(w*sf);
-  h = static_cast<int>(h*sf);
   FXApp->GetRenderer().Resize(0, 0, w, h, 1);
   FGlConsole->Resize(0, dheight, w, h - dheight);
   if (FInfoBox->IsCreated()) {
