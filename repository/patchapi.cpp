@@ -44,6 +44,25 @@ short PatchAPI::DoPatch(olx_object_ptr<AActionHandler> OnFileCopy,
   // clean...
   short res = papi_OK;
   if (TEFile::Exists(cmd_file)) {
+    TStrList cmdl = TEFile::ReadLines(cmd_file);
+    for (size_t i = 0; i < cmdl.Count(); i++) {
+      if (cmdl[i].StartsFrom("rmdir")) {
+        TBasicApp::NewLogEntry(logInfo) << cmdl[i];
+        olxstr dp = TEFile::JoinPath(TStrList() << TBasicApp::GetBaseDir()
+          << cmdl[i].SubStringFrom(5).TrimWhiteChars());
+        if (TEFile::Exists(dp) && TEFile::IsDir(dp)) {
+          TEFile::DeleteDir(dp, false, true);
+        }
+      }
+      if (cmdl[i].StartsFrom("rm")) {
+        TBasicApp::NewLogEntry(logInfo) << cmdl[i];
+        olxstr dp = TEFile::JoinPath(TStrList() << TBasicApp::GetBaseDir()
+          << cmdl[i].SubStringFrom(2).TrimWhiteChars());
+        if (TEFile::Exists(dp) && !TEFile::IsDir(dp)) {
+          TEFile::DelFile(dp);
+        }
+      }
+    }
     TEFile::DelFile(cmd_file);
   }
   // copy...

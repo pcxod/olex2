@@ -367,7 +367,7 @@ void TIns::ParseRestraints(RefinementModel& rm,
           continue;
         }
         for (size_t j = i - 1; j != InvalidIndex; j--) {
-          if (SL[j].IsEmpty()) {
+          if (SL[j].IsEmpty() || !SL[j].StartsFromi("REM")) {
             break;
           }
           sr->remarks.Add(SL[j]);

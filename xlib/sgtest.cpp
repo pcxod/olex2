@@ -55,72 +55,70 @@ TSGTest::~TSGTest()  {
     delete Hkl3DArray;
 }
 //..............................................................................
-void TSGTest::MergeTest(const TPtrList<TSpaceGroup>& sgList,  TTypeList<TSGStats>& res )  {
+void TSGTest::MergeTest(const TPtrList<TSpaceGroup>& sgList, TTypeList<TSGStats>& res) {
   typedef AnAssociation4<TSpaceGroup*, TwoDoublesInt, TwoDoublesInt, int> SGAss;
   typedef TPtrList<SGAss>  SGpList;
   typedef olx_pair_t<mat3i, SGpList> MatrixAss;
   typedef TTypeList<SGAss>  SGList;
   TTypeList< MatrixAss > UniqMatricesNT;
-  SGList SGHitsNT;
+  SGList SGHitsNT(olx_reserve(sgList.Count()));
   smatd_list sgMl;
 
   const TArray3D<TReflection*>& Hkl3D = *Hkl3DArray;
 
-  SGHitsNT.SetCapacity( sgList.Count() );
-
-  for( size_t i=0; i < sgList.Count(); i++ )  {
+  for (size_t i = 0; i < sgList.Count(); i++) {
     TSpaceGroup& sg = *sgList[i];
     SGAss& sgvNT =
-      SGHitsNT.AddNew<TSpaceGroup*, TwoDoublesInt, TwoDoublesInt, int > (
-                  &sg, TwoDoublesInt(0.0,0.0,0), TwoDoublesInt(0.0,0.0,0), 0);
+      SGHitsNT.AddNew<TSpaceGroup*, TwoDoublesInt, TwoDoublesInt, int >(
+        &sg, TwoDoublesInt(0.0, 0.0, 0), TwoDoublesInt(0.0, 0.0, 0), 0);
     sgMl.Clear();
-    sg.GetMatrices( sgMl, mattAll );
+    sg.GetMatrices(sgMl, mattAll);
     const size_t sgml_cnt = sgMl.Count();
-    for( size_t j=0; j < sgml_cnt; j++ )  {
+    for (size_t j = 0; j < sgml_cnt; j++) {
       smatd& m = sgMl[j];
       bool uniq = true;
       const size_t umnt_cnt = UniqMatricesNT.Count();
-      for( size_t k=0; k < umnt_cnt; k++ )  {
-        if( UniqMatricesNT[k].GetA() == m.r )  {
+      for (size_t k = 0; k < umnt_cnt; k++) {
+        if (UniqMatricesNT[k].GetA() == m.r) {
           uniq = false;
           UniqMatricesNT[k].b.Add(&sgvNT);
-          sgvNT.d ++;
+          sgvNT.d++;
           break;
         }
       }
-      if( uniq )  {
-        sgvNT.d ++;
+      if (uniq) {
+        sgvNT.d++;
         UniqMatricesNT.AddNew<mat3i>(m.r).b.Add(&sgvNT);
       }
     }
   }
   const size_t umnt_cnt = UniqMatricesNT.Count();
-  for( size_t i=0; i < umnt_cnt; i++ )  {
+  for (size_t i = 0; i < umnt_cnt; i++) {
     const mat3i& m = UniqMatricesNT[i].GetA();
     const size_t ref_cnt = Refs.Count();
-    for( size_t j=0; j < ref_cnt; j++ )  {
-      if( Refs[j].GetI() < AverageI )  continue;
+    for (size_t j = 0; j < ref_cnt; j++) {
+      if (Refs[j].GetI() < AverageI)  continue;
       vec3i hklv = Refs[j] * m;
-      if( !vec3i::IsInRangeExc(hklv, minInd, maxInd) )  continue;
-      if( !Refs[j].EqHkl(hklv) )  {
+      if (!vec3i::IsInRangeExc(hklv, minInd, maxInd))  continue;
+      if (!Refs[j].EqHkl(hklv)) {
         const TReflection* ref = Hkl3D(hklv);
-        if( ref == NULL )
+        if (ref == NULL)
           continue;
 
         //double weight = olx_abs(ref->Data()[0] - Hkl.Ref(j)->Data()[0]) / (olx_abs(ref->Data()[0]) +olx_abs(Hkl.Ref(j)->Data()[0]));
         double diff = olx_abs(ref->GetI() - Refs[j].GetI());
         //double weight = diff * HklScaleFactor;
         // 5% of an average reflection itensity
-        for( size_t k=0; k < UniqMatricesNT[i].GetB().Count(); k++ )  {
+        for (size_t k = 0; k < UniqMatricesNT[i].GetB().Count(); k++) {
           UniqMatricesNT[i].GetB()[k]->c.a += diff;
           UniqMatricesNT[i].GetB()[k]->c.b += (olx_sqr(ref->GetS()) +
             olx_sqr(Refs[j].GetS()));
-          UniqMatricesNT[i].GetB()[k]->c.c ++;
+          UniqMatricesNT[i].GetB()[k]->c.c++;
         }
       }
     }
   }
-  for( size_t i=0; i < SGHitsNT.Count(); i++ )  {
+  for (size_t i = 0; i < SGHitsNT.Count(); i++) {
     SGHitsNT[i].c.b = sqrt(SGHitsNT[i].GetC().GetB());
     res.AddNew<TSpaceGroup*, TwoDoublesInt>(
       SGHitsNT[i].GetA(), SGHitsNT[i].GetC());
@@ -587,7 +585,7 @@ void TSGTest::WeakRefTest(const TPtrList<TSpaceGroup>& sgList,
     }
     sgMl.Clear();
   }
-  // collect statistrics for the matrices and the spacegroups
+  // collect statistics for the matrices and the spacegroups
   const size_t um_cnt = UniqMatrices.Count();
   for (size_t i = 0; i < um_cnt; i++) {
     const smatd& m = UniqMatrices[i].GetA();
