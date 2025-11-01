@@ -2633,6 +2633,7 @@ void TMainForm::OnResize() {
     return;
   }
   int w = 0, h = 0, l = 0;
+  double sf = 1.0;
   int dheight = InfoWindowVisible ? FInfoBox->GetHeight() : 1;
   GetClientSize(&w, &h);
   if (FHtmlMinimized) {
@@ -2669,6 +2670,10 @@ void TMainForm::OnResize() {
     HtmlManager.main->Update();
     HtmlManager.main->Thaw();
   }
+
+  sf = FGlCanvas->GetContentScaleFactor();
+  w = static_cast<int>(w*sf);
+  h = static_cast<int>(h*sf);
   if (CmdLineVisible) {
     FCmdLine->WI.SetWidth(w);
     FCmdLine->WI.SetLeft(l);
