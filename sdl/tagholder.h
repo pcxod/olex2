@@ -21,7 +21,7 @@ struct ItemTagHolder {
   struct ACIList {
     TArrayList<index_t> tags;
     ACIList(size_t sz) : tags(sz) {}
-    virtual ~ACIList() = default;
+    virtual ~ACIList() {}
     virtual const void* ptr() const = 0;
     virtual void restore() = 0;
     virtual bool have_changed() const = 0;
