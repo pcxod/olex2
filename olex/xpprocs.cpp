@@ -3939,9 +3939,18 @@ void TMainForm::macPatt(TStrObjList &Cmds, const TParamList &Options, TMacroData
   FXApp->XFile().UpdateAsymmUnit();  // update the last loader RM
 }
 //..............................................................................
-void TMainForm::funAlert(const TStrObjList& Params, TMacroData& E) {
-  olxstr msg(Params[1]);
+void TMainForm::funAlert(const TStrObjList& Params_, TMacroData& E) {
+  olxstr msg = Params_[1];
   msg.Replace("\\n", "\n");
+  TStrList Params = Params_;
+  TParamList options;
+  for (size_t i = 2; i < Params.Count(); i++) {
+    if (Params[i].Contains('=')) {
+      options.FromString(Params[i], '=');
+      Params.Delete(i--);
+    }
+  }
+
   if (Params.Count() == 2) {
     E.SetRetVal(TdlgMsgBox::Execute(this, msg, Params[0]));
   }
@@ -3964,7 +3973,35 @@ void TMainForm::funAlert(const TStrObjList& Params, TMacroData& E) {
     if (Params.Count() == 4) {
       tickBoxMsg = Params[3];
     }
-    E.SetRetVal(TdlgMsgBox::Execute(this, msg, Params[0], tickBoxMsg, flags, showCheckBox));
+    olxstr tm = options.FindValue("timeout");
+    long tm_value = 0;
+    wxWindowID tm_rv = 0;;
+    if (!tm.IsEmpty()) {
+      TStrList toks(tm, ';');
+      if (toks.Count() == 2 && !toks[1].IsEmpty()) {
+        tm_value = toks[0].ToSizeT();
+        switch (toks[1].ToUpperCase().CharAt(0)) {
+        case 'Y':
+          tm_rv = wxID_YES;
+          break;
+        case 'O':
+          tm_rv = wxID_OK;
+          break;
+        case 'N':
+          tm_rv = wxID_NO;
+          break;
+        case 'C':
+          tm_rv = wxID_CANCEL;
+          break;
+        }
+        if (tm_rv == 0) {
+          tm_value = 0;
+        }
+      }
+    }
+    E.SetRetVal(
+      TdlgMsgBox::Execute(
+        this, msg, Params[0], tickBoxMsg, flags, showCheckBox, tm_value, tm_rv));
   }
   FGlCanvas->SetFocus();
 }

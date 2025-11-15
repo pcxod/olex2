@@ -471,13 +471,15 @@ void TCif::Initialize() {
             sg_initialised = true;
           }
           catch (...) {
-            TBasicApp::NewLogEntry() << "Failed to expand Hall symbol";
+            TBasicApp::NewLogEntry(logError) << "Failed to expand Hall symbol";
           }
         }
       }
     }
   }
   if (!sg_initialised) {
+    // should be quiet - this could be a non-structure CIF
+    //TBasicApp::NewLogEntry(logError) << "Space group is not initialised, defaulting to P1";
     try {
       if (Matrices.IsEmpty()) {
         GetAsymmUnit().ChangeSpaceGroup(
@@ -681,7 +683,7 @@ void TCif::Initialize() {
       else if (DegenFunction == 3) {
         degen = 1. / degen;
       }
-      if (degen != 1) {
+      if (degen != 1 && degen != 0 && degen == degen) { // check for nan/inf as well
         A.SetOccu(A.GetOccu() / degen);
         A.SetOccuEsd(A.GetOccuEsd() / degen);
       }

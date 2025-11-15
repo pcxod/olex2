@@ -43,7 +43,7 @@ void UpdateThread::DoInit() {
     if (reinstall) {
       destFS = new TUpdateFS(PatchDir,
         *(new TOSFileSystem(TBasicApp::GetBaseDir())));
-      uapi.EvaluateProperties(properties);
+      properties = uapi.EvaluateProperties();
       srcFS->OnProgress.Add(new TActionProxy(OnDownload));
 
       return;
@@ -51,7 +51,7 @@ void UpdateThread::DoInit() {
     Index = new TFSIndex(*srcFS);
     destFS = new TUpdateFS(PatchDir,
       *(new TOSFileSystem(TBasicApp::GetBaseDir())));
-    uapi.EvaluateProperties(properties);
+    properties = uapi.EvaluateProperties();
     srcFS->OnProgress.Add(new TActionProxy(OnDownload));
     Index->OnAction.Add(new TActionProxy(OnAction));
   }

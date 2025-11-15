@@ -859,7 +859,7 @@ void TMainForm::XApp(Olex2App *XA)  {
 
   this_InitFunc(LoadDll, fpOne);
 
-  this_InitFuncD(Alert, fpTwo|fpThree|fpFour,
+  this_InitFuncD(Alert, fpTwo|fpThree|fpFour|fpFive,
     "title message [flags YNCO-yes,no,cancel,ok "
     "XHEIQ-icon:exclamation,hand,eror,information,question "
     "R-show checkbox] [checkbox message]");
@@ -1616,17 +1616,23 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
   }
 
   if (MsgId == ID_TIMER && wxThread::IsMain() &&
-    StartupInitialised && Py_IsInitialized() && PyEval_ThreadsInitialized())
+    StartupInitialised && Py_IsInitialized())
   {
-    size_t tc = OlexPyCore::GetRunningPythonThreadsCount();
-    if (tc > 0) {
-      PyGILState_STATE st = PyGILState_Ensure();
-      Py_BEGIN_ALLOW_THREADS;
-      olx_sleep(5);
-      Py_END_ALLOW_THREADS;
-      PyGILState_Release(st);
+#if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 10
+    if (PyEval_ThreadsInitialized()) {
+#endif
+      size_t tc = OlexPyCore::GetRunningPythonThreadsCount();
+      if (tc > 0) {
+        PyGILState_STATE st = PyGILState_Ensure();
+        Py_BEGIN_ALLOW_THREADS;
+        olx_sleep(5);
+        Py_END_ALLOW_THREADS;
+        PyGILState_Release(st);
+      }
+#if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 10
     }
-  }
+#endif
+    }
 
   bool res = true, Silent = (FMode & mSilent) != 0, Draw = false;
   static bool actionEntered = false, downloadEntered = false;

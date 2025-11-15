@@ -100,7 +100,7 @@ public:
   SettingsFile& GetSettings() { return settings; }
 
   const SettingsFile& GetSettings() const { return settings; }
-  void EvaluateProperties(TStrList& props) const;
+  TStrList::const_list_type EvaluateProperties() const;
 
   short DoUpdate(olx_object_ptr<AActionHandler> file_slnr,
     olx_object_ptr<AActionHandler> progress_lsnr);

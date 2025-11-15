@@ -198,7 +198,7 @@ PyObject* runWriteImage(PyObject* self, PyObject* args) {
   char *data = 0;
   olxstr name;
   int persistenceId = 0;
-  int length = 0;
+  Py_ssize_t length = 0;
   olxcstr format = PythonExt::UpdateBinaryFormat("ws#|i");
   if (!PythonExt::ParseTuple(args, format.c_str(), &name, &data, &length,
     &persistenceId))
@@ -879,9 +879,9 @@ bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...) {
     }
     else if (format[i] == 's') {
       char** cstr = va_arg(argptr, char**);
-      int  len, *rlen = 0;
+      Py_ssize_t  len, *rlen = 0;
       if ((i + 1) < slen && format[i + 1] == '#') {
-        rlen = va_arg(argptr, int*);
+        rlen = va_arg(argptr, Py_ssize_t*);
         i++;
       }
       else {
@@ -894,9 +894,9 @@ bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...) {
     }
     else if (format[i] == 'y') {
       char** cstr = va_arg(argptr, char**);
-      int  len, * rlen = 0;
+      Py_ssize_t  len, * rlen = 0;
       if ((i + 1) < slen && format[i + 1] == '#') {
-        rlen = va_arg(argptr, int*);
+        rlen = va_arg(argptr, Py_ssize_t*);
         i++;
       }
       else {
