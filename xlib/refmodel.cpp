@@ -469,6 +469,16 @@ InfoTab& RefinementModel::AddCONF() {
   return InfoTables.Add(new InfoTab(*this, infotab_conf));
 }
 //.............................................................................
+bool RefinementModel::HasRTABs() const {
+  for (size_t i = 0; i < InfoTabCount(); i++) {
+    const InfoTab& t = GetInfoTab(i);
+    if (t.GetType() == infotab_rtab && t.IsValid()) {
+      return true;
+    }
+  }
+  return false;
+}
+//.............................................................................
 TTypeList<cif_dp::cetTable>::const_list_type
   RefinementModel::ExportInfo(const TCif& cif, olx_object_ptr<VcoVContainer> vcovc) const
 {
@@ -3851,7 +3861,37 @@ void RefinementModel::LibStoreParam(TStrObjList& Cmds, const TParamList& Opts,
 void RefinementModel::LibClearParams(TStrObjList& Cmds, const TParamList& Opts,
   TMacroData& E)
 {
-  GenericStore.Clear();
+  if (Cmds.IsEmpty()) {
+    GenericStore.Clear();
+    return;
+  }
+  bool quiet = !Opts.GetBoolOption('q');
+  TStrList toks(Cmds[0], '.');
+  TDataItem* di = &GenericStore;
+  for (size_t i = 0; i < toks.Count() - 1; i++) {
+    TDataItem* di1 = di->FindItem(toks[i]);
+    if (di1 == 0) {
+      if (quiet) {
+        E.ProcessingError(__OlxSrcInfo, "Could not locate: ").quote() << Cmds[0];
+      }
+      return;
+    }
+    di = di1;
+  }
+  if (toks.GetLastString() == "value") {
+    di->SetValue(EmptyString());
+  }
+  else {
+    TDataItem* i = di->FindItem(toks.GetLastString());
+    if (i != 0) {
+      di->DeleteItem(i);
+    }
+    else {
+      if (!di->DeleteFieldByName(toks.GetLastString()) && ! quiet) {
+        E.ProcessingError(__OlxSrcInfo, "Could not locate: ").quote() << Cmds[0];
+      }
+    }
+  }
 }
 //..............................................................................
 //..............................................................................
@@ -3959,8 +3999,9 @@ TLibrary* RefinementModel::ExportLibrary(const olxstr& name) {
       ));
   lib->Register(
     new TMacro<RefinementModel>(thip, &RefinementModel::LibClearParams,
-      "ClearParams", EmptyString(),
-      fpNone,
+      "ClearParams",
+      "q-quiet when an item to celar does not exst",
+      fpNone|fpOne,
       "Clears all stored parameters"
     ));
   return lib;

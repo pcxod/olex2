@@ -87,6 +87,9 @@ public:
       }
       return r;
     }
+    bool operator == (const TCAtom::Site& a) const {
+      return Compare(a) == 0;
+    }
   };
 private:
   class TAsymmUnit* Parent;

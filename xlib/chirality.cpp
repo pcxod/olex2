@@ -9,77 +9,129 @@
 
 #include "analysis.h"
 
-int RSA_BondOrder(const TCAtom& a, const TCAtom::Site& to) {
-  if (a.GetType() == iHydrogenZ || to.atom->GetType() == iHydrogenZ) {
-    return 1;
-  }
-  size_t a_cnt = 0;
-  for (size_t i = 0; i < a.AttachedSiteCount(); i++) {
-    if (a.GetAttachedAtom(i).GetType().z >= 1) {
-      a_cnt++;
+// note max atom id is uint16_t
+struct RSA_BondOrder {
+  int get_order(const TCAtom& a, const TCAtom::Site& to) {
+    id_t id = get_id(a, to);
+    int o = orders.Find(id, -1);
+    if (o == -1) {
+      o = evaluate_order(a, to);
+      orders(id, o);
     }
-  }
-  if (a.GetType().z == iCarbonZ && a_cnt == 4) {
-    return 1;
-  }
-  if (a.GetType().z == iNitrogenZ && a_cnt == 3) {
-    return 1;
-  }
-  if (a.GetType().z == iOxygenZ) {
-    return a_cnt == 2 ? 1 : 2;
-  }
-  size_t b_cnt = 0;
-  for (size_t i = 0; i < to.atom->AttachedSiteCount(); i++) {
-    if (to.atom->GetAttachedAtom(i).GetType().z >= 1) {
-      b_cnt++;
+    else {
+      return o;
     }
+    return o;
   }
-  if (to.atom->GetType().z == iCarbonZ && b_cnt == 4) {
-    return 1;
+protected:
+  typedef TArrayList<size_t> id_t;
+
+  static typename id_t::const_list_type get_id(const TCAtom& a, const TCAtom::Site& to) {
+    return id_t(olx_reserve(3)) << a.GetId() << to.atom->GetId() << to.matrix.GetId();
   }
-  if (to.atom->GetType().z == iNitrogenZ && b_cnt == 3) {
-    return 1;
-  }
-  if (to.atom->GetType().z == iOxygenZ) {
-    return a_cnt == 2 ? 1 : 2;
-  }
-  double d = a.GetParent()->Orthogonalise(a.ccrd() - to.matrix * to.atom->ccrd())
-    .Length();
-  if (a.GetType().z == iCarbonZ || to.atom->GetType().z == iCarbonZ) {
-    const cm_Element& other = (a.GetType().z == iCarbonZ ? to.atom->GetType()
-      : a.GetType());
-    if (other.z == iCarbonZ) { //C-C
-      if (d < 1.27) {
-        return 3;
-      }
-      if (d < 1.44) {
-        return 2;
-      }
-    }
-    if (other.z == iNitrogenZ) { //C-N
-      if (d < 1.27) {
-        return 3;
-      }
-      if (d < 1.405) {
-        return 2;
-      }
-    }
-  }
-  if (a.GetType().z == iNitrogenZ || to.atom->GetType().z == iNitrogenZ) {
-    const cm_Element& other = (a.GetType().z == iNitrogenZ ? to.atom->GetType()
-      : a.GetType());
-    if (other.z == iNitrogenZ) { //N-N
-      if (d < 1.15) {
-        return 3;
-      }
-      if (d < 1.32) {
-        return 2;
-      }
+
+  typedef typename ListComparator<>::TListComparator<TPrimitiveComparator> cmp_t;
+  olxdict<id_t, int, cmp_t> orders;
+
+  int evaluate_order(const TCAtom& a, const TCAtom::Site& to) {
+    if (a.GetType() == iHydrogenZ || to.atom->GetType() == iHydrogenZ) {
       return 1;
     }
+    // analyse "from" atom
+    size_t a_cnt = 0;
+    for (size_t i = 0; i < a.AttachedSiteCount(); i++) {
+      if (a.GetAttachedAtom(i).GetType().z >= 1) {
+        a_cnt++;
+      }
+    }
+    if (a.GetType().z == iCarbonZ && a_cnt == 4) {
+      return 1;
+    }
+    if (a.GetType().z == iNitrogenZ && a_cnt == 3) {
+      return 1;
+    }
+    if (a.GetType().z == iOxygenZ) {
+      return a_cnt == 2 ? 1 : 2;
+    }
+    // analyse "to" atom
+    size_t b_cnt = 0;
+    for (size_t i = 0; i < to.atom->AttachedSiteCount(); i++) {
+      if (to.atom->GetAttachedAtom(i).GetType().z >= 1) {
+        b_cnt++;
+      }
+    }
+    if (to.atom->GetType().z == iCarbonZ && b_cnt == 4) {
+      return 1;
+    }
+    if (to.atom->GetType().z == iNitrogenZ && b_cnt == 3) {
+      return 1;
+    }
+    if (to.atom->GetType().z == iOxygenZ) {
+      return b_cnt == 2 ? 1 : 2;
+    }
+    // bond length analysis
+    double d = a.GetParent()->Orthogonalise(a.ccrd() - to.matrix * to.atom->ccrd())
+      .Length();
+    if (a.GetType().z == iCarbonZ || to.atom->GetType().z == iCarbonZ) {
+      const cm_Element& other = (a.GetType().z == iCarbonZ ? to.atom->GetType()
+        : a.GetType());
+      if (other.z == iCarbonZ) { //C-C
+        if (d < 1.27) {
+          return 3;
+        }
+        if (d < 1.44) {
+          if (a_cnt == 3) { // only the shortest bond can be 2
+            typedef olx_pair_t<double, const TCAtom::Site*> pair_t;
+            TTypeList<pair_t> bonds;
+            for (size_t i = 0; i < a.AttachedSiteCount(); i++) {
+              const TCAtom::Site& b = a.GetAttachedSite(i);
+              if (b.atom->GetType().z < 1) {
+                continue;
+              }
+              if (b == to) {
+                bonds.AddNew(d, &b);
+                continue;
+              }
+              double d1 = a.GetParent()->Orthogonalise(a.ccrd() - b.matrix * b.atom->ccrd())
+                .Length();
+              bonds.AddNew(d1, &b);
+            }
+            BubbleSorter::Sort(bonds, ComplexComparator::Make(
+              FunctionAccessor::MakeConst(&pair_t::GetA), TPrimitiveComparator()));
+            if (to == *bonds[0].b) {
+              return 2;
+            }
+            return 1;
+            //return to == *bonds[0].b ? 2 : 1;
+          }
+          return 2;
+        }
+      }
+      if (other.z == iNitrogenZ) { //C-N
+        if (d < 1.27) {
+          return 3;
+        }
+        if (d < 1.405) {
+          return 2;
+        }
+      }
+    }
+    if (a.GetType().z == iNitrogenZ || to.atom->GetType().z == iNitrogenZ) {
+      const cm_Element& other = (a.GetType().z == iNitrogenZ ? to.atom->GetType()
+        : a.GetType());
+      if (other.z == iNitrogenZ) { //N-N
+        if (d < 1.15) {
+          return 3;
+        }
+        if (d < 1.32) {
+          return 2;
+        }
+        return 1;
+      }
+    }
+    return 1;
   }
-  return 1;
-}
+};
 
 typedef olx_pair_t<const TCAtom::Site*, const cm_Element*> SiteInfo;
 typedef TTypeList<SiteInfo> AtomEnvList;
@@ -120,7 +172,7 @@ olxstr strof(const SiteInfo& a) {
   return sa.RightPadding(5, ' ');
 }
 
-int RSA_GetAtomPriorityX(AtomEnvList& a, AtomEnvList& b, olxstr_buf *bf) {
+int RSA_GetAtomPriorityX(RSA_BondOrder &boa, AtomEnvList& a, AtomEnvList& b, olxstr_buf *bf) {
   size_t sz = a.Count();
   if (sz == 0) {
     return 0;
@@ -171,7 +223,7 @@ int RSA_GetAtomPriorityX(AtomEnvList& a, AtomEnvList& b, olxstr_buf *bf) {
         else {
           aa.Add(new SiteInfo(&s, &s.atom->GetType()));
         }
-        int bo = RSA_BondOrder(atomA, s);
+        int bo = boa.get_order(atomA, s);
         for (int k = 1; k < bo; k++) {
           aa.Add(new SiteInfo(0, &s.atom->GetType()));
         }
@@ -196,7 +248,7 @@ int RSA_GetAtomPriorityX(AtomEnvList& a, AtomEnvList& b, olxstr_buf *bf) {
         else {
           bb.Add(new SiteInfo(&s, &s.atom->GetType()));
         }
-        int bo = RSA_BondOrder(atomB, s);
+        int bo = boa.get_order(atomB, s);
         for (int k = 1; k < bo; k++) {
           bb.Add(new SiteInfo(0, &s.atom->GetType()));
         }
@@ -210,6 +262,7 @@ int RSA_GetAtomPriorityX(AtomEnvList& a, AtomEnvList& b, olxstr_buf *bf) {
       bb.Add(new SiteInfo(0, &XElementLib::GetByIndex(iHydrogenIndex)));
     }
     BubbleSorter::SortSF(aa, &RSA_CompareSites);
+    BubbleSorter::SortSF(bb, &RSA_CompareSites);
   }
   if (bf != 0) {
     TSizeList ali(al.Count(), olx_list_init::index());
@@ -263,7 +316,7 @@ int RSA_GetAtomPriorityX(AtomEnvList& a, AtomEnvList& b, olxstr_buf *bf) {
   }
   a.DeleteRange(0, sz);
   b.DeleteRange(0, sz);
-  return RSA_GetAtomPriorityX(a, b, bf);
+  return RSA_GetAtomPriorityX(boa, a, b, bf);
 }
 
 struct RSA_EnviSorter {
@@ -271,8 +324,9 @@ struct RSA_EnviSorter {
   bool debug;
   mutable olxstr_buf out;
   mutable olx_pset<uint64_t> reported;
-  RSA_EnviSorter(TCAtom& center, bool debug)
-    : center(center),
+  RSA_BondOrder& boa;
+  RSA_EnviSorter(RSA_BondOrder &boa, TCAtom& center, bool debug)
+    : boa(boa), center(center),
     debug(debug)
   {}
 
@@ -283,7 +337,7 @@ struct RSA_EnviSorter {
     ea.Add(new SiteInfo(&a, &a.atom->GetType()));
     eb.Add(new SiteInfo(&b, &b.atom->GetType()));
     olxstr_buf da;
-    int res = RSA_GetAtomPriorityX(ea, eb, debug ? &da: 0);
+    int res = RSA_GetAtomPriorityX(boa, ea, eb, debug ? &da: 0);
     if (res != 0) {
       size_t ref;
       if (a.atom->GetId() < b.atom->GetId()) {
@@ -314,10 +368,11 @@ olxstr xlib::olx_analysis::chirality::rsa_analyse(TCAtom& a, bool debug) {
     }
     attached.Add(a.GetAttachedSite(j));
   }
+  RSA_BondOrder boa;
   olxstr w;
   if (attached.Count() == 4) {
     a.ClearChiralFlag();
-    RSA_EnviSorter es(a, debug);
+    RSA_EnviSorter es(boa, a, debug);
     BubbleSorter::SortMF(attached, es, &RSA_EnviSorter::Comparator);
     bool chiral = true;
     for (size_t j = 0; j < attached.Count(); j++) {

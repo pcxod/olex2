@@ -5715,16 +5715,19 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   }
   // update the refinement description
   cetStringList description("_olex2_refinement_description");
-  TStrList ri = xapp.XFile().GetRM().Describe();
+  RefinementModel& rm = xapp.XFile().GetRM();
+  TStrList ri = rm.Describe();
   for (size_t i=0; i < ri.Count(); i++) {
     description.lines.Hyphenate(ri[i].Replace(" ~ ", " \\\\sim "), 80, true);
   }
   Cif->SetParam(description);
   sw.start("Processing selected geometric measuremenets");
-  xapp.XFile().GetRM().GetSelectedTableRows().Process(*Cif);
+  rm.GetSelectedTableRows().Process(*Cif);
   bool insert_vars = Options.GetBoolOption("vars"),
     insert_rtab = Options.GetBoolOption("rtab");
-  if (insert_vars || insert_rtab) {
+  if ((insert_vars && rm.CVars.Validate()) ||
+    (insert_rtab && rm.HasRTABs()))
+  {
     olx_object_ptr<VcoVContainer> vcovc = new VcoVContainer(xapp.XFile().GetAsymmUnit());
     olxstr src_mat;
     try {
@@ -10998,39 +11001,6 @@ void XLibMacros::macTolman(TStrObjList &Cmds, const TParamList &Options,
   TBasicApp::NewLogEntry() << "Metal to P distance is: " << olxstr::FormatFloat(3, mpd);
   TBasicApp::NewLogEntry() << "C-H disance is: " << olxstr::FormatFloat(3, chd);
 }
-
-struct idx_pair_t : public olx_pair_t<size_t, size_t> {
-  idx_pair_t(size_t a, size_t b)
-    : olx_pair_t<size_t, size_t>(a, b)
-  {
-    if (a > b) {
-      olx_swap(this->a, this->b);
-    }
-  }
-  int Compare(const idx_pair_t &p) const {
-    int d = olx_cmp(a, p.a);
-    if (d == 0) {
-      d = olx_cmp(b, p.b);
-    }
-    return d;
-  }
-};
-
-struct PairListComparator {
-  int Compare(const TTypeList<idx_pair_t> &a,
-    const TTypeList<idx_pair_t> &b) const {
-    int r = olx_cmp(a.Count(), b.Count());
-    if (r == 0) {
-      for (size_t i = 0; i < a.Count(); i++) {
-        r = a[i].Compare(b[i]);
-        if (r != 0) {
-          break;
-        }
-      }
-    }
-    return r;
-  }
-};
 
 template <class list_t, typename accessor_t>
 void macSAME_expand(RefinementModel &rm, const list_t& groups,

@@ -118,6 +118,9 @@ struct ComplexComparator {
     Accessor acc;
     Comparator cmp;
   public:
+    TComplexComparator(const Accessor& acc)
+      : acc(acc)
+    {}
     TComplexComparator(const Accessor &acc, const Comparator &cmp)
       : acc(acc), cmp(cmp)
     {}
@@ -131,7 +134,7 @@ struct ComplexComparator {
   static TComplexComparator<Accessor, Comparator>
     Make(const Accessor &acc, const Comparator &cmp) {
       return TComplexComparator<Accessor, Comparator>(acc, cmp);
-    }
+  }
 };
 //.............................................................................
 struct ReverseComparator {
@@ -196,6 +199,51 @@ struct ReverseComparator {
    static ReverseComparator_<cmp_t> Make(const cmp_t& cmp)
   {
     return ReverseComparator_<cmp_t>(cmp);
+  }
+};
+//.............................................................................
+// size_priority - longer list is larger disregarding elements
+template <bool size_priority = false>
+struct ListComparator {
+  template <class Comparator>
+  struct TListComparator {
+    Comparator cmp;
+    TListComparator() {}
+    TListComparator(const Comparator& cmp)
+      : cmp(cmp)
+    {}
+
+    template <class list_a_t, class list_b_t>
+    int Compare(const list_a_t& a, const list_b_t& b) const {
+      if (size_priority) {
+        int r = olx_cmp(a.Count(), b.Count());
+        if (r != 0) {
+          return r;
+        }
+      }
+      else {
+        size_t sz = olx_min(a.Count(), b.Count());
+        for (size_t i = 0; i < sz; i++) {
+          int r = cmp.Compare(a[i], b[i]);
+          if (r != 0) {
+            return r;
+          }
+        }
+        return olx_cmp(a.Count(), b.Count());
+      }
+    }
+  };
+  template <class Comparator>
+  TListComparator<Comparator> make(const Comparator& cmp) {
+    return TListComparator<Comparator>(cmp);
+  }
+
+  template <class Accessor, class Comparator>
+  typename ComplexComparator::TComplexComparator<Accessor, Comparator>
+    make(const Accessor &acc, const Comparator& cmp)
+  {
+    typedef ComplexComparator::TComplexComparator<Accessor, Comparator> cmp_t;
+    return TListComparator<cmp_t>(cmp_t(acc, cmp));
   }
 };
 //.............................................................................
