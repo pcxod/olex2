@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2014 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2025 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -223,6 +223,11 @@ struct olx_ref {
   static P& get(P& p) { return p; }
   template <class P>
   static const P& get(const P& p) { return p; }
+  
+  template <class P>
+  static P& get(olx_object_ptr<P>& p) { return *p; }
+  template <class P>
+  static const P& get(const olx_object_ptr<P>& p) { return *p; }
 };
 
 struct olx_ptr {
@@ -234,6 +239,11 @@ struct olx_ptr {
   static P* get(P& p) { return &p; }
   template <class P>
   static const P* get(const P& p) { return &p; }
+
+  template <class P>
+  static P* get(olx_object_ptr<P>& p) { return &p; }
+  template <class P>
+  static const P* get(const olx_object_ptr<P>& p) { return &p; }
 
   template <typename T>
   static olx_array_ptr<T> copy(const T *d, size_t sz) {

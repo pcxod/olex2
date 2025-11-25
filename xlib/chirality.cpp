@@ -8,6 +8,7 @@
 ******************************************************************************/
 
 #include "analysis.h"
+#include "complex_id.h"
 
 // note max atom id is uint16_t
 struct RSA_BondOrder {
@@ -24,14 +25,12 @@ struct RSA_BondOrder {
     return o;
   }
 protected:
-  typedef TArrayList<size_t> id_t;
-
-  static typename id_t::const_list_type get_id(const TCAtom& a, const TCAtom::Site& to) {
-    return id_t(olx_reserve(3)) << a.GetId() << to.atom->GetId() << to.matrix.GetId();
+  typedef olx_object_ptr<complex_id_t> id_t;
+  static olx_object_ptr<complex_id_t> get_id(const TCAtom& a, const TCAtom::Site& to) {
+    return new complex_id_t(a.GetId(), to.atom->GetId(), to.matrix.GetId());
   }
 
-  typedef typename ListComparator<>::TListComparator<TPrimitiveComparator> cmp_t;
-  olxdict<id_t, int, cmp_t> orders;
+  olxdict<id_t, int, TComparableComparator> orders;
 
   int evaluate_order(const TCAtom& a, const TCAtom::Site& to) {
     if (a.GetType() == iHydrogenZ || to.atom->GetType() == iHydrogenZ) {

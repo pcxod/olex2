@@ -649,6 +649,7 @@
     <ClInclude Include="..\..\..\sdl\bitarray.h" />
     <ClInclude Include="..\..\..\sdl\citem.h" />
     <ClInclude Include="..\..\..\sdl\comparable_operators.h" />
+    <ClInclude Include="..\..\..\sdl\complex_id.h" />
     <ClInclude Include="..\..\..\sdl\constlist.h" />
     <ClInclude Include="..\..\..\sdl\datafile.h" />
     <ClInclude Include="..\..\..\sdl\dataitem.h" />

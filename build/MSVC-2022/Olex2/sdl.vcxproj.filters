@@ -638,6 +638,9 @@
     <ClInclude Include="..\..\..\sdl\aligned.h">
       <Filter>Header Files\containers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\sdl\complex_id.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />

@@ -84,7 +84,7 @@ namespace test {
     //return rv;
   }
   void perf_test(OlxTests& t) {
-    size_t max_str_c = 250000;
+    size_t max_str_c = 5000000;
     bool test_binary = max_str_c < 1000000; // takes too long with > 1m recs
     TStrList strings(max_str_c);
     for (size_t i = 0; i < max_str_c; i++) {
