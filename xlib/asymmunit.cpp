@@ -1004,6 +1004,7 @@ void TAsymmUnit::ChangeSpaceGroup(const TSpaceGroup& sg) {
   Matrices.Clear();
   if (sg.IsCentrosymmetric() && !sg.GetInversionCenter().IsNull(1e-3)) {
     sg.GetMatrices(Matrices, mattAll^(mattCentering|mattIdentity));
+    Latt = -olx_abs(Latt);
   }
   else {
     Matrices = sg.GetMatrices();

@@ -90,7 +90,7 @@ public:
 
   ~complex_id_t() {
     if (data != 0) {
-      delete data;
+      delete []data;
     }
   }
 
