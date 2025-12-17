@@ -3614,15 +3614,18 @@ void TMainForm::OnIdle() {
 #endif
     TBasicApp::GetInstance().OnIdle.Execute((AEventsDispatcher*)this, NULL);
   // runonce business...
-  if (!RunOnceProcessed && TBasicApp::IsBaseDirWriteable()) {
+  if (!RunOnceProcessed) {
     RunOnceProcessed = true;
     TStrList rof;
     TEFile::ListDir(FXApp->GetBaseDir(), rof, "runonce*.*", sefFile);
-    TStrList macros;
     for (size_t i=0; i < rof.Count(); i++) {
-      rof[i] = FXApp->GetBaseDir()+rof[i];
+      olxstr brof = FXApp->GetBaseDir() + rof[i];
+      olxstr urof = FXApp->GetInstanceDir() + rof[i];
+      if (TEFile::Exists(urof) && TEFile::GetFileID(brof) == TEFile::GetFileID(urof)) {
+        continue;
+      }
       try {
-        TEFile::ReadLines(rof[i], macros);
+        TStrList macros = TEFile::ReadLines(brof);
         macros.CombineLines('\\');
         for (size_t j=0; j < macros.Count(); j++) {
           processMacro(macros[j]);
@@ -3631,15 +3634,11 @@ void TMainForm::OnIdle() {
             macros[j];
 #endif
         }
+        TEFile::Copy(brof, urof);
       }
       catch (const TExceptionBase& e) {
         ShowAlert(e);
       }
-      time_t fa = TEFile::FileAge(rof[i]);
-      // Null the file
-      try  {  TEFile ef(rof[i], "wb+");  }
-      catch(TIOException&)  {}
-      TEFile::SetFileTimes(rof[i], fa, fa);
     }
   }
 }
