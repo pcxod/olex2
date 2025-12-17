@@ -11655,22 +11655,30 @@ void XLibMacros::macTLS(TStrObjList &Cmds, const TParamList &Options,
 //.............................................................................
 void XLibMacros::funCell(const TStrObjList& Params, TMacroData &E)  {
   TXApp &app = TXApp::GetInstance();
-  if( Params[0].Equalsi('a') )
+  if (Params[0].Equalsi('a')) {
     E.SetRetVal(app.XFile().GetAsymmUnit().GetAxes()[0]);
-  else if( Params[0].Equalsi('b') )
+  }
+  else if (Params[0].Equalsi('b')) {
     E.SetRetVal(app.XFile().GetAsymmUnit().GetAxes()[1]);
-  else if( Params[0].Equalsi('c') )
+  }
+  else if (Params[0].Equalsi('c')) {
     E.SetRetVal(app.XFile().GetAsymmUnit().GetAxes()[2]);
-  else if( Params[0].Equalsi("alpha") )
+  }
+  else if (Params[0].Equalsi("alpha")) {
     E.SetRetVal(app.XFile().GetAsymmUnit().GetAngles()[0]);
-  else if( Params[0].Equalsi("beta") )
+  }
+  else if (Params[0].Equalsi("beta")) {
     E.SetRetVal(app.XFile().GetAsymmUnit().GetAngles()[1]);
-  else if( Params[0].Equalsi("gamma") )
+  }
+  else if (Params[0].Equalsi("gamma")) {
     E.SetRetVal(app.XFile().GetAsymmUnit().GetAngles()[2]);
-  else if( Params[0].Equalsi("volume") )
+  }
+  else if (Params[0].Equalsi("volume")) {
     E.SetRetVal(olxstr::FormatFloat(2, app.XFile().GetUnitCell().CalcVolume()));
-  else
+  }
+  else {
     E.ProcessingError(__OlxSrcInfo, "invalid argument: ") << Params[0];
+  }
 }
 //..............................................................................
 void XLibMacros::funCif(const TStrObjList& Params, TMacroData &E)  {
