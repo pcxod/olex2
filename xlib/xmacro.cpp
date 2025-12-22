@@ -344,8 +344,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     (fpAny^fpNone)|psFileLoaded,
     "Changes current space group settings using provided cell setting (if "
     "applicable) and axis, or 9 transformation matrix elements and the space "
-    "group symbol. If the transformed HKL file is required, it should be "
-    "provided as the last argument (like test.hkl)");
+    "group symbol (optional). If the transformed HKL file is required, it should "
+    "be provided as the last argument (like test.hkl)");
   xlib_InitMacro(ASR, EmptyString(), fpNone^psFileLoaded,
     "Absolute structure refinement: adds TWIN and BASF to current model in the"
     " case of non-centrosymmetric structure");
@@ -3306,7 +3306,7 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options,
     }
     else {
       TAsymmUnit& au = xapp.XFile().LastLoader()->GetAsymmUnit();
-      if (!sg == 0) {
+      if (sg != 0) {
         au.ChangeSpaceGroup(*sg);
         au.InitMatrices();
         xapp.XFile().LastLoaderChanged();
