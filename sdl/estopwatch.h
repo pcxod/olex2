@@ -53,7 +53,10 @@ protected:
     static olx_critical_section cs;
     return cs;
   }
-  static Record *current;
+  static Record*& current_() {
+    static Record* current = 0;
+    return current;
+  }
   static void print();
 public:
   static Record &Push(const olxstr &functionName);
@@ -66,7 +69,7 @@ class TStopWatch : public IOlxObject {
 public:
   TStopWatch(const olxstr& functionName)
     : record(TStopWatchManager::Push(functionName)),
-      pg(NULL)
+      pg(0)
   {}
   ~TStopWatch() {
     record.termination_time = TETime::msNow();
@@ -74,9 +77,10 @@ public:
   }
   void start(const olxstr& name) {
     record.start(name);
-    if (pg != NULL) {
-      if (pg->GetPos()+1 >= pg->GetMax())
-        pg->SetMax(pg->GetMax()+1);
+    if (pg != 0) {
+      if (pg->GetPos() + 1 >= pg->GetMax()) {
+        pg->SetMax(pg->GetMax() + 1);
+      }
       pg->SetPos(pg->GetPos()+1);
       pg->SetAction(name);
       TBasicApp::GetInstance().OnProgress.Execute(this, pg);

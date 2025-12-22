@@ -11,6 +11,7 @@
 #define __olx_ctrl_H
 #include "actions.h"
 #include "ctrls/olxctrlbase.h"
+#include "wx/stc/stc.h"
 #include "wx/wx.h"
 
 class olxCommandEvent;

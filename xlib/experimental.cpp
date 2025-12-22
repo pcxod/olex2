@@ -53,6 +53,18 @@ void ExperimentalDetails::ToDataItem(TDataItem& item) const {
 PyObject* ExperimentalDetails::PyExport() {
   PyObject* main = PyDict_New();
   PythonExt::SetDictItem(main, "radiation", Py_BuildValue("d", Radiation));
+  olxstr rt;
+  if (RadiationType == radiaotion_type_neut) {
+    rt = "neutrons";
+  }
+  else if (RadiationType == radiaotion_type_ed) {
+    rt = "electrons";
+  }
+  else {
+    rt = "xray";
+  }
+  PythonExt::SetDictItem(main, "radiation_type", PythonExt::BuildString(rt));
+
   PythonExt::SetDictItem(main, "temperature",
     Py_BuildValue("d", TempValue.GetV()) );
   PythonExt::SetDictItem(main, "size",

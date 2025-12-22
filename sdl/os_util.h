@@ -91,11 +91,15 @@ protected:
   olx_critical_section* cs;
 public:
   olx_scope_cs(olx_critical_section* _cs) : cs(_cs)  {
-    if (cs != NULL) cs->enter();
+    if (cs != 0) {
+      cs->enter();
+    }
   }
   olx_scope_cs(olx_critical_section& _cs) : cs(&_cs)  {  cs->enter();  }
   ~olx_scope_cs() {
-    if (cs != NULL) cs->leave();
+    if (cs != 0) {
+      cs->leave();
+    }
   }
 };
 
@@ -109,6 +113,70 @@ inline void olx_sleep(time_t msec)  {
   nanosleep(&tm, NULL);
 #endif
 }
+/* after some time with ChatGPT! */
+template <typename T>
+class OlxVolatileValue {
+  T value;
+  mutable olx_critical_section cs;
+
+public:
+  OlxVolatileValue(const T& v) : value(v) {}
+
+  // Thread-safe getter
+  T get() const {
+    olx_scope_cs lock(cs);
+    return value;
+  }
+
+  // Thread-safe setter
+  void set(const T& v) {
+    *this = v;  // reuse operator=
+  }
+
+  // operator() shorthand
+  T operator()() const {
+    return get();
+  }
+
+  // Assign from T
+  OlxVolatileValue<T>& operator=(const T& v) {
+    olx_scope_cs lock(cs);
+    value = v;
+    return *this;
+  }
+
+  // Assign from another OlxVolatileValue<T>
+  OlxVolatileValue<T>& operator=(const OlxVolatileValue<T>& other) {
+    if (this != &other) {
+      // To avoid deadlock in multithreaded assignment, lock in address order
+      if (&cs < &other.cs) {
+        olx_scope_cs lock1(cs);
+        olx_scope_cs lock2(other.cs);
+        value = other.value;
+      }
+      else {
+        olx_scope_cs lock1(other.cs);
+        olx_scope_cs lock2(cs);
+        value = other.value;
+      }
+    }
+    return *this;
+  }
+
+  // Lambda-style in-place access (non-const)
+  template <typename F>
+  void with_lock(F func) {
+    olx_scope_cs lock(cs);
+    func(value);
+  }
+
+  // Lambda-style in-place access (const)
+  template <typename F>
+  void with_lock(F func) const {
+    olx_scope_cs lock(cs);
+    func(value);
+  }
+};
 
 EndEsdlNamespace()
 #endif

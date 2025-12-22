@@ -1135,9 +1135,18 @@ olxstr TEFile::ExpandRelativePath(const olxstr& path, const olxstr& _base) {
     toks = TStrList(OLX_OS_PATH(base), OLX_PATH_DEL);
     unc = base.StartsFrom(OLX_PATH_DEL);
   }
+  else {
+#ifndef __WIN32__
+    unc = true;
+#endif
+  }
   toks.AddAll(TStrList(OLX_OS_PATH(path), OLX_PATH_DEL));
   for (size_t i = 0; i < toks.Count(); i++) {
+#ifdef __WIN32__
     if (toks[i] == ".." && i > 1) {
+#else
+    if (toks[i] == ".." && i >= 1) {
+#endif
       toks.Delete(--i);
       toks.Delete(i--);
     }

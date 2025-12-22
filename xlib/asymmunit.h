@@ -214,9 +214,10 @@ public:
   //creates a new atom and puts it into the list
   TCAtom& NewCentroid(const vec3d& CCenter);
   /* returns an atom by label; if the label is not unique, returns the first
-  found
+  found. When signless_part is true - 'a' + abs(part) is checked, for signed
+  part '*' at the end points to a negative part
   */
-  TCAtom* FindCAtom(const olxstr& Label, TResidue* resi = 0) const;
+  TCAtom* FindCAtom(const olxstr& Label, TResidue* resi = 0, bool signless_part=false) const;
   /* direct label match search */
   TCAtom* FindCAtomDirect(const olxstr& Label) const;
   //returns an atom by Id

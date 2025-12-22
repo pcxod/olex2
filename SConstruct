@@ -322,15 +322,15 @@ if sys.platform[:3] == 'win':
     wx_env.Append(LIBPATH = [wxFolder+'lib/vc_lib'])
   wx_env.Append(CCFLAGS = ['-D__WXWIDGETS__'])
   if not debug:
-    wx_libs = """wxexpat wxjpeg wxpng wxtiff wxzlib 
-                 wxbase$$u wxbase$$u_net wxmsw$$u_gl   
-                 wxmsw$$u_html wxmsw$$u_core 
-                 wxmsw$$u_adv wxregexu"""
+    wx_libs = """wxmsw$$u_adv wxmsw$$u_html wxbase$$u_net wxmsw$$u_gl 
+                 wxmsw$$u_core wxbase$$u wxmsw$$u_webview wxmsw$$u_stc
+                 wxexpat wxjpeg wxpng wxtiff wxzlib wxregexu wxscintilla
+                 """
     wx_env.Append(CPPPATH=[wxFolder+'include', wxFolder+'lib/vc_lib/mswu'])
   else:
-    wx_libs = """wxexpat wxjpeg wxpng wxtiff wxzlib 
-                 wxbase$$ud wxbase$$ud_net wxmsw$$ud_gl   
-                 wxmsw$$ud_richtext wxmsw$$ud_html wxmsw$$ud_core 
+    wx_libs = """wxexpat wxjpeg wxpng wxtiff wxzlib wxscintillad
+                 wxbase$$ud wxbase$$ud_net wxmsw$$ud_gl wxmsw$$ud_stc
+                 wxmsw$$ud_richtext wxmsw$$ud_html wxmsw$$ud_core
                  wxmsw$$ud_adv wxregexud"""
     wx_env.Append(CPPPATH=[wxFolder+'include', wxFolder+'lib/vc_lib/mswud'])
   wx_env.Append(LIBS = Split(wx_libs.replace('$$', wxVersion)))

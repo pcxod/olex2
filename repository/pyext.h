@@ -1,14 +1,12 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2025 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
 * This source file is distributed under the terms of the licence located in   *
 * the root folder.                                                            *
 ******************************************************************************/
-
-#ifndef __olx_python_ext_H
-#define __olx_python_ext_H
+#pragma once
 #include "macrolib.h"
 #include "etime.h"
 #include "etbuffer.h"
@@ -17,14 +15,74 @@
 #if !defined OLX_CCAT
 #define OLX_CCAT(A, B) A ## B
 #endif
-#if PY_MAJOR_VERSION >= 3
+
 inline size_t olx_PyUnicode_Length(PyObject* pobj) { return PyUnicode_GetLength(pobj); }
 #define OlxInitPyModule(m_name, m_def) PyMODINIT_FUNC OLX_CCAT(PyInit_, m_name)() \
  { return PythonExt::init_module(#m_name, m_def); }
-#else
-inline size_t olx_PyUnicode_Length(PyObject* pobj) { return PyUnicode_GetSize(pobj); }
-#define OlxInitPyModule(m_name, m_def) void OLX_CCAT(init,m_name)() \
- { PythonExt::init_module(#m_name, m_def); }
+
+#ifdef _LIBFFI
+#include "olxffi.h"
+
+class LibFFI_Func_Closure {
+  olx_object_ptr<lib_ffi> FFI;
+  ABasicFunction* func;
+  olxcstr name, description;
+  olx_object_ptr<ffi_cif> cif;
+  ffi_closure* closure;
+  void* executable_func_ptr;
+  static ffi_type** arg_types();
+  static PyObject* processor(ABasicFunction* f,
+    PyObject* self, PyObject* args, PyObject* kwds);
+public:
+  typedef PyObject* (*closure_fn_t)(PyObject*, PyObject*);
+
+  LibFFI_Func_Closure(olx_object_ptr<lib_ffi> FFI, ABasicFunction* f);
+  ~LibFFI_Func_Closure() {
+    if (closure != 0) {
+      FFI->ffi_closure_free(closure);
+    }
+  }
+
+  closure_fn_t get_ptr() const {
+    return (closure_fn_t)executable_func_ptr;
+  }
+
+  const ABasicFunction& get_func() const { return *func; }
+  const olxcstr& get_name() const { return name; }
+  const olxcstr& get_description() const { return description; }
+  static void closure_handler(ffi_cif* cif, void* ret, void* args_[], void* func);
+};
+
+class LibFFI_Lib_Closure {
+  olx_object_ptr<lib_ffi> FFI;
+  TLibrary* lib;
+  olxcstr name;
+  olx_object_ptr<ffi_cif> cif;
+  ffi_closure* closure;
+  void* executable_func_ptr;
+  static PyObject* do_export(LibFFI_Lib_Closure* cl);
+  TTypeList<LibFFI_Func_Closure> closures;
+  olx_array_ptr<PyMethodDef> funcs;
+public:
+  typedef PyObject* (*closure_fn_t)();
+
+  LibFFI_Lib_Closure(olx_object_ptr<lib_ffi> FFI,
+    TLibrary* lib, const olxcstr &name_prefix);
+  ~LibFFI_Lib_Closure() {
+    if (closure != 0) {
+      FFI->ffi_closure_free(closure);
+    }
+  }
+
+  closure_fn_t get_ptr() const {
+    return (closure_fn_t)executable_func_ptr;
+  }
+
+  PyObject* do_register();
+  const TLibrary& get_lib() const { return *lib; }
+  const olxcstr& get_name() const { return name; }
+  static void closure_handler(ffi_cif* cif, void* ret, void* args_[], void* lib);
+};
 #endif
 
 //---------------------------------------------------------------------------
@@ -38,7 +96,6 @@ class PythonExt : public IOlxObject {
   }
   IOlex2Processor* OlexProcessor;
   TLibrary *Library, *BindLibrary;
-  TTypeList<pyRegFunc> ToRegister;
   //.............................................................................
   struct ProfileInfo {
     int CallCount;
@@ -56,14 +113,12 @@ class PythonExt : public IOlxObject {
   static size_t Olx_PyUnicode_AsWideChar(PyObject *unic, wchar_t *w,
     Py_ssize_t sz)
   {
-#if PY_MAJOR_VERSION >= 3
     return PyUnicode_AsWideChar(unic, w, sz);
-#else
-    return PyUnicode_AsWideChar((PyUnicodeObject *)unic, w, sz);
-#endif
   }
-#if PY_MAJOR_VERSION >= 3
   static PyObject *pyInit();
+
+#ifdef _LIBFFI
+  TTypeList<LibFFI_Lib_Closure> lib_closures;
 #endif
 public:
   class BasicWrapper : public IOlxObject {
@@ -156,6 +211,16 @@ public:
   IOlex2Processor* GetOlexProcessor() { return OlexProcessor; }
   void CheckInitialised();
 
+#ifdef _LIBFFI
+  // initialises the pointer below!
+  void ExportDirect(const olxcstr& name);
+  static olx_object_ptr<lib_ffi>& get_ffi() {
+    static olx_object_ptr<lib_ffi> FFI;
+    return FFI;
+  }
+
+#endif
+
   static PythonExt* GetInstance() {
     if (Instance() == 0) {
       throw TFunctionFailedException(__OlxSourceInfo, "Uninitialised object");
@@ -174,8 +239,9 @@ public:
     }
     return PyUnicode_FromWideChar(str.raw_str(), str.Length());
 #else
-    if (str.IsEmpty()) // silly Py...
+    if (str.IsEmpty()) { // silly Py...
       return PyString_FromStringAndSize("", 0);
+    }
     return PyString_FromStringAndSize(str.raw_str(), str.Length());
 #endif
   }
@@ -262,11 +328,7 @@ public:
   }
 
   static olxcstr UpdateBinaryFormat(const char *f) {
-#if PY_MAJOR_VERSION >= 3
     return olxcstr(f).Replace("s#", "y#");
-#else
-    return f;
-#endif
   }
   static PyObject* PyNone() { Py_INCREF(Py_None);  return Py_None; }
   static PyObject* PyTrue() { Py_INCREF(Py_True);  return Py_True; }
@@ -290,5 +352,4 @@ public:
   static PyObject *init_module(const olxcstr &name, PyMethodDef *m_def);
 };
 
-#endif
-#endif
+#endif // _PYTHON

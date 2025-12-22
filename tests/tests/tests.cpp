@@ -67,6 +67,7 @@ int main(int argc, char* argv[]) {
   xapp.XFile().RegisterFileFormat(new TIns, "ins");
   xapp.GetLog().AddStream(new TOutStream, true);
   xapp.GetLog().AddStream(TUtf8File::Create(xapp.GetBaseDir()+"log.out", false), true);
+  xapp.SetProfiling(true);
   OlxTests tests;
   tests.Add(&test::HashedTests);
   tests.Add(&test::exparse::ExparseTests);

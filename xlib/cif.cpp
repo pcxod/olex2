@@ -137,7 +137,7 @@ void TCif::_LoadCurrent() {
   Initialize();
 }
 //..............................................................................
-void TCif::SaveToStrings(TStrList& Strings)  {
+void TCif::SaveToStrings(TStrList& Strings) {
   TStopWatch sw(__FUNC__);
   static olxstr def_pivots(
     "_audit_creation,_publ,_chemical_name,_chemical_formula,_chemical,_atom_type,"
@@ -300,9 +300,14 @@ void TCif::Initialize() {
         t_v.V() -= 273.15;
         GetRM().expl.SetTempValue(t_v);
       }
-      const olxstr radiation = GetParamAsString("_diffrn_radiation_wavelength");
-      if (!radiation.IsEmpty() && radiation != '?')
-        GetRM().expl.SetRadiation(radiation.ToDouble());
+      olxstr tmp = GetParamAsString("_diffrn_radiation_wavelength");
+      if (tmp.IsNumber()) {
+        GetRM().expl.SetRadiation(tmp.ToDouble());
+      }
+      tmp = GetParamAsString("_diffrn_radiation_type");
+      if (tmp.Containsi("neutrons")) {
+        GetRM().expl.SetRadiationType(radiaotion_type_neut);
+      }
     }
     catch (...) {}
     EValue = GetParamAsString("_cell_length_a");
@@ -466,13 +471,15 @@ void TCif::Initialize() {
             sg_initialised = true;
           }
           catch (...) {
-            TBasicApp::NewLogEntry() << "Failed to expand Hall symbol";
+            TBasicApp::NewLogEntry(logError) << "Failed to expand Hall symbol";
           }
         }
       }
     }
   }
   if (!sg_initialised) {
+    // should be quiet - this could be a non-structure CIF
+    //TBasicApp::NewLogEntry(logError) << "Space group is not initialised, defaulting to P1";
     try {
       if (Matrices.IsEmpty()) {
         GetAsymmUnit().ChangeSpaceGroup(
@@ -676,7 +683,7 @@ void TCif::Initialize() {
       else if (DegenFunction == 3) {
         degen = 1. / degen;
       }
-      if (degen != 1) {
+      if (degen != 1 && degen != 0 && degen == degen) { // check for nan/inf as well
         A.SetOccu(A.GetOccu() / degen);
         A.SetOccuEsd(A.GetOccuEsd() / degen);
       }
@@ -889,7 +896,20 @@ void TCif::Initialize() {
       const size_t ind_s = ALoop->ColIndex("_atom_type_symbol");
       const size_t ind_r = ALoop->ColIndex("_atom_type_scat_dispersion_real");
       const size_t ind_i = ALoop->ColIndex("_atom_type_scat_dispersion_imag");
-      if ((ind_s | ind_r | ind_i) != InvalidIndex) {
+      const size_t ind_l = ALoop->ColIndex("_atom_type_scat_length_neutron");
+
+      if ((ind_s | ind_l) != InvalidIndex) {
+        for (size_t i = 0; i < ALoop->RowCount(); i++) {
+          const CifRow& r = (*ALoop)[i];
+          XScatterer* sc = new XScatterer(r[ind_s]->GetStringValue());
+          cm_Gaussians g;
+          g.c = r[ind_l]->GetStringValue().ToDouble();
+          sc->SetGaussians(g);
+          sc->SetFpFdp(0);
+          GetRM().AddSfac(*sc);
+        }
+      }
+      else if ((ind_s | ind_r | ind_i) != InvalidIndex) {
         for (size_t i = 0; i < ALoop->RowCount(); i++) {
           const CifRow& r = (*ALoop)[i];
           XScatterer* sc = new XScatterer(r[ind_s]->GetStringValue());
@@ -1132,6 +1152,9 @@ bool TCif::Adopt(TXFile& XF, int flags) {
   SetParam("_diffrn_ambient_temperature",
     XF.GetRM().expl.IsTemperatureSet() ? temp_v.ToString() : olxstr('?'), false);
   SetParam("_diffrn_radiation_wavelength", XF.GetRM().expl.GetRadiation(), false);
+  if (XF.GetRM().expl.GetRadiationType() == radiaotion_type_neut) {
+    SetParam("_diffrn_radiation_type", "neutrons", false);
+  }
   if (XF.GetRM().expl.GetCrystalSize().QLength() > 1.e-6) {
     SetParam("_exptl_crystal_size_max", XF.GetRM().expl.GetCrystalSize()[0], false);
     SetParam("_exptl_crystal_size_mid", XF.GetRM().expl.GetCrystalSize()[1], false);

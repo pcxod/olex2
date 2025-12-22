@@ -1717,6 +1717,12 @@ void TXFile::SetLastLoader(const TBasicCFile* ll) {
     return;
   }
   for (size_t i = 0; i < FileFormats.Count(); i++) {
+    if (ll == FileFormats.GetObject(i)) {
+      FLastLoader = FileFormats.GetObject(i);
+      return;
+    }
+  }
+  for (size_t i = 0; i < FileFormats.Count(); i++) {
     if (olx_type_check(*ll, *FileFormats.GetObject(i))) {
       FLastLoader = FileFormats.GetObject(i);
       return;

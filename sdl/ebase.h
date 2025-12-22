@@ -99,14 +99,33 @@ template <typename T> T *olx_realloc(T *a, size_t sz) {
   return (T*)olx_realloc_(a, sz*sizeof(T));
 }
 template <typename T> void olx_free(T *a) {
-  if( a != 0 )  free(a);
+  if (a != 0) {
+    free(a);
+  }
 }
 template <typename T> void olx_del_obj(T *a) {
-  if (a != 0) delete a;
+  if (a != 0) {
+    delete a;
+  }
 }
 template <typename T> void olx_del_arr(T *a) {
-  if (a != 0) delete [] a;
+  if (a != 0) {
+    delete[] a;
+  }
 }
+struct olx_obj_deleter {
+  template <typename obj_t>
+  void operator ()(const obj_t& o) const {
+    delete o;
+  }
+};
+
+struct olx_obj_deleter_safe {
+  template <typename obj_t>
+  void operator ()(const obj_t& o) const {
+    olx_del_obj(o);
+  }
+};
 template <typename T> T *olx_memcpy(T *dest, const T *src, size_t sz) {
   return (T *)memcpy(dest, src, sz*sizeof(T));
 }

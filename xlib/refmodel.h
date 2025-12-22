@@ -270,6 +270,9 @@ public:
   void ClearOmits() { Omits.Clear(); }
   void ClearOmit() { OMIT_set = false; }
   const vec3i_list& GetOmits() const {  return Omits;  }
+  void SetOmits(const vec3i_list& omits) {
+    Omits = omits;
+  }
   void AddOMIT(const TStrList& omit);
   void DelOMIT(const TStrList& omit, bool all);
   const AtomRefList &OmittedAtoms() const { return Omitted; }
@@ -366,6 +369,9 @@ Friedel opposites of components 1 ... m
   InfoTab& AddHTAB();
   InfoTab& AddRTAB(const olxstr& codename);
   InfoTab& AddCONF();
+  // checks if there are any valid RTABS
+  bool HasRTABs() const;
+  // exports RTABs as CIF loops
   TTypeList<cif_dp::cetTable>::const_list_type ExportInfo(const TCif &cif,
     olx_object_ptr<VcoVContainer> vcovc=0) const;
   // internal: this should be called before the AU atom coordinates are changed
@@ -418,9 +424,12 @@ Friedel opposites of components 1 ... m
     return (i == InvalidIndex ? NULL : &UsedSymm.GetValue(i).symop);
   }
   /* initialises ID's of the matrices to conform to the unit cell, this called
-  by TLattice
+  by TLattice.
   */
   void UpdateUsedSymm(const class TUnitCell& uc);
+  /* Transforms used symmetry (only the rotation part is used)
+  */
+  void TransformUsedSymm(const smatd& rm);
   // throws an exception if not found
   const adirection& DirectionById(const olxstr &id) const;
   // adds new custom scatterer (created with new, will be deleted)

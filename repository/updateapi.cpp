@@ -120,8 +120,7 @@ short UpdateAPI::DoUpdate(olx_object_ptr < AActionHandler> _f_lsnr,
   }
   srcFS->SetBase(AddTagPart(srcFS->GetBase(), false));
   // evaluate properties
-  TStrList props;
-  EvaluateProperties(props);
+  TStrList props = EvaluateProperties();
   bool skip = (toSkip.extsToSkip == 0 && toSkip.filesToSkip == 0);
   res = _Update(*srcFS, props, skip ? 0 : &toSkip);
   if (res == updater::uapi_OK) {
@@ -354,10 +353,12 @@ const_strlist UpdateAPI::GetSystemTags() {
   os_str = "unknown";
 #endif
   res << os_str << os_str;
-  if (TBasicApp::Is64BitCompilation())
+  if (TBasicApp::Is64BitCompilation()) {
     res.GetLastString() << "-64";
-  else
+  }
+  else {
     res.GetLastString() << "-32";
+  }
   return res;
 }
 //.............................................................................
@@ -371,42 +372,51 @@ const_strlist UpdateAPI::GetPluginProperties(const olxstr &p) {
   return props;
 }
 //.............................................................................
-void UpdateAPI::EvaluateProperties(TStrList& props) const {
-  props.Add("olex-update");
+TStrList::const_list_type UpdateAPI::EvaluateProperties() const {
+  olxstr platform, py_ver;
 #if defined(__WIN32__)
 #  if defined(_DEBUG)
 #    if !defined(_WIN64)
-  props.Add("port-win32-portable");  // but can change this ...
-  props.Add("port-win32");
+  platform = "win32";
 #    else
-  props.Add("port-win64");
+  platform = "win64";
 #    endif
 #  elif _WIN64
-  props.Add("port-win64");
+  platform = "win64";
 #  else
-  props.Add("port-win32-portable");  // but can change this ...
 #    if _M_IX86_FP == 0
-  props.Add("port-win32-nosse");
+  platform = "win32-nosse";
 #    elif _M_IX86_FP == 1
-  props.Add("port-win32-sse");
+  platform = "win32-sse";
   // cannot change it! olex2 does not get updated and this is it...
 #    elif _M_IX86_FP == 2
-  props.Add("port-win32");
+  platform = "win32";
 #    endif
 #  endif
 #elif __MAC__
 #  if defined(__LP64__) || defined(__x86_64__)
-  props.Add("port-mac64");
+  platform = "mac64";
 #  else
-  props.Add("port-mac32");
+  platform = "mac32";
 #  endif
 #elif __linux__
 #  if defined(__LP64__) || defined(__x86_64__)
-  props.Add("port-linux64");
+  platform = "lin64";
 #  else
-  props.Add("port-linux32");
+  platform = "win32";
 #  endif
 #endif
+
+#ifdef _PYTHON
+  py_ver << "py" << PY_MAJOR_VERSION << PY_MINOR_VERSION;
+#endif
+
+  TStrList props;
+  props.Add("olex-update");
+  if (!py_ver.IsEmpty()) {
+    props.Add(platform) << '-' << py_ver;
+  }
+
   if (!settings.olex2_port.IsEmpty()) {
     props.Add(settings.olex2_port);
     log.Add("Portable executable update tag: ") << settings.olex2_port;
@@ -426,6 +436,7 @@ void UpdateAPI::EvaluateProperties(TStrList& props) const {
     }
     catch (...) {}  // unlucky
   }
+  return props;
 }
 //.............................................................................
 olx_object_ptr<AFileSystem> UpdateAPI::FSFromString(const olxstr& _repo,

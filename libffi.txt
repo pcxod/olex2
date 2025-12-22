@@ -1,0 +1,10 @@
+- install msys32
+  - pacman -S --noconfirm autoconf autoconf-archive automake make libtool pkg-config
+- open VS Tools command line and run: '...\msys64\msys2_shell.cmd -use-full-path'
+- cd to libffi git repository
+  -./autogen.sh
+  - mkdir build
+  - cd build
+  - ../configure CC="../msvcc.sh -m64" CXX=../msvcc.sh LD=link CPP="cl -nologo -EP" CXXCPP="cl -nologo -EP" CPPFLAGS="-DFFI_BUILDING_DLL"
+
+For static build, use "--disable-shared" - but also replace "-DFFI_BUILDING_DLL" with "-DFFI_STATIC_BUILD"

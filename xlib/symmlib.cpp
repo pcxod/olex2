@@ -831,26 +831,30 @@ void TSpaceGroup::SplitIntoElements(TPtrList<TSymmElement>& ref,
   GetMatrices(mat, mattAll^mattIdentity);
   SplitIntoElements(mat, ref, sgElm);
 }
+//..............................................................................
 void TSpaceGroup::SplitIntoElements(smatd_list& mat,
   TPtrList<TSymmElement>& ref, TPtrList<TSymmElement>& sgElm)
 {
-  for (size_t i = 0; i < mat.Count(); i++)
+  for (size_t i = 0; i < mat.Count(); i++) {
     mat[i].SetRawId(0);
+  }
   for (size_t i = 0; i < ref.Count(); i++) {
     ref[i]->SetTag(0);
-    if (mat.Count() < ref[i]->MatrixCount())  continue;
+    if (mat.Count() < ref[i]->MatrixCount()) {
+      continue;
+    }
     bool elm_found = true;
     for (size_t j = 0; j < ref[i]->MatrixCount(); j++) {
-      bool found = false;
       const smatd& m = ref[i]->GetMatrix(j);
+      bool mat_found = false;
       for (size_t k = 0; k < mat.Count(); k++) {
         const smatd& m1 = mat[k];
         if (m.r == m1.r && _checkTDS(m.t, m1.t)) {
-          found = true;
+          mat_found = true;
           break;
         }
       }
-      if (!found) {
+      if (!mat_found) {
         elm_found = false;
         break;
       }
@@ -862,10 +866,14 @@ void TSpaceGroup::SplitIntoElements(smatd_list& mat,
   }
   // analyse the result
   for (size_t i = 0; i < sgElm.Count(); i++) {
-    if (sgElm[i]->GetSuperElement() != NULL &&
-      sgElm[i]->GetSuperElement()->GetTag() == 1)
-    {
-      sgElm[i] = NULL;
+    if (sgElm[i]->GetSuperElement() != 0) {
+      if (sgElm[i]->GetSuperElement()->GetTag() == 1) {
+        sgElm[i] = 0;
+      }
+      else if (sgElm[i]->GetSuperElement()->AllSubElementsHaveTag(1)) {
+        sgElm.Add(sgElm[i]->GetSuperElement())->SetTag(1);
+        sgElm[i] = 0;
+      }
     }
   }
   sgElm.Pack();
@@ -1098,19 +1106,41 @@ size_t TBravaisLattice::FindSpaceGroups(TPtrList<TSpaceGroup>& SpaceGroups) cons
 //..............................................................................
 //..............................................................................
 //..............................................................................
-TSymmElement::TSymmElement(const olxstr& name, TSpaceGroup* sg)  {
+TSymmElement::TSymmElement(const olxstr& name, TSpaceGroup* sg)
+: Name(name), SuperElement(0)
+{
   sg->GetMatrices(Matrices, mattAll^mattIdentity);
-  Name = name;
-  SuperElement = NULL;
+}
+//..............................................................................
+void TSymmElement::AddSubElement(TSymmElement& e) {
+  e.SuperElement = this;
+  if (!SubElements.ok()) {
+    SubElements = new TPtrList<TSymmElement>();
+  }
+  SubElements->Add(e);
+}
+//..............................................................................
+bool TSymmElement::AllSubElementsHaveTag(index_t tag) const {
+  if (!SubElements.ok()) {
+    return true;
+  }
+  for (size_t i = 0; i < SubElements->Count(); i++) {
+    if (SubElements->GetItem(i)->GetTag() != tag) {
+      return false;
+    }
+  }
+  return true;
 }
 //..............................................................................
 //..............................................................................
 //..............................................................................
 TSymmLib::TSymmLib(const olxstr& FN) : extra_added(0)  {
-  if( Instance != NULL )
-    throw TFunctionFailedException(__OlxSourceInfo, "An instance of the library is already created");
+  if (Instance != 0) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      "An instance of the library is already created");
+  }
 
-  for( int i=1; i < 8; i++ )  {
+  for (int i = 1; i < 8; i++) {
     TCLattice* CL = new TCLattice(i);
     Lattices.Add(CL->GetSymbol(), CL);
   }
@@ -1250,25 +1280,31 @@ TSymmLib::TSymmLib(const olxstr& FN) : extra_added(0)  {
     "--n", FindGroupByName("P11n") );
 
   // 0.5+X,-Y,+Z
-  SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
-    "-a-", FindGroupByName("Pa") ).SuperElement = se_n;
+  se_n->AddSubElement(
+    SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
+      "-a-", FindGroupByName("Pa")));
   //0.5+X,+Y,-Z
-  SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
-    "--a", FindGroupByName("P11a") ).SuperElement = se_11n;
+  se_11n->AddSubElement(
+    SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
+      "--a", FindGroupByName("P11a")));
 
   //-X,0.5+Y,+Z
-  SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
-    "b--", FindGroupByName("Pb11") ).SuperElement = se_n11;
+  se_n11->AddSubElement(
+    SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
+      "b--", FindGroupByName("Pb11")));
   //+X,0.5+Y,-Z
-  SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
-    "--b", FindGroupByName("P11b") ).SuperElement = se_11n;
+  se_11n->AddSubElement(
+    SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
+      "--b", FindGroupByName("P11b")));
 
   //-X,+Y,0.5+Z
-  SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
-    "c--", FindGroupByName("Pc11") ).SuperElement = se_n11;
+  se_n11->AddSubElement(
+    SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
+      "c--", FindGroupByName("Pc11")));
   //+X,-Y,0.5+Z
-  SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
-    "-c-", FindGroupByName("Pc") ).SuperElement = se_n;
+  se_n->AddSubElement(
+    SymmetryElements.AddNew<olxstr, TSpaceGroup*>(
+      "-c-", FindGroupByName("Pc")));
 
 //  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("m--", FindGroupByName("Pm11") );
 //  SymmetryElements.AddNew<olxstr, TSpaceGroup*>("-m-", FindGroupByName("Pm") );
@@ -1346,19 +1382,25 @@ TSymmLib::TSymmLib(const olxstr& FN) : extra_added(0)  {
   Instance = this;
 }
 //..............................................................................
-TSymmLib::~TSymmLib()  {
-  for( size_t i=0; i < SGCount(); i++ )
-    delete &(GetGroup(i));
-  for( size_t i=0; i < LatticeCount(); i++ )
-    delete &(GetLatticeByIndex(i));
-  for( size_t i=0; i < BravaisLatticeCount(); i++ )
-    delete &(GetBravaisLattice(i));
-  Instance = NULL;
+TSymmLib::~TSymmLib() {
+  for (size_t i = 0; i < SpaceGroups.Count(); i++) {
+    delete SpaceGroups.GetValue(i);
+  }
+  for (size_t i = 0; i < Lattices.Count(); i++) {
+    delete Lattices.GetObject(i);
+  }
+  for (size_t i = 0; i < BravaisLattices.Count(); i++) {
+    delete BravaisLattices.GetObject(i);
+  }
+  Instance = 0;
 }
 //..............................................................................
-void TSymmLib::GetGroupByNumber(int N, TPtrList<TSpaceGroup>& res) const  {
-  for( size_t i=0; i < SGCount(); i++ )
-    if( GetGroup(i).GetNumber() == N )  res.Add( &GetGroup(i) );
+void TSymmLib::GetGroupByNumber(int N, TPtrList<TSpaceGroup>& res) const {
+  for (size_t i = 0; i < SGCount(); i++) {
+    if (GetGroup(i).GetNumber() == N) {
+      res.Add(&GetGroup(i));
+    }
+  }
 }
 //..............................................................................
 TSpaceGroup &TSymmLib::CreateNewFromCompact(int latt, const smatd_list& ml,
@@ -1366,10 +1408,10 @@ TSpaceGroup &TSymmLib::CreateNewFromCompact(int latt, const smatd_list& ml,
 {
   const olxstr hs = _hs.IsEmpty() ? HallSymbol::Evaluate(latt, ml) : _hs;
   TBasicApp::NewLogEntry(logInfo) << "Adding new SG " << hs;
-  TSpaceGroup *SG = new TSpaceGroup(ml, hs, hs,
+  olx_object_ptr<TSpaceGroup> SG = new TSpaceGroup(ml, hs, hs,
     EmptyString(), -(++extra_added), GetLatticeByNumber(latt), (latt > 0), hs);
   SpaceGroups.Add(hs, &InitSpaceGroup(*SG));
-  return *hall_symbols.Add(hs, SG);
+  return *hall_symbols.Add(hs, SG.release());
 }
 //..............................................................................
 TSpaceGroup &TSymmLib::InitSpaceGroup(TSpaceGroup &sg) {
@@ -1442,35 +1484,35 @@ TSpaceGroup& TSymmLib::CreateNew(const SymmSpace::Info& si,
     return CreateNewFromCompact(si.centrosymmetric ? si.latt : -si.latt, ml, hs);
   }
   else {
-    TSpaceGroup* SG = new TSpaceGroup(ml, hs, hs,
+    olx_object_ptr<TSpaceGroup> SG = new TSpaceGroup(ml, hs, hs,
       EmptyString(), -(++extra_added), GetLatticeByNumber(si.latt), true, hs);
     SG->InversionCenter = si.inv_trans/2;
     TBasicApp::NewLogEntry(logInfo) << "Adding new SG " << hs;
     SpaceGroups.Add(hs, &InitSpaceGroup(*SG));
-    return *hall_symbols.Add(hs, SG);
+    return *hall_symbols.Add(hs, SG.release());
   }
 }
 //..............................................................................
 TSpaceGroup &TSymmLib::CreateNew(const SymmSpace::Info &si) {
   olxstr hs = HallSymbol::Evaluate(si);
-  TSpaceGroup *sg = hall_symbols.Find(hs, NULL);
+  TSpaceGroup *sg = hall_symbols.Find(hs, 0);
   return sg == NULL ? CreateNew(si, hs) : *sg;
 }
 //..............................................................................
 TSpaceGroup &TSymmLib::CreateNew(const olxstr &hs_) {
   olxstr hs = olxstr(hs_).TrimWhiteChars();
   SymmSpace::Info si = HallSymbol::Expand(hs);
-  TSpaceGroup *sg = hall_symbols.Find(hs, NULL);
-  return sg == NULL ? CreateNew(si, hs) : *sg;
+  TSpaceGroup *sg = hall_symbols.Find(hs, 0);
+  return sg == 0 ? CreateNew(si, hs) : *sg;
 }
 //..............................................................................
-TSpaceGroup& TSymmLib::FindSG(const TAsymmUnit& AU)  {
+TSpaceGroup& TSymmLib::FindSG(const TAsymmUnit& AU) {
   smatd_list ml;
-  TSymmLib::GetInstance().ExpandLatt(ml, AU.GetMatices(), AU.GetLatt());
+  ExpandLatt(ml, AU.GetMatices(), AU.GetLatt());
   SymmSpace::Info si = SymmSpace::GetInfo(ml);
   olxstr hs = HallSymbol::Evaluate(si);
-  TSpaceGroup *sg = hall_symbols.Find(hs, NULL);
-  return sg == NULL ? CreateNew(si, hs) : *sg;
+  TSpaceGroup *sg = hall_symbols.Find(hs, 0);
+  return sg == 0 ? CreateNew(si, hs) : *sg;
 }
 //..............................................................................
 size_t TSymmLib::FindBravaisLattices(TAsymmUnit& AU,

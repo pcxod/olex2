@@ -179,11 +179,12 @@ enum  {
 const unsigned short
   mListen = 0x0001,    // modes
   mSilent = 0x0002,  // silent mode
-  mPick   = 0x0020,  // pick mode, for a future use
-  mFade   = 0x0080,  // structure fading ..
-  mRota   = 0x0100,  // rotation
-  mSolve  = 0x0200,  // structure solution
-  mSGDet  = 0x0400;  // space group determination
+  mPick = 0x0020,  // pick mode, for a future use
+  mFade = 0x0080,  // structure fading ..
+  mRota = 0x0100,  // rotation
+  mSolve = 0x0200,  // structure solution
+  mSGDet = 0x0400,  // space group determination
+  mListenCmd = 0x0800;    // listen to cmds file
 
 // persistence level
 const short
@@ -350,6 +351,7 @@ private:
   DefMacro(Clear)
   DefMacro(Rota)
   DefMacro(Listen)
+  DefMacro(ListenCmd)
   DefMacro(WindowCmd)
   DefMacro(ProcessCmd)
   DefMacro(Wait)
@@ -493,6 +495,7 @@ private:
   DefFunc(ValidatePlugin)
   DefFunc(IsPluginInstalled)
   DefFunc(GetUserInput)
+  DefFunc(GetUserStyledInput)
   DefFunc(TranslatePhrase)
   DefFunc(IsCurrentLanguage)
   DefFunc(CurrentLanguageEncoding)
@@ -566,6 +569,8 @@ private:
   vec3d FFadeVector; // stores: current position, end and increment
 
   olxstr FListenFile;
+
+  olxstr FListenCmdFile; // file to listen for commands
 
   TStringToList<olxstr,wxMenuItem*> FRecentFiles;
   olxstr_dict<olxstr,true> Bindings;

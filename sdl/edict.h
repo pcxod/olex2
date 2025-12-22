@@ -10,6 +10,7 @@
 #ifndef __olx_sdl_dict_H
 #define __olx_sdl_dict_H
 #include "sortedlist.h"
+#include "ebtree.h"
 BeginEsdlNamespace()
 
 template <typename, typename, typename> class const_olxdict;
@@ -44,8 +45,9 @@ struct DictEntry {
   };
 };
 
-template <typename KType, typename VType, class Comparator> class olxdict
-  : protected SortedObjectList<
+template <typename KType, typename VType, class Comparator> class olxdict :
+  public AIterable<VType>,
+  protected SortedObjectList<
       DictEntry<KType, VType, Comparator>,
       typename DictEntry<KType, VType, Comparator>::Comparator>
 {
@@ -90,7 +92,9 @@ public:
   olxdict(const const_olxdict<KType, VType, Comparator>& ad)
     : SortedL(ad.obj().cmp)
   {
-    SortedL::TakeOver(ad.Release(), true);
+    olxdict & d = ad.Release();
+    SortedL::TakeOver(d);
+    delete& d;
   }
   void TakeOver(olxdict& d) { SortedL::TakeOver(d); }
   olxdict& operator = (const olxdict& ad) {
@@ -98,7 +102,9 @@ public:
     return *this;
   }
   olxdict& operator = (const const_olxdict<KType, VType, Comparator>& ad) {
-    SortedL::TakeOver(ad.Release(), true);
+    olxdict& d = ad.Release();
+    SortedL::TakeOver(d);
+    delete& d;
     return *this;
   }
   template <class T> VType& Get(const T& key) const {
@@ -144,8 +150,8 @@ public:
     return SortedL::Contains(key);
   }
 
-  void AddListItem(const EntryType& e) {
-    SortedL::AddUnique(e.key);
+  bool Add(const EntryType& e) {
+    return SortedL::AddUnique(e.key).b;
   }
 
   template <typename T>
@@ -213,6 +219,14 @@ public:
         GetValue(idx) = d.GetValue(idx);
       }
     }
+  }
+  struct ValueAccessor {
+    static const VType& get(const olxdict& s, size_t idx) {
+      return s.GetValue(idx);
+    }
+  };
+  IIterator<VType>* iterate() const {
+    return new IndexableIterator<olxdict, ValueAccessor, VType>(this);
   }
 public:
   typedef KType key_item_type;
@@ -307,6 +321,61 @@ public:
   const_olxdict &operator = (const const_olxdict &d) {
     parent_t::operator = (d);
     return *this;
+  }
+};
+
+template <typename key_t, typename item_t, class cmp_t = TComparableComparator>
+class olxtree_map :
+  public RBTree<RBTreeEntry<TreeMapEntry<key_t, item_t> >, cmp_t>
+{
+public:
+  typedef RBTree<RBTreeEntry<TreeMapEntry<key_t, item_t> >, cmp_t> parent_t;
+  olxtree_map(const cmp_t& cmp = cmp_t())
+    : parent_t(cmp)
+  {}
+
+  template <typename k_t, typename v_t>
+  bool Add(const k_t& k, const v_t& v) {
+    return parent_t::Add(TreeMapEntry<key_t, item_t>(k, v));
+  }
+
+  template <typename k_t>
+  typename parent_t::entry_t* Find(const k_t& k) const {
+    return parent_t::Find(k);
+  }
+
+  template <typename k_t>
+  const item_t& Find(const k_t& key, const item_t& def) const {
+    typename parent_t::entry_t* e = parent_t::Find(key);
+    return e == 0 ? def : e->get_value();
+  }
+};
+
+// allows for duplicate values
+template <typename key_t, typename item_t, class cmp_t = TComparableComparator>
+class olxtree_map_ex :
+  public RBTree<RBTreeEntryEx<TreeMapEntry<key_t, item_t> >, cmp_t>
+{
+public:
+  typedef RBTree<RBTreeEntryEx<TreeMapEntry<key_t, item_t> >, cmp_t> parent_t;
+  olxtree_map_ex(const cmp_t& cmp = cmp_t())
+    : parent_t(cmp)
+  {}
+
+  template <typename k_t, typename v_t>
+  bool Add(const k_t& k, const v_t& v) {
+    return parent_t::Add(TreeMapEntry<key_t, item_t>(k, v));
+  }
+
+  template <typename k_t>
+  typename parent_t::entry_t* Find(const k_t& k) const {
+    return parent_t::Find(k);
+  }
+
+  template <typename k_t>
+  const item_t& Find(const k_t& key, const item_t& def) const {
+    typename parent_t::entry_t* e = parent_t::Find(key);
+    return e == 0 ? def : e->get_value();
   }
 };
 

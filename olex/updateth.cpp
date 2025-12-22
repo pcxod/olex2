@@ -28,7 +28,7 @@ UpdateThread::UpdateThread(const olxstr& patch_dir, bool force_update,
 }
 //.............................................................................
 void UpdateThread::DoInit() {
-  if (!TBasicApp::HasInstance() || Terminate) {
+  if (!TBasicApp::HasInstance() || Terminate()) {
     return;
   }
   try {
@@ -43,7 +43,7 @@ void UpdateThread::DoInit() {
     if (reinstall) {
       destFS = new TUpdateFS(PatchDir,
         *(new TOSFileSystem(TBasicApp::GetBaseDir())));
-      uapi.EvaluateProperties(properties);
+      properties = uapi.EvaluateProperties();
       srcFS->OnProgress.Add(new TActionProxy(OnDownload));
 
       return;
@@ -51,7 +51,7 @@ void UpdateThread::DoInit() {
     Index = new TFSIndex(*srcFS);
     destFS = new TUpdateFS(PatchDir,
       *(new TOSFileSystem(TBasicApp::GetBaseDir())));
-    uapi.EvaluateProperties(properties);
+    properties = uapi.EvaluateProperties();
     srcFS->OnProgress.Add(new TActionProxy(OnDownload));
     Index->OnAction.Add(new TActionProxy(OnAction));
   }
@@ -64,7 +64,7 @@ void UpdateThread::DoInit() {
 //.............................................................................
 int UpdateThread::Run() {
   DoInit();
-  if (!TBasicApp::HasInstance() || Terminate ||
+  if (!TBasicApp::HasInstance() || Terminate() ||
     !srcFS.ok() || !destFS.ok() ||
     (!reinstall && !Index.ok()))
   {
@@ -74,7 +74,7 @@ int UpdateThread::Run() {
   // try to lock updateAPI
   while (!patcher::PatchAPI::LockUpdater()) {
     olx_sleep(100);
-    if (Terminate || !TBasicApp::HasInstance()) {
+    if (Terminate() || !TBasicApp::HasInstance()) {
       CleanUp();
       return 0;
     }
@@ -112,7 +112,7 @@ int UpdateThread::Run() {
       return 0;
     }
     while (!_DoUpdate) {
-      if (Terminate || !TBasicApp::HasInstance()) {  // nobody took care ?
+      if (Terminate() || !TBasicApp::HasInstance()) {  // nobody took care ?
         CleanUp();
         // safe to call without app instance
         patcher::PatchAPI::UnlockUpdater();
@@ -129,7 +129,7 @@ int UpdateThread::Run() {
     // try to lock updateAPI for update
     while (!patcher::PatchAPI::LockUpdater()) {
       olx_sleep(100);
-      if (Terminate || !TBasicApp::HasInstance()) {
+      if (Terminate() || !TBasicApp::HasInstance()) {
         CleanUp();
         return 0;
       }

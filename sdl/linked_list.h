@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2025 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -38,14 +38,20 @@ protected:
   struct Entry {
     T data;
     Entry* next;
-    Entry(T& d) : data(d), next(0) {}
-    ~Entry() { cleanupClass::DoCleanup(data); }
+    Entry(const T& d) : data(d), next(0) {}
+    ~Entry() {
+      cleanupClass::DoCleanup(data);
+    }
   };
   size_t count;
   Entry *first, *last;
 public:
-  TLinkedList() : count(0), first(0), last(0) {}
+  TLinkedList()
+    : count(0), first(0), last(0)
+  {}
+  
   virtual ~TLinkedList() { Clear(); }
+  
   void Clear() {
     if (first == 0) {
       return;
@@ -60,7 +66,8 @@ public:
     first = last = 0;
     count = 0;
   }
-  T& Add(T v) {
+  
+  T& Add(const T &v) {
     if (first == 0) {
       last = first = new Entry(v);
     }
@@ -87,20 +94,27 @@ public:
   }
 
   struct Iterator {
-    const TLinkedList &parent;
-    Entry *cur;
-    Iterator(const TLinkedList &_parent) : parent(_parent), cur(0) {}
+  private:
+    Entry *first, *cur;
+    size_t count;
+  public:
+    Iterator()
+      : first(0), cur(0), count(0)
+    {}
+    Iterator(const TLinkedList &parent)
+      : first(parent.first), cur(0), count(parent.count)
+    {}
     bool HasNext() const {
-      return (cur == 0 ? parent.first : cur->next) != 0;
+      return (cur == 0 ? first : cur->next) != 0;
     }
     bool IsEmpty() const { return cur == 0; }
-    size_t Count() const { return parent.count; }
+    size_t Count() const { return count; }
     T& Next() {
       if (cur != 0) {
         cur = cur->next;
       }
       else {
-        cur = parent.first;
+        cur = first;
       }
       if (cur == 0) {
         TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo,
@@ -108,9 +122,38 @@ public:
       }
       return cur->data;
     }
+
+    T& Lookup() const {
+      Entry* c = cur;
+      if (c != 0) {
+        c = c->next;
+      }
+      else {
+        c = first;
+      }
+      if (c == 0) {
+        TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo,
+          "end of the list");
+      }
+      return c->data;
+    }
   };
 
   Iterator GetIterator() const { return Iterator(*this); }
+
+  TLinkedList &TakeOver(TLinkedList& src, bool do_delete = false) {
+    Clear();
+    first = src.first;
+    last = src.last;
+    count = src.count;
+
+    src.first = src.last = 0;
+    src.count = 0;
+    if (do_delete) {
+      delete& src;
+    }
+    return *this;
+  }
 public:
   typedef T list_item_type;
 };

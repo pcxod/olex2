@@ -73,9 +73,9 @@ public:
   */
   virtual bool Adopt(TXFile&, int);
   //Finds a value by name
-  cif_dp::ICifEntry* FindEntry(const olxstr& name) const {
+  cif_dp::ICifEntry* FindEntry(const olxstr& name, size_t block_idx=InvalidIndex) const {
     return (block_index == InvalidIndex) ? 0 :
-      data_provider[block_index].param_map.Find(name, 0);
+      data_provider[get_bix(block_idx)].param_map.Find(name, 0);
   }
   template <class Entry> Entry* FindParam(const olxstr& name) const {
     return dynamic_cast<Entry*>(FindEntry(name));

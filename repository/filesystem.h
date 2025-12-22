@@ -286,7 +286,7 @@ public:
   // syncronises two items
   uint64_t Synchronise(TFSItem& Dest, const TStrList& properties,
     TStrList* cmds = 0);
-  TFSItem* UpdateFile(TFSItem& FN);
+  TFSItem* UpdateFile(TFSItem& FN, TStrList* cmds=0);
   /* deletes underlying physical object (file or folder). If the object is a
   folder the content of that folder will be removed completely
   */
@@ -350,10 +350,10 @@ public:
   */
   bool ShallAdopt(const TFSItem& src, TFSItem& dest) const;
   bool ShouldExist(const TFSItem& src)  const {
-    return src.GetActions().IndexOfi("delete") == InvalidIndex;
+    return !src.GetActions().Containsi("delete");
   }
   // returns if the action was procesed (or not) successful
-  bool ProcessActions(TFSItem& item);
+  bool ProcessActions(TFSItem& item, TStrList* cmds);
   // stops the syncronisation and updates the index
   void DoBreak() {
     Break = true;

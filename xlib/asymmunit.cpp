@@ -527,14 +527,19 @@ olxset<TCAtom *, TPointerComparator>::const_set_type
   return rv;
 }
 //..............................................................................
-TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi) const {
+TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi,
+  bool signless_part) const
+{
   int part = DefNoPart;
   olxstr lb = Label;
   size_t p_idx = Label.IndexOf('^');
   if (p_idx != InvalidIndex) {
     olxstr sfx = Label.SubStringFrom(p_idx + 1);
-    if (sfx.Length() == 1) {
+    if (sfx.Length() >= 1) {
       part = olxstr::o_tolower(sfx.CharAt(0)) - 'a' + 1;
+      if (!signless_part && sfx.Length() > 1 && sfx.CharAt(1) == '*') {
+        part = -part;
+      }
     }
     lb = Label.SubStringTo(p_idx);
   }
@@ -587,7 +592,12 @@ TCAtom * TAsymmUnit::FindCAtom(const olxstr &Label, TResidue* resi) const {
       if (!resi->GetAtom(i).IsDeleted() &&
         resi->GetAtom(i).GetLabel().Equalsi(lb))
       {
-        if (part == DefNoPart || olx_abs(resi->GetAtom(i).GetPart()) == part) {
+        if (part == DefNoPart) {
+          return &resi->GetAtom(i);
+        }
+        if ((signless_part && olx_abs(resi->GetAtom(i).GetPart()) == part) ||
+          resi->GetAtom(i).GetPart() == part)
+        {
           return &resi->GetAtom(i);
         }
       }
@@ -994,6 +1004,7 @@ void TAsymmUnit::ChangeSpaceGroup(const TSpaceGroup& sg) {
   Matrices.Clear();
   if (sg.IsCentrosymmetric() && !sg.GetInversionCenter().IsNull(1e-3)) {
     sg.GetMatrices(Matrices, mattAll^(mattCentering|mattIdentity));
+    Latt = -olx_abs(Latt);
   }
   else {
     Matrices = sg.GetMatrices();

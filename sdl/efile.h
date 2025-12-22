@@ -270,6 +270,13 @@ public:
     return '/';
 #endif
   }
+  static char GetEnviPathDelimeter() {
+#ifdef __WIN32__
+    return ';';
+#else
+    return ':';
+#endif
+  }
   /* copies a file, use overwrite option to modify the behaviour, if overwrite
   is false and file exists the return value is false
   */

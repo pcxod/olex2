@@ -53,14 +53,27 @@ void RelativePathTest(OlxTests& t)  {
   if( TEFile::ExpandRelativePath(rel5,base3) != path3 )
     throw TFunctionFailedException(__OlxSourceInfo, "failed to expand relative path");
   {
+#ifdef __WIN32__
     olxstr t1 = TEFile::OSPath("c:/tmp/../tmp1");
-    if (TEFile::ExpandRelativePath(t1) != TEFile::OSPath("c:/tmp1"))
+    if (TEFile::ExpandRelativePath(t1) != TEFile::OSPath("c:/tmp1")) {
       throw TFunctionFailedException(__OlxSourceInfo, "failed to expand relative path");
+    }
 
     olxstr t2 = TEFile::OSPath("c:/tmp/../tmp1/tmp3");
-    if (TEFile::ExpandRelativePath(t2) != TEFile::OSPath("c:/tmp1/tmp3"))
+    if (TEFile::ExpandRelativePath(t2) != TEFile::OSPath("c:/tmp1/tmp3")) {
       throw TFunctionFailedException(__OlxSourceInfo, "failed to expand relative path");
+    }
+#else
+    olxstr t1 = TEFile::OSPath("/tmp/../tmp1");
+    if (TEFile::ExpandRelativePath(t1) != TEFile::OSPath("/tmp1")) {
+      throw TFunctionFailedException(__OlxSourceInfo, "failed to expand relative path");
+    }
 
+    olxstr t2 = TEFile::OSPath("/tmp/../tmp1/tmp3");
+    if (TEFile::ExpandRelativePath(t2) != TEFile::OSPath("/tmp1/tmp3")) {
+      throw TFunctionFailedException(__OlxSourceInfo, "failed to expand relative path");
+    }
+#endif
     olxstr t3 = TEFile::OSPath("../tmp1/tmp3");
     if (TEFile::ExpandRelativePath(t3, "c:/tmp") != TEFile::OSPath("c:/tmp1/tmp3"))
       throw TFunctionFailedException(__OlxSourceInfo, "failed to expand relative path");

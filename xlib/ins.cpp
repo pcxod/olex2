@@ -367,7 +367,7 @@ void TIns::ParseRestraints(RefinementModel& rm,
           continue;
         }
         for (size_t j = i - 1; j != InvalidIndex; j--) {
-          if (SL[j].IsEmpty()) {
+          if (SL[j].IsEmpty() || !SL[j].StartsFromi("REM")) {
             break;
           }
           sr->remarks.Add(SL[j]);
@@ -435,6 +435,9 @@ bool TIns::_ParseIns(RefinementModel& rm, const TStrList& Toks) {
   }
   else if (Toks[0].Equalsi("MERG") && Toks.Count() == 2) {
     rm.SetMERG(Toks[1].ToInt());
+  }
+  else if (Toks[0].Equalsi("NEUT")) {
+    rm.expl.SetRadiationType(radiaotion_type_neut);
   }
   else if (Toks[0].Equalsi("EXTI")) {
     TEValueD ev;
@@ -2928,7 +2931,7 @@ TStrList::const_list_type TIns::SaveHeader(TStrList& SL,
   SL.Add(_CellToString());
   SL.Add(_ZerrToString());
   _SaveSymm(SL);
-  if (FindIns("NEUT") != 0) {
+  if (GetRM().expl.GetRadiationType() == radiaotion_type_neut) {
     SL.Add("NEUT");
   }
   SL.Add(EmptyString());

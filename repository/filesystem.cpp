@@ -417,10 +417,11 @@ uint64_t TFSItem::Synchronise(TFSItem& Dest, const TStrList& properties,
       Res->Processed = true;
       if (!Res->ValidateProperties(properties))
         continue;
-      if (FI.IsFolder())
+      if (FI.IsFolder()) {
         Res->Synchronise(FI, properties, cmds);
+      }
       else if (Dest.Index.ShallAdopt(*Res, FI)) {
-        if (FI.UpdateFile(*Res) != 0) {
+        if (FI.UpdateFile(*Res, cmds) != 0) {
           Index.Progress.IncPos(FI.GetSize());
           Index.OnProgress.Execute(this, &Index.Progress);
         }
@@ -438,13 +439,13 @@ uint64_t TFSItem::Synchronise(TFSItem& Dest, const TStrList& properties,
     Index.Progress.SetAction(FI.GetFullName());
     Index.OnProgress.Execute(this, &Index.Progress);
     if (FI.IsFolder()) {
-      TFSItem* Res = Dest.UpdateFile(FI);
+      TFSItem* Res = Dest.UpdateFile(FI, cmds);
       if (Res != 0) {
         FI.Synchronise(*Res, properties, cmds);
       }
     }
     else {
-      if (Dest.UpdateFile(FI) != 0) {
+      if (Dest.UpdateFile(FI, cmds) != 0) {
         Index.Progress.IncPos(FI.GetSize());
         Index.OnProgress.Execute(this, &Index.Progress);
       }
@@ -489,7 +490,7 @@ uint64_t TFSItem::CalcDiffSize(const TFSItem& Dest,
   return sz;
 }
 //.............................................................................
-TFSItem* TFSItem::UpdateFile(TFSItem& item) {
+TFSItem* TFSItem::UpdateFile(TFSItem& item, TStrList* cmds) {
   if (item.IsFolder()) {
     olxstr FN = GetIndexFS().GetBase() + item.GetFullName();
     if (TEFile::Exists(FN) || GetIndexFS().NewDir(FN)) {
@@ -523,7 +524,7 @@ TFSItem* TFSItem::UpdateFile(TFSItem& item) {
         TFSItem tmp(Index, this, EmptyString());
         tmp = *FI;
         *FI = item;
-        bool res = Index.ProcessActions(*FI);
+        bool res = Index.ProcessActions(*FI, cmds);
         if (!res) {
           *FI = tmp;
         }
@@ -632,7 +633,7 @@ TFSItem& TFSItem::NewItem(TFSItem* item) {
   // not in the items all path to the item
   TFSItem* ti = this;
   for (size_t i = items.Count(); i > 0; i--) {
-    TFSItem* nti = ti->UpdateFile(*items[i - 1]);
+    TFSItem* nti = ti->UpdateFile(*items[i - 1], 0);
     if (nti == 0) {
       throw TFunctionFailedException(__OlxSourceInfo, "failed to update file");
     }
@@ -877,19 +878,30 @@ bool TFSIndex::ShallAdopt(const TFSItem& src, TFSItem& dest) const {
   return false;
 }
 //.............................................................................
-bool TFSIndex::ProcessActions(TFSItem& item) {
+bool TFSIndex::ProcessActions(TFSItem& item, TStrList* cmds) {
   const TStrList& actions = item.GetActions();
   bool res = true;
-  if (actions.IndexOfi("extract") != InvalidIndex) {
+  if (cmds != 0) {
+    for (size_t i = 0; i < actions.Count(); i++) {
+      if (actions[i].StartsFromi("rm")) {
+        cmds->Add(actions[i]);
+      }
+    }
+  }
+  if (actions.Containsi("extract")) {
     olx_object_ptr<AZipFS> fs(ZipFSFactory::GetInstance(
       IndexFS.GetBase() + item.GetFullName(), false));
     fs->OnProgress.Add(new TActionProxy(OnAction));
     OnBreak.Add(&fs);
-    try { res = fs->ExtractAll(IndexFS.GetBase()); }
-    catch (...) { res = false; }
+    try {
+      res = fs->ExtractAll(IndexFS.GetBase());
+    }
+    catch (...) {
+      res = false;
+    }
     OnBreak.Remove(&fs);
   }
-  if (res && actions.IndexOfi("delete") != InvalidIndex) {
+  if (res && actions.Containsi("delete")) {
     item._DelFile();
   }
   return res;

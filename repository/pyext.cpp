@@ -25,7 +25,6 @@
 //#include "egc.h"
 #ifdef _PYTHON
 //.............................................................................
-#if PY_MAJOR_VERSION >= 3
 struct olx_PyModuleDef {
   olx_object_ptr<PyModuleDef> moduleDef;
   PyObject *moduleObj;
@@ -66,12 +65,22 @@ struct olx_PyModuleDef {
   }
 };
 //.............................................................................
-olxdict<PyObject *, olx_PyModuleDef*, TPointerComparator>
-&GetModuleRegistry()
+olxdict<PyObject *, olx_PyModuleDef*, TPointerComparator> &GetModuleRegistry()
 {
   static olxdict<PyObject *, olx_PyModuleDef*, TPointerComparator> reg;
   return reg;
 }
+//.............................................................................
+#ifdef _LIBFFI
+olxdict<const TLibrary*,
+  olx_pair_t<LibFFI_Lib_Closure*, PyObject*>, TPointerComparator>&
+  GetLibraryMap()
+{
+  static olxdict<const TLibrary*,
+    olx_pair_t<LibFFI_Lib_Closure*, PyObject*>, TPointerComparator> map;
+  return map;
+}
+#endif
 //.............................................................................
 //.............................................................................
 class TFuncWrapper : public PythonExt::BasicWrapper {
@@ -185,12 +194,11 @@ public:
 //.............................................................................
 //.............................................................................
 //.............................................................................
-olx_critical_section py_io_cs_;
 PyObject* runWriteImage(PyObject* self, PyObject* args) {
   char *data = 0;
   olxstr name;
   int persistenceId = 0;
-  int length = 0;
+  Py_ssize_t length = 0;
   olxcstr format = PythonExt::UpdateBinaryFormat("ws#|i");
   if (!PythonExt::ParseTuple(args, format.c_str(), &name, &data, &length,
     &persistenceId))
@@ -368,8 +376,9 @@ PyObject* runOlexMacro(PyObject* self, PyObject* args)  {
 PyObject* runOlexFunction(PyObject* self, PyObject* args) {
   IOlex2Processor* o_r = PythonExt::GetInstance()->GetOlexProcessor();
   olxstr functionName;
-  if (!PythonExt::ParseTuple(args, "w", &functionName))
+  if (!PythonExt::ParseTuple(args, "w", &functionName)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
+  }
   olxstr retValue = functionName;
   bool res = o_r->processFunction(retValue);
   if (res) {
@@ -498,8 +507,8 @@ PyObject* runPrintText(PyObject* self, PyObject* args) {
 }
 //.............................................................................
 PyMethodDef Methods[] = {
-  {"m", runOlexMacro, METH_VARARGS, "executes olex macro"},
-  {"f", runOlexFunction, METH_VARARGS, "executes olex function"},
+  {"m", runOlexMacro, METH_VARARGS, "executes olex2 macro"},
+  {"f", runOlexFunction, METH_VARARGS, "executes olex2 function"},
   {"f_ex", runOlexFunctionEx, METH_VARARGS, "executes olex function"},
   {"writeImage", runWriteImage, METH_VARARGS, "adds new image/object to olex2 "
     "memory; (name, date, persistence=0). Persistence: 0 - none, 1 - for "
@@ -521,31 +530,23 @@ PyMethodDef Methods[] = {
 };
 //.............................................................................
 olxcstr PyFuncBody(const olxcstr& olexName, const olxcstr& pyName, char sep,
-  const olxstr &module_name)
+  const olxstr& module_name)
 {
-  if( sep == ',' )  {
+  if (sep == ',') {
     olxcstr res("def ");
     res << pyName << "(*args):\n  ";
     res << "al = []\n  ";
     res << "for arg in args:\n    ";
-#if PY_MAJOR_VERSION >= 3
     res << "al.append(str(arg))\n  ";
-#else
-    res << "al.append(unicode(arg))\n  ";
-#endif
     res << "return " << module_name << ".f_ex('" << olexName << "', False, al)";
     return res;
   }
-  else  {
+  else {
     olxcstr res("def ");
     res << pyName << "(*args, **kwds):\n  ";
     res << "al = []\n  ";
     res << "for arg in args:\n    ";
-#if PY_MAJOR_VERSION >= 3
     res << "al.append(str(arg))\n  ";
-#else
-    res << "al.append(unicode(arg))\n  ";
-#endif
     res << "return " << module_name << ".f_ex('" << olexName <<
       "', True, al, kwds)";
     return res;
@@ -566,11 +567,14 @@ PythonExt::~PythonExt() {
   ToDelete.DeleteItems(false);
   if (Py_IsInitialized()) {
     Py_Finalize();
-#if PY_MAJOR_VERSION >= 3
     for (size_t i = 0; i < GetModuleRegistry().Count(); i++) {
       delete GetModuleRegistry().GetValue(i);
     }
     GetModuleRegistry().Clear();
+#ifdef _LIBFFI
+    GetLibraryMap().Clear();
+    lib_closures.Clear();
+    get_ffi() = 0;
 #endif
   }
   Instance() = 0;
@@ -583,17 +587,10 @@ void PythonExt::ProfileAll() {
 }
 //.............................................................................
 void PythonExt::Register(const olxcstr &name, pyRegFunc regFunc) {
-#if PY_MAJOR_VERSION >= 3
   if (Py_IsInitialized()) {
     throw TFunctionFailedException(__OlxSourceInfo, "too late to register!");
   }
   PyImport_AppendInittab(name.c_str(), regFunc);
-#else
-  ToRegister.AddCopy(regFunc);
-  if (Py_IsInitialized()) {
-    (*regFunc)();
-  }
-#endif
 }
 //.............................................................................
 olxcstr &PythonExt::ModuleName() {
@@ -601,26 +598,17 @@ olxcstr &PythonExt::ModuleName() {
   return mn;
 }
 //.............................................................................
-#if PY_MAJOR_VERSION >= 3
 PyObject *PythonExt::pyInit() {
   return init_module(ModuleName().c_str(), Methods);
 }
-#endif
-
+//.............................................................................
 void PythonExt::CheckInitialised() {
   if (!Py_IsInitialized()) {
-#if PY_MAJOR_VERSION >= 3
     PyImport_AppendInittab(ModuleName().c_str(), &PythonExt::pyInit);
-    Py_Initialize();
-#else
-    Py_Initialize();
-    PyEval_InitThreads();
-    init_module(ModuleName(), Methods);
-    for (size_t i = 0; i < ToRegister.Count(); i++) {
-      (*ToRegister[i])();
-    }
+#ifdef _LIBFFI
+    ExportDirect("olex2");
 #endif
-
+    Py_Initialize();
   }
 }
 //.............................................................................
@@ -673,32 +661,39 @@ void ExportLib(const olxstr &_root, const TLibrary& Lib,
   else {
     ln = olxcstr(py_module_name) << "." << ln;
   }
-  for (size_t i = 0; i < Lib.LibraryCount(); i++) {
-    TLibrary &lib = *Lib.GetLibraryByIndex(i);
+  TLibrary::lib_container_t::iterator_t li = Lib.IterateLibs();
+  while (li->HasNext()) {
+    TLibrary &lib = *li->Next();
     if (!lib.IsEmpty()) {
       out.Write(olxcstr("from ") << ln << " import " << lib.GetName() << '\n');
     }
   }
-  for (size_t i = 0; i < Lib.FunctionCount(); i++) {
-    ABasicFunction* fun = Lib.GetFunctionByIndex(i);
-    olxstr pyName = fun->GetName();
-    pyName.Replace('@', "At");
-    out.Write(PyFuncBody(fun->GetQualifiedName(), pyName, ',', module_name)
-      << '\n');
-  }
-
-  for (size_t i = 0; i < Lib.MacroCount(); i++) {
-    ABasicFunction* fun = Lib.GetMacroByIndex(i);
-    if (dynamic_cast<macrolib::TEMacro*>(fun) != 0) {
-      continue;
+  {
+    TLibrary::container_t::iterator_t itr = Lib.IterateFunctions();
+    while (itr->HasNext()) {
+      ABasicFunction* fun = itr->Next();
+      olxstr pyName = fun->GetName();
+      pyName.Replace('@', "At");
+      out.Write(PyFuncBody(fun->GetQualifiedName(), pyName, ',', module_name)
+        << '\n');
     }
-    olxstr pyName = fun->GetName();
-    pyName.Replace('@', "At");
-    out.Write(PyFuncBody(fun->GetQualifiedName(), pyName, ' ', module_name)
-      << '\n');
   }
-  for (size_t i = 0; i < Lib.LibraryCount(); i++) {
-    TLibrary &lib = *Lib.GetLibraryByIndex(i);
+  {
+    TLibrary::container_t::iterator_t itr = Lib.IterateMacros();
+    while (itr->HasNext()) {
+      ABasicFunction* fun = itr->Next();
+      if (dynamic_cast<macrolib::TEMacro*>(fun) != 0) {
+        continue;
+      }
+      olxstr pyName = fun->GetName();
+      pyName.Replace('@', "At");
+      out.Write(PyFuncBody(fun->GetQualifiedName(), pyName, ' ', module_name)
+        << '\n');
+    }
+  }
+  li = Lib.IterateLibs();
+  while (li->HasNext()) {
+    TLibrary &lib = *li->Next();
     ExportLib(root + lib.GetName(), lib, module_name, py_module_name);
   }
 }
@@ -740,12 +735,10 @@ void PythonExt::macReset(TStrObjList& Cmds, const TParamList &Options,
 {
   if (Py_IsInitialized()) {
     Py_Finalize();
-#if PY_MAJOR_VERSION >= 3
     for (size_t i = 0; i < GetModuleRegistry().Count(); i++) {
       delete GetModuleRegistry().GetValue(i);
     }
     GetModuleRegistry().Clear();
-#endif
   }
   CheckInitialised();
 }
@@ -886,9 +879,9 @@ bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...) {
     }
     else if (format[i] == 's') {
       char** cstr = va_arg(argptr, char**);
-      int  len, *rlen = 0;
+      Py_ssize_t  len, *rlen = 0;
       if ((i + 1) < slen && format[i + 1] == '#') {
-        rlen = va_arg(argptr, int*);
+        rlen = va_arg(argptr, Py_ssize_t*);
         i++;
       }
       else {
@@ -901,9 +894,9 @@ bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...) {
     }
     else if (format[i] == 'y') {
       char** cstr = va_arg(argptr, char**);
-      int  len, * rlen = 0;
+      Py_ssize_t  len, * rlen = 0;
       if ((i + 1) < slen && format[i + 1] == '#') {
-        rlen = va_arg(argptr, int*);
+        rlen = va_arg(argptr, Py_ssize_t*);
         i++;
       }
       else {
@@ -956,15 +949,10 @@ bool PythonExt::ParseTuple(PyObject* tuple, const char* format, ...) {
 }
 //.............................................................................
 PyObject *PythonExt::init_module(const olxcstr &name, PyMethodDef *md) {
-#if PY_MAJOR_VERSION >= 3
   olx_PyModuleDef *pmd = new olx_PyModuleDef(name, md);
   GetModuleRegistry().Add(pmd->moduleObj, pmd);
   return pmd->moduleObj;
-#else
-  return Py_InitModule(name.c_str(), md);
-#endif
 }
-#endif
 //.............................................................................
 PyObject* PythonExt::ToPython(const TDataItem &di, PyObject* to) {
   PyObject* t = PyDict_New(),
@@ -985,4 +973,229 @@ PyObject* PythonExt::ToPython(const TDataItem &di, PyObject* to) {
   return t;
 }
 //.............................................................................
+//.............................................................................
+//.............................................................................
+#ifdef _LIBFFI
+void ExportLibsDirect(const olxcstr& prefix, TLibrary& Lib,
+  TTypeList<LibFFI_Lib_Closure>& closures)
+{
+
+  closures.Add(new LibFFI_Lib_Closure(PythonExt::get_ffi(),  &Lib, prefix));
+  TLibrary::lib_container_t::iterator_t li = Lib.IterateLibs();
+  while (li->HasNext()) {
+    TLibrary& lib = *li->Next();
+    ExportLibsDirect(prefix, lib, closures);
+  }
+}
+//..............................................................................
+void PythonExt::ExportDirect(const olxcstr & name) {
+  IOlex2Processor* o_r = PythonExt::GetInstance()->GetOlexProcessor();
+  if (o_r == 0) {
+    return;
+  }
+  try {
+    get_ffi() = new lib_ffi();
+  }
+  catch (const TExceptionBase& e) {
+    TBasicApp::NewLogEntry(logError) << "Could not initialise LIBFFI: "
+      << e.GetException()->GetError();
+    return;
+  }
+  
+  ExportLibsDirect(name, o_r->GetLibrary(), lib_closures);
+  typedef olx_pair_t<LibFFI_Lib_Closure*, PyObject*> cl_t;
+  olxdict<const TLibrary*, cl_t, TPointerComparator>& map = GetLibraryMap();
+  for (size_t i = 0; i < lib_closures.Count(); i++) {
+    map.Add(&lib_closures[i].get_lib(), cl_t(&lib_closures[i], 0));
+  }
+}
+//..............................................................................
+//..............................................................................
+//..............................................................................
+LibFFI_Func_Closure::LibFFI_Func_Closure(olx_object_ptr<lib_ffi> FFI,
+  ABasicFunction * f)
+  : FFI(FFI), func(f),
+  cif(new ffi_cif),
+  closure(0), executable_func_ptr(0)
+{
+  if (FFI->ffi_prep_cif(&cif, FFI_DEFAULT_ABI,
+    f->HasOptions() ? 3 : 2, FFI->ffi_type_pointer, arg_types()) != FFI_OK)
+  {
+    throw TFunctionFailedException(__OlxSourceInfo, "");
+  }
+
+  closure = (ffi_closure*)FFI->ffi_closure_alloc(sizeof(ffi_closure), &executable_func_ptr);
+  if (closure == 0) {
+    throw TFunctionFailedException(__OlxSourceInfo, "");
+  }
+  if (FFI->ffi_prep_closure_loc(closure, &cif, &closure_handler, f, executable_func_ptr) != FFI_OK) {
+    FFI->ffi_closure_free(closure);
+    throw TFunctionFailedException(__OlxSourceInfo, "");
+  }
+  name = f->GetName();
+  description = f->GetDescription();
+  //(*get_ptr())(0, 0);
+}
+//..............................................................................
+ffi_type** LibFFI_Func_Closure::arg_types() {
+  static lib_ffi::ffi_type_pointer_t pt = PythonExt::get_ffi()->ffi_type_pointer;
+  static ffi_type* args[] = { pt, pt, pt, pt};
+  return &args[0];
+}
+PyObject* LibFFI_Func_Closure::processor(ABasicFunction *f,
+  PyObject* self, PyObject *args, PyObject* kwds)
+{
+  size_t arg_c = PyTuple_Size(args);
+  TStrObjList f_args(arg_c);
+  for (size_t i = 0; i < arg_c; i++) {
+    PyObject* repr = PyObject_Str(PyTuple_GetItem(args, i));
+    if (repr != 0) {
+      f_args[i] = PythonExt::ParseStr(repr);
+      Py_DecRef(repr);
+    }
+  }
+  TMacroData md;
+  if (f->HasOptions()) {
+    TParamList f_kwds;
+    if (kwds != 0) {
+      PyObject* kwd_list = PyDict_Items(kwds);
+      size_t kwd_c = PyList_Size(kwd_list);
+      for (size_t i = 0; i < kwd_c; i++) {
+        PyObject* kv = PyList_GetItem(kwd_list, i);
+        olxstr key = PythonExt::ParseStr(
+          PyObject_Str(PyTuple_GetItem(kv, 0)));
+        olxstr val = PythonExt::ParseStr(
+          PyObject_Str(PyTuple_GetItem(kv, 1)));
+        f_kwds.AddParam(key, val);
+      }
+      Py_DecRef(kwd_list);
+    }
+    f->Run(f_args, f_kwds, md);
+  }
+  else {
+    f->Run(f_args, md);
+  }
+  if (!md.IsSuccessful()) {
+    PythonExt::SetErrorMsg(PyExc_RuntimeError,
+      __OlxSrcInfo, md.GetInfo());
+    return PythonExt::PyNone();
+  }
+  return PythonExt::BuildString(md.GetRetVal());
+}
+void LibFFI_Func_Closure::closure_handler(ffi_cif * cif,
+  void* ret, void* args[], void* func)
+{
+  void* np = 0;
+  void* target_args[4] = { &func, args[0], args[1], &np};
+  if (((ABasicFunction*)func)->HasOptions()) {
+    target_args[3] = args[2];
+  }
+  ffi_cif target_cif;
+  if (PythonExt::get_ffi()->ffi_prep_cif(&target_cif, FFI_DEFAULT_ABI,
+    4, PythonExt::get_ffi()->ffi_type_pointer, arg_types()) != FFI_OK)
+  {
+    throw TFunctionFailedException(__OlxSourceInfo, "");
+  }
+  PythonExt::get_ffi()->ffi_call(&target_cif, FFI_FN(&processor), ret, target_args);
+}
+//..............................................................................
+//..............................................................................
+//..............................................................................
+PyObject* LibFFI_Lib_Closure::do_register() {
+  TLibrary::container_t::iterator_t itr = lib->IterateFunctions();
+  olx_object_ptr<lib_ffi> ffi = PythonExt::get_ffi();
+  while (itr->HasNext()) {
+    closures.Add(new LibFFI_Func_Closure(ffi, itr->Next()));
+  }
+  itr = lib->IterateMacros();
+  while (itr->HasNext()) {
+    closures.Add(new LibFFI_Func_Closure(ffi, itr->Next()));
+  }
+  size_t sz = closures.Count();
+  funcs = new PyMethodDef[sz + 1];
+  for (size_t i = 0; i < sz; i++) {
+    funcs[i].ml_meth = closures[i].get_ptr();
+    funcs[i].ml_name = closures[i].get_name().c_str();
+    funcs[i].ml_doc = closures[i].get_description().c_str();
+    funcs[i].ml_flags = METH_VARARGS;
+    if (closures[i].get_func().HasOptions()) {
+      funcs[i].ml_flags |= METH_KEYWORDS;
+    }
+  }
+  memset(&funcs[sz], 0, sizeof(PyMethodDef));
+  PyObject* pmod = PythonExt::init_module(name.c_str(), funcs);
+  if (pmod == 0) {
+    TBasicApp::NewLogEntry(logError) << "Failed to directly export Olex2 library to Python";
+  }
+  typedef olx_pair_t<LibFFI_Lib_Closure*, PyObject*> cl_t;
+  olxdict<const TLibrary*, cl_t, TPointerComparator>& map = GetLibraryMap();
+  map.Add(lib, cl_t(this, pmod), true);
+  if (lib->GetParentLibrary() == 0) {
+    for (size_t i = 0; i < map.Count(); i++) {
+      if (map.GetValue(i).a->get_lib().GetParentLibrary() == 0) {
+        continue;
+      }
+      map.GetValue(i).a->do_register();
+    }
+  }
+  else {
+    cl_t cl = GetLibraryMap().Find(lib->GetParentLibrary(), cl_t());
+    if (cl.b != 0) {
+      PyModule_AddObject(cl.b, lib->GetName().c_str(), pmod);
+    }
+    PyObject* moduleDict = PyImport_GetModuleDict();
+    PyDict_SetItemString(moduleDict, name.c_str(), pmod);
+  }
+  return pmod;
+}
+//..............................................................................
+LibFFI_Lib_Closure::LibFFI_Lib_Closure(olx_object_ptr<lib_ffi> FFI,
+  TLibrary* lib, const olxcstr& name_prefix)
+  : FFI(FFI), lib(lib),
+  cif(new ffi_cif),
+  closure(0), executable_func_ptr(0)
+{
+  olxcstr qn = lib->GetQualifiedName();
+  if (qn.IsEmpty()) {
+    name = name_prefix;
+  }
+  else {
+    name = olxcstr(name_prefix) << '.' << qn;
+  }
+  if (FFI->ffi_prep_cif(&cif, FFI_DEFAULT_ABI, 0, FFI->ffi_type_pointer, 0) != FFI_OK) {
+    throw TFunctionFailedException(__OlxSourceInfo, "");
+  }
+  closure = (ffi_closure*)FFI->ffi_closure_alloc(sizeof(ffi_closure), &executable_func_ptr);
+  if (closure == 0) {
+    throw TFunctionFailedException(__OlxSourceInfo, "");
+  }
+  if (FFI->ffi_prep_closure_loc(closure, &cif, &closure_handler,
+    this, executable_func_ptr) != FFI_OK)
+  {
+    FFI->ffi_closure_free(closure);
+    throw TFunctionFailedException(__OlxSourceInfo, "");
+  }
+  PyImport_AppendInittab(name.c_str(), (closure_fn_t)executable_func_ptr);
+}
+//..............................................................................
+PyObject* LibFFI_Lib_Closure::do_export(LibFFI_Lib_Closure* cl) {
+  return cl->do_register();
+}
+//..............................................................................
+void LibFFI_Lib_Closure::closure_handler(ffi_cif* cif, void* ret, void* args_[], void* lib_) {
+  void* args[] = { &lib_ };
+  ffi_cif target_cif;
+  ffi_type* arg_types[] = { PythonExt::get_ffi()->ffi_type_pointer };
+
+  if (PythonExt::get_ffi()->ffi_prep_cif(&target_cif, FFI_DEFAULT_ABI,
+    1, PythonExt::get_ffi()->ffi_type_pointer, arg_types) != FFI_OK)
+  {
+    throw TFunctionFailedException(__OlxSourceInfo, "");
+  }
+
+  PythonExt::get_ffi()->ffi_call(&target_cif, FFI_FN(&do_export), ret, args);
+}
+
+#endif // _LIBFFI
+
 #endif // _PYTHON

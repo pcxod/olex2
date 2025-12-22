@@ -388,7 +388,7 @@ void XLibMacros::Export(TLibrary& lib)  {
  );
   xlib_InitMacro(SGInfo,
     "c-include lattice centering matrices&;"
-    "i - include inversion generated matrices if any&;"
+    "i-include inversion generated matrices if any&;"
     "s-print ShelX compatible LATT/SYMM cards",
     fpNone|fpOne,
     "Prints space group information.");
@@ -832,6 +832,10 @@ void XLibMacros::Export(TLibrary& lib)  {
     EmptyString(),
     fpNone | fpOne | fpTwo | psFileLoaded,
     "'Shakes' the structure as desribed in ShelXl manual");
+  xlib_InitMacro(Copy,
+    "d-locate file format by content rather than extension",
+    fpTwo,
+    "Converts input file into the output");
   //_____________________________________________________________________________
 
   xlib_InitFunc(FileName, fpNone|fpOne,
@@ -2624,6 +2628,9 @@ void XLibMacros::macFree(TStrObjList &Cmds, const TParamList &Options,
     RefinementModel& rm = xapp.XFile().GetRM();
     rm.aunit.GetAtoms().ForEach(ACollectionItem::TagSetter(0));
     for (size_t i = 0; i < atoms.Count(); i++) {
+      if (atoms[i]->CAtom().GetType() < 0) {
+        continue;
+      }
       if (!atoms[i]->CAtom().GetDisp().ok()) {
         rm.InitDisp(atoms[i]->CAtom());
       }
@@ -3182,8 +3189,22 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg,
     const mat3d hklf_mat = tm_t * xapp.XFile().LastLoader()->GetRM().GetHKLF_mat();
     xapp.XFile().LastLoader()->GetRM().SetHKLF_mat(hklf_mat);
   }
+  const vec3i_list &omits = xapp.XFile().GetRM().GetOmits();
+  if (!omits.IsEmpty()) {
+    vec3i_list new_omits(olx_reserve(omits.Count()));
+    for (size_t i = 0; i < xapp.XFile().GetRM().OmittedCount(); i++) {
+      vec3d h_d = tm_t * vec3d(xapp.XFile().GetRM().GetOmitted(i)),
+        h_i = h_d.Round<int>();
+      if (h_d.DistanceTo(h_i) > 1e-3) {
+        continue;
+      }
+      new_omits.AddCopy(h_i);
+    }
+    xapp.XFile().GetRM().SetOmits(new_omits);
+  }
   au.ChangeSpaceGroup(new_sg);
   au.InitMatrices();
+  xapp.XFile().LastLoader()->GetRM().TransformUsedSymm(tm);
   xapp.XFile().LastLoaderChanged();
   if (save) {
     xapp.XFile().SaveToFile(xapp.XFile().GetFileName());
@@ -3245,26 +3266,39 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options,
     }
     Cmds.Delete(Cmds.Count()-1);
   }
-  if (Cmds.Count() == 10) {  // transformation provided?
-    TSpaceGroup* sg = TSymmLib::GetInstance().FindGroupByName(Cmds[9]);
-    if (sg == 0) {
-      try {
-        sg = &TSymmLib::GetInstance().CreateNew(Cmds[9]);
+  if (Cmds.Count() == 9 || Cmds.Count() == 10) {  // transformation provided?
+    TSpaceGroup* sg = 0;
+    if (Cmds.Count() == 10) {
+      sg = TSymmLib::GetInstance().FindGroupByName(Cmds[9]);
+      if (sg == 0) {
+        try {
+          sg = &TSymmLib::GetInstance().CreateNew(Cmds[9]);
+        }
+        catch (const TExceptionBase& e) {}
       }
-      catch (const TExceptionBase& e) {}
-    }
-    if (sg == 0) {
-      E.ProcessingError(__OlxSrcInfo, "undefined space group");
-      return;
+      if (sg == 0) {
+        E.ProcessingError(__OlxSrcInfo, "undefined space group");
+        return;
+      }
     }
     mat3d tm;
     for (int i = 0; i < 9; i++) {
       tm[i / 3][i % 3] = Cmds[i].ToDouble();
     }
     if (!tm.IsI()) {
-      ChangeCell(tm, *sg, hkl_fn);
+      const TAsymmUnit &au = xapp.XFile().GetAsymmUnit();
+      smatd_list ml;
+      TSymmLib::GetInstance().ExpandLatt(ml, au.GetMatices(), au.GetLatt());
+      smatd sg_r = tm,
+        sg_r_t = tm.GetTranspose();
+      for (size_t i = 0; i < au.MatrixCount(); i++) {
+        ml[i] = sg_r_t * ml[i] * sg_r;
+      }
+      SymmSpace::Info si = SymmSpace::GetInfo(ml);
+      TSpaceGroup& sg = TSymmLib::GetInstance().CreateNew(si);
+      ChangeCell(tm, sg, hkl_fn);
       TBasicApp::NewLogEntry() << "The cell, atomic coordinates and ADP's are "
-        "transformed using given transformion";
+        "transformed using given transformation. New space group: " << sg.GetName();
       if (tm.Determinant() < 0) {
         TBasicApp::NewLogEntry(logWarning) <<
           "Note that the transformation matrix has a negative determinant";
@@ -3272,9 +3306,11 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options,
     }
     else {
       TAsymmUnit& au = xapp.XFile().LastLoader()->GetAsymmUnit();
-      au.ChangeSpaceGroup(*sg);
-      au.InitMatrices();
-      xapp.XFile().LastLoaderChanged();
+      if (!sg == 0) {
+        au.ChangeSpaceGroup(*sg);
+        au.InitMatrices();
+        xapp.XFile().LastLoaderChanged();
+      }
     }
     XLibMacros_macSGS_finalise(finalise);
     return;
@@ -5205,7 +5241,7 @@ void CifMerge_UpdateAtomLoop(TCif &Cif) {
           {
             if (tab->GetData()[ri][occu_ind] != 0) {
               TEValueD occu(tab->Get(ri, occu_ind).ToString());
-              occu /= a.GetDegeneracy();
+              occu /= (double)a.GetDegeneracy();
               tab->Set(ri, occu_ind, new cetString(occu.ToString()));
               tab->Set(ri, st_order_ind, new cetString(1));
             }
@@ -5695,16 +5731,19 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   }
   // update the refinement description
   cetStringList description("_olex2_refinement_description");
-  TStrList ri = xapp.XFile().GetRM().Describe();
+  RefinementModel& rm = xapp.XFile().GetRM();
+  TStrList ri = rm.Describe();
   for (size_t i=0; i < ri.Count(); i++) {
     description.lines.Hyphenate(ri[i].Replace(" ~ ", " \\\\sim "), 80, true);
   }
   Cif->SetParam(description);
   sw.start("Processing selected geometric measuremenets");
-  xapp.XFile().GetRM().GetSelectedTableRows().Process(*Cif);
+  rm.GetSelectedTableRows().Process(*Cif);
   bool insert_vars = Options.GetBoolOption("vars"),
     insert_rtab = Options.GetBoolOption("rtab");
-  if (insert_vars || insert_rtab) {
+  if ((insert_vars && rm.CVars.Validate()) ||
+    (insert_rtab && rm.HasRTABs()))
+  {
     olx_object_ptr<VcoVContainer> vcovc = new VcoVContainer(xapp.XFile().GetAsymmUnit());
     olxstr src_mat;
     try {
@@ -9491,7 +9530,7 @@ void XLibMacros::macDfix(TStrObjList& Cmds, const TParamList& Options,
     olxdict<int, list_t, TPrimitiveComparator> groups;
     for (size_t i = 0; i < Atoms.Count(); i += 2) {
       TEValueD cb = tls.BondCorrect(*Atoms[i], *Atoms[i + 1]);
-      int v = cb.GetV() * 1000;
+      int v = (int)(cb.GetV() * 1000);
       groups.Add(v).AddNew(Atoms[i], Atoms[i + 1]);
     }
     for (size_t i = 0; i < groups.Count(); i++) {
@@ -10979,39 +11018,6 @@ void XLibMacros::macTolman(TStrObjList &Cmds, const TParamList &Options,
   TBasicApp::NewLogEntry() << "C-H disance is: " << olxstr::FormatFloat(3, chd);
 }
 
-struct idx_pair_t : public olx_pair_t<size_t, size_t> {
-  idx_pair_t(size_t a, size_t b)
-    : olx_pair_t<size_t, size_t>(a, b)
-  {
-    if (a > b) {
-      olx_swap(this->a, this->b);
-    }
-  }
-  int Compare(const idx_pair_t &p) const {
-    int d = olx_cmp(a, p.a);
-    if (d == 0) {
-      d = olx_cmp(b, p.b);
-    }
-    return d;
-  }
-};
-
-struct PairListComparator {
-  int Compare(const TTypeList<idx_pair_t> &a,
-    const TTypeList<idx_pair_t> &b) const {
-    int r = olx_cmp(a.Count(), b.Count());
-    if (r == 0) {
-      for (size_t i = 0; i < a.Count(); i++) {
-        r = a[i].Compare(b[i]);
-        if (r != 0) {
-          break;
-        }
-      }
-    }
-    return r;
-  }
-};
-
 template <class list_t, typename accessor_t>
 void macSAME_expand(RefinementModel &rm, const list_t& groups,
   const accessor_t &acc, double esd12, double esd13)
@@ -11665,22 +11671,30 @@ void XLibMacros::macTLS(TStrObjList &Cmds, const TParamList &Options,
 //.............................................................................
 void XLibMacros::funCell(const TStrObjList& Params, TMacroData &E)  {
   TXApp &app = TXApp::GetInstance();
-  if( Params[0].Equalsi('a') )
+  if (Params[0].Equalsi('a')) {
     E.SetRetVal(app.XFile().GetAsymmUnit().GetAxes()[0]);
-  else if( Params[0].Equalsi('b') )
+  }
+  else if (Params[0].Equalsi('b')) {
     E.SetRetVal(app.XFile().GetAsymmUnit().GetAxes()[1]);
-  else if( Params[0].Equalsi('c') )
+  }
+  else if (Params[0].Equalsi('c')) {
     E.SetRetVal(app.XFile().GetAsymmUnit().GetAxes()[2]);
-  else if( Params[0].Equalsi("alpha") )
+  }
+  else if (Params[0].Equalsi("alpha")) {
     E.SetRetVal(app.XFile().GetAsymmUnit().GetAngles()[0]);
-  else if( Params[0].Equalsi("beta") )
+  }
+  else if (Params[0].Equalsi("beta")) {
     E.SetRetVal(app.XFile().GetAsymmUnit().GetAngles()[1]);
-  else if( Params[0].Equalsi("gamma") )
+  }
+  else if (Params[0].Equalsi("gamma")) {
     E.SetRetVal(app.XFile().GetAsymmUnit().GetAngles()[2]);
-  else if( Params[0].Equalsi("volume") )
+  }
+  else if (Params[0].Equalsi("volume")) {
     E.SetRetVal(olxstr::FormatFloat(2, app.XFile().GetUnitCell().CalcVolume()));
-  else
+  }
+  else {
     E.ProcessingError(__OlxSrcInfo, "invalid argument: ") << Params[0];
+  }
 }
 //..............................................................................
 void XLibMacros::funCif(const TStrObjList& Params, TMacroData &E)  {
@@ -12864,7 +12878,7 @@ void XLibMacros::macWigl(TStrObjList& Cmds, const TParamList& Options,
   if (Cmds.Count() > 1) {
     dU = Cmds[1].ToDouble();
   }
-  srand(TETime::msNow());
+  srand((uint32_t)TETime::msNow());
   TXApp& app = TXApp::GetInstance();
   TAsymmUnit& au = app.XFile().GetAsymmUnit();
   for (size_t i = 0; i < au.AtomCount(); i++) {
@@ -12889,5 +12903,53 @@ void XLibMacros::macWigl(TStrObjList& Cmds, const TParamList& Options,
     }
   }
   app.XFile().EndUpdate();
+}
+//..............................................................................
+void XLibMacros::macCopy(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& E)
+{
+  TBasicCFile* ifl = 0;
+  olx_object_ptr<TXFile> xf = dynamic_cast<TXFile*>(
+    TXApp::GetInstance().XFile().Replicate());
+  TBasicCFile* ofl = xf->FindFormat(TEFile::ExtractFileExt(Cmds[1]));
+  if (ofl == 0) {
+    E.ProcessingError(__OlxSrcInfo, "Unknown output file format");
+    return;
+  }
+  TStrList lines;
+  if (Options.GetBoolOption('d')) {
+    lines = TEFile::ReadLines(Cmds[0]);
+    for (size_t i = 0; i < lines.Count(); i++) {
+      if (lines[i].StartsFrom('#') || lines[i].StartsFrom("data_")) {
+        ifl = xf->FindFormat("cif");
+        break;
+      }
+      if (lines[i].StartsFromi("CELL ") || lines[i].StartsFromi("REM ")) {
+        ifl = xf->FindFormat("ins");
+        break;
+      }
+    }
+  }
+  else {
+    ifl = xf->FindFormat(TEFile::ExtractFileExt(Cmds[0]));
+  }
+  if (ifl == 0) {
+    E.ProcessingError(__OlxSrcInfo, "Unknown inout file format");
+    return;
+  }
+  if (lines.IsEmpty()) {
+    ifl->LoadFromFile(Cmds[0]);
+  }
+  else {
+    ifl->LoadStrings(lines);
+  }
+  xf->SetLastLoader(ifl);
+  xf->LastLoaderChanged();
+  ofl->Adopt(xf, 1);
+  //ol->GetRM().Assign(il->GetRM(), true);
+  //if (ol->Is<TCif>()) {
+  //  dynamic_cast<TCif*>(&ol)->GetDataManager().->SetCurrentBlock(0);
+  //}
+  ofl->SaveToFile(Cmds[1]);
 }
 //..............................................................................

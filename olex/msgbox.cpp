@@ -13,106 +13,161 @@
 #include "icons/information.xpm"
 #include "icons/question.xpm"
 #include "icons/stop.xpm"
+#include "bapp.h"
+#include "etime.h"
+
+enum {
+  MSGBOX_EVT_BUTTON,
+  MSGBOX_EVT_TIMER
+};
 
 TdlgMsgBox::TdlgMsgBox(TMainFrame* Parent, const olxstr& msg, const olxstr& title,
-                       const olxstr& tickBoxMsg, long flags, bool ShowRememberCheckBox) :
-  TDialog(Parent, title.u_str(), EsdlClassName(TdlgMsgBox).u_str() )
+  const olxstr& tickBoxMsg, long flags, bool ShowRememberCheckBox,
+  long selfTimeout, wxWindowID selfTimeoutId)
+  : TDialog(Parent, title.u_str(), EsdlClassName(TdlgMsgBox).u_str()),
+  SelfTimeout(selfTimeout), SelfTimeoutId(selfTimeoutId)
 {
-  AActionHandler::SetToDelete(false);
+  ShownAt = TETime::msNow();
   int Border = 5;
   wxStaticText* text = new wxStaticText(this, -1, msg.u_str());
-  wxStaticBitmap* sbmp = NULL;
-  cbRemember = (ShowRememberCheckBox ? new wxCheckBox(this, -1, tickBoxMsg.u_str()) : NULL);
-  if( (flags & wxICON_EXCLAMATION) != 0 )
+  wxStaticBitmap* sbmp = 0;
+  cbRemember = (ShowRememberCheckBox ? new wxCheckBox(this, -1, tickBoxMsg.u_str()) : 0);
+  if ((flags & wxICON_EXCLAMATION) != 0) {
     sbmp = new wxStaticBitmap(this, -1, wxBitmap(exclamation_xpm));
-  else if( (flags & wxICON_HAND) != 0 )
+  }
+  else if ((flags & wxICON_HAND) != 0) {
     sbmp = new wxStaticBitmap(this, -1, wxBitmap(stop_xpm));
-  else if( (flags & wxICON_ERROR) != 0 )
+  }
+  else if ((flags & wxICON_ERROR) != 0) {
     sbmp = new wxStaticBitmap(this, -1, wxBitmap(exception_xpm));
-  else if( (flags & wxICON_INFORMATION) != 0 )
+  }
+  else if ((flags & wxICON_INFORMATION) != 0) {
     sbmp = new wxStaticBitmap(this, -1, wxBitmap(information_xpm));
-  else if( (flags & wxICON_QUESTION) != 0 )
+  }
+  else if ((flags & wxICON_QUESTION) != 0) {
     sbmp = new wxStaticBitmap(this, -1, wxBitmap(question_xpm));
-
-  wxBoxSizer *ASizer = new wxBoxSizer( wxHORIZONTAL );
-  if( sbmp != NULL )
-    ASizer->Add( sbmp, 0, wxALL, Border );
-  ASizer->Add( text, 0, wxALL, Border );
-  wxBoxSizer *BSizer = NULL;
-  if( ShowRememberCheckBox )  {
-    BSizer = new wxBoxSizer( wxHORIZONTAL );
-    BSizer->Add( cbRemember, 0, wxALL, Border );
   }
 
-  wxBoxSizer *ButtonsSizer = new wxBoxSizer( wxHORIZONTAL );
+  wxBoxSizer* ASizer = new wxBoxSizer(wxHORIZONTAL);
+  if (sbmp != 0) {
+    ASizer->Add(sbmp, 0, wxALL, Border);
+  }
+  ASizer->Add(text, 0, wxALL, Border);
+  wxBoxSizer* BSizer = 0;
+  if (ShowRememberCheckBox) {
+    BSizer = new wxBoxSizer(wxHORIZONTAL);
+    BSizer->Add(cbRemember, 0, wxALL, Border);
+  }
+
+  wxBoxSizer* ButtonsSizer = new wxBoxSizer(wxHORIZONTAL);
   TButton* btn;
-  if( (flags & wxOK) != 0 )  {
+  if ((flags & wxOK) != 0) {
     btn = new TButton(this, wxID_OK, wxT("OK"));
-    btn->OnClick.Add(this);
-    ButtonsSizer->Add( btn, 0, wxALL, Border);
+    btn->OnClick.Add(this, MSGBOX_EVT_BUTTON);
+    ButtonsSizer->Add(btn, 0, wxALL, Border);
     buttons.Add(btn);
   }
-  if( (flags & wxYES) != 0 )  {
+  if ((flags & wxYES) != 0) {
     btn = new TButton(this, wxID_YES, wxT("Yes"));
-    btn->OnClick.Add(this);
-    ButtonsSizer->Add( btn, 0, wxALL, Border);
+    btn->OnClick.Add(this, MSGBOX_EVT_BUTTON);
+    ButtonsSizer->Add(btn, 0, wxALL, Border);
     buttons.Add(btn);
   }
-  if( (flags & wxNO) != 0 )  {
+  if ((flags & wxNO) != 0) {
     btn = new TButton(this, wxID_NO, wxT("No"));
-    btn->OnClick.Add(this);
-    ButtonsSizer->Add( btn, 0, wxALL, Border);
+    btn->OnClick.Add(this, MSGBOX_EVT_BUTTON);
+    ButtonsSizer->Add(btn, 0, wxALL, Border);
     buttons.Add(btn);
   }
-  if( (flags & wxCANCEL) != 0 )  {
+  if ((flags & wxCANCEL) != 0) {
     btn = new TButton(this, wxID_CANCEL, wxT("Cancel"));
-    btn->OnClick.Add(this);
-    ButtonsSizer->Add( btn, 0, wxALL, Border);
+    btn->OnClick.Add(this, MSGBOX_EVT_BUTTON);
+    ButtonsSizer->Add(btn, 0, wxALL, Border);
     buttons.Add(btn);
   }
 
-  wxBoxSizer *TopSiser = new wxBoxSizer( wxVERTICAL );
+  wxBoxSizer* TopSiser = new wxBoxSizer(wxVERTICAL);
   TopSiser->Add(ASizer, 0, wxALL, 5);
-  if( BSizer != NULL )
-    TopSiser->Add(BSizer, 0, wxALL|wxALIGN_RIGHT, 5);
-  TopSiser->Add(ButtonsSizer, 0, wxALL|wxALIGN_RIGHT, 5);
+  if (BSizer != 0) {
+    TopSiser->Add(BSizer, 0, wxALL | wxALIGN_RIGHT, 5);
+  }
+  TopSiser->Add(ButtonsSizer, 0, wxALL | wxALIGN_RIGHT, 5);
 
-  SetSizer( TopSiser );      // use the sizer for layout
+  SetSizer(TopSiser);      // use the sizer for layout
 
-  TopSiser->SetSizeHints( this );   // set size hints to honour minimum size
+  TopSiser->SetSizeHints(this);   // set size hints to honour minimum size
 
   Center();
-//  TDialog::Init();
+
+  if (SelfTimeout != 0) {
+    TBasicApp::GetInstance().OnTimer.Add(this, MSGBOX_EVT_TIMER);
+  }
+  
+  //  TDialog::Init();
 }
 //..............................................................................
-TdlgMsgBox::~TdlgMsgBox()  {
-  for( size_t i=0; i < buttons.Count(); i++ )
+TdlgMsgBox::~TdlgMsgBox() {
+  TBasicApp::GetInstance().OnTimer.Remove(this);
+  for (size_t i = 0; i < buttons.Count(); i++) {
     buttons[i]->OnClick.Clear();
+  }
 }
 //..............................................................................
-bool TdlgMsgBox::Execute(const IOlxObject *Sender, const IOlxObject *Data,
-  TActionQueue *)
+bool TdlgMsgBox::Dispatch(int MsgId, short MsgSubId, const IOlxObject* Sender,
+  const IOlxObject* Data, TActionQueue*)
 {
-  if (Sender->Is<TButton>()) {
-    EndModal(dynamic_cast<const TButton *>(Sender)->GetId());
+  if (MsgId == MSGBOX_EVT_BUTTON) {
+    TBasicApp::GetInstance().OnTimer.Remove(this);
+    EndModal(dynamic_cast<const TButton*>(Sender)->GetId());
+  }
+  else if (MsgId == MSGBOX_EVT_TIMER) {
+    if (TETime::msNow() - ShownAt > SelfTimeout*1000) {
+      TBasicApp::GetInstance().OnTimer.Remove(this);
+      EndModal(SelfTimeoutId);
+    }
+    else {
+      for (size_t i = 0; i < buttons.Count(); i++) {
+        if (buttons[i]->GetId() == SelfTimeoutId) {
+          olxstr l = buttons[i]->GetLabel();
+          size_t ti = l.LastIndexOf('(');
+          if (ti != InvalidIndex) {
+            l = l.SubStringTo(ti - 1).TrimWhiteChars();
+          }
+          l << " (" << (SelfTimeout*1000 + ShownAt - TETime::msNow())/1000 << ')';
+          buttons[i]->SetLabel(l.u_str());
+          buttons[i]->Update();
+          break;
+        }
+      }
+    }
   }
   return true;
 }
 //..............................................................................
 olxstr TdlgMsgBox::Execute(TMainFrame* Parent, const olxstr& msg,
   const olxstr& title, const olxstr& tickBoxMsg, long flags,
-  bool ShowRememberCheckBox)
+  bool ShowRememberCheckBox,
+  long selfTimeout, wxWindowID selfTimeoutId)
 {
   TdlgMsgBox* dlg = new TdlgMsgBox(Parent, msg, title, tickBoxMsg, flags,
-    ShowRememberCheckBox);
+    ShowRememberCheckBox, selfTimeout, selfTimeoutId);
   int mv = dlg->ShowModal();
   olxstr rv;
-  if (ShowRememberCheckBox && dlg->cbRemember->IsChecked())
+  if (ShowRememberCheckBox && dlg->cbRemember->IsChecked()) {
     rv = 'R';
+  }
   dlg->Destroy();
-  if( mv == wxID_OK )  rv << 'O';
-  else if( mv == wxID_YES )  rv << 'Y';
-  else if( mv == wxID_NO )  rv << 'N';
-  else if( mv == wxID_CANCEL )  rv << 'C';
+  if (mv == wxID_OK) {
+    rv << 'O';
+  }
+  else if (mv == wxID_YES) {
+    rv << 'Y';
+  }
+  else if (mv == wxID_NO) {
+    rv << 'N';
+  }
+  else if (mv == wxID_CANCEL) {
+    rv << 'C';
+  }
   return rv;
 }

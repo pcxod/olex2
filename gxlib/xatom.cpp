@@ -488,7 +488,7 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
 
   double scale = GetZoom();
   if ((FRadius & darIsot) != 0) {
-    if (GetType().z != 1) {
+    if (GetType().z != 1 || GetEllipsoid() != 0) {
       scale *= defs.GetTelpProb();
     }
   }

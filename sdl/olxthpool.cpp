@@ -37,7 +37,7 @@ void TThreadSlot::SetTask(ITask& _task)  {
 }
 int TThreadSlot::Run() {
   while (true) {
-    if (Terminate) {
+    if (Terminate()) {
       Running = false;
       break;
     }

@@ -93,13 +93,13 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au) {
       continue;
     }
     if (last_atom_name != toks[5]) {
-      atom = au.FindCAtom(toks[5]);
+      atom = au.FindCAtom(toks[5], 0, true);
       last_atom_name = toks[5];
     }
     if (atom == 0) {
-      TBasicApp::NewLogEntry(logError) <<
-        "Mismatching matrix file, could not locate: " << last_atom_name;
-      continue;
+      throw TFunctionFailedException(__OlxSourceInfo,
+        olxstr("Mismatching matrix file, could not locate: ") <<
+        last_atom_name);
     }
     const size_t ssci = SiteConstraints.IndexOf(atom->GetId());
     const SiteSymmCon& ssc = (ssci == InvalidIndex ?

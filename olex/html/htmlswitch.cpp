@@ -80,21 +80,41 @@ void THtmlSwitch::UpdateFileIndex() {
         delete_last = false;
       }
       olxstr rv = fn;
-      if (olex2::IOlex2Processor::GetInstance()->processFunction(rv)) {
-        if (rv.ToBool()) {
-          Strings.DeleteRange(i, j - i + 1);
+      try {
+        if (olex2::IOlex2Processor::GetInstance()->processFunction(rv, __OlxSrcInfo)) {
+          bool fv = false;
+          if (!rv.IsBool()) {
+            TBasicApp::NewLogEntry(logError) <<
+              (olxstr("A boolean returning function: ").quote() << fn)
+              << (olxstr(" returned ").quote() << rv);
+            TBasicApp::NewLogEntry(logError) << "ASSUMING: " << olxstr(rv.IsEmpty() != true);
+          }
+          else {
+            fv = rv.ToBool();
+          }
+          if (fv) {
+            Strings.DeleteRange(i, j - i + 1);
+          }
+          else {
+            if (delete_last) {
+              Strings.Delete(j);
+            }
+            Strings.Delete(i);
+          }
         }
         else {
-          if (delete_last) {
-            Strings.Delete(j);
-          }
-          Strings.Delete(i);
+          TBasicApp::NewLogEntry(logError) <<
+            (olxstr("Failed to evaluate condition function in ignoreif: ").quote() << fn
+              << " removing the block");
+          Strings.DeleteRange(i, j - i + 1);
         }
       }
-      else {
+      catch (const TExceptionBase &e) {
         TBasicApp::NewLogEntry(logError) <<
-          (olxstr("Invalid function in ignoreif: ").quote() << fn);
-        i = j + 1; // skip the block
+          (olxstr("Failed to process the condition function: ").quote() << fn
+            << " removing the block");
+          TBasicApp::NewLogEntry(logException) << e;
+          Strings.DeleteRange(i, j - i + 1);
       }
       i--;
     }

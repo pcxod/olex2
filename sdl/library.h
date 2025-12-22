@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2025 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -10,6 +10,7 @@
 #ifndef __olx_sdl_library_H
 #define __olx_sdl_library_H
 #include "function.h"
+#include "ehashed.h"
 #undef GetObject
 
 BeginEsdlNamespace()
@@ -19,11 +20,18 @@ const uint16_t
   libReturn  = 0x0002,
   libChain   = 0x0004;
 
-class TLibrary: public IOlxObject, public ABasicLibrary  {
-  sorted::StringAssociation<ABasicFunction*, true> Functions, Macros;
+class TLibrary : public IOlxObject, public ABasicLibrary {
+public:
+  typedef TEHashTreeMapEx<olxstr, ABasicFunction* , olxstrComparator<true> >
+  //typedef sorted::StringAssociation<ABasicFunction*, true>
+    container_t;
+  typedef olxtree_map<olxstr, TLibrary*, olxstrComparator<true> >
+    lib_container_t;
+private:
+  container_t Functions, Macros;
   TTypeList<FunctionChainer> Chains;
   olxstr LibraryName;
-  olxstr_dict<TLibrary*, true> Libraries;
+  lib_container_t Libraries;
   ALibraryContainer* LibraryOwner;
   TLibrary* ParentLibrary;
 protected:
@@ -35,7 +43,7 @@ protected:
 
   size_t LocateLocalFunctions(const olxstr& name, TBasicFunctionPList& store);
   size_t LocateLocalMacros(const olxstr& name, TBasicFunctionPList& store);
-  void SetParentLibrary(TLibrary* lib)  {  ParentLibrary = lib;  }
+  void SetParentLibrary(TLibrary* lib) { ParentLibrary = lib; }
   /* Adds a macro or a function to the given container. If an object with the
   same name and number of arguments already exists and replace is set to false
   the TDuplicateEntry exception will be thrown. Otherwise, if do_return is
@@ -43,8 +51,8 @@ protected:
   false. Note that if the description of the fm is empty - the description of
   the previous function will be copied to
   */
-  ABasicFunction *Register(
-    sorted::StringAssociation<ABasicFunction*, true> &container,
+  ABasicFunction* Register(
+    container_t& container,
     ABasicFunction* fm,
     uint16_t flags);
 public:
@@ -54,41 +62,44 @@ public:
   TLibrary(const olxstr& libraryName, ALibraryContainer* owner = NULL);
   virtual ~TLibrary();
 
-  virtual const olxstr& GetName() const {  return LibraryName;  }
-  virtual ABasicLibrary* GetParentLibrary() const {  return ParentLibrary;  }
+  virtual const olxstr& GetName() const { return LibraryName; }
+  virtual ABasicLibrary* GetParentLibrary() const { return ParentLibrary; }
   // implementation of the state checker
   virtual bool CheckProgramState(uint32_t state);
-  virtual ALibraryContainer* GetOwner() const {  return LibraryOwner;  }
+  virtual ALibraryContainer* GetOwner() const { return LibraryOwner; }
 
-  size_t FunctionCount() const {  return Functions.Count(); }
-  ABasicFunction* GetFunctionByIndex(size_t i)  const {
-    return Functions.GetValue(i);
+  container_t::iterator_t IterateFunctions() const {
+    return Functions.iterate();
   }
 
-  size_t MacroCount() const {  return Macros.Count(); }
-  ABasicFunction* GetMacroByIndex(size_t i) const {
-    return Macros.GetValue(i);
+  container_t::iterator_t IterateMacros() const {
+    return Macros.iterate();
   }
 
-  TLibrary* AddLibrary(const olxstr& name, ALibraryContainer* owner = NULL);
-  // not that the library will be deleted upon destruction
+  size_t FunctionCount() const { return Functions.Count(); }
+
+  size_t MacroCount() const { return Macros.Count(); }
+
+  TLibrary* AddLibrary(const olxstr& name, ALibraryContainer* owner = 0);
+  // note that the library will be deleted upon destruction
   void AttachLibrary(TLibrary* lib);
 
-  size_t LibraryCount() const {  return Libraries.Count();  }
+  size_t LibraryCount() const { return Libraries.Count(); }
   TLibrary* GetLibraryByName(const olxstr& name) const {
-    return Libraries.Find(name, NULL);
-  }
-  TLibrary* GetLibraryByIndex(size_t index) const {
-    return Libraries.GetValue(index);
+    return Libraries.Find(name, 0);
   }
 
-  ABasicFunction *Register(
-    AFunction* func, uint16_t flags=0)
+  olx_object_ptr<IIterator<TLibrary*> > IterateLibs() const {
+    return Libraries.Iterate();
+  }
+
+  ABasicFunction* Register(
+    AFunction* func, uint16_t flags = 0)
   {
     return Register(Functions, func, flags);
   }
-  ABasicFunction *Register(
-    AMacro* func, uint16_t flags=0)
+  ABasicFunction* Register(
+    AMacro* func, uint16_t flags = 0)
   {
     return Register(Macros, func, flags);
   }
@@ -126,30 +137,33 @@ public:
   void ListAllMacros(TBasicFunctionPList& store);
 
   bool IsEmpty() const {
-    if( MacroCount() == 0 && FunctionCount() == 0 )  {
-      for( size_t i=0; i < LibraryCount(); i++ )
-        if( !GetLibraryByIndex(i)->IsEmpty() )
+    if (Macros.Count() == 0 && Functions.Count() == 0) {
+      lib_container_t::iterator_t i = Libraries.iterate();
+      while (i->HasNext()) {
+        if (!i->Next()->IsEmpty()) {
           return false;
+        }
+      }
       return true;
     }
     return false;
   }
 
-  class TDuplicateEntry : public TBasicException  {
+  class TDuplicateEntry : public TBasicException {
   public:
     TDuplicateEntry(const olxstr& location, const olxstr& entry,
       const olxstr& entryType) :
       TBasicException(location, olxstr("Duplicate ") << entryType << '-' << entry)
-      {}
-    virtual IOlxObject* Replicate() const {  return new TDuplicateEntry(*this);  }
+    {}
+    virtual IOlxObject* Replicate() const { return new TDuplicateEntry(*this); }
   };
 
-  class TLibraryNotFound : public TBasicException  {
+  class TLibraryNotFound : public TBasicException {
   public:
     TLibraryNotFound(const olxstr& location, const olxstr& libName) :
       TBasicException(location, olxstr("Library ") << libName << " not found")
-      {}
-    virtual IOlxObject* Replicate() const {  return new TLibraryNotFound(*this);  }
+    {}
+    virtual IOlxObject* Replicate() const { return new TLibraryNotFound(*this); }
   };
 };
 

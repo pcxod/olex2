@@ -36,3 +36,4 @@ explicit_same [true]	writes expands SAME just before the INS END rather than to 
 As above, this gives more flexibility as it does not enforce atom order in the reference SAME groups
 exyz_separation [0.5]	separation for EXYZ atoms in special rendering mode
 on_loaded_file[] - an action to perform when a file the user tries to load is opened in another Olex2 instance. [Y]-proceed with loaading, [N]-do not open any files, [C]-close this instance and bring the other to the front
+allow_multiple_reference_same [false] - disable stacking SAME on single reference group

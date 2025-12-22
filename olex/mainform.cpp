@@ -499,6 +499,10 @@ void TMainForm::XApp(Olex2App *XA)  {
     "Listens for changes in a file provided as argument. If the file content "
     "changes it is automatically reloaded in Olex2. If no arguments provided "
     "prints current status of the mode");
+  this_InitMacroD(ListenCmd, EmptyString(), fpAny,
+    "Listens for changes in a file provided as argument. If the file content "
+    "changes its first line is ran as a command. If no arguments provided "
+    "prints current status of the mode");
   #ifdef __WIN32__
   this_InitMacroD(WindowCmd, EmptyString(), fpAny^(fpNone|fpOne),
     "Windows specific command which send a command to a process with GUI "
@@ -855,7 +859,7 @@ void TMainForm::XApp(Olex2App *XA)  {
 
   this_InitFunc(LoadDll, fpOne);
 
-  this_InitFuncD(Alert, fpTwo|fpThree|fpFour,
+  this_InitFuncD(Alert, fpTwo|fpThree|fpFour|fpFive,
     "title message [flags YNCO-yes,no,cancel,ok "
     "XHEIQ-icon:exclamation,hand,eror,information,question "
     "R-show checkbox] [checkbox message]");
@@ -865,6 +869,7 @@ void TMainForm::XApp(Olex2App *XA)  {
 
   // number of lines, caption, def value
   this_InitFunc(GetUserInput, fpThree);
+  this_InitFunc(GetUserStyledInput, fpFour);
 
   this_InitFuncD(TranslatePhrase, fpOne,
 "Translates provided phrase into current language");
@@ -1346,7 +1351,7 @@ void TMainForm::StartupInit() {
   for (size_t i = 0; i < gls.FontCount(); i++) {
     gls._GetFont(i).SetMaterial(glm);
   }
-  
+
 
   olxstr T(FXApp->GetConfigDir());
   T << FLastSettingsFile;
@@ -1611,17 +1616,23 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
   }
 
   if (MsgId == ID_TIMER && wxThread::IsMain() &&
-    StartupInitialised && Py_IsInitialized() && PyEval_ThreadsInitialized())
+    StartupInitialised && Py_IsInitialized())
   {
-    size_t tc = OlexPyCore::GetRunningPythonThreadsCount();
-    if (tc > 0) {
-      PyGILState_STATE st = PyGILState_Ensure();
-      Py_BEGIN_ALLOW_THREADS;
-      olx_sleep(5);
-      Py_END_ALLOW_THREADS;
-      PyGILState_Release(st);
+#if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 10
+    if (PyEval_ThreadsInitialized()) {
+#endif
+      size_t tc = OlexPyCore::GetRunningPythonThreadsCount();
+      if (tc > 0) {
+        PyGILState_STATE st = PyGILState_Ensure();
+        Py_BEGIN_ALLOW_THREADS;
+        olx_sleep(5);
+        Py_END_ALLOW_THREADS;
+        PyGILState_Release(st);
+      }
+#if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 10
     }
-  }
+#endif
+    }
 
   bool res = true, Silent = (FMode & mSilent) != 0, Draw = false;
   static bool actionEntered = false, downloadEntered = false;
@@ -1765,6 +1776,19 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
       if (FileMT != FileT) {
         FObjectUnderMouse = 0;
         processMacro((olxstr("reap_listen \"") << FListenFile) + '\"', "OnListen");
+        FileMT = FileT;
+      }
+    }
+    if ((FMode & mListenCmd) != 0 && TEFile::Exists(FListenCmdFile)) {
+      static time_t FileMT = TEFile::FileAge(FListenCmdFile);
+      time_t FileT = TEFile::FileAge(FListenCmdFile);
+      if (FileMT != FileT) {
+        FObjectUnderMouse = 0;
+        const_cstrlist file_lines = TEFile::ReadCLines(FListenCmdFile);
+        if (!file_lines.IsEmpty()) {
+          processMacro(file_lines[0], "OnCmdListen");
+          FXApp->Draw();
+        }
         FileMT = FileT;
       }
     }
@@ -2615,6 +2639,7 @@ void TMainForm::OnResize() {
     return;
   }
   int w = 0, h = 0, l = 0;
+  double sf = 1.0;
   int dheight = InfoWindowVisible ? FInfoBox->GetHeight() : 1;
   GetClientSize(&w, &h);
   if (FHtmlMinimized) {
@@ -2651,6 +2676,10 @@ void TMainForm::OnResize() {
     HtmlManager.main->Update();
     HtmlManager.main->Thaw();
   }
+
+  sf = FGlCanvas->GetContentScaleFactor();
+  w = static_cast<int>(w*sf);
+  h = static_cast<int>(h*sf);
   if (CmdLineVisible) {
     FCmdLine->WI.SetWidth(w);
     FCmdLine->WI.SetLeft(l);
@@ -2840,12 +2869,28 @@ void TMainForm::SaveSettings(const olxstr& FN) {
   I->AddField("ThreadCount", FXApp->GetMaxThreadCount());
 
   I = &DF.Root().AddItem("Recent_files");
-  for (size_t i = 0; i < olx_min(FRecentFilesToShow, FRecentFiles.Count()); i++) {
-    olxstr x = TEFile::CreateRelativePath(FRecentFiles[i]);
-    if (x.Length() > FRecentFiles[i].Length()) {
-      x = FRecentFiles[i];
+  size_t files_added = 0;
+  for (size_t i = 0; i < FRecentFiles.Count(); i++) {
+    olxstr y = TEFile::ExpandRelativePath(FRecentFiles[i]);
+    olxstr ext = TEFile::ExtractFileExt(y);
+    if (ext.IsEmpty()) {
+      if (!TEFile::Exists(y + ".res") &&
+        !TEFile::Exists(y + ".ins"))
+      {
+        continue;
+      }
     }
-    I->AddField(olxstr("file") << i, olxstr().quote('"') << x);
+    else if (!TEFile::Exists(y)) {
+      continue;
+    }
+    olxstr x = TEFile::CreateRelativePath(y);
+    if (x.Length() >= y.Length()) {
+      x = y;
+    }
+    I->AddField(olxstr("file") << i, x);
+    if (++files_added >= FRecentFilesToShow) {
+      break;
+    }
   }
 
   I = &DF.Root().AddItem("Stored_params");
@@ -2997,23 +3042,14 @@ void TMainForm::LoadSettings(const olxstr& FN) {
   I = DF.Root().FindItem("Recent_files");
   if (I != 0) {
     MenuFile->AppendSeparator();
-    int i = 0;
-    TStrList uniqNames;
-    olxstr T = TEFile::ExpandRelativePath(I->FindField(olxstr("file") << i));
-    while (!T.IsEmpty()) {
-      if (T.EndsWithi(".ins") || T.EndsWithi(".res")) {
-        T = TEFile::ChangeFileExt(T, EmptyString());
+    olxtree_set<olxstr> uniq;
+    for (size_t i = 0; i < I->FieldCount(); i++) {
+      olxstr fn = I->GetFieldByIndex(i);
+      if (!uniq.Add(fn)) {
+        continue;
       }
-      TEFile::OSPathI(T);
-      if (uniqNames.IndexOf(T) == InvalidIndex)
-        uniqNames.Add(T);
-      i++;
-      T = I->FindField(olxstr("file") << i);
-    }
-    for (size_t j = 0; j < olx_min(uniqNames.Count(), FRecentFilesToShow); j++) {
-      processFunction(uniqNames[j]);
-      MenuFile->AppendCheckItem((int)(ID_FILE0 + j), uniqNames[j].u_str());
-      FRecentFiles.Add(uniqNames[j],
+      MenuFile->AppendCheckItem((int)(ID_FILE0 + FRecentFiles.Count()), fn.u_str());
+      FRecentFiles.Add(fn,
         MenuFile->FindItemByPosition(MenuFile->GetMenuItemCount() - 1));
     }
   }
@@ -3129,7 +3165,7 @@ void TMainForm::LoadSettings(const olxstr& FN) {
   }
 }
 //..............................................................................
-void TMainForm::UpdateRecentFile(const olxstr& fn)  {
+void TMainForm::UpdateRecentFile(const olxstr& fn) {
   if (fn.IsEmpty()) {
     for (size_t i = 0; i < FRecentFiles.Count(); i++) { // change item captions
       FRecentFiles.GetObject(i)->Check(false);
@@ -3137,50 +3173,54 @@ void TMainForm::UpdateRecentFile(const olxstr& fn)  {
     return;
   }
   TPtrList<wxMenuItem> Items;
-  olxstr FN = (fn.EndsWithi(".ins") || fn.EndsWithi(".res")) ?
-    TEFile::ChangeFileExt(fn, EmptyString()) : fn;
+  olxstr FN = (fn.EndsWithi(".ins") || fn.EndsWithi(".res"))
+    ? TEFile::ChangeFileExt(fn, EmptyString()) : fn;
   TEFile::OSPathI(FN);
   olxstr x = TEFile::CreateRelativePath(FN);
   if (x.Length() < FN.Length()) {
     FN = x;
   }
   size_t index = FRecentFiles.IndexOf(FN);
-  wxMenuItem* mi=NULL;
-  if( index == InvalidIndex )  {
-    if( (FRecentFiles.Count()+1) < FRecentFilesToShow )  {
-      for( size_t i=0; i < MenuFile->GetMenuItemCount(); i++ )  {
+  wxMenuItem* mi = 0;
+  if (index == InvalidIndex) {
+    if ((FRecentFiles.Count() + 1) < FRecentFilesToShow) {
+      for (size_t i = 0; i < MenuFile->GetMenuItemCount(); i++) {
         wxMenuItem* item = MenuFile->FindItemByPosition(i);
-          if( item->GetId() >= ID_FILE0 && item->GetId() <= (ID_FILE0+FRecentFilesToShow))
-            index = i;
+        if (item->GetId() >= ID_FILE0 && item->GetId() <= (ID_FILE0 + FRecentFilesToShow)) {
+          index = i;
+        }
       }
-      if( index != InvalidIndex ) {
+      if (index != InvalidIndex) {
         mi = MenuFile->InsertCheckItem(index + 1,
-          (int)(ID_FILE0+FRecentFiles.Count()), wxT("tmp"));
+          (int)(ID_FILE0 + FRecentFiles.Count()), wxT("tmp"));
       }
       else {
         mi = MenuFile->AppendCheckItem(
-          (int)(ID_FILE0+FRecentFiles.Count()), wxT("tmp"));
+          (int)(ID_FILE0 + FRecentFiles.Count()), wxT("tmp"));
       }
       FRecentFiles.Insert(0, FN, mi);
     }
-    else  {
+    else {
       FRecentFiles.Insert(0, FN, FRecentFiles.GetLast().Object);
-      FRecentFiles.Delete(FRecentFiles.Count()-1);
+      FRecentFiles.Delete(FRecentFiles.Count() - 1);
     }
   }
-  else
+  else {
     FRecentFiles.Move(index, 0);
+  }
 
-  for( size_t i=0; i < FRecentFiles.Count(); i++ )
-    Items.Add( FRecentFiles.GetObject(i) );
-  for( size_t i=0; i < FRecentFiles.Count(); i++ )  { // put items in the right position
-    FRecentFiles.GetObject(Items[i]->GetId()-ID_FILE0) = Items[i];
-    Items[i]->SetItemLabel(FRecentFiles[Items[i]->GetId()-ID_FILE0].u_str());
+  for (size_t i = 0; i < FRecentFiles.Count(); i++) {
+    Items.Add(FRecentFiles.GetObject(i));
+  }
+  for (size_t i = 0; i < FRecentFiles.Count(); i++) { // put items in the right position
+    FRecentFiles.GetObject(Items[i]->GetId() - ID_FILE0) = Items[i];
+    Items[i]->SetItemLabel(FRecentFiles[Items[i]->GetId() - ID_FILE0].u_str());
     Items[i]->Check(false);
   }
-  FRecentFiles.GetObject(0)->Check( true );
-  if( FRecentFiles.Count() >= FRecentFilesToShow )
+  FRecentFiles.GetObject(0)->Check(true);
+  if (FRecentFiles.Count() >= FRecentFilesToShow) {
     FRecentFiles.SetCount(FRecentFilesToShow);
+  }
 }
 //..............................................................................
 bool TMainForm::UpdateRecentFilesTable(bool TableDef)  {
@@ -3200,9 +3240,10 @@ bool TMainForm::UpdateRecentFilesTable(bool TableDef)  {
   Table.CreateHTMLList(Output, EmptyString(), false, false, false);
   olxcstr cst = TUtf8::Encode(Output.Text('\n'));
   TFileHandlerManager::AddMemoryBlock(RecentFilesFile, cst.c_str(), cst.Length(), plGlobal);
-  if( TEFile::Exists(FXApp->GetInstanceDir()+RecentFilesFile) )
-    TEFile::DelFile(FXApp->GetInstanceDir()+RecentFilesFile);
-  //TUtf8File::WriteLines( RecentFilesFile, Output, false );
+  if (TEFile::Exists(FXApp->GetInstanceDir() + RecentFilesFile)) {
+    TEFile::DelFile(FXApp->GetInstanceDir() + RecentFilesFile);
+    //TUtf8File::WriteLines( RecentFilesFile, Output, false );
+  }
   return true;
 }
 //..............................................................................
@@ -3573,15 +3614,18 @@ void TMainForm::OnIdle() {
 #endif
     TBasicApp::GetInstance().OnIdle.Execute((AEventsDispatcher*)this, NULL);
   // runonce business...
-  if (!RunOnceProcessed && TBasicApp::IsBaseDirWriteable()) {
+  if (!RunOnceProcessed) {
     RunOnceProcessed = true;
     TStrList rof;
     TEFile::ListDir(FXApp->GetBaseDir(), rof, "runonce*.*", sefFile);
-    TStrList macros;
     for (size_t i=0; i < rof.Count(); i++) {
-      rof[i] = FXApp->GetBaseDir()+rof[i];
+      olxstr brof = FXApp->GetBaseDir() + rof[i];
+      olxstr urof = FXApp->GetInstanceDir() + rof[i];
+      if (TEFile::Exists(urof) && TEFile::GetFileID(brof) == TEFile::GetFileID(urof)) {
+        continue;
+      }
       try {
-        TEFile::ReadLines(rof[i], macros);
+        TStrList macros = TEFile::ReadLines(brof);
         macros.CombineLines('\\');
         for (size_t j=0; j < macros.Count(); j++) {
           processMacro(macros[j]);
@@ -3590,15 +3634,11 @@ void TMainForm::OnIdle() {
             macros[j];
 #endif
         }
+        TEFile::Copy(brof, urof);
       }
       catch (const TExceptionBase& e) {
         ShowAlert(e);
       }
-      time_t fa = TEFile::FileAge(rof[i]);
-      // Null the file
-      try  {  TEFile ef(rof[i], "wb+");  }
-      catch(TIOException&)  {}
-      TEFile::SetFileTimes(rof[i], fa, fa);
     }
   }
 }
@@ -4097,6 +4137,30 @@ PyObject* pyGetUserInput(PyObject* self, PyObject* args) {
   return rv;
 }
 //..............................................................................
+PyObject* pyGetUserStyledInput(PyObject* self, PyObject* args) {
+  olxstr title, str;
+  int lexer_code;
+  int flags = 0;
+  if (!PythonExt::ParseTuple(args, "iwwi", &flags, &title, &str, &lexer_code)) {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "iwwi");
+  }
+  const bool MultiLine = (flags != 1);
+  auto* dlg = new TdlgStyledEdit(TGlXApp::GetMainForm(), MultiLine);
+  dlg->SetTitle(title.u_str());
+  dlg->SetText(str);
+  dlg->SetLexer(lexer_code);
+
+  PyObject* rv;
+  if (dlg->ShowModal() == wxID_OK)
+    rv = PythonExt::BuildString(dlg->GetText());
+  else {
+    rv = Py_None;
+    Py_IncRef(rv);
+  }
+  dlg->Destroy();
+  return rv;
+}
+//..............................................................................
 PyObject* pyPPI(PyObject* self, PyObject* args) {
   wxWindowDC wx_dc(TGlXApp::GetMainForm());
   wxSize ppi = wx_dc.GetPPI();
@@ -4139,6 +4203,11 @@ static PyMethodDef CORE_Methods[] = {
   {"GetUserInput", pyGetUserInput, METH_VARARGS,
   "Shows a dialog, where user can type some text. Takes three agruments: flags"
   ", title and content. If flags not equal to 1, a muliline dialog sis created"
+  },
+    {"GetUserStyledInput", pyGetUserStyledInput, METH_VARARGS,
+  "Shows a dialog, where user can type some text. Takes four agruments: flags"
+  ", title, content and lexer_code. If flags not equal to 1, a muliline dialog sis created. lexer_code defines the "
+  "programming language. It uses wxSTC_LEX compatible ones."
   },
   {"IsControl", pyIsControl, METH_VARARGS,
   "Takes HTML element name and optionaly popup name. Returns true/false if "
@@ -4354,7 +4423,8 @@ BOOL CALLBACK TMainForm::QueryOlex2Windows(HWND w, LPARAM p) {
     olxstr t = olxstr::FromExternal(title.release(), sz, max_sz);
     QueryParams* q = (QueryParams*)p;
     if (t.StartsFrom("Olex2") && q->hwnd != w) {
-      SendMessage(w, q->evt, (WPARAM)q->hwnd, 0);
+      SendMessageTimeout(w, q->evt, (WPARAM)q->hwnd, 0,
+        SMTO_ABORTIFHUNG, 1000, 0); // 1 sec timeout
     }
   }
   return TRUE;

@@ -114,14 +114,14 @@ TDUserObj *XTLS::CreateUdiffObject(const vec3f_alist &crds,
     }
   }
   short m_c[3] = {
-    OLX_GetRValue(start_color)+OLX_GetRValue(end_color),
-    OLX_GetGValue(start_color)+OLX_GetGValue(end_color),
-    OLX_GetBValue(start_color)+OLX_GetBValue(end_color),
+    (short)(OLX_GetRValue(start_color)+OLX_GetRValue(end_color)),
+    (short)(OLX_GetGValue(start_color)+OLX_GetGValue(end_color)),
+    (short)(OLX_GetBValue(start_color)+OLX_GetBValue(end_color)),
   };
   short s_c[3] = {
-    OLX_GetRValue(end_color)-OLX_GetRValue(start_color),
-    OLX_GetGValue(end_color)-OLX_GetGValue(start_color),
-    OLX_GetBValue(end_color)-OLX_GetBValue(start_color),
+    (short)(OLX_GetRValue(end_color)-OLX_GetRValue(start_color)),
+    (short)(OLX_GetGValue(end_color)-OLX_GetGValue(start_color)),
+    (short)(OLX_GetBValue(end_color)-OLX_GetBValue(start_color)),
   };
   for (int i=0; i < 3; i++) {
     m_c[i] /= 2;

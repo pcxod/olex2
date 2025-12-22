@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2014 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2025 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -9,37 +9,55 @@
 
 #include "xscatterer.h"
 
-void XScatterer::SetSource(const cm_Element& src, double energy) {
-  if (src.gaussians == 0) {
-    throw TInvalidArgumentException(__OlxSourceInfo,
-      "given scatterer is only partially initialised");
-  }
-  gaussians = *src.gaussians;
+void XScatterer::SetSource(const cm_Element& src, double energy, bool neut) {
   Label = src.symbol;
   wt = src.GetMr();
   r = src.r_bonding;
   source = &src;
-  set_items = setAll ^ setMu;
-  try {
-    fpfdp = src.CalcFpFdp(energy) - src.z;
-  }
-  catch (...) {
+  if (neut) {
+    if (src.neutron_scattering == 0) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        olxstr() << "Could not locate neutron data for: " <<
+        src.symbol);
+    }
+    gaussians = cm_Gaussians(0, 0, 0, 0, 0, 0, 0, 0,
+      src.neutron_scattering->coh.GetRe());
     fpfdp = 0;
-    set_items ^= setDispersion;
+    set_items = setAll ^ setMu;
+  }
+  else {
+    if (src.gaussians == 0) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        "given scatterer is only partially initialised");
+    }
+    gaussians = *src.gaussians;
+    set_items = setAll ^ setMu;
+    try {
+      fpfdp = src.CalcFpFdp(energy) - src.z;
+    }
+    catch (...) {
+      fpfdp = 0;
+      set_items ^= setDispersion;
+    }
   }
 }
 //.............................................................................
 void XScatterer::Merge(const XScatterer& sc) {
-  if ((sc.set_items & setGaussian))
+  if ((sc.set_items & setGaussian)) {
     SetGaussians(sc.gaussians);
-  if ((sc.set_items & setDispersion))
+  }
+  if ((sc.set_items & setDispersion)) {
     SetFpFdp(sc.fpfdp);
-  if ((sc.set_items & setMu))
+  }
+  if ((sc.set_items & setMu)) {
     SetMu(sc.mu);
-  if ((sc.set_items & setR))
+  }
+  if ((sc.set_items & setR)) {
     SetR(sc.r);
-  if ((sc.set_items & setWt))
+  }
+  if ((sc.set_items & setWt)) {
     SetWeight(sc.wt);
+  }
 }
 //.............................................................................
 XScatterer& XScatterer::operator = (const XScatterer& sc) {
@@ -133,12 +151,15 @@ void XScatterer::FromDataItem(const TDataItem& di) {
     fpfdp.Re() = toks[ind++].ToDouble();
     fpfdp.Im() = toks[ind++].ToDouble();
   }
-  if ((set_items & setMu) != 0)
+  if ((set_items & setMu) != 0) {
     mu = toks[ind++].ToDouble();
-  if ((set_items & setR) != 0)
+  }
+  if ((set_items & setR) != 0) {
     r = toks[ind++].ToDouble();
-  if ((set_items & setWt) != 0)
+  }
+  if ((set_items & setWt) != 0) {
     wt = toks[ind++].ToDouble();
+  }
   source = XElementLib::FindBySymbol(Label);
 }
 //.............................................................................
@@ -155,12 +176,15 @@ PyObject* XScatterer::PyExport() {
     PythonExt::SetDictItem(main, "fpfdp",
       Py_BuildValue("(dd)", fpfdp.GetRe(), fpfdp.GetIm()));
   }
-  if ((set_items & setMu) != 0)
+  if ((set_items & setMu) != 0) {
     PythonExt::SetDictItem(main, "mu", Py_BuildValue("d", mu));
-  if ((set_items & setR) != 0)
+  }
+  if ((set_items & setR) != 0) {
     PythonExt::SetDictItem(main, "r", Py_BuildValue("d", r));
-  if ((set_items & setWt) != 0)
+  }
+  if ((set_items & setWt) != 0) {
     PythonExt::SetDictItem(main, "wt", Py_BuildValue("d", wt));
+  }
   return main;
 }
 #endif

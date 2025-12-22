@@ -899,7 +899,9 @@ void TSameGroupList::Analyse() {
   if (!log.IsEmpty()) {
     TBasicApp::NewLogEntry(logWarning) << log;
   }
-  else if (true) { // check if the same dependent group is used - invert if possible
+  else if (!TBasicApp::GetInstance().GetOptions()
+    .GetBoolOption("allow_multiple_reference_same"))
+  { // check if the same dependent group is used - invert if possible
     olxstr_dict<TPtrList<TSameGroup> > deps; // inst_str -> dep
     olxstr_dict<TPtrList<TSameGroup> > dep2ref; // ins_str of dep -> ref
     for (size_t i = 0; i < items.Count(); i++) {
@@ -911,7 +913,7 @@ void TSameGroupList::Analyse() {
         dep2ref.Add(ss).Add(items[i].GetParentGroup());
       }
     }
-    // invert of needed
+    // invert if needed
     for (size_t i = 0; i < deps.Count(); i++) {
       if (deps.GetValue(i).Count() > 1) {
         TPtrList<TSameGroup>& pcs = dep2ref[deps.GetKey(i)];

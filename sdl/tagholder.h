@@ -21,6 +21,7 @@ struct ItemTagHolder {
   struct ACIList {
     TArrayList<index_t> tags;
     ACIList(size_t sz) : tags(sz) {}
+    virtual ~ACIList() {}
     virtual const void* ptr() const = 0;
     virtual void restore() = 0;
     virtual bool have_changed() const = 0;
@@ -106,8 +107,9 @@ struct ItemTagHolder {
 
   void restore_all() {
     for (size_t i = 0; i < data.Count(); i++) {
-      data.GetValue(i)->restore();
-      delete data.GetValue(i);
+      auto temp = data.GetValue(i);
+      temp->restore();
+      delete temp;
     }
     data.Clear();
   }

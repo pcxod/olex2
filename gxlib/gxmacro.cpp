@@ -464,7 +464,8 @@ void GXLibMacros::Export(TLibrary& lib) {
       "type-object type [diff], rmsd&;"
       "r-reset the object style&;"
       "n-[udiff] collection name&;"
-      "c-[true] center the object for 2 atoms&;",
+      "c-[true] center the object for 2 atoms&;"
+      "f-file with the same model to show difference for&;",
       fpAny,
       "Renders a difference between two sets of ADPs")
   );
@@ -2178,9 +2179,13 @@ void GXLibMacros::macMpln(TStrObjList & Cmds, const TParamList & Options,
         tab.CreateTXTList(olxstr("Atom-to-plane distances for ") << planeName,
         true, false, " | ");
       TBasicApp::NewLogEntry() << "Plane equation: " << plane->StrRepr();
-      TBasicApp::NewLogEntry() << "Plane centroid: " << plane->GetCenter().ToString();
-      TBasicApp::NewLogEntry() << "HKL direction: " <<
-        plane->GetCrystallographicDirection().ToString();
+      TBasicApp::NewLogEntry() << "Plane centroid: "
+        << strof(plane->GetCenter()) << ", f:"
+        << strof(au.Fractionalise(plane->GetCenter()));
+      TBasicApp::NewLogEntry() << "Direction abc: "
+        << strof(plane->GetCrystallographicDirection(false, false));
+      TBasicApp::NewLogEntry() << "Direction a*b*c*: "
+        << strof(plane->GetCrystallographicDirection(true, false));
       if (weightExtent != 0) {
         TBasicApp::NewLogEntry() << "Weighted RMSD/A: " <<
           olxstr::FormatFloat(3, plane->GetWeightedRMSD());
@@ -3398,66 +3403,61 @@ void GXLibMacros::macCalcVoid(TStrObjList &Cmds, const TParamList &Options,
   //E.SetRetVal(XLibMacros::NAString());
 }
 //.............................................................................
-void GXLibMacros::macDirection(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &E)
+void GXLibMacros::macDirection(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& E)
 {
   const mat3d Basis = app.GetRenderer().GetBasis().GetMatrix();
   const vec3d Z(Basis[0][2], Basis[1][2], Basis[2][2]);
-  if( app.XFile().HasLastLoader() )  {
-    TAsymmUnit &au = app.XFile().GetAsymmUnit();
-    mat3d m = au.GetCellToCartesian();
-    vec3d fZ = au.Fractionalise(Z).Normalise();
-    double min_v = 100;
-    for (int i=0; i < 3; i++) {
-      if (fZ[i] != 0 && olx_abs(fZ[i]) < min_v)
-        min_v = olx_abs(fZ[i]);
-    }
-    if (min_v >= 1e-4)
-      fZ /= min_v;
-    olxstr Tmp =  "Direction: (";
-    Tmp << olxstr::FormatFloat(3, fZ[0]) << "*A, " <<
-      olxstr::FormatFloat(3, fZ[1]) << "*B, " <<
-      olxstr::FormatFloat(3, fZ[2]) << "*C)";
-    TBasicApp::NewLogEntry() << Tmp;
-    const char *Dir[] = {"000", "100", "010", "001", "110", "101", "011", "111"};
+  if (app.XFile().HasLastLoader()) {
+    TAsymmUnit& au = app.XFile().GetAsymmUnit();
+    vec3d dir_d = TSPlane::GetCrystallographicDirection(
+      au.GetCartesianToCell(), Z);
+    vec3d rep_d = TSPlane::GetCrystallographicDirection(
+      au.GetCellToCartesian(), Z);
+    TBasicApp::NewLogEntry() << "Direction, abc: " << strof(dir_d) ;
+    TBasicApp::NewLogEntry() << "Direction, a*b*c*: " << strof(rep_d);
+
+    const char* Dir[] = { "000", "100", "010", "001", "110", "101", "011", "111" };
     TTypeList<vec3d> Points;
-    Points.AddNew();
-    Points.AddCopy(m[0]);
-    Points.AddCopy(m[1]);
-    Points.AddCopy(m[2]);
-    Points.AddCopy(m[0] + m[1]);
-    Points.AddCopy(m[0] + m[2]);
-    Points.AddCopy(m[1] + m[2]);
-    Points.AddCopy(m[0] + m[1] + m[2]);
-    for( size_t i=0; i < Points.Count(); i++ )  {
-      for( size_t j=i+1; j < Points.Count(); j++ )  {
-        double d = (Points[j]-Points[i]).Normalise().DistanceTo(Z)/2;
+    {
+      mat3d m = au.GetCellToCartesian();
+      Points.AddNew();
+      Points.AddCopy(m[0]);
+      Points.AddCopy(m[1]);
+      Points.AddCopy(m[2]);
+      Points.AddCopy(m[0] + m[1]);
+      Points.AddCopy(m[0] + m[2]);
+      Points.AddCopy(m[1] + m[2]);
+      Points.AddCopy(m[0] + m[1] + m[2]);
+    }
+    for (size_t i = 0; i < Points.Count(); i++) {
+      for (size_t j = i + 1; j < Points.Count(); j++) {
+        double d = (Points[j] - Points[i]).Normalise().DistanceTo(Z) / 2;
         if (d < 0.05) {
-          Tmp = "View along ";
-          Tmp << Dir[i] <<  '-' <<  Dir[j] << ' ' << '(' <<
-            "normalised deviation: " <<  olxstr::FormatFloat(3, d) << "A)";
-          TBasicApp::NewLogEntry() << Tmp;
+          TBasicApp::NewLogEntry()<< "View along "
+            << Dir[i] << '-' << Dir[j] << ' ' << '(' <<
+            "normalised deviation: " << olxstr::FormatFloat(3, d) << "A)";
         }
       }
     }
-    if( !app.XGrid().IsEmpty() && app.XGrid().IsVisible() &&
-      (app.XGrid().GetRenderMode()&(planeRenderModeContour|planeRenderModePlane)) != 0 )
+    if (!app.XGrid().IsEmpty() && app.XGrid().IsVisible() &&
+      (app.XGrid().GetRenderMode() & (planeRenderModeContour | planeRenderModePlane)) != 0)
     {
-      const vec3d center(app.GetRenderer().GetBasis().GetCenter());
       vec3d p(0, 0, app.XGrid().GetDepth());
-      p = au.Fractionalise(Basis*p - center);
-      olxstr Tmp =  "Grid center: (";
+      vec3d center(app.GetRenderer().GetBasis().GetCenter());
+      p = au.Fractionalise(Basis * p - center);
+      olxstr Tmp = "Grid center: (";
       Tmp << olxstr::FormatFloat(3, p[0]) << "*A, " <<
-             olxstr::FormatFloat(3, p[1]) << "*B, " <<
-             olxstr::FormatFloat(3, p[2]) << "*C)";
+        olxstr::FormatFloat(3, p[1]) << "*B, " <<
+        olxstr::FormatFloat(3, p[2]) << "*C)";
       TBasicApp::NewLogEntry() << Tmp;
     }
   }
-  else  {
-    olxstr Tmp =  "Normal: (";
+  else {
+    olxstr Tmp = "Normal: (";
     Tmp << olxstr::FormatFloat(3, Z[0]) << ", " <<
-           olxstr::FormatFloat(3, Z[1]) << ", " <<
-           olxstr::FormatFloat(3, Z[2]) << ')';
+      olxstr::FormatFloat(3, Z[1]) << ", " <<
+      olxstr::FormatFloat(3, Z[2]) << ')';
     TBasicApp::NewLogEntry() << Tmp;
   }
 }
@@ -6274,42 +6274,111 @@ void GXLibMacros::macUdiff(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
   TGXApp &app = TGXApp::GetInstance();
-  TXAtomPList xatoms = app.FindXAtoms(Cmds, true, true);
-  for (size_t i = 0; i < xatoms.Count(); i++) {
-    if (xatoms[i]->GetEllipsoid() == 0) {
-      xatoms[i] = 0;
+  olxstr fname = Options.FindValue('f');
+  TSAtomPList satoms;
+  if (!fname.IsEmpty()) {
+    TIObjectProvider<TSAtom> &xas = app.XFile().GetLattice().GetObjects().atoms;
+    for (size_t i = 0; i < xas.Count(); i++) {
+      if (xas[i].GetEllipsoid() == 0) {
+        continue;
+      }
+      satoms.Add(xas[i]);
     }
   }
-  xatoms.Pack();
-  if (xatoms.Count() != 2 &&
-    (xatoms.Count() < 6 || (xatoms.Count() % 2) != 0))
-  {
-    Error.ProcessingError(__OlxSrcInfo,
-      "at least 3 pairs of anisotropic atoms expected");
-    return;
+  else {
+    satoms = app.FindSAtoms(Cmds, true, true);
+    for (size_t i = 0; i < satoms.Count(); i++) {
+      if (satoms[i]->GetEllipsoid() == 0) {
+        satoms[i] = 0;
+      }
+    }
   }
-  size_t aag = xatoms.Count() / 2;
-  vec3f_alist crds(aag);
-  TTypeList<olx_pair_t<TSAtom*, TSAtom*> > satomp(aag);
-  TEllpPList u_from(aag), u_to(aag);
-  for (size_t i = 0; i < aag; i++) {
-    satomp[i].a = xatoms[i];
-    crds[i] = xatoms[i]->crd();
-    satomp[i].b = xatoms[i + aag];
-    u_from[i] = xatoms[i]->GetEllipsoid();
-    u_to[i] = new TEllipsoid(*xatoms[i + aag]->GetEllipsoid());
+  satoms.Pack();
+  TEllpPList u_to;
+  if (fname.IsEmpty()) {
+    if (satoms.Count() != 2 &&
+      (satoms.Count() < 6 || (satoms.Count() % 2) != 0))
+    {
+      Error.ProcessingError(__OlxSrcInfo,
+        "At least 3 pairs of anisotropic atoms expected");
+      return;
+    }
   }
-  if (xatoms.Count() > 2) {
-    TNetwork::AlignInfo rv = TNetwork::GetAlignmentRMSD(satomp, false,
-      TSAtom::weight_unit);
-    mat3d m;
-    QuaternionToMatrix(rv.align_out.quaternions[0], m);
+  else {
+    TBasicCFile* l_ = app.XFile().FindFormat(TEFile::ExtractFileExt(fname));
+    if (l_ == 0) {
+      Error.ProcessingError(__OlxSrcInfo, "Could not locate a file loader");
+      return;
+    }
+    olx_object_ptr<TXFile> xf;
+    if (l_->IsNative()) {
+      xf = app.LoadMainModel(fname);
+      if (!xf.ok()) {
+        Error.ProcessingError(__OlxSrcInfo, "Failed to load the model");
+        return;
+      }
+    }
+    else {
+      olx_object_ptr<TBasicCFile> l = dynamic_cast<TBasicCFile*>(l_->Replicate());
+      l->LoadFromFile(fname);
+      xf = (new SObjectProvider())->CreateXFile();
+      xf->GetRM().Assign(l->GetRM(), true);
+    }
+    TLattice::GrowInfo* gi = app.XFile().GetLattice().GetGrowInfo();
+    if ( gi != 0) {
+      xf->GetLattice().SetGrowInfo(gi);
+    }
+    xf->GetLattice().Init();
+    TLattice& latt = xf->GetLattice();
+    for (size_t i = 0; i < latt.GetObjects().atoms.Count(); i++) {
+      TSAtom& a = latt.GetObjects().atoms[i];
+      if (a.GetEllipsoid() == 0) {
+        continue;
+      }
+      u_to.Add(new TEllipsoid(*a.GetEllipsoid()));
+    }
+    if (u_to.Count() != satoms.Count()) {
+      Error.ProcessingError(__OlxSrcInfo, "Missmatching number of atoms");
+      u_to.DeleteItems(false);
+      return;
+    }
+  }
+  vec3f_alist crds;
+  TEllpPList u_from;
+  if (u_to.IsEmpty()) {
+    size_t aag = satoms.Count() / 2;
+    crds.SetCount(aag);
+    u_from.SetCount(aag);
+    u_to.SetCount(aag);
+    TTypeList<olx_pair_t<TSAtom*, TSAtom*> > satomp(aag);
     for (size_t i = 0; i < aag; i++) {
-      u_to[i]->Mult(m);
+      satomp[i].a = satoms[i];
+      crds[i] = satoms[i]->crd();
+      satomp[i].b = satoms[i + aag];
+      u_from[i] = satoms[i]->GetEllipsoid();
+      u_to[i] = new TEllipsoid(*satoms[i + aag]->GetEllipsoid());
+    }
+    if (satoms.Count() > 2) {
+      TNetwork::AlignInfo rv = TNetwork::GetAlignmentRMSD(satomp, false,
+        TSAtom::weight_unit);
+      mat3d m;
+      QuaternionToMatrix(rv.align_out.quaternions[0], m);
+      for (size_t i = 0; i < aag; i++) {
+        u_to[i]->Mult(m);
+      }
+    }
+    else if (Options.GetBoolOption('c')) { // center the object between the atoms
+      crds[0] = (satoms[0]->crd() + satoms[1]->crd()) / 2;
     }
   }
-  else if (Options.GetBoolOption('c')) { // center the object between the atoms
-    crds[0] = (xatoms[0]->crd() + xatoms[1]->crd()) / 2;
+  else {
+    crds.SetCount(satoms.Count());
+    u_from.SetCount(satoms.Count());
+    u_to.SetCount(satoms.Count());
+    for (size_t i = 0; i < satoms.Count(); i++) {
+      crds[i] = satoms[i]->crd();
+      u_from[i] = satoms[i]->GetEllipsoid();
+    }
   }
   int q = Options.FindValue("quality", "5").ToUInt();
   if (q > 7) {

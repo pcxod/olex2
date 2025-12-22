@@ -131,6 +131,7 @@ void TXApp::CalcSFEx(const TRefList& refs, TArrayList<TEComplex<double> >& F,
   const static double T_PI = 2 * M_PI;
   const static double TQ_PI = 2.0*M_PI*M_PI;
   const double r_e = XFile().GetRM().expl.GetRadiationEnergy();
+  bool neutrons = XFile().GetRM().expl.GetRadiationType() == radiaotion_type_neut;
 
   // the thermal ellipsoid scaling factors
   double BM[6] = { hkl2c[0].Length(), hkl2c[1].Length(), hkl2c[2].Length(),
@@ -178,7 +179,7 @@ void TXApp::CalcSFEx(const TRefList& refs, TArrayList<TEComplex<double> >& F,
   for (size_t i = 0; i < scatterers.Count(); i++) {
     XScatterer *xs = scs.Find(scatterers[i].GetLabel(), 0);
     if (xs == 0) {
-      scatterers[i].SetSource(*types[i], ev);
+      scatterers[i].SetSource(*types[i], ev, neutrons);
     }
     else {
       if (xs->IsSet(XScatterer::setGaussian)) {

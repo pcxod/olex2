@@ -59,7 +59,8 @@ class TGlConsole: public AGDrawObject,
                   public AActionHandler,
                   public IDataOutputStream  {
   double FLineSpacing;
-  uint16_t Width, Height, Top, Left; // to clip the content
+  int Width, Height, Top, Left; // to clip the content
+  int XOffset;
   double GlLeft, GlTop;
   TStringToList<olxstr, TGlMaterial*> FBuffer;
   TStrList FCommands;   // the content
@@ -132,10 +133,10 @@ public:
   bool ProcessKey(int Key, short ShiftState);
   bool WillProcessKey(int Key, short ShiftState);
 
-  uint16_t GetLeft() const { return Left; }
-  uint16_t GetTop() const { return Top; }
-  uint16_t GetWidth() const { return Width; }
-  uint16_t GetHeight() const { return Height; }
+  int GetLeft() const { return Left; }
+  int GetTop() const { return Top; }
+  int GetWidth() const { return Width; }
+  int GetHeight() const { return Height; }
 
   void Resize(int l, int t, int w, int h);
   DefPropBIsSet(SkipPosting)
@@ -146,9 +147,10 @@ public:
   void SetLineSpacing(double v);
   const olxstr& GetInviteString() const { return InviteStr; }
   void SetInviteString(const olxstr& S);
+  void SetXOffset(int v);
 
-  void PrintText(const olxstr& S, TGlMaterial *M=NULL, bool Hyphenate=true);
-  void PrintText(const IStrList& SL, TGlMaterial *M=NULL, bool Hyphenate=true);
+  void PrintText(const olxstr& S, TGlMaterial *M=0, bool Hyphenate=true);
+  void PrintText(const IStrList& SL, TGlMaterial *M=0, bool Hyphenate=true);
   void NewLine()  {  FBuffer.Add(EmptyString()); }
   size_t MaxLines();
   void SetMaxLines(size_t V)  {  FMaxLines = V; }
@@ -169,6 +171,7 @@ public:
   void LibLineSpacing(const TStrObjList& Params, TMacroData& E);
   void LibInviteString(const TStrObjList& Params, TMacroData& E);
   void LibCommand(const TStrObjList& Params, TMacroData& E);
+  void LibXOffset(const TStrObjList& Params, TMacroData& E);
   class TLibrary* ExportLibrary(const olxstr& name=EmptyString());
 };
 

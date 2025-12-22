@@ -13,6 +13,7 @@
 #include "utf8file.h"
 #include "olxstate.h"
 #include "imgcellext.h"
+#include "state_manager.h"
 
 #define this_InitFuncD(funcName, argc, desc) \
   (Library).Register(\
@@ -414,6 +415,11 @@ void THtmlManager::macTooltips(TStrObjList &Cmds, const TParamList &Options,
 void THtmlManager::macUpdate(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
+  static bool updating = false;
+  if (updating) {
+    TBasicApp::NewLogEntry(logError) << "Recursive html.Update encountered!";
+    return;
+  }
   THtml *html = (Cmds.Count() == 1) ? FindHtml(Cmds[0]) : main;
   if (html == 0) {
     if (!Options.GetBoolOption('q')) {
@@ -422,6 +428,7 @@ void THtmlManager::macUpdate(TStrObjList &Cmds, const TParamList &Options,
     }
     return;
   }
+  StateManager<bool> st_(updating, true, false);
   if (html->GetParentCell() != 0 &&
     html->GetParentCell()->GetFloatY() != 0 && false)
   {

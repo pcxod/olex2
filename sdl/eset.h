@@ -10,12 +10,14 @@
 #ifndef __olx_sdl_set_H
 #define __olx_sdl_set_H
 #include "sortedlist.h"
+#include "ebtree.h"
 BeginEsdlNamespace()
 
 template <typename, typename> class const_olxset;
 
-template <typename object_t, class cmp_t> class olxset
-: protected SortedObjectList<object_t, cmp_t>
+template <typename object_t, class cmp_t> class olxset :
+  public AIterable<object_t>,
+  protected SortedObjectList<object_t, cmp_t>
 {
   typedef SortedObjectList<object_t, cmp_t> list_t;
 public:
@@ -86,7 +88,7 @@ public:
     return list_t::AddUnique(obj).b;
   }
 
-  bool AddListItem(const object_t& obj) {
+  bool Add(const object_t& obj) {
     return list_t::AddUnique(obj).b;
   }
 
@@ -184,6 +186,15 @@ public:
 
   void SetIncrement(size_t v) { list_t::SetIncrement(v); }
   void SetCapacity(size_t v) { list_t::SetCapacity(v); }
+
+  struct ValueAccessor {
+    static const object_t& get(const olxset& s, size_t idx) {
+      return s.Get(idx);
+    }
+  };
+  IIterator<object_t>* iterate() const {
+    return new IndexableIterator<olxset, ValueAccessor, object_t>(this);
+  }
 public:
   typedef object_t list_item_type;
   typedef object_t set_item_type;
@@ -263,6 +274,23 @@ public:
   const_olxset&operator = (const const_olxset &s) {
     parent_t::operator = (s);
     return *this;
+  }
+};
+
+
+template <typename item_t, class cmp_t=TComparableComparator>
+class olxtree_set :
+  public RBTree<RBTreeEntry<TreeSetEntry<item_t> >, cmp_t>
+{
+public:
+  typedef RBTree<RBTreeEntry<TreeSetEntry<item_t> >, cmp_t> parent_t;
+  olxtree_set(const cmp_t & cmp=cmp_t())
+  : parent_t(cmp)
+  {}
+
+  template <typename T>
+  bool Add(const T &v) {
+    return parent_t::Add(TreeSetEntry<item_t>(v));
   }
 };
 
