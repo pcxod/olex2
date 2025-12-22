@@ -206,13 +206,13 @@ const smatd& RefinementModel::AddUsedSymm(const smatd& matr, const olxstr& id_)
   return UsedSymm.Add(id, RefinementModel::Equiv(matr), true).symop;
 }
 //.............................................................................
-void RefinementModel::UpdateUsedSymm(const class TUnitCell& uc)  {
+void RefinementModel::UpdateUsedSymm(const TUnitCell& uc) {
   try {
     for (size_t i = 0; i < UsedSymm.Count(); i++) {
       uc.InitMatrixId(UsedSymm.GetValue(i).symop);
     }
   }
-  catch (const TExceptionBase &) {
+  catch (const TExceptionBase&) {
     TBasicApp::NewLogEntry(logError) <<
       "Failed to update EQIV list, resetting to identity";
     TBasicApp::NewLogEntry(logError) <<
@@ -220,6 +220,14 @@ void RefinementModel::UpdateUsedSymm(const class TUnitCell& uc)  {
     for (size_t i = 0; i < UsedSymm.Count(); i++) {
       UsedSymm.GetValue(i).symop = uc.GetMatrix(0);
     }
+  }
+}
+//.............................................................................
+void RefinementModel::TransformUsedSymm(const smatd& rm) {
+  smatd rm_t = rm.r.GetTranspose();
+  for (size_t i = 0; i < UsedSymm.Count(); i++) {
+    smatd neq = rm_t * UsedSymm.GetValue(i).symop * rm;
+    UsedSymm.GetValue(i).symop = neq;
   }
 }
 //.............................................................................

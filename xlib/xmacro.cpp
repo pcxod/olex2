@@ -3204,6 +3204,7 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg,
   }
   au.ChangeSpaceGroup(new_sg);
   au.InitMatrices();
+  xapp.XFile().LastLoader()->GetRM().TransformUsedSymm(tm);
   xapp.XFile().LastLoaderChanged();
   if (save) {
     xapp.XFile().SaveToFile(xapp.XFile().GetFileName());
@@ -3265,26 +3266,39 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options,
     }
     Cmds.Delete(Cmds.Count()-1);
   }
-  if (Cmds.Count() == 10) {  // transformation provided?
-    TSpaceGroup* sg = TSymmLib::GetInstance().FindGroupByName(Cmds[9]);
-    if (sg == 0) {
-      try {
-        sg = &TSymmLib::GetInstance().CreateNew(Cmds[9]);
+  if (Cmds.Count() == 9 || Cmds.Count() == 10) {  // transformation provided?
+    TSpaceGroup* sg = 0;
+    if (Cmds.Count() == 10) {
+      sg = TSymmLib::GetInstance().FindGroupByName(Cmds[9]);
+      if (sg == 0) {
+        try {
+          sg = &TSymmLib::GetInstance().CreateNew(Cmds[9]);
+        }
+        catch (const TExceptionBase& e) {}
       }
-      catch (const TExceptionBase& e) {}
-    }
-    if (sg == 0) {
-      E.ProcessingError(__OlxSrcInfo, "undefined space group");
-      return;
+      if (sg == 0) {
+        E.ProcessingError(__OlxSrcInfo, "undefined space group");
+        return;
+      }
     }
     mat3d tm;
     for (int i = 0; i < 9; i++) {
       tm[i / 3][i % 3] = Cmds[i].ToDouble();
     }
     if (!tm.IsI()) {
-      ChangeCell(tm, *sg, hkl_fn);
+      const TAsymmUnit &au = xapp.XFile().GetAsymmUnit();
+      smatd_list ml;
+      TSymmLib::GetInstance().ExpandLatt(ml, au.GetMatices(), au.GetLatt());
+      smatd sg_r = tm,
+        sg_r_t = tm.GetTranspose();
+      for (size_t i = 0; i < au.MatrixCount(); i++) {
+        ml[i] = sg_r_t * ml[i] * sg_r;
+      }
+      SymmSpace::Info si = SymmSpace::GetInfo(ml);
+      TSpaceGroup& sg = TSymmLib::GetInstance().CreateNew(si);
+      ChangeCell(tm, sg, hkl_fn);
       TBasicApp::NewLogEntry() << "The cell, atomic coordinates and ADP's are "
-        "transformed using given transformion";
+        "transformed using given transformation. New space group: " << sg.GetName();
       if (tm.Determinant() < 0) {
         TBasicApp::NewLogEntry(logWarning) <<
           "Note that the transformation matrix has a negative determinant";
@@ -3292,9 +3306,11 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options,
     }
     else {
       TAsymmUnit& au = xapp.XFile().LastLoader()->GetAsymmUnit();
-      au.ChangeSpaceGroup(*sg);
-      au.InitMatrices();
-      xapp.XFile().LastLoaderChanged();
+      if (!sg == 0) {
+        au.ChangeSpaceGroup(*sg);
+        au.InitMatrices();
+        xapp.XFile().LastLoaderChanged();
+      }
     }
     XLibMacros_macSGS_finalise(finalise);
     return;

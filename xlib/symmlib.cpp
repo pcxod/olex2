@@ -1382,19 +1382,25 @@ TSymmLib::TSymmLib(const olxstr& FN) : extra_added(0)  {
   Instance = this;
 }
 //..............................................................................
-TSymmLib::~TSymmLib()  {
-  for( size_t i=0; i < SGCount(); i++ )
-    delete &(GetGroup(i));
-  for( size_t i=0; i < LatticeCount(); i++ )
-    delete &(GetLatticeByIndex(i));
-  for( size_t i=0; i < BravaisLatticeCount(); i++ )
-    delete &(GetBravaisLattice(i));
-  Instance = NULL;
+TSymmLib::~TSymmLib() {
+  for (size_t i = 0; i < SpaceGroups.Count(); i++) {
+    delete SpaceGroups.GetValue(i);
+  }
+  for (size_t i = 0; i < Lattices.Count(); i++) {
+    delete Lattices.GetObject(i);
+  }
+  for (size_t i = 0; i < BravaisLattices.Count(); i++) {
+    delete BravaisLattices.GetObject(i);
+  }
+  Instance = 0;
 }
 //..............................................................................
-void TSymmLib::GetGroupByNumber(int N, TPtrList<TSpaceGroup>& res) const  {
-  for( size_t i=0; i < SGCount(); i++ )
-    if( GetGroup(i).GetNumber() == N )  res.Add( &GetGroup(i) );
+void TSymmLib::GetGroupByNumber(int N, TPtrList<TSpaceGroup>& res) const {
+  for (size_t i = 0; i < SGCount(); i++) {
+    if (GetGroup(i).GetNumber() == N) {
+      res.Add(&GetGroup(i));
+    }
+  }
 }
 //..............................................................................
 TSpaceGroup &TSymmLib::CreateNewFromCompact(int latt, const smatd_list& ml,
@@ -1402,10 +1408,10 @@ TSpaceGroup &TSymmLib::CreateNewFromCompact(int latt, const smatd_list& ml,
 {
   const olxstr hs = _hs.IsEmpty() ? HallSymbol::Evaluate(latt, ml) : _hs;
   TBasicApp::NewLogEntry(logInfo) << "Adding new SG " << hs;
-  TSpaceGroup *SG = new TSpaceGroup(ml, hs, hs,
+  olx_object_ptr<TSpaceGroup> SG = new TSpaceGroup(ml, hs, hs,
     EmptyString(), -(++extra_added), GetLatticeByNumber(latt), (latt > 0), hs);
   SpaceGroups.Add(hs, &InitSpaceGroup(*SG));
-  return *hall_symbols.Add(hs, SG);
+  return *hall_symbols.Add(hs, SG.release());
 }
 //..............................................................................
 TSpaceGroup &TSymmLib::InitSpaceGroup(TSpaceGroup &sg) {
@@ -1478,35 +1484,35 @@ TSpaceGroup& TSymmLib::CreateNew(const SymmSpace::Info& si,
     return CreateNewFromCompact(si.centrosymmetric ? si.latt : -si.latt, ml, hs);
   }
   else {
-    TSpaceGroup* SG = new TSpaceGroup(ml, hs, hs,
+    olx_object_ptr<TSpaceGroup> SG = new TSpaceGroup(ml, hs, hs,
       EmptyString(), -(++extra_added), GetLatticeByNumber(si.latt), true, hs);
     SG->InversionCenter = si.inv_trans/2;
     TBasicApp::NewLogEntry(logInfo) << "Adding new SG " << hs;
     SpaceGroups.Add(hs, &InitSpaceGroup(*SG));
-    return *hall_symbols.Add(hs, SG);
+    return *hall_symbols.Add(hs, SG.release());
   }
 }
 //..............................................................................
 TSpaceGroup &TSymmLib::CreateNew(const SymmSpace::Info &si) {
   olxstr hs = HallSymbol::Evaluate(si);
-  TSpaceGroup *sg = hall_symbols.Find(hs, NULL);
+  TSpaceGroup *sg = hall_symbols.Find(hs, 0);
   return sg == NULL ? CreateNew(si, hs) : *sg;
 }
 //..............................................................................
 TSpaceGroup &TSymmLib::CreateNew(const olxstr &hs_) {
   olxstr hs = olxstr(hs_).TrimWhiteChars();
   SymmSpace::Info si = HallSymbol::Expand(hs);
-  TSpaceGroup *sg = hall_symbols.Find(hs, NULL);
-  return sg == NULL ? CreateNew(si, hs) : *sg;
+  TSpaceGroup *sg = hall_symbols.Find(hs, 0);
+  return sg == 0 ? CreateNew(si, hs) : *sg;
 }
 //..............................................................................
-TSpaceGroup& TSymmLib::FindSG(const TAsymmUnit& AU)  {
+TSpaceGroup& TSymmLib::FindSG(const TAsymmUnit& AU) {
   smatd_list ml;
-  TSymmLib::GetInstance().ExpandLatt(ml, AU.GetMatices(), AU.GetLatt());
+  ExpandLatt(ml, AU.GetMatices(), AU.GetLatt());
   SymmSpace::Info si = SymmSpace::GetInfo(ml);
   olxstr hs = HallSymbol::Evaluate(si);
-  TSpaceGroup *sg = hall_symbols.Find(hs, NULL);
-  return sg == NULL ? CreateNew(si, hs) : *sg;
+  TSpaceGroup *sg = hall_symbols.Find(hs, 0);
+  return sg == 0 ? CreateNew(si, hs) : *sg;
 }
 //..............................................................................
 size_t TSymmLib::FindBravaisLattices(TAsymmUnit& AU,

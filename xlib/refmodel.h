@@ -424,9 +424,12 @@ Friedel opposites of components 1 ... m
     return (i == InvalidIndex ? NULL : &UsedSymm.GetValue(i).symop);
   }
   /* initialises ID's of the matrices to conform to the unit cell, this called
-  by TLattice
+  by TLattice.
   */
   void UpdateUsedSymm(const class TUnitCell& uc);
+  /* Transforms used symmetry (only the rotation part is used)
+  */
+  void TransformUsedSymm(const smatd& rm);
   // throws an exception if not found
   const adirection& DirectionById(const olxstr &id) const;
   // adds new custom scatterer (created with new, will be deleted)
