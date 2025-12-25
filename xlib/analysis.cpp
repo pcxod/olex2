@@ -1922,7 +1922,7 @@ void Framework::set_tags(Framework::Vertex& v) {
         }
         TTypeList<conn_atom_t>& dest_j = conn_info[dest[j].a->id];
         for (size_t k = j + 1; k < dest.Count(); k++) {
-          smatd rm = dest[j].b.Inverse() * dest[k].b;
+          smatd rm = dest[j].b.GetInverse() * dest[k].b;
           bool uniq = true;
           for (size_t l = 0; l < dest_j.Count(); l++) {
             if (dest_j[l].a == dest[k].a && dest_j[l].b == rm) {
@@ -1935,7 +1935,7 @@ void Framework::set_tags(Framework::Vertex& v) {
           }
           // check reverse link
           uniq = true;
-          rm = dest[k].b.Inverse() * dest[j].b;
+          rm = dest[k].b.GetInverse() * dest[j].b;
           TTypeList<conn_atom_t>& dest_k = conn_info[dest[k].a->id];
           for (size_t l = 0; l < dest_k.Count(); l++) {
             if (dest_k[l].a == dest[j].a && dest_k[l].b == rm) {
@@ -2014,9 +2014,11 @@ TTypeList<TTypeList<NetTools::atom_t> >::const_list_type NetTools::extract_trian
     if (centres.Count() >= 2) {
       for (size_t i1 = 0; i1 < centres.Count(); i1++) {
         for (size_t i2 = i1 + 1; i2 < centres.Count(); i2++) {
-          const TTypeList<conn_atom_t>& con1 = conn_info[conn_map[conn_info[i][centres[i1].b].a->GetId()]];
+          const TTypeList<conn_atom_t>& con1 =
+            conn_info[conn_map[conn_info[i][centres[i1].b].a->GetId()]];
           bool connected = false;
-          smatd rm = conn_info[i][centres[i1].b].b.Inverse() * conn_info[i][centres[i2].b].b;
+          smatd rm = conn_info[i][centres[i1].b].b.GetInverse()
+            * conn_info[i][centres[i2].b].b;
           for (size_t c = 0; c < con1.Count(); c++) {
             if (con1[c].a->GetId() == conn_info[i][centres[i2].b].a->GetId() &&
               con1[c].b == rm)
@@ -2104,7 +2106,7 @@ void NetTools::set_tags(TCAtom& a) {
     for (size_t j = d; j < dest.Count(); j++) {
       TTypeList<conn_atom_t>& dest_j = conn_info[conn_map[dest[j].a->GetId()]];
       for (size_t k = j + 1; k < dest.Count(); k++) {
-        smatd rm = dest[j].b.Inverse() * dest[k].b;
+        smatd rm = dest[j].b.GetInverse() * dest[k].b;
         bool uniq = true;
         for (size_t l = 0; l < dest_j.Count(); l++) {
           if (dest_j[l].a == dest[k].a && dest_j[l].b == rm) {
@@ -2117,7 +2119,7 @@ void NetTools::set_tags(TCAtom& a) {
         }
         // check reverse link
         uniq = true;
-        rm = dest[k].b.Inverse() * dest[j].b;
+        rm = dest[k].b.GetInverse() * dest[j].b;
         TTypeList<conn_atom_t>& dest_k = conn_info[conn_map[dest[k].a->GetId()]];
         for (size_t l = 0; l < dest_k.Count(); l++) {
           if (dest_k[l].a == dest[j].a && dest_k[l].b == rm) {

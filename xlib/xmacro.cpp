@@ -3110,7 +3110,7 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg,
   const mat3d tm_t = tm.GetT();
   xapp.XFile().UpdateAsymmUnit();
   TAsymmUnit& au = xapp.XFile().LastLoader()->GetAsymmUnit();
-  const mat3d i_tm(tm.Inverse());
+  const mat3d i_tm(tm.GetInverse());
   const mat3d f2c = (au.GetCellToCartesian().GetT() * tm).GetT();
   mat3d ax_err;
   ax_err[0] = olx_sqr(au.GetAxisEsds());
@@ -3243,7 +3243,8 @@ olxstr XLibMacros_macSGS_SgInfo(const olxstr& caxis)  {
 void XLibMacros_macSGS_finalise(bool run) {
   if (run && TBasicApp::HasGUI()) {
     olex2::IOlex2Processor* op = olex2::IOlex2Processor::GetInstance();
-    TActionQueueLock __queuelock(TBasicApp::GetInstance().FindActionQueue(olxappevent_GL_DRAW));
+    TActionQueueLock __queuelock(
+      TBasicApp::GetInstance().FindActionQueue(olxappevent_GL_DRAW));
     op->processMacro("compaq");
     op->processMacro("move");
     op->processMacro("fuse 0.5");
@@ -3252,8 +3253,8 @@ void XLibMacros_macSGS_finalise(bool run) {
     op->processMacro("html.update");
   }
 }
-void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &E)
+void XLibMacros::macSGS(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& E)
 {
   TXApp& xapp = TXApp::GetInstance();
   olxstr hkl_fn;
@@ -3264,15 +3265,28 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options,
     if (!TEFile::IsAbsolutePath(hkl_fn)) {
       hkl_fn = TEFile::AddPathDelimeter(TEFile::CurrentDir()) << hkl_fn;
     }
-    Cmds.Delete(Cmds.Count()-1);
+    Cmds.Delete(Cmds.Count() - 1);
   }
-  if (Cmds.Count() == 9 || Cmds.Count() == 10) {  // transformation provided?
+  olx_object_ptr<mat3d> tm_;
+  if (Cmds.Count() > 0) {
+    tm_ = SGSettings::GetABCTransformation(Cmds[0]);
+    if (tm_.ok() && tm_->IsI()) { // skip I as a transformation
+      tm_ = 0;
+    }
+  }
+  // symmetric (6) or full (9) matrix
+  if ((tm_.ok() && (Cmds.Count() == 1 || Cmds.Count() == 2))
+    || Cmds.Count() == 6 || Cmds.Count() == 7
+    || Cmds.Count() == 9 || Cmds.Count() == 10)
+  {  // transformation provided?
     TSpaceGroup* sg = 0;
-    if (Cmds.Count() == 10) {
-      sg = TSymmLib::GetInstance().FindGroupByName(Cmds[9]);
+    if ((tm_.ok() && Cmds.Count() == 2)
+      || Cmds.Count() == 7 || Cmds.Count() == 10)
+    {
+      sg = TSymmLib::GetInstance().FindGroupByName(Cmds.GetLastString());
       if (sg == 0) {
         try {
-          sg = &TSymmLib::GetInstance().CreateNew(Cmds[9]);
+          sg = &TSymmLib::GetInstance().CreateNew(Cmds.GetLastString());
         }
         catch (const TExceptionBase& e) {}
       }
@@ -3282,15 +3296,30 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options,
       }
     }
     mat3d tm;
-    for (int i = 0; i < 9; i++) {
-      tm[i / 3][i % 3] = Cmds[i].ToDouble();
+    if (tm_.ok()) {
+      tm = *tm_;
+    }
+    else {
+      if (Cmds.Count() >= 9) {
+        for (int i = 0; i < 9; i++) {
+          tm[i / 3][i % 3] = Cmds[i].ToDouble();
+        }
+      }
+      else {
+        tm[0][0] = Cmds[0].ToDouble();
+        tm[0][1] = tm[1][0] = Cmds[1].ToDouble();
+        tm[0][2] = tm[2][0] = Cmds[2].ToDouble();
+        tm[1][1] = Cmds[3].ToDouble();
+        tm[1][2] = tm[2][1] = Cmds[4].ToDouble();
+        tm[2][2] = Cmds[5].ToDouble();
+      }
     }
     if (!tm.IsI()) {
-      const TAsymmUnit &au = xapp.XFile().GetAsymmUnit();
+      const TAsymmUnit& au = xapp.XFile().GetAsymmUnit();
       smatd_list ml;
       TSymmLib::GetInstance().ExpandLatt(ml, au.GetMatices(), au.GetLatt());
       smatd sg_r = tm,
-        sg_r_t = tm.GetTranspose();
+        sg_r_t = tm.GetInverse();
       for (size_t i = 0; i < au.MatrixCount(); i++) {
         ml[i] = sg_r_t * ml[i] * sg_r;
       }
@@ -3317,44 +3346,46 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options,
   }
   TSpaceGroup* sg_ = Cmds.Count() == 1 ? &xapp.XFile().GetLastLoaderSG() :
     TSymmLib::GetInstance().FindGroupByName(Cmds[1]);
-  if (sg_ == 0)  {
+  if (sg_ == 0) {
     E.ProcessingError(__OlxSrcInfo, "undefined space group");
     return;
   }
-  TSpaceGroup &sg = *sg_;
+  TSpaceGroup& sg = *sg_;
   SGSettings sg_set(sg);
   olxstr axis = sg_set.axisInfo.GetAxis();
   TBasicApp::NewLogEntry() << "Current setting: " <<
     XLibMacros_macSGS_SgInfo(axis);
-  if( axis.IsEmpty() )  {
+  if (axis.IsEmpty()) {
     TBasicApp::NewLogEntry() << "Nothing to do";
     return;
   }
   const TSymmLib& sl = TSymmLib::GetInstance();
   TPtrList<TSpaceGroup> sgs;
   sl.GetGroupByNumber(sg.GetNumber(), sgs);
-  for( size_t i=0; i < sgs.Count(); i++ )  {
-    if( &sg != sgs[i] ) {
+  for (size_t i = 0; i < sgs.Count(); i++) {
+    if (&sg != sgs[i]) {
       TBasicApp::NewLogEntry() << "Possible: " <<
         XLibMacros_macSGS_SgInfo(sgs[i]->GetAxis());
     }
   }
   AxisInfo n_ai(sg, Cmds[0]);
-  if( sg_set.axisInfo.HasMonoclinicAxis() && !n_ai.HasMonoclinicAxis() )
+  if (sg_set.axisInfo.HasMonoclinicAxis() && !n_ai.HasMonoclinicAxis()) {
     n_ai.ChangeMonoclinicAxis(sg_set.axisInfo.GetMonoclinicAxis());
-  if( sg_set.axisInfo.HasCellChoice() && !n_ai.HasCellChoice() )
+  }
+  if (sg_set.axisInfo.HasCellChoice() && !n_ai.HasCellChoice()) {
     n_ai.ChangeCellChoice(sg_set.axisInfo.GetCellChoice());
-  if( sg_set.axisInfo.GetAxis() == n_ai.GetAxis() )  {
+  }
+  if (sg_set.axisInfo.GetAxis() == n_ai.GetAxis()) {
     TBasicApp::NewLogEntry() << "Nothing to change";
     return;
   }
   mat3d tm;
-  if( sg_set.GetTrasformation(n_ai, tm) )  {
+  if (sg_set.GetTrasformation(n_ai, tm)) {
     TSpaceGroup* new_sg = XLibMacros_macSGS_FindSG(sgs, n_ai.GetAxis());
     if (new_sg == 0 && n_ai.GetAxis() == "abc") {
       new_sg = XLibMacros_macSGS_FindSG(sgs, EmptyString());
     }
-    if( new_sg == 0)  {
+    if (new_sg == 0) {
       E.ProcessingError(__OlxSrcInfo,
         "Could not locate space group for given settings");
       return;
@@ -3362,7 +3393,7 @@ void XLibMacros::macSGS(TStrObjList &Cmds, const TParamList &Options,
     ChangeCell(tm, *new_sg, hkl_fn);
     XLibMacros_macSGS_finalise(finalise);
   }
-  else  {
+  else {
     E.ProcessingError(__OlxSrcInfo,
       "could not find appropriate transformation");
   }
@@ -12862,7 +12893,8 @@ void XLibMacros::macADPInfo(TStrObjList& Cmds, const TParamList& Options,
   app.NewLogEntry() << tmp.SubStringFrom(0,2);
 
   if (b->GetEllipsoid() != 0) {
-    mat3d rm = b->GetEllipsoid()->GetMatrix()* a->GetEllipsoid()->GetMatrix().Inverse();
+    mat3d rm = b->GetEllipsoid()->GetMatrix()
+      * a->GetEllipsoid()->GetMatrix().GetInverse();
     app.NewLogEntry() << "Rotation matrix:";
     app.NewLogEntry() << strof(rm);
   }

@@ -121,7 +121,7 @@ double TEllipsoid::CalcScale(const vec3d &v) {
     return 1;
   }
   mat3d etm = mat3d::Scale(Matrix, Norms);
-  vec3d nv = (v*etm.Inverse()).Normalise()*etm;
+  vec3d nv = (v*etm.GetInverse()).Normalise()*etm;
   return sqrt(v.QLength() / nv.QLength());
 }
 //..............................................................................

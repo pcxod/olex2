@@ -139,6 +139,7 @@ olxstr TEMacroLib::ProcessEvaluator(
       me.NonexitingMacroError(name);
       return EmptyString();
     }
+    bool user_macro = dynamic_cast<TEMacro*>(f) != 0;
     TStrObjList Cmds;
     TParamList Options;
     if (e->evator != 0) {
@@ -153,7 +154,12 @@ olxstr TEMacroLib::ProcessEvaluator(
             Cmds.Add(r.GetB());
           }
           else {
-            Options.AddParam(r.GetA(), r.GetB());
+            if (user_macro || !r.GetB().IsEmpty() || f->GetOptions().Contains(r.GetA())) {
+              Options.AddParam(r.GetA(), r.GetB());
+            }
+            else { // put to Cmds
+              Cmds.Add(olxstr(olx_reserve(r.GetA().Length() + 1)) << '-' << r.GetA());
+            }
           }
         }
         else {

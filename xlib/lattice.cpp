@@ -2242,7 +2242,7 @@ size_t TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
       if (d > 1.3) {  // otherwise a double bond
         TAtomEnvi pivoting = UnitCell->GetAtomPossibleHBonds(AE);
         // d < 1.8 - move bonds only if not coordination
-        UnitCell->FilterHBonds(AE, pivoting, d < 1.8);
+        //UnitCell->FilterHBonds(AE, pivoting, false);
         RemoveNonHBonding(pivoting, d > 1.8 ? 2 : 1);
         if (AE.GetType(0) == iChlorineZ) {
           ;
@@ -2641,16 +2641,7 @@ void TLattice::RemoveNonHBonding(TAtomEnvi& Envi, size_t max) {
   }
   // all similar length  .... Q peaks might help :)
   if (Envi.Count() > max) {
-    TAtomEnvi AE = UnitCell->GetAtomQEnviList(Envi.GetBase());
-    TSizeList to_exclude;
-    for (size_t i = 0; i < AE.Count(); i++) {
-      const double d = Envi.GetBase().crd().DistanceTo(AE.GetCrd(i));
-      if (d < 0.65 || d > 1.2) {
-        to_exclude.Add(i);
-      }
-    }
-    AE.ExcludeIndices(to_exclude);
-
+    TAtomEnvi AE = UnitCell->GetAtomQEnviList(Envi.GetBase(), 0.65, 1.2);
     TSizeList to_leave;
     for (size_t ei = 0; ei < AE.Count(); ei++) {
       vec3d vec1 = AE.GetCrd(ei) - Envi.GetBase().crd();

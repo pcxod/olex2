@@ -375,7 +375,7 @@ SymmSpace::Info HallSymbol::Expand_(const olxstr &_hs) const {
   }
   bool add_I = true;
   if (!change_of_basis.IsI()) {
-    smatd cob_i = change_of_basis.Inverse();
+    smatd cob_i = change_of_basis.GetInverse();
     if (info.latt != 1) {
       info.matrices.Insert(0, new smatd).r.I();
       smatd_list matrices = info.expand();

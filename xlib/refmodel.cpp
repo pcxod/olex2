@@ -224,7 +224,7 @@ void RefinementModel::UpdateUsedSymm(const TUnitCell& uc) {
 }
 //.............................................................................
 void RefinementModel::TransformUsedSymm(const smatd& rm) {
-  smatd rm_t = rm.r.GetTranspose();
+  smatd rm_t = rm.r.GetInverse();
   for (size_t i = 0; i < UsedSymm.Count(); i++) {
     smatd neq = rm_t * UsedSymm.GetValue(i).symop * rm;
     UsedSymm.GetValue(i).symop = neq;
@@ -627,7 +627,7 @@ TTypeList<cif_dp::cetTable>::const_list_type
       if (others[i].a.Count() == 1) {
       }
       if (others[i].a.Count() == 2) {
-        others[i].a[1].matrix = others[i].a[0].matrix.Inverse() * others[i].a[1].matrix;
+        others[i].a[1].matrix = others[i].a[0].matrix.GetInverse() * others[i].a[1].matrix;
         if (others[i].a[0].atom->IsAttachedTo(*others[i].a[1].atom)) {
           double d = others[i].b.GetV();
           bool bonded = true;
@@ -658,7 +658,7 @@ TTypeList<cif_dp::cetTable>::const_list_type
       else if (others[i].a.Count() == 3) {
         row = &a_tab->AddRow();
         if (!others[i].a[1].matrix.IsI()) {
-          smatd im = others[i].a[1].matrix.Inverse();
+          smatd im = others[i].a[1].matrix.GetInverse();
           others[i].a[0].matrix = im * others[i].a[0].matrix;
           others[i].a[2].matrix = im * others[i].a[2].matrix;
         }

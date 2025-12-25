@@ -117,15 +117,15 @@ public:
     return *this;
   }
 
-  TSymmMat Inverse() const  {
-    TSymmMat rv(r.Inverse(), t*-1);
+  TSymmMat GetInverse() const {
+    TSymmMat rv(r.GetInverse(), t * -1);
     rv.t = rv.r * rv.t;
     return rv;
   }
 
-  static TSymmMat& Inverse(TSymmMat& m)  {
+  static TSymmMat& Invert(TSymmMat& m) {
     m.r = m.r.Inverse();
-    m.t = ((m.r*m.t) *= -1);
+    m.t = ((m.r * m.t) *= -1);
     return m;
   }
 

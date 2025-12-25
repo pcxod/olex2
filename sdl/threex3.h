@@ -533,6 +533,9 @@ public:
   TMatrix33(FT xx, FT yy, FT zz) {
     data[0][0] = xx;  data[1][1] = yy;  data[2][2] = zz;
   }
+  TMatrix33(FT d) {
+    data[0][0] = data[1][1] = data[2][2] = d;
+  }
   template <class vt> TMatrix33(const TVector3<vt>& x, const TVector3<vt>& y,
     const TVector3<vt>& z)
   {
@@ -793,7 +796,7 @@ public:
       data[0][1] * (data[1][0] * data[2][2] - data[1][2] * data[2][0]) +
       data[0][2] * (data[1][0] * data[2][1] - data[1][1] * data[2][0]);
   }
-  TMatrix33<FT> Inverse() const {
+  TMatrix33<FT> GetInverse() const {
     return TMatrix33<FT>(
       data[2][2] * data[1][1] - data[2][1] * data[1][2],
       data[2][1] * data[0][2] - data[2][2] * data[0][1],
