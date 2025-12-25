@@ -5700,7 +5700,7 @@ void GXLibMacros::funFBond(const TStrObjList &Params, TMacroData &E) {
     }
     smatd cm = bonds[0]->B().GetMatrix();
     if (!bonds[0]->A().GetMatrix().IsFirst()) {
-      cm = bonds[0]->A().GetMatrix().Inverse()*cm;
+      cm = bonds[0]->A().GetMatrix().GetInverse() * cm;
     }
     TGXApp::BondIterator bi = app.GetBonds();
     while (bi.HasNext()) {
@@ -5712,7 +5712,7 @@ void GXLibMacros::funFBond(const TStrObjList &Params, TMacroData &E) {
       }
       smatd m = b.B().GetMatrix();
       if (!b.A().GetMatrix().IsFirst()) {
-        m = b.A().GetMatrix().Inverse()*m;
+        m = b.A().GetMatrix().GetInverse() * m;
       }
       if (m.Equals(cm)) {
         b.Params()[5] = v;

@@ -59,9 +59,9 @@ void TXBlob::Create(const olxstr& cName)  {
 //...........................................................................
 bool TXBlob::Orient(TGlPrimitive& P)  {
   //olx_gl::translate(Basis.GetCenter());
-  olx_gl::polygonMode(GL_FRONT_AND_BACK, PolygonMode);
-  bool use_color = colors.Count() == vertices.Count();
+  bool use_color = colors.Count() == vertices.Count() && !Parent.IsSelecting();
   olx_gl::FlagManager fm;
+  fm.polygonMode(GL_FRONT_AND_BACK, PolygonMode);
   if (use_color) {
     fm.enable(GL_COLOR_MATERIAL);
   }
@@ -95,7 +95,6 @@ bool TXBlob::Orient(TGlPrimitive& P)  {
     }
   }
   olx_gl::end();
-  olx_gl::polygonMode(GL_FRONT_AND_BACK, GL_FILL);
   return true;
 }
 //...........................................................................

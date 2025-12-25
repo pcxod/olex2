@@ -37,7 +37,7 @@ ort_atom::ort_atom(const OrtDraw& parent, const TXAtom& a) :
     elpm = new mat3f(_elpm);
     p_elpm = &(_elpm *= parent.ProjMatr);
     mat3f& ielpm = *(new mat3f((sa.GetEllipsoid()->GetMatrix()
-      *parent.basis.GetMatrix()).Inverse()));
+      *parent.basis.GetMatrix()).GetInverse()));
     p_ielpm = &(ielpm *= _elpm);
   }
   draw_rad = (float)atom.GetDrawScale()*parent.DrawScale;
@@ -635,9 +635,9 @@ void ort_bond_line::_render(PSWriter& pw, float scalex, uint32_t mask) const {
   }
   if (a1 != 0 && !a1->IsSpherical() && a1->IsSolid()) {
     mat3f elm = *a1->elpm;
-    mat3f ielm = mat3f(elm).Normalise().Inverse();
+    mat3f ielm = mat3f(elm).Normalise().GetInverse();
     mat3f erm, etm = ielm * elm;
-    vec3f pv = (touch_point*etm.Inverse()).Normalise();
+    vec3f pv = (touch_point*etm.GetInverse()).Normalise();
     const vec3f tp = etm * touch_point;
     const float erm_ca = tp.CAngle(touch_point);
     if (erm_ca != 1) {
@@ -952,7 +952,7 @@ void OrtDraw::Init(PSWriter& pw) {
   SceneOrigin = basis.GetCenter();
   DrawOrigin = vec3f(vp[2] / 2, vp[3] / 2, 0);
   ProjMatr = basis.GetMatrix()*DrawScale;
-  UnProjMatr = ProjMatr.Inverse();
+  UnProjMatr = ProjMatr.GetInverse();
 }
 /*
 Grid interpolation stuff...

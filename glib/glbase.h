@@ -865,9 +865,44 @@ struct olx_gl {
     ~ColorMatertialChanger() { restore(); }
   };
 
+  class PolygonModeChanger {
+    GLint original_values[2];
+    GLint current_values[2];
+    void restore() {
+      if (original_values[0] != current_values[0]) {
+        olx_gl::colorMaterial(GL_FRONT, original_values[0]);
+      }
+      if (original_values[1] != current_values[1]) {
+        olx_gl::colorMaterial(GL_BACK, original_values[1]);
+      }
+    }
+  public:
+    PolygonModeChanger() {
+      olx_gl::get(GL_POLYGON_MODE, &current_values[0]);
+      original_values[0] = current_values[0];
+      original_values[1] = current_values[1];
+    }
+    void set(GLint face, GLint value) {
+      if (face == GL_FRONT_AND_BACK) {
+        current_values[0] = current_values[1] = value;
+        olx_gl::polygonMode(face, value);
+      }
+      else if (face == GL_FRONT) {
+        current_values[0] = value;
+        olx_gl::polygonMode(face, value);
+      }
+      else if (face == GL_BACK) {
+        current_values[1] = value;
+        olx_gl::polygonMode(face, value);
+      }
+    }
+    ~PolygonModeChanger() { restore(); }
+  };
+
   struct FlagManager {
   private:
     olx_object_ptr<ColorMatertialChanger> cm_ptr;
+    olx_object_ptr<PolygonModeChanger> pm_ptr;
   public:
     olx_pdict<GLenum, FlagChanger *>  state;
     ~FlagManager() {
@@ -879,6 +914,7 @@ struct olx_gl {
       }
       state.Clear();
       cm_ptr = 0;
+      pm_ptr = 0;
     }
     void enable(GLenum f) {
       size_t idx = state.IndexOf(f);
@@ -903,6 +939,13 @@ struct olx_gl {
         cm_ptr = new ColorMatertialChanger();
       }
       cm_ptr->set(face, value);
+    }
+
+    void polygonMode(GLint face, GLint value) {
+      if (!pm_ptr.ok()) {
+        pm_ptr = new PolygonModeChanger();
+      }
+      pm_ptr->set(face, value);
     }
   };
 

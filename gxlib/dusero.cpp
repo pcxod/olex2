@@ -19,8 +19,8 @@
 TDUserObj::TDUserObj(TGlRenderer& R, short type, const olxstr& collectionName) :
   AGlMouseHandlerImp(R, collectionName),
     Type(type),
-    Vertices(NULL), Normals(NULL),
-    Colors(NULL)
+    Vertices(0), Normals(0),
+    Colors(0)
 {
   SetSelectable(false);
   GlM.SetFlags(sglmAmbientF);
@@ -31,10 +31,11 @@ TDUserObj::TDUserObj(TGlRenderer& R, short type, const olxstr& collectionName) :
 //.............................................................................
 TDUserObj::TDUserObj(TGlRenderer& R, const TDataItem &di)
   : AGlMouseHandlerImp(R, EmptyString()),
-    Vertices(NULL),
-    Normals(NULL),
-    Colors(NULL)
+    Vertices(0),
+    Normals(0),
+    Colors(0)
 {
+  SetSelectable(false);
   FromDataItem(di);
 }
 //.............................................................................
