@@ -22,32 +22,51 @@ public:
 */
 
 template <typename float_t>
-int normalise_float(float_t v, int max) {
+int hash_float(float_t v) {
   if (v == 0) {
     return 0;
   }
-  int ex = 0;
-  if (v < 0) {
-    while (v > -1) {
-      v *= 10;
-      ex++;
-    }
-    while (v < -1) {
-      v /= 10;
-      ex--;
-    }
+  const char* x = (const char*)&v;
+  int32_t h = 0;
+  for (size_t i = 0; i < sizeof(v); i++) {
+    h = 31 * h + x[i];
   }
-  else {
-    while (v < 1) {
-      v *= 10;
-      ex++;
-    }
-    while (v > 1) {
-      v /= 10;
-      ex--;
-    }
+  return h;
+}
+/* converts a float to an exponential form string and return its hash.
+This will prodice the same hash for the same number distregarding of the storage
+type (e.g. float/double)
+*/
+template <typename float_t>
+int hash_float_str_(float_t v, const char* fmt) {
+  olx_array_ptr<char> bf(80);
+#if defined(_MSC_VER)
+  sprintf_s(*bf, 80, fmt, v);
+#else
+  sprintf(*bf, fmt, v);
+#endif
+  const char* str = *bf;
+  size_t sz = olxcstr::o_strlen(str);
+  int32_t h = 0;
+  for (size_t i = 0; i < sz; i++) {
+    h = 31 * h + str[i];
   }
-  return (int)(v*max + ex);
+  return h;
+}
+
+static int hash_float_str(float v) {
+  return hash_float_str_(v, "%.6e");
+}
+static int hash_float_str(double v) {
+  return hash_float_str_(v, "%.6le");
+}
+static int hash_float_str(const long double& v) {
+  return hash_float_str_(v, "%.6Le");
+}
+
+template <typename float_t>
+int hash_float_str(const float_t& v) {
+  return hash_float_str_(static_cast<double>(v), "%.6le");
 }
 
 // 2^32 = N^L * 2^[32 - log_2(N)*L]
