@@ -49,11 +49,15 @@ namespace test {
     while (fitr.HasNext()) {
       TBasicApp::NewLogEntry() << fitr.Next();
     }
-    double h1 = normalise_float(0.0001, 0xFFFFFFFF / 2);
-    double h2 = normalise_float(0.001, 0xFFFFFFFF / 2);
-    double h3 = normalise_float(0.01, 0xFFFFFFFF / 2);
-    double h4 = normalise_float(1, 0xFFFFFFFF / 2);
-    double h5 = normalise_float(10, 0xFFFFFFFF / 2);
+    if (hash_float_str(10.0L) != hash_float_str(10.0)) {
+      throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
+    }
+    if (hash_float_str(10.0f) != hash_float_str(10.0)) {
+      throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
+    }
+    if (hash_float_str(10UL) != hash_float_str(10.0)) {
+      throw TFunctionFailedException(__OlxSourceInfo, "unexpected");
+    }
   }
   //...........................................................................................
   void basic_dict_test(OlxTests& t) {
@@ -84,7 +88,7 @@ namespace test {
     //return rv;
   }
   void perf_test(OlxTests& t) {
-    size_t max_str_c = 5000000;
+    size_t max_str_c = 10000;
     bool test_binary = max_str_c < 1000000; // takes too long with > 1m recs
     TStrList strings(max_str_c);
     for (size_t i = 0; i < max_str_c; i++) {

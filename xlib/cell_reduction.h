@@ -59,7 +59,7 @@ struct Niggli {
       olx_sqr(sides[2]));
 
     mat3d tm = TCLattice::FromPrimitive(_latt);
-    tm = tm.Inverse();
+    tm = tm.GetInverse();
     metr_m = tm.GetT() * metr_m * tm;
 
     R[0] = metr_m[0][0];

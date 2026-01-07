@@ -123,7 +123,7 @@ public:
     return rv;
   }
   smatd InvMatrix(const smatd& m) const {
-    smatd rv = m.Inverse();
+    smatd rv = m.GetInverse();
     uint8_t c_id = m.GetContainerId();
     if (c_id >= Matrices.Count()) {
       throw TInvalidArgumentException(__OlxSourceInfo,
@@ -312,7 +312,7 @@ public:
     int part = DefNoPart, bool remove_redundant = false) const;
 
   // finds only q-peaks in the environment of specified atom
-  TAtomEnvi GetAtomQEnviList(const TSAtom& atom);
+  TAtomEnvi GetAtomQEnviList(const TSAtom& atom, double min_d=0, double max_d=0);
 
   /* finds "pivoting" atoms for possible h-bonds, considering O, N and Cl only
   with distances within 2.9A and angles 90-150 deg

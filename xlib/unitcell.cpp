@@ -157,7 +157,7 @@ void  TUnitCell::InitMatrices() {
       MulDest[i][j] = (uint8_t)index;
     }
     {
-      const smatd m = Matrices[i].Inverse();
+      const smatd m = Matrices[i].GetInverse();
       size_t index = InvalidIndex;
       for (size_t k = 0; k < mc; k++) {
         if (Matrices[k].r == m.r) {
@@ -847,7 +847,9 @@ TAtomEnvi TUnitCell::GetAtomEnviList(const TSAtom& atom, bool IncludeQ,
   return envi;
 }
 //..............................................................................
-TAtomEnvi TUnitCell::GetAtomQEnviList(const TSAtom& atom) {
+TAtomEnvi TUnitCell::GetAtomQEnviList(const TSAtom& atom,
+  double min_d, double max_d)
+{
   TAtomEnvi  envi(atom);
   smatd I;
   I.I().SetId(0);
@@ -859,6 +861,14 @@ TAtomEnvi TUnitCell::GetAtomQEnviList(const TSAtom& atom) {
     }
     const smatd m = MulMatrix(site.matrix, atom.GetMatrix());
     const vec3d v = au.Orthogonalise(m*site.atom->ccrd());
+    if (min_d > 0 || max_d > 0) {
+      double d = atom.crd().DistanceTo(v);
+      if ((min_d > 0 && d <= min_d) ||
+        (max_d > 0 && d >= max_d))
+      {
+        continue;
+      }
+    }
     envi.Add(*site.atom, m, v);
   }
   return envi;

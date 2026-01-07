@@ -595,7 +595,7 @@ const smatd* ConnInfo::GetCorrectMatrix(const smatd* eqiv1, const smatd* eqiv2,
   smatd mat;
   if (!rm.aunit.HasLattice()) {  // no lattice?
     if (eqiv2 == 0 || (eqiv2->r.IsI() && eqiv2->t.IsNull())) {
-      mat = eqiv1->Inverse();
+      mat = eqiv1->GetInverse();
       if (release) {
         rm.RemUsedSymm(*eqiv1);
         if (eqiv2 != 0) {
@@ -604,7 +604,7 @@ const smatd* ConnInfo::GetCorrectMatrix(const smatd* eqiv1, const smatd* eqiv2,
       }
     }
     else {
-      mat = ((*eqiv2)*eqiv1->Inverse());
+      mat = ((*eqiv2)*eqiv1->GetInverse());
       if (release) {
         rm.RemUsedSymm(*eqiv1);
         rm.RemUsedSymm(*eqiv2);
@@ -638,7 +638,7 @@ void ConnInfo::AddBond(TCAtom& a1, TCAtom& a2, const smatd &eqiv1,
 {
   bool swap = false;
   if (a1.GetResiId() == 0 && a2.GetResiId() != 0) {
-    smatd m = eqiv2 * eqiv1.Inverse();
+    smatd m = eqiv2 * eqiv1.GetInverse();
     swap = !m.IsI();
   }
   if (swap) {
@@ -654,7 +654,7 @@ void ConnInfo::RemBond(TCAtom& a1, TCAtom& a2, const smatd &eqiv1,
 {
   bool swap = false;
   if (a1.GetResiId() == 0 && a2.GetResiId() != 0) {
-    smatd m = eqiv2 * eqiv1.Inverse();
+    smatd m = eqiv2 * eqiv1.GetInverse();
     swap = !m.IsI();
   }
   if (swap) {

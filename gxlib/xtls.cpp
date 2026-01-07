@@ -72,7 +72,7 @@ TDUserObj *XTLS::CreateUdiffObject(const vec3f_alist &crds,
       m1.Scale(from[i]->GetNorms());
       m2 = to[i]->GetMatrix();
       m2.Scale(to[i]->GetNorms());
-      etm = m2.Inverse();
+      etm = m2.GetInverse();
     }
     else if (obj_type == xtls_obj_rmsd) {
       mat3f qm1 = from[i]->ExpandQuad(),

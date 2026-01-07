@@ -363,7 +363,7 @@ public:
     //DrawOrigin = vec3f(pw.GetWidth()/2, pw.GetHeight()/2, 0);
     DrawOrigin = vec3f(vp[2] / 2, vp[3] / 2, 0);
     ProjMatr = basis.GetMatrix() * DrawScale;
-    UnProjMatr = ProjMatr.Inverse();
+    UnProjMatr = ProjMatr.GetInverse();
   }
   void Render(const olxstr& fileName) {
     TEXWriter pw(fileName);
@@ -431,8 +431,10 @@ public:
         elpm.Scale(sa.GetEllipsoid()->GetNorms());
         elpm *= TXAtom::GetSettings(app.GetRenderer()).GetTelpProb();
         elpm *= ProjMatr;
-        mat3f& ielpm = *(new mat3f((sa.GetEllipsoid()->GetMatrix() * basis.GetMatrix()).Inverse()));
-        atoms.AddNew(&sa, (sa.crd() + SceneOrigin) * ProjMatr + DrawOrigin, &elpm, &(ielpm *= elpm));
+        mat3f& ielpm = *(new mat3f((sa.GetEllipsoid()->GetMatrix()
+          * basis.GetMatrix()).GetInverse()));
+        atoms.AddNew(&sa, (sa.crd() + SceneOrigin) * ProjMatr
+          + DrawOrigin, &elpm, &(ielpm *= elpm));
       }
       else
         atoms.AddNew(&sa, (sa.crd() + SceneOrigin) * ProjMatr + DrawOrigin);
