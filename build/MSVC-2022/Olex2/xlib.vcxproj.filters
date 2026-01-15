@@ -843,6 +843,9 @@
     <ClCompile Include="..\..\..\xlib\absorpc\absorpc_Ag.cpp">
       <Filter>Source Files\absorpc</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\xlib\label_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\xlib\afixgroup.h">

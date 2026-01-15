@@ -633,6 +633,7 @@
     <ClCompile Include="..\..\..\xlib\constraints_ext.cpp" />
     <ClCompile Include="..\..\..\xlib\hall.cpp" />
     <ClCompile Include="..\..\..\xlib\infotab.cpp" />
+    <ClCompile Include="..\..\..\xlib\label_utils.cpp" />
     <ClCompile Include="..\..\..\xlib\lcells.cpp" />
     <ClCompile Include="..\..\..\xlib\macro\brushhkl.cpp" />
     <ClCompile Include="..\..\..\xlib\catom.cpp" />

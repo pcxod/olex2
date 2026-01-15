@@ -201,7 +201,7 @@ const smatd& RefinementModel::AddUsedSymm(const smatd& matr, const olxstr& id_)
     size_t idx = UsedSymm.Count();
     while (UsedSymm.HasKey(olxstr("$") << ++idx))
       ;
-    id = (olxstr("S") << idx);
+    id = (olxstr("$") << idx);
   }
   return UsedSymm.Add(id, RefinementModel::Equiv(matr), true).symop;
 }

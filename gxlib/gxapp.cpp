@@ -344,13 +344,13 @@ TGXApp::TGXApp(const olxstr &FileName, AGlScene *scene)
   XFile().OnFileLoad.Add(&TEGC::AddP(new xappXFileLoad(this)));
   XFile().OnFileClose.Add(this, ID_OnFileClose);
   try {
-    float ma = TBasicApp::GetInstance().GetOptions()
-      .FindValue("q_peak_min_alpha", "0").ToFloat();
+    double ma = TBasicApp::GetInstance().GetOptions()
+      .FindValue("q_peak_min_alpha", "0").ToDouble();
     if (ma < 0) {
       ma = 0.1;
     }
-    else if (ma > 0.75f) {
-      ma = 0.75f;
+    else if (ma > 0.75) {
+      ma = 0.75;
     }
     TXAtom::GetSettings(GetRenderer()).SetQPeakMinAlpha(ma);
   }
@@ -1972,7 +1972,7 @@ ConstPtrList<TXAtom> TGXApp::GetXAtoms(const olxstr& AtomName) {
       if (!xa.IsVisible()) {
         continue;
       }
-      if (li.DoesMatch(xa.CAtom(), true)) {
+      if (li.DoesMatch(xa, true)) {
         res.Add(xa);
       }
     }
