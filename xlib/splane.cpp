@@ -119,6 +119,10 @@ void TSPlane::FromDataItem(const TDataItem& item, const TXApp& app) {
       olxstr old_id = ai.FindField("atom_id");
       if (!old_id.IsEmpty()) {
         size_t id = old_id.ToSizeT();
+        if (id > p.atoms.Count()) {
+          TBasicApp::NewLogEntry(logError, false, __OlxSourceInfo) <<
+            "Invalid atom id for plane: " << id;
+        }
         Crds.AddNew(&p.atoms[id],
           ai.GetValue().ToDouble());
         continue;

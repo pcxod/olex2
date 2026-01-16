@@ -50,6 +50,12 @@ public:
       SetVisible(false);
     }
   }
+  virtual void SetVisible(bool v) {
+    if (v) {
+      TSPlane::SetDeleted(false);
+    }
+    AGDrawObject::SetVisible(v);
+  }
 
   virtual vec3d CalcCenter() const { return GetCenter(); }
 

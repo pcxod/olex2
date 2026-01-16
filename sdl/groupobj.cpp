@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -30,8 +30,9 @@ void TObjectGroup::RemoveObjectsByTag(int Tag) {
   for (size_t i = 0; i < ObjectCount(); i++) {
     if (Objects[i]->GetTag() == Tag) {
       AGOProperties& P = Objects[i]->GetProperties();
-      if (P.ObjectCount() == 1)
+      if (P.ObjectCount() == 1) {
         P.SetObjectGroupId(InvalidIndex); // mark to remove
+      }
       P.RemoveObject(Objects[i]);
       delete Objects[i];
       Objects[i] = 0;
@@ -48,10 +49,11 @@ void TObjectGroup::RemoveObjectsByTag(int Tag) {
 }
 //..............................................................................
 AGOProperties* TObjectGroup::FindProps(const AGOProperties& C) {
-  for (size_t i = 0; i < Props.Count(); i++)
+  for (size_t i = 0; i < Props.Count(); i++) {
     if (C == *Props[i]) {
       return Props[i];
     }
+  }
   return 0;
 }
 //..............................................................................

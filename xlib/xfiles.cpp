@@ -605,11 +605,18 @@ void TXFile::LoadFromFile(const olxstr & _fn) {
     replicated = true;
   }
   try {
-    Loader->LoadFromFile(_fn);
-    ExpandHKLSource(Loader->GetRM(), _fn);
     if (FLastLoader != 0) {
       OnFileClose.Execute(this, FLastLoader);
     }
+    if (Loader->IsNative()) {
+      OnFileLoad.Enter(this, &_fn);
+    }
+    Loader->LoadFromFile(_fn);
+    if (Loader->IsNative()) {
+      OnFileLoad.Execute(this, Loader);
+      OnFileLoad.Exit(this, Loader);
+    }
+    ExpandHKLSource(Loader->GetRM(), _fn);
   }
   catch (const TExceptionBase& exc) {
     if (replicated) {

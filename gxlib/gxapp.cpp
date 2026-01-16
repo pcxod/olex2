@@ -199,6 +199,10 @@ public:
     return true;
   }
   bool Execute(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *) {
+    const TBasicCFile* loader = dynamic_cast<const TBasicCFile*>(Data);
+    if (loader != 0 && loader->IsNative()) {
+      return true;
+    }
     state = 2;
     const TAsymmUnit& au = FParent->XFile().GetAsymmUnit();
     bool sameAU = true, hasNonQ = false;
@@ -245,6 +249,10 @@ public:
     return false;
   }
   bool Exit(const IOlxObject *Sender, const IOlxObject *Data, TActionQueue *) {
+    const TBasicCFile* loader = dynamic_cast<const TBasicCFile*>(Data);
+    if (loader != 0 && loader->IsNative()) {
+      return true;
+    }
     // something went not as expected? try to recover then...
     if (state == 1 || dynamic_cast<const TExceptionBase *>(Data) != 0) {
       FParent->CreateObjects(true);
@@ -2870,6 +2878,9 @@ TXPlane *TGXApp::AddPlane(const olxstr &name, const TXAtomPList &Atoms,
     if (!p->IsVisible()) {
       p->SetVisible(true);
     }
+    if (p->HasPrimitives()) {
+      p->GetPrimitives().RemoveObject(*p);
+    }
     p->Create(name);
     if (&planes[i]->GetAtom(0) == Atoms[0]) {
       pi = i;
@@ -3019,6 +3030,10 @@ void TGXApp::undoHide(TUndoData *data) {
 }
 //..............................................................................
 TUndoData* TGXApp::DeleteXObjects(const AGDObjList& L) {
+  if (L.IsEmpty()) {
+    return 0;
+  }
+  olx_object_ptr<THideUndo> undo = new THideUndo(UndoAction::New(this, &TGXApp::undoHide));
   TXAtomPList atoms;
   atoms.SetCapacity(L.Count());
   bool planes_deleted = false;
@@ -3027,10 +3042,8 @@ TUndoData* TGXApp::DeleteXObjects(const AGDObjList& L) {
       atoms.Add((TXAtom*)L[i]);
     }
     else if (L[i]->Is<TXPlane>()) {
+      undo->AddObject(L[i]);
       ((TXPlane*)L[i])->Delete(true);
-      if (L[i]->GetPrimitives().ObjectCount() == 1) {
-        L[i]->GetPrimitives().ClearPrimitives();
-      }
       planes_deleted = true;
     }
     else if (L[i]->Is<TXBond>()) {
@@ -3038,13 +3051,19 @@ TUndoData* TGXApp::DeleteXObjects(const AGDObjList& L) {
       xb->Delete();
     }
     else {
+      undo->AddObject(L[i]);
       L[i]->SetVisible(false);
     }
   }
   if (planes_deleted) {
     XFile().GetLattice().UpdatePlaneDefinitions();
   }
-  return DeleteXAtoms(atoms);
+  TUndoData* au = DeleteXAtoms(atoms);
+  if (au != 0) {
+    au->AddAction(undo.release());
+    return au;
+  }
+  return undo.release();
 }
 //..............................................................................
 TUndoData* TGXApp::DeleteXAtoms(TXAtomPList& L) {
@@ -3103,7 +3122,7 @@ TUndoData* TGXApp::DeleteXAtoms(TXAtomPList& L) {
     }
   }
   //CenterView();
-  TUndoData *undo = new TDeleteUndo(0);
+  olx_object_ptr<TUndoData> undo = new TDeleteUndo(0);
   olxdict<TLattice *, TDeleteUndo *, TPointerComparator> lud;
   for (size_t i = 0; i < deleted.Count(); i++) {
     TDeleteUndo *du = lud.Find(&deleted[i]->GetParent(), 0);
@@ -3128,7 +3147,7 @@ TUndoData* TGXApp::DeleteXAtoms(TXAtomPList& L) {
   if (FAtomLegend->IsVisible()) {
     FAtomLegend->Update();
   }
-  return undo;
+  return undo.release();
 }
 //..............................................................................
 olx_object_ptr<TXBondPList> TGXApp::FindXBondsWhere(const olxstr &Where) {
