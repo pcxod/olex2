@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -7,35 +7,35 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-#ifndef __olx_sdl_undo_H
-#define __olx_sdl_undo_H
+#pragma once
 #include "tptrlist.h"
 BeginEsdlNamespace()
 
 class IUndoAction;
 class TUndoData;
 
-class TUndoStack  {
+class TUndoStack {
   TPtrList<TUndoData> UndoList;
 public:
   TUndoStack() {}
-  virtual ~TUndoStack() {  Clear();  }
+  virtual ~TUndoStack() { Clear(); }
   // for convinience
-  const TPtrList<TUndoData>& GetList() const {  return UndoList;  }
+  const TPtrList<TUndoData>& GetList() const { return UndoList; }
   void Clear();
-  bool isEmpty() const {  return UndoList.Count() == 0;  }
+  bool isEmpty() const { return UndoList.IsEmpty(); }
   /* the function will not do anything for a NULL UndoObject, which might
   appear when a function cannot be undone or undone safely (graphical objects)
   */
-  inline TUndoData* Push(TUndoData* UndoObject)  {
-    if (UndoObject!= NULL)
+  inline TUndoData* Push(TUndoData* UndoObject) {
+    if (UndoObject != 0) {
       UndoList.Add(UndoObject);
+    }
     return UndoObject;
   }
   TUndoData* Pop();
 };
 
-class IUndoAction  {
+class IUndoAction {
 public:
   IUndoAction() {}
   virtual ~IUndoAction() {}
@@ -49,10 +49,12 @@ public:
   TUndoData(IUndoAction* a) { UndoAction = a; }
   virtual ~TUndoData();
   virtual void Undo() {
-    if (UndoAction)
+    if (UndoAction != 0) {
       UndoAction->Execute(this);
-    for (size_t i=0; i < UndoList.Count(); i++)
+    }
+    for (size_t i = 0; i < UndoList.Count(); i++) {
       UndoList[i]->Undo();
+    }
   }
   void AddAction(TUndoData* data) { UndoList.Add(data); }
 };
@@ -92,4 +94,3 @@ struct UndoAction {
 };
 
 EndEsdlNamespace()
-#endif

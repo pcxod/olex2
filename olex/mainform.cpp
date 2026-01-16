@@ -3935,16 +3935,33 @@ bool TMainForm::FindXAtoms(const TStrObjList &Cmds, TXAtomPList& xatoms,
 }
 //..............................................................................
 bool TMainForm::IsControl(const olxstr& _cname) const {
+  // this comes from Python binding if popup name specified explicitly
   size_t di = _cname.IndexOf("->");
-  olxstr pname = (di == InvalidIndex ? EmptyString() : _cname.SubStringTo(di));
-  olxstr cname = (di == InvalidIndex ? _cname : _cname.SubStringFrom(di+2));
   THtml* html = HtmlManager.main;
-  if (!pname.IsEmpty()) {
-    THtmlManager::TPopupData *pd = HtmlManager.Popups.Find(pname, NULL);
-    if (pd != NULL)
-      html = pd->Html;
+  if (di == InvalidIndex) {
+    size_t di = _cname.IndexOf('.');
+    olxstr cname = _cname;
+    if (di != InvalidIndex) {
+      olxstr pname = _cname.SubStringTo(di);
+      THtmlManager::TPopupData* pd = HtmlManager.Popups.Find(pname, 0);
+      if (pd != 0) {
+        html = pd->Html;
+        cname = _cname.SubStringFrom(di + 1);
+      }
+    }
+    return html->FindObject(cname) != 0;
   }
-  return html == NULL ? false : (html->FindObject(cname) != NULL);
+  else {
+    olxstr pname = _cname.SubStringTo(di);
+    olxstr cname = _cname.SubStringFrom(di + 2);
+    if (!pname.IsEmpty()) {
+      THtmlManager::TPopupData* pd = HtmlManager.Popups.Find(pname, 0);
+      if (pd != 0) {
+        html = pd->Html;
+      }
+    }
+    return html == 0 ? false : (html->FindObject(cname) != 0);
+  }
 }
 //..............................................................................
 void TMainForm::DoUpdateFiles()  {

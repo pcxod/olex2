@@ -916,6 +916,7 @@ void TMainForm::macClear(TStrObjList &Cmds, const TParamList &Options,
       }
     }
     FXApp->ClearIndividualCollections();
+    FXApp->CreateObjects(false);
   }
   else if (Cmds[0].Equalsi("same")) {
     FXApp->XFile().GetRM().rSAME.Clear();

@@ -1366,6 +1366,7 @@ void TGlRenderer::RemoveCollection(TGPCollection& GP) {
 
   Primitives.GetObjects().ForEach(ACollectionItem::TagSetter(-1));
   GP.GetPrimitives().ForEach(ACollectionItem::TagSetter(0));
+  FGObjects.Pack(ACollectionItem::TagAnalyser(0));
   Primitives.RemoveObjectsByTag(0);
   FCollections.Delete(FCollections.IndexOfValue(&GP));
   for (size_t i = 0; i < Primitives.PropertiesCount(); i++) {
@@ -1398,6 +1399,7 @@ void TGlRenderer::RemoveCollections(const TPtrList<TGPCollection>& Colls_) {
     FCollections.Delete(col_ind);
     delete colls[i];
   }
+  FGObjects.Pack(ACollectionItem::TagAnalyser(0));
   Primitives.RemoveObjectsByTag(0);
   for (size_t i = 0; i < Primitives.PropertiesCount(); i++) {
     TGlMaterial& GlM = Primitives.GetProperties(i);
