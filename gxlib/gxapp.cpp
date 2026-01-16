@@ -3042,10 +3042,8 @@ TUndoData* TGXApp::DeleteXObjects(const AGDObjList& L) {
       atoms.Add((TXAtom*)L[i]);
     }
     else if (L[i]->Is<TXPlane>()) {
+      undo->AddObject(L[i]);
       ((TXPlane*)L[i])->Delete(true);
-      if (L[i]->GetPrimitives().ObjectCount() == 1) {
-        L[i]->GetPrimitives().ClearPrimitives();
-      }
       planes_deleted = true;
     }
     else if (L[i]->Is<TXBond>()) {
