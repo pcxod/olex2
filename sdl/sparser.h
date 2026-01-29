@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -467,8 +467,9 @@ class TExpressionParser {
   TPtrList<IEvaluable> Evaluables;
   TPtrList<IEvaluator> Evaluators;
   TStrList FErrors;
-  olxstr_dict<TObjectFactory<IEvaluable>*, false> LogicalOperators,
-    ComparisonOperators, ArithmeticFunctions;
+  // order of items is important!
+  TStringToList <olxstr, TObjectFactory<IEvaluable>*> LogicalOperators,
+    ComparisonOperators;
 protected:
   IEvaluable* SimpleParse(const olxstr& Expression);
 public:

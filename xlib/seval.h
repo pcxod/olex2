@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -13,7 +13,7 @@
 #include "satom.h"
 #include "sparser.h"
 
-// atomaticaly generted code
+// atomaticaly generted code (mostly)
 class TSFactoryRegister;
 class ITSAtom_DataProvider;
 class TTSAtom_EvaluatorFactory;
@@ -41,6 +41,7 @@ public:
 class TTBasicAtomInfoDataProvider: public ITBasicAtomInfoDataProvider {
   const cm_Element *type;
 public:
+  TTBasicAtomInfoDataProvider() : type(0) {}
   const cm_Element *GetType() {
     if (type == 0) {
       throw TFunctionFailedException(__OlxSourceInfo, "uninitialised object");
@@ -61,6 +62,7 @@ public:
 class TTSAtom_DataProvider: public ITSAtom_DataProvider {
   TSAtom *SAtom;
 public:
+  TTSAtom_DataProvider() : SAtom(0) {}
   virtual TSAtom* GetTSAtom() {
     if (SAtom == 0) {
       throw TFunctionFailedException(__OlxSourceInfo, "uninitialised object");

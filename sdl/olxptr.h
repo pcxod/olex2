@@ -343,4 +343,16 @@ public:
   }
 };
 
+typedef olx_object_ptr<bool> olx_bool_ptr;
+typedef olx_object_ptr<int8_t> olx_int8_ptr;
+typedef olx_object_ptr<uint8_t> olx_uint8_ptr;
+typedef olx_object_ptr<int16_t> olx_int16_ptr;
+typedef olx_object_ptr<uint16_t> olx_uint16_ptr;
+typedef olx_object_ptr<int32_t> olx_int32_ptr;
+typedef olx_object_ptr<uint32_t> olx_uint32_ptr;
+typedef olx_object_ptr<int64_t> olx_int64_ptr;
+typedef olx_object_ptr<uint64_t> olx_uint64_ptr;
+typedef olx_object_ptr<float> olx_float_ptr;
+typedef olx_object_ptr<double> olx_double_ptr;
+
 #endif

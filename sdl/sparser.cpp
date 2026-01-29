@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -57,10 +57,10 @@ TExpressionParser::~TExpressionParser() {
   Evaluables.DeleteItems(false);
   Evaluators.DeleteItems(false);
   for (size_t i = 0; i < LogicalOperators.Count(); i++) {
-    delete LogicalOperators.GetValue(i);
+    delete LogicalOperators.GetObject(i);
   }
   for (size_t i = 0; i < ComparisonOperators.Count(); i++) {
-    delete ComparisonOperators.GetValue(i);
+    delete ComparisonOperators.GetObject(i);
   }
 }
 
@@ -193,7 +193,7 @@ IEvaluable* TExpressionParser::SimpleParse(const olxstr& Exp) {
     // do not check the left condition - for '!' operator it might be empty or
     // if there is a logical operator on the left (on the right it can be only
     // in the case of brackets)
-    if (loFactory && RightCondition) {
+    if (loFactory != 0 && RightCondition != 0) {
       TPtrList<IOlxObject> Args;
       if (LogicalOperator != 0) {
         Args.Add(LogicalOperator);
@@ -215,8 +215,8 @@ IEvaluable* TExpressionParser::SimpleParse(const olxstr& Exp) {
       olxch Char = Exp.CharAt(i);
       for (size_t j = 0; j < ComparisonOperators.Count(); j++) {
         size_t index = 0;
-        while ((index < ComparisonOperators.GetKey(j).Length()) &&
-          (ComparisonOperators.GetKey(j).CharAt(index) == Char))
+        while ((index < ComparisonOperators[j].Length()) &&
+          (ComparisonOperators[j].CharAt(index) == Char))
         {
           if ((i + index + 1) >= Exp.Length()) {
             break;
@@ -224,15 +224,12 @@ IEvaluable* TExpressionParser::SimpleParse(const olxstr& Exp) {
           Char = Exp.CharAt(i + index + 1);
           index++;
         }
-        if (index == ComparisonOperators.GetKey(j).Length()) {
+        if (index == ComparisonOperators[j].Length()) {
           i += (index - 1);
-          coFactory = ComparisonOperators.GetValue(j);
+          coFactory = ComparisonOperators.GetObject(j);
           break;
         }
         Char = Exp.CharAt(i);  // roll back the character
-      }
-      if (coFactory != 0) {
-        continue;
       }
     }
 
@@ -240,16 +237,18 @@ IEvaluable* TExpressionParser::SimpleParse(const olxstr& Exp) {
       olxch Char = Exp.CharAt(i);
       for (size_t j = 0; j < LogicalOperators.Count(); j++) {
         size_t index = 0;
-        while ((index < LogicalOperators.GetKey(j).Length()) &&
-          (LogicalOperators.GetKey(j).CharAt(index) == Char))
+        while ((index < LogicalOperators[j].Length()) &&
+          (LogicalOperators[j].CharAt(index) == Char))
         {
-          if ((i + index + 1) >= Exp.Length()) break;
+          if ((i + index + 1) >= Exp.Length()) {
+            break;
+          }
           Char = Exp.CharAt(i + index + 1);
           index++;
         }
-        if (index == LogicalOperators.GetKey(j).Length()) {
+        if (index == LogicalOperators[j].Length()) {
           i += (index - 1);
-          loFactory = LogicalOperators.GetValue(j);
+          loFactory = LogicalOperators.GetObject(j);
           break;
         }
         Char = Exp.CharAt(i);  // roll back the character

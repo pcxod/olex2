@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -48,6 +48,7 @@ public:
 class TTXBond_DataProvider : public ITXBond_DataProvider {
   TXBond* XBond;
 public:
+  TTXBond_DataProvider() : XBond(0) {}
   TXBond* GetTXBond() {
     if (XBond == 0) {
       throw TFunctionFailedException(__OlxSourceInfo, "uninitialised object");
@@ -113,6 +114,7 @@ public:
 class TTGlGroupDataProvider : public ITGlGroupDataProvider {
   TGlGroup *sel;
 public:
+  TTGlGroupDataProvider() : sel(0) {}
   TGlGroup *GetTGlGroup() {
     if (sel == 0) {
       throw TFunctionFailedException(__OlxSourceInfo, "uninitialised object");
