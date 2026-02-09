@@ -253,6 +253,7 @@ void GXLibMacros::Export(TLibrary& lib) {
     "c-copies printed values to the clipboard&;"
     "i-invert selection&;"
     "p-extra part to use (along with 0) in the case of disorder with sel sel&;"
+    "npd-affects selecting NPD atoms"
     ,
     fpAny,
     "If no arguments provided, prints current selection. This includes "
@@ -269,9 +270,9 @@ void GXLibMacros::Export(TLibrary& lib) {
     "and length or rings of particular connectivity like C6 or NC5. If the "
     "'where' keyword is used, logical operators, like and (&&), and or (||) "
     "can be used to refine the selection. For example:"
-    "\nsel atoms where xatom.bai.z > 2 - to select all atoms heavier after H"
-    "\nsel bonds where xbond.length > 2 - to select all bonds longer than 2 A"
-    "\nsel bonds where xbond.b.bai.z == 1 - to select all bonds where the "
+    "\nsel atoms where atom.bai.z > 2 - to select all atoms heavier after H"
+    "\nsel bonds where bond.length > 2 - to select all bonds longer than 2 A"
+    "\nsel bonds where bond.b.bai.z == 1 - to select all bonds where the "
     "lightest atoms is H. Other extensions include 'sel atom bonds' and "
     "'sel bond atoms' and 'sel collection [wildcards]'"
     );
@@ -2695,6 +2696,7 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     macSel_sel_anis(app, Cmds, flag);
   }
   else if (Cmds.Count() == 1 && Cmds[0].Equalsi("atoms")) {
+    olx_bool_ptr npd = Options.GetBoolPtr("npd");
     TGXApp::AtomIterator ai = app.GetAtoms();
     if (flag == glSelectionNone) {
       flag = glSelectionSelect;
@@ -2702,6 +2704,18 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     while (ai.HasNext()) {
       TXAtom &a = ai.Next();
       if (a.IsVisible()) {
+        if (npd.ok()) {
+          if (*npd) {
+            if (a.CAtom().GetEllipsoid() == 0 || !a.CAtom().GetEllipsoid()->IsNPD()) {
+              continue;
+            }
+          }
+          else {
+            if (a.CAtom().GetEllipsoid() != 0 && a.CAtom().GetEllipsoid()->IsNPD()) {
+              continue;
+            }
+          }
+        }
         app.GetRenderer().Select(a, flag);
       }
     }
@@ -2950,10 +2964,24 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
       processed = true;
     }
     if (!processed) {
+      olx_bool_ptr npd = Options.GetBoolPtr("npd");
       TXAtomPList atoms = app.FindXAtoms(Cmds, false, false);
       TGlRenderer& r = app.GetRenderer();
       for (size_t i = 0; i < atoms.Count(); i++) {
-        r.Select(*atoms[i], flag);
+        TXAtom& a = *atoms[i];
+        if (npd.ok()) {
+          if (*npd) {
+            if (a.CAtom().GetEllipsoid() == 0 || !a.CAtom().GetEllipsoid()->IsNPD()) {
+              continue;
+            }
+          }
+          else {
+            if (a.CAtom().GetEllipsoid() != 0 && a.CAtom().GetEllipsoid()->IsNPD()) {
+              continue;
+            }
+          }
+        }
+        r.Select(a, flag);
       }
     }
   }
@@ -5752,7 +5780,7 @@ void GXLibMacros::macCalcSurf(TStrObjList &Cmds, const TParamList &Options,
       sm.smooth(0.5f);
     }
     TArrayList<size_t> indices = olx_grid_util::reducer(
-      blob->vertices, blob->triangles).reduce(0.05);
+      blob->vertices, blob->triangles).reduce(0.05f);
     TArrayList<int> owners_o = owners;
     owners.SetCount(blob->vertices.Count());
     for (size_t j = 0; j < owners_o.Count(); j++) {
