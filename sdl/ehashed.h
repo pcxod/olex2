@@ -40,11 +40,7 @@ type (e.g. float/double)
 template <typename float_t>
 int hash_float_str_(float_t v, const char* fmt) {
   olx_array_ptr<char> bf(80);
-#if defined(_MSC_VER)
-  sprintf_s(*bf, 80, fmt, v);
-#else
-  sprintf(*bf, fmt, v);
-#endif
+  snprintf(*bf, 80, fmt, v);
   const char* str = *bf;
   size_t sz = olxcstr::o_strlen(str);
   int32_t h = 0;

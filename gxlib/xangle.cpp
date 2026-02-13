@@ -83,7 +83,7 @@ void TXAngle::Create(const olxstr& cName) {
     if ((pmask & (1 << i)) != 0) {
       TGlPrimitive& GlP = GPC->NewPrimitive(pnames[i], sgloCommandList);
       GlP.SetProperties(GS.GetMaterial(pnames[i], def_m));
-      GlP.SetOwnerId(i);
+      GlP.SetOwnerId(static_cast<GLuint>(i));
     }
   }
 }

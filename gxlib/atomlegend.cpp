@@ -62,7 +62,7 @@ void TAtomLegend::Fit() {
     }
   }
   Width = ColWidth + max_w + FirstSpacer;
-  Height = glf.GetMaxHeight() * text.Count();
+  Height = static_cast<int>(glf.GetMaxHeight() * text.Count());
   Height += (uint16_t)olx_round(LineSpacer*(text.Count() - 1));
 }
 //.............................................................................
