@@ -170,7 +170,7 @@ TMainForm::TMainForm(TGlXApp *Parent)
 #ifdef _WIN32
   void InitCommonControls();
 #endif // _WIN32
-
+  GetInstance() = this;
   //Bindings
   {
     Bind(wxEVT_SIZE, &TMainForm::OnSize, this);

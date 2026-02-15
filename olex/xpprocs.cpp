@@ -157,6 +157,7 @@
 #include "ememstream.h"
 #include "pers_util.h"
 #include "encodings.h"
+#include "state_manager.h"
 //#include "gl2ps/gl2ps.c"
 
 int CalcL(int v) {
@@ -2782,6 +2783,16 @@ void TMainForm::macHklExtract(TStrObjList &Cmds, const TParamList &Options, TMac
   //THklFile::SaveToFile(Cmds[0], Refs, true);
 }
 //..............................................................................
+void mac_Reap_update_title() {
+  olxstr title = "Olex2";
+  TXApp& xapp = TXApp::GetInstance();
+  if (xapp.XFile().HasLastLoader()) {
+    title << ": " << TEFile::ExtractFileName(xapp.XFile().GetFileName())
+      << ", " << xapp.XFile().GetFileName();
+  }
+  TMainForm::GetInstance()->SetTitle(title.u_str());
+};
+
 void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
@@ -2789,6 +2800,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
   if (!IsShown() && Cmds.IsEmpty()) {
     return;
   }
+  olx_finally finally = olx_finally::make(mac_Reap_update_title);
   TStopWatch sw(__FUNC__);
   bool CheckLoaded = Options.GetBoolOption("check_loaded", false, true);
   bool CheckCrashed = Options.GetBoolOption("check_crashed", false, true);
@@ -3335,12 +3347,6 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
     }
     FGlConsole->SetCommand(FGlConsole->GetCommand());  // force the update
     FXApp->Draw();
-    olxstr title = "Olex2";
-    if (FXApp->XFile().HasLastLoader()) {
-      title << ": " << TEFile::ExtractFileName(FXApp->XFile().GetFileName())
-        << ", " << FXApp->XFile().GetFileName();
-    }
-    this->SetTitle(title.u_str());
   }
   else {
     Error.ProcessingError(__OlxSrcInfo, EmptyString());
