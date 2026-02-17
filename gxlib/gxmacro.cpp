@@ -1473,10 +1473,10 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options,
           bcc = olxstr('(') << bcc << ')';
         }
         if ((lt & 2) == 2) {
-          lb << "\\-" << bcc;
+          lb << "\\-\\" << bcc;
         }
         else if ((lt & 4) == 4) {
-          lb << "\\+" << bcc;
+          lb << "\\+\\" << bcc;
         }
         else {
           lb << bcc;
@@ -1507,10 +1507,10 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options,
             lb << "_$" << (pos + 1);
           }
           else if (symm_tag == 2) {
-            lb << "\\+" << (pos + 1);
+            lb << "\\+\\" << (pos + 1);
           }
           else {
-            lb << "\\+" << RomanNumber::To(pos + 1).ToLowerCase();
+            lb << "\\+\\" << RomanNumber::To(pos + 1).ToLowerCase();
           }
         }
         else if (symm_tag == 4) {

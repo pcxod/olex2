@@ -2580,7 +2580,6 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroD
       }
       FXApp->XFile().LastLoaderChanged();
       BadReflectionsTable(false);
-      UpdateInfoBox();
       E.SetRetVal<bool>(true);
     }
     else  {
@@ -2783,16 +2782,6 @@ void TMainForm::macHklExtract(TStrObjList &Cmds, const TParamList &Options, TMac
   //THklFile::SaveToFile(Cmds[0], Refs, true);
 }
 //..............................................................................
-void mac_Reap_update_title() {
-  olxstr title = "Olex2";
-  TXApp& xapp = TXApp::GetInstance();
-  if (xapp.XFile().HasLastLoader()) {
-    title << ": " << TEFile::ExtractFileName(xapp.XFile().GetFileName())
-      << ", " << xapp.XFile().GetFileName();
-  }
-  TMainForm::GetInstance()->SetTitle(title.u_str());
-};
-
 void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
@@ -2800,7 +2789,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
   if (!IsShown() && Cmds.IsEmpty()) {
     return;
   }
-  olx_finally finally = olx_finally::make(mac_Reap_update_title);
+  olx_finally finally = olx_finally::make(*this, &TMainForm::UpdateInfoBox);
   TStopWatch sw(__FUNC__);
   bool CheckLoaded = Options.GetBoolOption("check_loaded", false, true);
   bool CheckCrashed = Options.GetBoolOption("check_crashed", false, true);
@@ -3225,7 +3214,6 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
           }
         }
       }
-      UpdateInfoBox();
       // check if the associated HKL file has the same name and location
       olxstr hkl_fn = TEFile::OSPath(FXApp->XFile().GetRM().GetHKLSource()),
         src_fn = TEFile::OSPath(FXApp->XFile().LastLoader()->GetFileName());
