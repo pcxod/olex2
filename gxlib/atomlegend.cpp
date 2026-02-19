@@ -1,3 +1,12 @@
+/******************************************************************************
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
+*                                                                             *
+* This file is part of the OlexSys Development Framework.                     *
+*                                                                             *
+* This source file is distributed under the terms of the licence located in   *
+* the root folder.                                                            *
+******************************************************************************/
+
 #include "atomlegend.h"
 //#include "glprimitive.h"
 #include "gxapp.h"
@@ -152,10 +161,11 @@ bool TAtomLegend::Orient(TGlPrimitive& P) {
     olx_gl::translate(t);
     olx_gl::scale(sph_scale);
     for (size_t i = 0; i < materials.Count(); i++) {
-      materials[i].Init(false);
+      materials[i].Init(Parent.ForcePlain());
       P.Draw();
       olx_gl::translate(0.0, -(glf.GetMaxHeight()+LineSpacer)*scale, 0.0);
     }
+    P.GetProperties().Init(Parent.ForcePlain());
     return true;
   }
   return false;

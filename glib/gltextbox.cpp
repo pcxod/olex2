@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2025 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -63,6 +63,7 @@ void TGlTextBox::Create(const olxstr& cName) {
 }
 //..............................................................................
 bool TGlTextBox::Orient(TGlPrimitive& P) {
+  olx_gl::normal(0, 0, 1);
   TGlFont& glf = GetFont();
   const double es = Parent.GetExtraZoom()*Parent.GetViewZoom();
   if (P.GetType() == sgloText) {
@@ -100,21 +101,22 @@ bool TGlTextBox::Orient(TGlPrimitive& P) {
         Parent.DrawTextSafe(T, line, glf);
       }
       T[1] += (olx_max(tr.height, max_h) + LineSpacer)*scale;
-    }
-    if (mat_changed) {
-      P.GetProperties().Init(Parent.ForcePlain());
+      if (mat_changed) {
+        P.GetProperties().Init(Parent.ForcePlain());
+        mat_changed = false;
+      }
     }
     return true;
   }
   else {
     double Scale = Parent.GetScale()*es;
     double hw = Parent.GetWidth() / (2 * es), w = Width;
-    if (FBuffer.Count() == 1)
+    if (FBuffer.Count() == 1) {
       w /= Parent.GetExtraZoom();
+    }
     const double hh = Parent.GetHeight() / (2 * es), h = Height / Parent.GetExtraZoom();
     double xx = GetCenter()[0], xy = -GetCenter()[1];
     const double z = Z - 0.01;
-    olx_gl::normal(0, 0, 1);
     P.Vertices[0] = vec3d((Left + w + xx - hw)*Scale, -(Top + h + xy - hh)*Scale, z);
     P.Vertices[1] = vec3d(P.Vertices[0][0], -(Top + xy - hh)*Scale, z);
     P.Vertices[2] = vec3d((Left + xx - hw)*Scale, -(Top + xy - hh)*Scale, z);
@@ -165,23 +167,29 @@ void TGlTextBox::PostText(const TStrList &SL, TGlMaterial *M) {
 void TGlTextBox::Fit() {
   const TGlFont& glf = GetFont();
   double scale = 1;
-  if (glf.IsVectorFont())
+  if (glf.IsVectorFont()) {
     scale = 1. / Parent.GetScale();
+  }
   if (FBuffer.Count() > 1) {
     const uint16_t th = glf.TextHeight(EmptyString());
     const double LineSpacer = (0.05 + LineSpacing - 1) * th;
     Height = 0;
     Width = 0;
+    double h = 0;
     for (size_t i = 0; i < FBuffer.Count(); i++) {
-      TTextRect tr = glf.GetTextRect(FBuffer[i]);
+      TTextRect tr = glf.GetTextRect(FBuffer[FBuffer.Count()-i-1]);
       if (glf.IsVectorFont()) {
         tr.height *= scale;
         tr.width *= scale;
       }
-      Height += (uint16_t)olx_round(olx_max(tr.height, glf.GetMaxHeight()));
-      if (tr.width > Width) Width = (uint16_t)olx_round(tr.width);
+      h -= tr.top * scale;
+      h += olx_max(tr.height, glf.GetMaxHeight());
+      if (tr.width > Width) {
+        Width = olx_round_t<double, uint16_t>(tr.width);
+      }
     }
-    Height += (uint16_t)olx_round(LineSpacer * (FBuffer.Count() - 1));
+    h += LineSpacer * (FBuffer.Count() - 1);
+    Height = static_cast<uint16_t>(h);
   }
   else if (FBuffer.Count() == 1) {
     TTextRect tr = glf.GetTextRect(FBuffer[0]);
@@ -189,8 +197,7 @@ void TGlTextBox::Fit() {
       tr.height *= scale;
       tr.width *= scale;
     }
-    // add 3 extra pixels for better presentation...
-    Height = (uint16_t)olx_round(tr.height) + 3;
+    Height = (uint16_t)olx_round(tr.height);
     Width = (uint16_t)olx_round(tr.width);
   }
   else {
@@ -245,10 +252,34 @@ void TGlTextBox::LibReset(const TStrObjList& Params, TMacroData& E) {
   Update();
 }
 //..............................................................................
+void TGlTextBox::LibFit(const TStrObjList& Params, TMacroData& E) {
+  Fit();
+}
+//..............................................................................
+void TGlTextBox::LibPostText(const TStrObjList& Params, TMacroData& E) {
+  if (Params.Count() == 2) {
+    TGlMaterial m(Params[1]);
+    PostText(Params[0], &m);
+  }
+  else {
+    PostText(Params[0]);
+  }
+}
+//..............................................................................
+void TGlTextBox::LibClear(const TStrObjList& Params, TMacroData& E) {
+  Clear();
+}
+//..............................................................................
 void TGlTextBox::ExportLibrary(TLibrary& lib) {
   AGDrawObject::ExportLibrary(lib);
 
   lib.Register(new TFunction<TGlTextBox>(this, &TGlTextBox::LibReset,
     "Reset", fpOne, "Resets the text box position"));
+  lib.Register(new TFunction<TGlTextBox>(this, &TGlTextBox::LibFit,
+    "Fit", fpNone, "Fits box size to the content"));
+  lib.Register(new TFunction<TGlTextBox>(this, &TGlTextBox::LibPostText,
+    "PostText", fpOne|fpTwo, "Posts a text line into the box with optional material"));
+  lib.Register(new TFunction<TGlTextBox>(this, &TGlTextBox::LibClear ,
+    "Clear", fpNone, "Clears the text"));
 }
 //..............................................................................

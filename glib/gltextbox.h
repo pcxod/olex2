@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2025 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -68,6 +68,9 @@ public:
   bool OnMouseUp(const IOlxObject* Sender, const TMouseData& Data);
   
   void LibReset(const TStrObjList& Params, TMacroData& E);
+  void LibFit(const TStrObjList& Params, TMacroData& E);
+  void LibPostText(const TStrObjList& Params, TMacroData& E);
+  void LibClear(const TStrObjList& Params, TMacroData& E);
   void ExportLibrary(TLibrary& lib);
 };
 

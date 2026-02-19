@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -809,6 +809,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects,
   static const int DrawMask = sgdoSelected | sgdoGrouped | sgdoHidden;
   if (!FIdentityObjects.IsEmpty() || FSelection->GetGlM().IsIdentityDraw()) {
     SetView(x, y, true, Selecting, 1);
+    olx_gl::normal(0, 0, 1);
     const size_t id_obj_count = FIdentityObjects.Count();
     for (size_t i = 0; i < id_obj_count; i++) {
       TGlMaterial* GlM = FIdentityObjects[i];
@@ -946,6 +947,7 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects,
   }
   if (!FTranslucentIdentityObjects.IsEmpty()) {
     SetView(x, y, true, Selecting, 1);
+    olx_gl::normal(0, 0, 1);
     const size_t trans_id_obj_count = FTranslucentIdentityObjects.Count();
     for (size_t i = 0; i < trans_id_obj_count; i++) {
       TGlMaterial* GlM = FTranslucentIdentityObjects[i];

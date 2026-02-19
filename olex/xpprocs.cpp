@@ -3136,7 +3136,6 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
       }
     }
     if (FXApp->XFile().HasLastLoader()) {
-      FInfoBox->Clear();
       if (FXApp->CheckFileType<TP4PFile>() ||
         FXApp->CheckFileType<TCRSFile>())
       {
@@ -4311,16 +4310,16 @@ void TMainForm::macNextSolution(TStrObjList &Cmds, const TParamList &Options, TM
 }
 //..............................................................................
 //..............................................................................
-void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
-  if( Cmds.Count() == 2 )  {
-    if( Cmds[0].Equalsi("help") )  {
+void TMainForm::macShowWindow(TStrObjList& Cmds, const TParamList& Options, TMacroData& E) {
+  if (Cmds.Count() == 2) {
+    if (Cmds[0].Equalsi("help")) {
       HelpWindowVisible = Cmds[1].ToBool();
       FHelpWindow->SetVisible(HelpWindowVisible);
       FGlConsole->ShowBuffer(!HelpWindowVisible);  // sync states
       TStateRegistry::GetInstance().SetState(stateHelpWindowVisible,
         HelpWindowVisible, EmptyString(), true);
     }
-    else  if( Cmds[0].Equalsi("info") )  {
+    else  if (Cmds[0].Equalsi("info")) {
       InfoWindowVisible = Cmds[1].ToBool();
       FInfoBox->SetVisible(InfoWindowVisible);
       TStateRegistry::GetInstance().SetState(stateInfoWidnowVisible,
@@ -4328,10 +4327,10 @@ void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMac
       OnResize();
       FXApp->Draw();
     }
-    else if( Cmds[0].Equalsi("cmdline") )  {
+    else if (Cmds[0].Equalsi("cmdline")) {
       CmdLineVisible = Cmds[1].ToBool();
       FCmdLine->Show(CmdLineVisible);
-      if( CmdLineVisible )  FCmdLine->SetFocus();
+      if (CmdLineVisible)  FCmdLine->SetFocus();
       FGlConsole->SetPromptVisible(!CmdLineVisible);
       TStateRegistry::GetInstance().SetState(stateCmdLineVisible,
         CmdLineVisible, EmptyString(), true);
@@ -4339,15 +4338,15 @@ void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMac
       FXApp->Draw();
     }
   }
-  else  {
-    if( Cmds[0].Equalsi("help") )  {
+  else {
+    if (Cmds[0].Equalsi("help")) {
       HelpWindowVisible = !HelpWindowVisible;
       FHelpWindow->SetVisible(HelpWindowVisible);
       FGlConsole->ShowBuffer(!HelpWindowVisible);  // sync states
       TStateRegistry::GetInstance().SetState(stateHelpWindowVisible,
         HelpWindowVisible, EmptyString(), true);
     }
-    else if( Cmds[0].Equalsi("info") )  {
+    else if (Cmds[0].Equalsi("info")) {
       InfoWindowVisible = !InfoWindowVisible;
       FInfoBox->SetVisible(InfoWindowVisible);
       TStateRegistry::GetInstance().SetState(stateInfoWidnowVisible,
@@ -4355,10 +4354,10 @@ void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMac
       OnResize();
       FXApp->Draw();
     }
-    else if( Cmds[0].Equalsi("cmdline") )  {
+    else if (Cmds[0].Equalsi("cmdline")) {
       CmdLineVisible = !CmdLineVisible;
-      FCmdLine->Show( CmdLineVisible );
-      if( CmdLineVisible )  FCmdLine->SetFocus();
+      FCmdLine->Show(CmdLineVisible);
+      if (CmdLineVisible)  FCmdLine->SetFocus();
       FGlConsole->SetPromptVisible(!CmdLineVisible);
       TStateRegistry::GetInstance().SetState(stateCmdLineVisible,
         CmdLineVisible, EmptyString(), true);

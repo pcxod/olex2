@@ -1442,7 +1442,7 @@ void OrtDraw::Render(const olxstr& fileName) {
     }
   }
   // scale a bit up
-  float scale_up = 1.10;
+  float scale_up = 1.10f;
   float mx = (boundary[2] + boundary[0]) / 2;
   float my = (boundary[3] + boundary[1]) / 2;
   boundary[0] = (boundary[0] - mx)*scale_up + mx;

@@ -1249,6 +1249,7 @@ void TMainForm::XApp(Olex2App *XA)  {
 
   FInfoBox = new TGlTextBox(FXApp->GetRenderer(), "InfoBox");
   FXApp->AddObjectToCreate(FInfoBox);
+  FInfoBox->ExportLibrary(*GetLibrary().AddLibrary("info_box"));
 
   GlTooltip = new TGlTextBox(FXApp->GetRenderer(), "Tooltip");
   FXApp->AddObjectToCreate(GlTooltip);
