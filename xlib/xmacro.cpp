@@ -9549,21 +9549,57 @@ void XLibMacros::macDfix(TStrObjList& Cmds, const TParamList& Options,
   }
   olxstr tls = Options.FindValue("tls", "none");
   if (tls != "none") {
-    if (Atoms.Pack().Count() < 4 || (Atoms.Count() % 2) != 0) {
+    Atoms.Pack();
+    ACollectionItem::Unify(Atoms);
+    if (Atoms.Count() < 4) {
       E.ProcessingError(__OlxSrcInfo,
-        "even number of at least 4 anisotropic atoms expected");
+        "at least 4 anisotropic atoms are expected");
       return;
     }
-    TAsymmUnit& au = app.XFile().GetAsymmUnit();
+    //TAsymmUnit& au = app.XFile().GetAsymmUnit();
     xlib::TLS tls(Atoms);
+    app.XFile().GetLattice().GetObjects().atoms.ForEach(ACollectionItem::TagSetter(-1));
+    Atoms.ForEach(ACollectionItem::IndexTagSetter());
     typedef olx_pair_t<TSAtom*, TSAtom*> pair_t;
     typedef TTypeList<pair_t> list_t;
     olxdict<int, list_t, TPrimitiveComparator> groups;
-    for (size_t i = 0; i < Atoms.Count(); i += 2) {
-      TEValueD cb = tls.BondCorrect(*Atoms[i], *Atoms[i + 1]);
-      int v = (int)(cb.GetV() * 1000);
-      groups.Add(v).AddNew(Atoms[i], Atoms[i + 1]);
+    olx_pset<size_t> unique;
+    
+    for (size_t i = 0; i < Atoms.Count(); i++) {
+      for (size_t j = 0; j < Atoms[i]->NodeCount(); j++) {
+        TSAtom& na = *Atoms[i]->GetNodes()[j];
+        if (na.IsDeleted() || na.GetTag() < 0) {
+          continue;
+        }
+        size_t hs = (Atoms[i]->GetTag() << 16) | na.GetTag();
+        if (na.GetTag() < Atoms[i]->GetTag()) {
+          hs = (na.GetTag()  << 16) | Atoms[i]->GetTag();
+        }
+        if (!unique.Contains(hs)) {
+          unique.Add(hs);
+          TEValueD cb = tls.BondCorrect(*Atoms[i], na);
+          int v = (int)(cb.GetV() * 1000);
+          groups.Add(v).AddNew(Atoms[i], &na);
+        }
+        for (size_t k = j+1; k < Atoms[i]->NodeCount(); k++) {
+          TSAtom& nb = *Atoms[i]->GetNodes()[k];
+          if (nb.IsDeleted() || nb.GetTag() < 0) {
+            continue;
+          }
+          size_t hs = (nb.GetTag() << 16) | na.GetTag();
+          if (na.GetTag() < nb.GetTag()) {
+            hs = (na.GetTag() << 16) | nb.GetTag();
+          }
+          if (!unique.Contains(hs)) {
+            unique.Add(hs);
+            TEValueD cb = tls.BondCorrect(na, nb);
+            int v = (int)(cb.GetV() * 1000);
+            groups.Add(v).AddNew(&na, &nb);
+          }
+        }
+      }
     }
+
     for (size_t i = 0; i < groups.Count(); i++) {
       const list_t& pl = groups.GetValue(i);
       double d = (double)groups.GetKey(i) / 1000;
@@ -9622,7 +9658,7 @@ void XLibMacros::macDfix(TStrObjList& Cmds, const TParamList& Options,
     if ((Atoms.Count() % 2) != 0) {
       E.ProcessingError(__OlxSrcInfo, "even number of atoms is expected");
       return;
-    }
+    };
     for (size_t i = 0; i < Atoms.Count(); i += 2) {
       dfix.AddAtomPair(
         Atoms[i]->CAtom(), &Atoms[i]->GetMatrix(),

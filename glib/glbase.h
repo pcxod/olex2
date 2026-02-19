@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+ * Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
  *                                                                             *
  * This file is part of the OlexSys Development Framework.                     *
  *                                                                             *
@@ -34,9 +34,11 @@ struct olx_gl {
 
   template <typename MC> static void orient(const MC& m) {
     static float Bf[4][4];
-    for (int i = 0; i < 3; i++)
-      for (int j = 0; j < 3; j++)
-        Bf[i][j] = (float) m[i][j];
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+        Bf[i][j] = (float)m[i][j];
+      }
+    }
     Bf[0][3] = Bf[1][3] = Bf[2][3] = Bf[3][0] = Bf[3][1] = Bf[3][2] = 0;
     Bf[3][3] = 1.0;
     glMultMatrixf(&Bf[0][0]);
@@ -946,6 +948,15 @@ struct olx_gl {
         pm_ptr = new PolygonModeChanger();
       }
       pm_ptr->set(face, value);
+    }
+  };
+
+  struct AttribStack {
+    AttribStack(int mask) {
+      pushAttrib(mask);
+    }
+    ~AttribStack() {
+      popAttrib();
     }
   };
 

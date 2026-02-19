@@ -170,7 +170,7 @@ TMainForm::TMainForm(TGlXApp *Parent)
 #ifdef _WIN32
   void InitCommonControls();
 #endif // _WIN32
-
+  GetInstance() = this;
   //Bindings
   {
     Bind(wxEVT_SIZE, &TMainForm::OnSize, this);
@@ -1249,6 +1249,7 @@ void TMainForm::XApp(Olex2App *XA)  {
 
   FInfoBox = new TGlTextBox(FXApp->GetRenderer(), "InfoBox");
   FXApp->AddObjectToCreate(FInfoBox);
+  FInfoBox->ExportLibrary(*GetLibrary().AddLibrary("info_box"));
 
   GlTooltip = new TGlTextBox(FXApp->GetRenderer(), "Tooltip");
   FXApp->AddObjectToCreate(GlTooltip);
@@ -4255,35 +4256,45 @@ PyObject *TMainForm::PyInit() {
 bool TMainForm::FileDropTarget::OnDropFiles(wxCoord x, wxCoord y,
   const wxArrayString& filenames)
 {
-  if( filenames.Count() != 1 )  return false;
-  const olxstr fn = filenames[0];
-  try  {
-    if( parent.FXApp->XFile().FindFormat(TEFile::ExtractFileExt(fn)) == NULL )
-      return false;
+  if (filenames.Count() != 1) {
+    return false;
   }
-  catch(...)  {  return false;  }
+  const olxstr fn = filenames[0];
+  try {
+    if (parent.FXApp->XFile().FindFormat(TEFile::ExtractFileExt(fn)) == 0) {
+      return false;
+    }
+  }
+  catch (...) {
+    return false;
+  }
   parent.processMacro(olxstr("reap \"") << fn << '\"');
   return true;
 }
 //..............................................................................
 bool TMainForm::PopupMenu(wxMenu* menu, const wxPoint& p)  {
-  if( GlTooltip != NULL && _UseGlTooltip )
+  if (GlTooltip != 0 && _UseGlTooltip) {
     GlTooltip->SetVisible(false);
+  }
   return wxWindow::PopupMenu(menu, p);
 }
 //..............................................................................
-void TMainForm::UpdateInfoBox()  {
+void TMainForm::UpdateInfoBox() {
+  olxstr title = "Olex2";
   FInfoBox->Clear();
   if (FXApp->XFile().HasLastLoader()) {
-    FInfoBox->PostText(olxstr("\\-") <<
+    title << ": " << TEFile::ExtractFileName(FXApp->XFile().GetFileName())
+      << ", " << FXApp->XFile().GetFileName();
+    FInfoBox->PostText(olxstr("\\-\\") <<
       TEFile::ExtractFilePath(FXApp->XFile().GetFileName()));
     FInfoBox->PostText(TEFile::ExtractFileName(FXApp->XFile().GetFileName()));
     FInfoBox->PostText(FXApp->XFile().LastLoader()->GetTitle());
     FInfoBox->Fit();
   }
-  else  {
+  else {
     FInfoBox->PostText("No file is loaded");
   }
+  SetTitle(title.u_str());
 }
 //..............................................................................
 void TMainForm::beforeCall(const olxstr &cmd) {

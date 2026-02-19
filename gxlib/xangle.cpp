@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -43,16 +43,18 @@ TXAngle::~TXAngle() {
 void TXAngle::Init() {
   SetMoveable(true);
   SetZoomable(true);
-
-  vec3d intersect = center.NormalIntersection(from, to);
-  vec3d ab_center = (from + to) / 2;
+  InitDC();
+}
+//...........................................................................
+void TXAngle::InitDC() {
+  vec3d a = (from - center) * radius + center,
+    b = (to - center) * radius + center;
+  vec3d intersect = center.NormalIntersection(a, b);
+  vec3d ab_center = (a + b) / 2;
   vec3d shift = intersect - ab_center;
-  vec3d ba = from - to;
+  vec3d ba = a - b;
   draw_center = center -
     ba.NormaliseTo((shift).Length()) * olx_sign(ba.DotProd(shift));
-  if (radius != 1) {
-    draw_center = ab_center + (draw_center - ab_center) * radius;
-  }
 }
 //...........................................................................
 void TXAngle::Create(const olxstr& cName) {
@@ -83,14 +85,14 @@ void TXAngle::Create(const olxstr& cName) {
     if ((pmask & (1 << i)) != 0) {
       TGlPrimitive& GlP = GPC->NewPrimitive(pnames[i], sgloCommandList);
       GlP.SetProperties(GS.GetMaterial(pnames[i], def_m));
-      GlP.SetOwnerId(i);
+      GlP.SetOwnerId(static_cast<GLuint>(i));
     }
   }
 }
 //...........................................................................
 bool TXAngle::Orient(TGlPrimitive& glp) {
-  vec3d a = (from - draw_center) * radius;
-  vec3d b = (to - draw_center) * radius;
+  vec3d a = (from - center) * radius + center - draw_center;
+  vec3d b = (to - center) * radius + center - draw_center;
   olx_gl::translate(draw_center);
   vec3d normal = a.XProdVec(b).Normalise();
 
@@ -142,7 +144,7 @@ bool TXAngle::Orient(TGlPrimitive& glp) {
     olx_create_rotation_matrix(rm, normal, ca);
     for (int i = 0; i < sections; i++) {
       vec3d b = a * rm;
-      vec3d t = a + (b - a) / 2;
+      vec3d t = (a + b) / 2;
       vec3d d = (b - a).Normalise();
       double rang = acos(d[2]) * 180 / M_PI;
       olx_gl::translate(t);
@@ -161,10 +163,10 @@ bool TXAngle::Orient(TGlPrimitive& glp) {
   }
   if (glp.GetOwnerId() == 3) {
     double ca = cos(ang / sections / 2);
+    olx_create_rotation_matrix(rm, normal, ca);
     olx_gl::begin(GL_TRIANGLE_FAN);
     olx_gl::normal(normal);
-    olx_gl::vertex(vec3d());
-    olx_create_rotation_matrix(rm, normal, ca);
+    olx_gl::vertex(center - draw_center);
     for (int i = 0; i < sections; i++) {
       olx_gl::vertex(a);
       a *= rm;
@@ -238,6 +240,7 @@ bool TXAngle::DoTranslate(const vec3d& t_) {
   else if (radius > 1) {
     radius = 1;
   }
+  InitDC();
   return true;
 }
 //...........................................................................

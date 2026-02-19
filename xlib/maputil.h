@@ -39,7 +39,9 @@ protected:
     const MapT neg_level = -pos_level;
     for (size_t mc = 0; mc < maxima.Count(); mc++) {
       peak& peak = maxima[mc];
-      if (mask[peak.center[0]][peak.center[1]][peak.center[2]])  continue;
+      if (mask[peak.center[0]][peak.center[1]][peak.center[2]]) {
+        continue;
+      }
       stack.Push(peak.center);
       const MapT& ref_val = data[peak.center[0]][peak.center[1]][peak.center[2]];
       vec3d new_cent;
@@ -231,8 +233,9 @@ public:
           }
           TVector3<index_t> p(_p[0] + ix, _p[1] + iy, _p[2] + iz);
           for (int i = 0; i < 3; i++) {
-            if ((p[i] %= dim[i]) < 0)
+            if ((p[i] %= dim[i]) < 0) {
               p[i] += dim[i];
+            }
           }
           val += map[p[0]][p[1]][p[2]];
         }
@@ -272,8 +275,9 @@ public:
               }
             }
           }
-          if (stack.IsEmpty() && --res[dim_n] == 0) // would be odd
+          if (stack.IsEmpty() && --res[dim_n] == 0) { // would be odd
             break;
+          }
         }
         while (!stack.IsEmpty()) {
           pt = stack.Pop();
@@ -527,6 +531,7 @@ public:
         return val;
       }
     }
+    typedef mapT float_t;
   };
   /* fills a grid in cartesian coordinates with values from the map of the unit
   cell
@@ -535,11 +540,13 @@ public:
     Cell2Cart(const _MapGetter& src, array_3d<dest_t> &dest,
       const smatdd& grid_2_cart, const mat3d& cart2cell)
   {
+    typedef typename _MapGetter::float_t FT;
     for (size_t i = 0; i < dest.width; i++) {
       for (size_t j = 0; j < dest.height; j++) {
         for (size_t k = 0; k < dest.depth; k++) {
           // cartesian coordinates from grid
-          const vec3d cc = vec3d(i, j, k)*grid_2_cart.r + grid_2_cart.t;
+          TVector3<FT> cc = vec3d(static_cast<FT>(i), static_cast<FT>(j), static_cast<FT>(k))
+            * grid_2_cart.r + grid_2_cart.t;
           const vec3d p(
             cc[0] * cart2cell[0][0] + cc[1] * cart2cell[1][0] + cc[2] * cart2cell[2][0],
             cc[1] * cart2cell[1][1] + cc[2] * cart2cell[2][1],

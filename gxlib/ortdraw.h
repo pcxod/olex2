@@ -244,14 +244,14 @@ public:
     ElpDiv = 36;
     BondDiv = 12;
     PieDiv = 4;
-    QuadLineWidth = PieLineWidth = 0.5;
+    QuadLineWidth = PieLineWidth = 0.5f;
     ElpLineWidth = FontLineWidth = 1;
     BondRad = 1;
     ColorMode = 0;
-    HBondScale = 0.5;
+    HBondScale = 0.5f;
     AtomOutlineColor = BondOutlineColor = ~0;
-    BondOutlineSize = 0.1;
-    AtomOutlineSize = 0.05;
+    BondOutlineSize = 0.1f;
+    AtomOutlineSize = 0.05f;
     Perspective = false;
     AutoStippleDisorder = true;
     MultipleBondsWidth = 0;

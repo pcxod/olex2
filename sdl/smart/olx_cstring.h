@@ -48,11 +48,7 @@ protected:
   //..............................................................................
   template <class T> inline TCString& writeType(const char* format, T v) {
     olx_array_ptr<char> bf(80);
-#if defined(_MSC_VER)
-    sprintf_s(bf, 80, format, v);
-#else
-    sprintf(bf, format, v);
-#endif
+    snprintf(bf, 80, format, v);
     size_t len = strlen(bf);
     checkBufferForModification(_Length + len);
     olx_memcpy(&SData->Data[_Length], bf, len);
@@ -84,22 +80,14 @@ protected:
     _Start = 0;
     _Increment = 8;
     olx_array_ptr<char> bf(80);
-#if defined(_MSC_VER)
-    sprintf_s(*bf, 80, format, v);
-#else
-    sprintf(*bf, format, v);
-#endif
+    snprintf(*bf, 80, format, v);
     _Length = strlen(bf);
     SData = new Buffer(_Length + _Increment, bf, _Length);
   }
   //..............................................................................
   template <class T> inline TCString& assignTypeValue(const char* format, T v) {
     olx_array_ptr<char> bf(80);
-#if defined(_MSC_VER)
-    sprintf_s(*bf, 80, format, v);
-#else
-    sprintf(*bf, format, v);
-#endif
+    snprintf(*bf, 80, format, v);
     _Start = 0;
     _Increment = 8;
     _Length = strlen(bf);

@@ -157,6 +157,7 @@
 #include "ememstream.h"
 #include "pers_util.h"
 #include "encodings.h"
+#include "state_manager.h"
 //#include "gl2ps/gl2ps.c"
 
 int CalcL(int v) {
@@ -2579,7 +2580,6 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroD
       }
       FXApp->XFile().LastLoaderChanged();
       BadReflectionsTable(false);
-      UpdateInfoBox();
       E.SetRetVal<bool>(true);
     }
     else  {
@@ -2789,6 +2789,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
   if (!IsShown() && Cmds.IsEmpty()) {
     return;
   }
+  olx_finally finally = olx_finally::make(*this, &TMainForm::UpdateInfoBox);
   TStopWatch sw(__FUNC__);
   bool CheckLoaded = Options.GetBoolOption("check_loaded", false, true);
   bool CheckCrashed = Options.GetBoolOption("check_crashed", false, true);
@@ -3135,7 +3136,6 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
       }
     }
     if (FXApp->XFile().HasLastLoader()) {
-      FInfoBox->Clear();
       if (FXApp->CheckFileType<TP4PFile>() ||
         FXApp->CheckFileType<TCRSFile>())
       {
@@ -3213,7 +3213,6 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
           }
         }
       }
-      UpdateInfoBox();
       // check if the associated HKL file has the same name and location
       olxstr hkl_fn = TEFile::OSPath(FXApp->XFile().GetRM().GetHKLSource()),
         src_fn = TEFile::OSPath(FXApp->XFile().LastLoader()->GetFileName());
@@ -3335,12 +3334,6 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
     }
     FGlConsole->SetCommand(FGlConsole->GetCommand());  // force the update
     FXApp->Draw();
-    olxstr title = "Olex2";
-    if (FXApp->XFile().HasLastLoader()) {
-      title << ": " << TEFile::ExtractFileName(FXApp->XFile().GetFileName())
-        << ", " << FXApp->XFile().GetFileName();
-    }
-    this->SetTitle(title.u_str());
   }
   else {
     Error.ProcessingError(__OlxSrcInfo, EmptyString());
@@ -4317,16 +4310,16 @@ void TMainForm::macNextSolution(TStrObjList &Cmds, const TParamList &Options, TM
 }
 //..............................................................................
 //..............................................................................
-void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
-  if( Cmds.Count() == 2 )  {
-    if( Cmds[0].Equalsi("help") )  {
+void TMainForm::macShowWindow(TStrObjList& Cmds, const TParamList& Options, TMacroData& E) {
+  if (Cmds.Count() == 2) {
+    if (Cmds[0].Equalsi("help")) {
       HelpWindowVisible = Cmds[1].ToBool();
       FHelpWindow->SetVisible(HelpWindowVisible);
       FGlConsole->ShowBuffer(!HelpWindowVisible);  // sync states
       TStateRegistry::GetInstance().SetState(stateHelpWindowVisible,
         HelpWindowVisible, EmptyString(), true);
     }
-    else  if( Cmds[0].Equalsi("info") )  {
+    else  if (Cmds[0].Equalsi("info")) {
       InfoWindowVisible = Cmds[1].ToBool();
       FInfoBox->SetVisible(InfoWindowVisible);
       TStateRegistry::GetInstance().SetState(stateInfoWidnowVisible,
@@ -4334,10 +4327,10 @@ void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMac
       OnResize();
       FXApp->Draw();
     }
-    else if( Cmds[0].Equalsi("cmdline") )  {
+    else if (Cmds[0].Equalsi("cmdline")) {
       CmdLineVisible = Cmds[1].ToBool();
       FCmdLine->Show(CmdLineVisible);
-      if( CmdLineVisible )  FCmdLine->SetFocus();
+      if (CmdLineVisible)  FCmdLine->SetFocus();
       FGlConsole->SetPromptVisible(!CmdLineVisible);
       TStateRegistry::GetInstance().SetState(stateCmdLineVisible,
         CmdLineVisible, EmptyString(), true);
@@ -4345,15 +4338,15 @@ void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMac
       FXApp->Draw();
     }
   }
-  else  {
-    if( Cmds[0].Equalsi("help") )  {
+  else {
+    if (Cmds[0].Equalsi("help")) {
       HelpWindowVisible = !HelpWindowVisible;
       FHelpWindow->SetVisible(HelpWindowVisible);
       FGlConsole->ShowBuffer(!HelpWindowVisible);  // sync states
       TStateRegistry::GetInstance().SetState(stateHelpWindowVisible,
         HelpWindowVisible, EmptyString(), true);
     }
-    else if( Cmds[0].Equalsi("info") )  {
+    else if (Cmds[0].Equalsi("info")) {
       InfoWindowVisible = !InfoWindowVisible;
       FInfoBox->SetVisible(InfoWindowVisible);
       TStateRegistry::GetInstance().SetState(stateInfoWidnowVisible,
@@ -4361,10 +4354,10 @@ void TMainForm::macShowWindow(TStrObjList &Cmds, const TParamList &Options, TMac
       OnResize();
       FXApp->Draw();
     }
-    else if( Cmds[0].Equalsi("cmdline") )  {
+    else if (Cmds[0].Equalsi("cmdline")) {
       CmdLineVisible = !CmdLineVisible;
-      FCmdLine->Show( CmdLineVisible );
-      if( CmdLineVisible )  FCmdLine->SetFocus();
+      FCmdLine->Show(CmdLineVisible);
+      if (CmdLineVisible)  FCmdLine->SetFocus();
       FGlConsole->SetPromptVisible(!CmdLineVisible);
       TStateRegistry::GetInstance().SetState(stateCmdLineVisible,
         CmdLineVisible, EmptyString(), true);

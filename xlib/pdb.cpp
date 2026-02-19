@@ -29,7 +29,7 @@ void TPdb::SaveToStrings(TStrList& Strings) {
   if (z.Length() > 4) {
     z.SetLength(4);
   }
-  sprintf(bf, "CRYST1%9.3f%9.3f%9.3f%7.2f%7.2f%7.2f %-11s%4s",
+  snprintf(bf, 120, "CRYST1%9.3f%9.3f%9.3f%7.2f%7.2f%7.2f %-11s%4s",
     GetAsymmUnit().GetAxes()[0],
     GetAsymmUnit().GetAxes()[1],
     GetAsymmUnit().GetAxes()[2],
@@ -60,7 +60,7 @@ void TPdb::SaveToStrings(TStrList& Strings) {
     if (p != 0) {
       p_num[0] = ('A' + p - 1);
     }
-    sprintf(bf, "ATOM  %5d %4s%1s%3s %1c%4s    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s  ",
+    snprintf(bf, 120, "ATOM  %5d %4s%1s%3s %1c%4s    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s  ",
       (int)(i + 1),
       label.c_str(),
       p_num.c_str(),
@@ -83,7 +83,7 @@ void TPdb::SaveToStrings(TStrList& Strings) {
     for (int j = 0; j < 6; j++) {
       iq[j] = (int)(q[j] * 10000);
     }
-    sprintf(bf, "ANISOU%5d %4s            %7d%7d%7d%7d%7d%7d      %2s  ",
+    snprintf(bf, 120, "ANISOU%5d %4s            %7d%7d%7d%7d%7d%7d      %2s  ",
       (int)(i + 1),
       label.c_str(),
       iq[0],

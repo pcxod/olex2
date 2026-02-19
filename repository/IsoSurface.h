@@ -29,8 +29,8 @@
 using namespace olx_array;
 struct IsoTriangle {
   int64_t pointID[3];
-  int64_t operator [] (int i) const { return pointID[i]; }
-  int64_t& operator [] (int i) { return pointID[i]; }
+  int64_t operator [] (size_t i) const { return pointID[i]; }
+  int64_t& operator [] (size_t i) { return pointID[i]; }
 };
 
 class CIsoSurface {
@@ -203,10 +203,10 @@ protected:
              (((uint64_t)z) & 0x0000000000FFFFF);
     }
     static inline void decode(uint64_t code, int& x, int& y, int& z, int& extra) {
-      extra = ((code & 0xF000000000000000) >> 60);
-      z =     ((code & 0x0000000000FFFFF));
-      y =     ((code & 0x00000FFFFF00000) >> 20);
-      x =     ((code & 0xFFFFF0000000000) >> 40);
+      extra = static_cast<int>(((code & 0xF000000000000000) >> 60));
+      z =     static_cast<int>(((code & 0x0000000000FFFFF)));
+      y =     static_cast<int>(((code & 0x00000FFFFF00000) >> 20));
+      x =     static_cast<int>(((code & 0xFFFFF0000000000) >> 40));
     }
   };
 ///////////////////////////////////////////////////////////////////////////////////
