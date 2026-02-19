@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -22,6 +22,7 @@ class TXAngle : public AGlMouseHandlerImp {
   virtual bool IsStyleSaveable() const { return true; }
   virtual bool IsRadiusSaveable() const { return true; }
   void Init();
+  void InitDC();
   virtual bool DoRotate(const vec3d& vec, double angle) {
     return false;
   }
