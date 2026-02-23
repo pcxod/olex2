@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -70,7 +70,7 @@ bool IOlex2Processor::process_macro(const olxch *f) {
   return ip == 0 ? false : ip->processMacro(f);
 }
 
-void IOlex2Processor::log_message(const olxch *f, int level) {
+void IOlex2Processor::log_message(const olxch *f, Logging level) {
   if (TBasicApp::HasInstance()) {
     TBasicApp::NewLogEntry(level) << f;
   }

@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -124,7 +124,7 @@ public:
   */
   void SetInstanceDir(const olxstr &d);
   static TLog& GetLog()  {  return *GetInstance().Log;  }
-  static TLog::LogEntry NewLogEntry(int evt_type=logDefault,
+  static TLog::LogEntry NewLogEntry(Logging evt_type=logDefault,
     bool annotate=false, const olxstr &location=EmptyString())
   {
     return GetInstance().Log->NewEntry(evt_type, annotate, location);

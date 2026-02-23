@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -99,7 +99,7 @@ olxstr TMacroData::GetRetVal() const {
   return RetValue->ToString();
 }
 
-void TMacroData::PrintStack(int logEvt, bool annotate,
+void TMacroData::PrintStack(Logging logEvt, bool annotate,
   const olxstr &prefix) const
 {
   const str_stack::item *i = Stack.TopItem();

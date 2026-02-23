@@ -1139,6 +1139,9 @@
     <ClInclude Include="..\..\..\repository\refinement_listener.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\xlib\sfbase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />

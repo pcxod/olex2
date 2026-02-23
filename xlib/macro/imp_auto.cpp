@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -808,7 +808,8 @@ double TryPoint(TArray3D<float>& map, const TUnitCell& uc, const vec3i& p,
   TArrayList<compd> F;
   TArrayList<SFUtil::StructureFactor> P1SF;
   const TUnitCell::SymmSpace sym_space = uc.GetSymmSpace();
-  SFUtil::GetSF(refs, F, SFUtil::mapTypeDiff, SFUtil::sfOriginOlex2, SFUtil::scaleSigma);
+  SFUtil::GetSF(refs, F, SFUtil::MapType::Diff,
+    SFUtil::SFOrigin::Olex2, SFUtil::ScaleType::Sigma);
   SFUtil::ExpandToP1(refs, F, sym_space, P1SF);
   const vec3s dim = map.GetSize();
   const vec3d norm(1./dim[0], 1./dim[1], 1./dim[2]);
@@ -840,8 +841,8 @@ void XLibMacros::funFATA(const TStrObjList& Cmds, TMacroData& E) {
   resolution = 1. / resolution;
   TRefList refs;
   TArrayList<compd> F;
-  olxstr err(SFUtil::GetSF(refs, F, SFUtil::mapTypeDiff,
-    SFUtil::sfOriginOlex2, SFUtil::scaleSigma));
+  olxstr err(SFUtil::GetSF(refs, F, SFUtil::MapType::Diff,
+    SFUtil::SFOrigin::Olex2, SFUtil::ScaleType::Sigma));
   if (!err.IsEmpty()) {
     E.ProcessingError(__OlxSrcInfo, err);
     return;

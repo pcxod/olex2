@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -20,7 +20,8 @@
  volatile TLog::Disabler olx_log_disabler = TBasicApp::GetInstance().GetLog().Disable()
 BeginEsdlNamespace()
 
-enum  {
+enum Logging {
+  logSkip,
   logDefault,
   logVerbose, // as logInfo but may be discarded if TLog is not verbose
   logInfo,
@@ -107,35 +108,45 @@ public:
   struct LogEntry {
     TLog& parent;
     olxstr_buf buffer;
-    int evt;
-    LogEntry(TLog& _parent, int evt, bool annotate, const olxstr& location);
+    Logging evt;
+    LogEntry(TLog& _parent, Logging evt, bool annotate, const olxstr& location);
     ~LogEntry();
     LogEntry& operator << (const olxstr& str) {
-      buffer << str;
+      if (evt != Logging::logSkip) {
+        buffer << str;
+      }
       return *this;
     }
     LogEntry& operator << (const TExceptionBase& e);
     LogEntry& nl() {
-      buffer << NewLineSequence();
+      if (evt != Logging::logSkip) {
+        buffer << NewLineSequence();
+      }
       return *this;
     }
     template <class T>
     LogEntry& operator << (const TTStrList<T>& lst) {
-      buffer << lst.Text(NewLineSequence());
+      if (evt != Logging::logSkip) {
+        buffer << lst.Text(NewLineSequence());
+      }
       return *this;
     }
     template <class T>
     LogEntry& operator << (const ConstStrList<T>& lst) {
-      buffer << lst.Text(NewLineSequence());
+      if (evt != Logging::logSkip) {
+        buffer << lst.Text(NewLineSequence());
+      }
       return *this;
     }
     LogEntry& operator << (const IOlxObject& o) {
-      buffer << o.ToString();
+      if (evt != Logging::logSkip) {
+        buffer << o.ToString();
+      }
       return *this;
     }
   };
   //..............................................................................
-  LogEntry NewEntry(int evt = logDefault, bool annotate = false,
+  LogEntry NewEntry(Logging evt = logDefault, bool annotate = false,
     const olxstr& location = EmptyString())
   {
     return LogEntry(*this, evt, annotate, location);

@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -18,6 +18,7 @@
 #include "arrays.h"
 #include "atomref.h"
 #include "etable.h"
+#include "sfbase.h"
 
 BeginXlibNamespace()
 // program state and some other special checks for functions
@@ -131,7 +132,7 @@ public:
   If extinction correction is used, it will be applied to the Fsq
   */
   RefinementModel::HklStat CalcFsq(TRefList &refs, evecd &Fsq,
-    bool scale) const;
+    bool scale, SFUtil::EXTIDest extiDest) const;
   /* function undoes renaming atoms */
   void undoName(TUndoData *data);
   void NameHydrogens(TSAtom& a, TAsymmUnit::TLabelChecker &lc, TUndoData* ud);

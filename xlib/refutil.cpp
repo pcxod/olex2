@@ -1,3 +1,12 @@
+/******************************************************************************
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
+*                                                                             *
+* This file is part of the OlexSys Development Framework.                     *
+*                                                                             *
+* This source file is distributed under the terms of the licence located in   *
+* the root folder.                                                            *
+******************************************************************************/
+
 #include "refmodel.h"
 #include "refutil.h"
 #include "sfutil.h"
@@ -179,7 +188,7 @@ Stats::Stats(bool update_scale, bool fcf)
     }
   }
   else {
-    xapp.CalcFsq(refs, Fsq, false);
+    xapp.CalcFsq(refs, Fsq, false, SFUtil::EXTIDest::Fo);
   }
   if (weights.IsEmpty()) {
     weights.Resize(refs.Count());

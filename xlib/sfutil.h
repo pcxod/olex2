@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -19,25 +19,6 @@
 BeginXlibNamespace()
 
 namespace SFUtil {
-
-  static const short mapTypeDiff = 0,  // map type
-    mapTypeObs = 1,
-    mapTypeCalc = 2,
-    mapType2OmC = 3;
-  static const short scaleSigma = 0,  // scale for difference map
-    scaleShelx = 1,
-    scaleExternal = 2,
-    scaleExternalForced = 3;
-  static const short sfOriginFcf = 0,  // structure factor origin
-    sfOriginOlex2 = 1;
-  // merge Friedel pairs
-  static const short fpDefault = 0,  // depending on SG
-    fpMerge = 1,
-    fpDoNotMerge = 2;
-  static const double T_PI = M_PI * 2;
-  static const double MT_PI = -M_PI * 2;
-  const static double EQ_PI = 8 * M_PI*M_PI;
-  const static double TQ_PI = 2 * M_PI*M_PI;
 
   struct StructureFactor {
     vec3i hkl;  // hkl indexes
@@ -121,11 +102,12 @@ namespace SFUtil {
  empty string
  */
   olxstr GetSF(TRefList& refs, TArrayList<compd>& F,
-    short mapType, short sfOrigin = sfOriginOlex2,
-    short scaleType = scaleShelx,
+    MapType mt, SFOrigin sfOrigin=SFOrigin::Olex2,
+    ScaleType  scaleType= ScaleType::External,
     double scale = 0,
-    short friedelPairs = fpDefault,
-    bool anom_only = false);
+    FPMerge friedelMerge=FPMerge::Default,
+    bool anom_only = false,
+    EXTIDest extiDest=EXTIDest::Fc);
   // calculates the structure factors for given reflections
   void _CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
     TArrayList<compd>& F, bool UseFpFdp, bool anom_only = false);

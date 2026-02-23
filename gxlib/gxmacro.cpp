@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -800,15 +800,15 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
     resolution = 0.05;
   }
   resolution = 1./resolution;
-  short mapType = SFUtil::mapTypeCalc;
+  SFUtil::MapType mapType = SFUtil::MapType::Calc;
   if (Options.Contains("tomc")) {
-    mapType = SFUtil::mapType2OmC;
+    mapType = SFUtil::MapType::TwoObs_Calc;
   }
   else if (Options.Contains("obs")) {
-    mapType = SFUtil::mapTypeObs;
+    mapType = SFUtil::MapType::Obs;
   }
   else if (Options.Contains("diff")) {
-    mapType = SFUtil::mapTypeDiff;
+    mapType = SFUtil::MapType::Diff;
   }
   olxstr strMaskInc = Options.FindValue("m");
   if (!strMaskInc.IsEmpty()) {
@@ -824,43 +824,43 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
   TRefList refs;
   TArrayList<compd> F;
   st.start("Obtaining structure factors");
-  short scale = SFUtil::scaleShelx;
+  SFUtil::ScaleType scale = SFUtil::ScaleType::Shelx;
   double scale_value = 0;
   {
     olxstr str_scale = Options.FindValue("scale", EmptyString())
       .ToLowerCase();
     if (str_scale.IsEmpty() || str_scale.StartsFromi("external")) {
-      scale = SFUtil::scaleExternal;
+      scale = SFUtil::ScaleType::External;
       if (app.XFile().GetRM().Vars.VarCount() > 0) {
         scale_value = 1. / app.XFile().GetRM().Vars.GetVar(0).GetValue();
         if (str_scale.EndsWithi("forced")) {
-          scale = SFUtil::scaleExternalForced;
+          scale = SFUtil::ScaleType::ExternalForced;
         }
       }
       else {
         TBasicApp::NewLogEntry(logWarning) << "Could not locate external "
           "scale - using the default";
-        scale = SFUtil::scaleShelx;
+        scale = SFUtil::ScaleType::Shelx;
       }
     }
     else if (str_scale.Equalsi("sigma")) {
-      scale = SFUtil::scaleSigma;
+      scale = SFUtil::ScaleType::Sigma;
     }
   }
-  short src = Options.GetBoolOption("fcf") ? SFUtil::sfOriginFcf
-    : SFUtil::sfOriginOlex2;
+  SFUtil::SFOrigin src = Options.GetBoolOption("fcf") ? SFUtil::SFOrigin::Fcf
+    : SFUtil::SFOrigin::Olex2;
   bool anom_only = Options.GetBoolOption("anom_only");
   if (anom_only) {
-    src = SFUtil::sfOriginOlex2;
+    src = SFUtil::SFOrigin::Olex2;
   }
   olxstr err = SFUtil::GetSF(refs, F, mapType, src,
-    scale, scale_value, SFUtil::fpMerge, anom_only);
+    scale, scale_value, SFUtil::FPMerge::Merge, anom_only);
   if (!err.IsEmpty()) {
     E.ProcessingError(__OlxSrcInfo, err);
     return;
   }
   if (Options.GetBoolOption("fcfmc")) {
-    if (src != SFUtil::sfOriginFcf || mapType != SFUtil::mapTypeCalc) {
+    if (src != SFUtil::SFOrigin::Fcf || mapType != SFUtil::MapType::Calc) {
       E.ProcessingError(__OlxSrcInfo, "Invalid combination of arguments");
       return;
     }
@@ -5817,10 +5817,10 @@ void GXLibMacros::macCalcSurf(TStrObjList &Cmds, const TParamList &Options,
     if (mc.Equals('e')) {
       TRefList refs;
       TArrayList<compd> F;
-      olxstr err = SFUtil::GetSF(refs, F, SFUtil::mapTypeDiff,
-        Options.Contains("fcf") ? SFUtil::sfOriginFcf : SFUtil::sfOriginOlex2,
+      olxstr err = SFUtil::GetSF(refs, F, SFUtil::MapType::Diff,
+        Options.Contains("fcf") ? SFUtil::SFOrigin::Fcf : SFUtil::SFOrigin::Olex2,
         (Options.FindValue("scale", "r").Equalsi("sigma")) ?
-        SFUtil::scaleSigma : SFUtil::scaleShelx);
+        SFUtil::ScaleType::Sigma : SFUtil::ScaleType::Shelx);
       if (!err.IsEmpty()) {
         E.ProcessingError(__OlxSrcInfo, err);
         return;

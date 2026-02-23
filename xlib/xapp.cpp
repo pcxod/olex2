@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -21,9 +21,9 @@
 #include "maputil.h"
 #include "vcov.h"
 #include "twinning.h"
-#include "sfutil.h"
 #include "datafile.h"
 #include "seval.h"
+#include "sfutil.h"
 
 TXApp::TXApp(const olxstr &basedir, bool)
   : TBasicApp(basedir), Library(EmptyString(), this)
@@ -244,7 +244,7 @@ void TXApp::CalcSFEx(const TRefList& refs, TArrayList<TEComplex<double> >& F,
 }
 //..............................................................................
   RefinementModel::HklStat TXApp::CalcFsq(TRefList &refs, evecd &Fsq,
-    bool scale) const
+    bool scale, SFUtil::EXTIDest extiDest) const
   {
     RefinementModel::HklStat rv;
     RefinementModel& rm = XFile().GetRM();
@@ -290,7 +290,12 @@ void TXApp::CalcSFEx(const TRefList& refs, TArrayList<TEComplex<double> >& F,
     if (rm.Vars.HasEXTI()) {
       RefinementModel::EXTI::Shelxl cr = rm.GetShelxEXTICorrector();
       for (size_t i = 0; i < refs.Count(); i++) {
-        Fsq[i] *= olx_sqr(cr.CalcForFc(refs[i].GetHkl(), Fsq[i]));
+        if (extiDest == SFUtil::EXTIDest::Fc) {
+          Fsq[i] *= olx_sqr(cr.CalcForFc(refs[i].GetHkl(), Fsq[i]));
+        }
+        else {
+          refs[i] *= cr.CalcForFo2(refs[i].GetHkl(), Fsq[i]);
+        }
       }
     }
     else if (rm.IsSWATSet()) {
@@ -298,7 +303,6 @@ void TXApp::CalcSFEx(const TRefList& refs, TArrayList<TEComplex<double> >& F,
       for (size_t i = 0; i < refs.Count(); i++) {
         Fsq[i] *= olx_sqr(cr.CalcForFc(refs[i].GetHkl()));
       }
-
     }
     if (scale) {
       double scale_k = 1. / olx_sqr(rm.Vars.GetVar(0).GetValue());
