@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -91,14 +91,18 @@ void SFUtil::FindMinMax(const TArrayList<StructureFactor>& F,
 }
 //..............................................................................
 olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
-  short mapType, short sfOrigin, short scaleType, double scale,
-  short friedelPairs, bool anom_only)
+  MapType mapType, SFOrigin sfOrigin,
+  ScaleType  scaleType,
+  double scale,
+  FPMerge friedelMerge,
+  bool anom_only,
+  EXTIDest extiDest)
 {
   TXApp& xapp = TXApp::GetInstance();
   TStopWatch sw(__FUNC__);
   TUnitCell::SymmSpace sp = xapp.XFile().GetUnitCell().GetSymmSpace();
   SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
-  if (sfOrigin == sfOriginFcf) {
+  if (sfOrigin == SFOrigin::Fcf) {
     olxstr fcffn = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "fcf");
     cif_dp::cetTable* hklLoop = 0;
     olx_object_ptr<TCif> cif;
@@ -186,15 +190,15 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
         rv = compd::polar(sqrt(row[fcqInd]->GetStringValue().ToDouble()),
           row[fcpInd]->GetStringValue().ToDouble()*M_PI / 180);
       }
-      if (mapType == mapTypeDiff) {
+      if (mapType == MapType::Diff) {
         double dI = (sqrt(olx_max(0, ref.GetI())) - rv.mod());
         F[i] = compd::polar(dI, rv.arg());
       }
-      else if (mapType == mapType2OmC) {
+      else if (mapType == MapType::TwoObs_Calc) {
         double dI = 2* sqrt(olx_max(0, ref.GetI())) - rv.mod();
         F[i] = compd::polar(dI, rv.arg());
       }
-      else if (mapType == mapTypeObs) {
+      else if (mapType == MapType::Obs) {
         F[i] = compd::polar(sqrt(olx_max(0, ref.GetI())), rv.arg());
       }
       else {
@@ -274,7 +278,12 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
       sw.start("EXTI/SWAT");
       for (size_t i = 0; i < F.Count(); i++) {
         if (exti_cr.IsValid()) {
-          F[i] *= exti_cr.CalcForFc(refs[i].GetHkl(), F[i].qmod());
+          if (extiDest == EXTIDest::Fc) {
+            F[i] *= exti_cr.CalcForFc(refs[i].GetHkl(), F[i].qmod());
+          }
+          else {
+            refs[i] *= exti_cr.CalcForFo2(refs[i].GetHkl(), F[i].qmod());
+          }
         }
         else {
           F[i] *= swat_cr.CalcForFc(refs[i].GetHkl());
@@ -282,10 +291,10 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
       }
     }
     sw.start("Scaling structure factors");
-    if (mapType != mapTypeCalc) {
+    if (mapType != MapType::Calc) {
       // find a linear scale between F
       double scale_k = 1;
-      if (scaleType == scaleExternal) {
+      if (scaleType == ScaleType::External) {
         double sc = RefUtil::CalcFScaleShelx(rm, F, refs);
         if (olx_abs((sc - scale) / (sc + scale)) > 0.01) {
           TBasicApp::NewLogEntry(logWarning) << "External scale deviates too much."
@@ -297,11 +306,11 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
           scale_k = scale;
         }
       }
-      else if (scaleType == scaleExternalForced) {
+      else if (scaleType == ScaleType::ExternalForced) {
         scale_k = scale;
       }
       else {
-        if (scaleType == scaleSigma) {
+        if (scaleType == ScaleType::Sigma) {
           scale_k= RefUtil::CalcFScaleSigma(rm, F, refs);
         }
         else {
@@ -313,13 +322,13 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
       }
       for (size_t i=0; i < F.Count(); i++) {
         double Fo = scale_k * TReflection::GetF(refs[i]);
-        if (mapType == mapTypeDiff) {
+        if (mapType == MapType::Diff) {
           F[i] = compd::polar(Fo, F[i].arg()) - F[i];
         }
-        else if (mapType == mapType2OmC) {
+        else if (mapType == MapType::TwoObs_Calc) {
           F[i] = compd::polar(2*Fo, F[i].arg()) - F[i];
         }
-        else if (mapType == mapTypeObs) {
+        else if (mapType == MapType::Obs) {
           F[i] = compd::polar(Fo, F[i].arg());
         }
       }

@@ -14,6 +14,7 @@
 #include "reflection.h"
 #include "arrays.h"
 #include "bitarray.h"
+#include "sfbase.h"
 
 BeginXlibNamespace()
 
@@ -244,7 +245,7 @@ namespace RefUtil {
     double partical_threshold; // = 2;
     size_t partial_R1_cnt;
     vec3i min_hkl, max_hkl;
-    Stats(bool update_scale, bool fcf);
+    Stats(bool update_scale, const olxstr &fcf, SFUtil::EXTIDest extiDest);
 
     double UpdatePartialR1(double threshold);
 

@@ -126,7 +126,7 @@ struct olx_obj_deleter_safe {
     olx_del_obj(o);
   }
 };
-#if defined(__GNUC__)
+#if defined(__GNUC__) and defined(__linux__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
 #endif
@@ -144,7 +144,7 @@ template <typename T, typename T1>
 T* olx_memmove(T* dest, const T1& src, size_t sz) {
   return (T*)memmove(dest, src, sz * sizeof(T));
 }
-#if defined(__GNUC__)
+#if defined(__GNUC__) and defined(__linux__)
 #pragma GCC diagnostic pop
 #endif
 

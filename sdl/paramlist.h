@@ -27,7 +27,16 @@ public:
   const olxstr& GetName(size_t index) const { return GetString(index); }
   void FromString(const olxstr& S, char Sep); // -t=op
   void AddParam(const olxstr& Name, const olxstr& Param, bool Check = true);
-  template <class T>
+  // puts aliases back to the base names
+  void Translate(const olxstr_dict<olxstr>& aliases) {
+    if (aliases.IsEmpty()) {
+      return;
+    }
+    for (size_t i = 0; i < Count(); i++) {
+      this->Strings[i]->String = aliases.Find(this->GetName(i), this->GetName(i));
+    }
+  }
+  template <typename T>
   bool Contains(const T& Name) const {
     return TStrStrList::IndexOf(Name) != InvalidIndex;
   }
@@ -38,6 +47,16 @@ public:
     size_t i = IndexOf(Name);
     return (i != InvalidIndex) ? GetObject(i) : defval;
   }
+  template <typename T, typename T1>
+  const olxstr& FindValueA(const T& Name, const T1 &Alias,
+    const olxstr& defval = EmptyString()) const
+  {
+    size_t i = IndexOf(Name);
+    if (i == InvalidIndex) {
+      i = IndexOf(Alias);
+    }
+    return (i != InvalidIndex) ? GetObject(i) : defval;
+  }
   // special evaluation of a boolean option
   template <class T>
   bool GetBoolOption(const T& Name,
@@ -45,16 +64,47 @@ public:
     bool if_does_not_exist = false) const
   {
     size_t i = IndexOf(Name);
-    if (i == InvalidIndex) return if_does_not_exist;
+    if (i == InvalidIndex) {
+      return if_does_not_exist;
+    }
+    const olxstr& v = GetObject(i);
+    return v.IsEmpty() ? if_empty : v.ToBool();
+  }
+  template <typename T, typename T1>
+  bool GetBoolOptionA(const T& Name, const T1 &Alias,
+    bool if_empty = true,
+    bool if_does_not_exist = false) const
+  {
+    size_t i = IndexOf(Name);
+    if (i == InvalidIndex) {
+      i = IndexOf(Alias);
+    }
+    if (i == InvalidIndex) {
+      return if_does_not_exist;
+    }
     const olxstr& v = GetObject(i);
     return v.IsEmpty() ? if_empty : v.ToBool();
   }
   // returns null_ptr if does not exist
-  template <class T>
+  template <typename T>
   olx_bool_ptr GetBoolPtr(const T& Name,
     bool if_empty = true) const
   {
     size_t i = IndexOf(Name);
+    if (i == InvalidIndex) {
+      return 0;
+    }
+    const olxstr& v = GetObject(i);
+    return new bool(v.IsEmpty() ? if_empty : v.ToBool());
+  }
+  template <typename T, typename T1>
+  olx_bool_ptr GetBoolPtrA(const T& Name, const T1 &Alias,
+    bool if_empty = true) const
+  {
+    size_t i = IndexOf(Name);
+    if (i == InvalidIndex) {
+      i = IndexOf(Alias);
+    }
     if (i == InvalidIndex) {
       return 0;
     }

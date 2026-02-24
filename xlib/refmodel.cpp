@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -1048,6 +1048,42 @@ const TRefList& RefinementModel::GetReflections() const {
     _Reflections.Clear();
     throw TFunctionFailedException(__OlxSourceInfo, exc);
   }
+}
+//.............................................................................
+double RefinementModel::CalcF000(Logging logging) const {
+  const ContentList& cont = GetUserContent();
+  double r_e = expl.GetRadiationEnergy();
+  double F000 = 0;
+  for (size_t i = 0; i < cont.Count(); i++) {
+    XScatterer* xs = FindSfacData(cont[i].element->GetChargedLabel(cont[i].charge));
+    compd f0 = round(cont[i].element->gaussians->calc_sq(0));
+    bool processed = false;
+    if (xs != 0) {
+      if (xs->IsSet(XScatterer::setGaussian) &&
+        xs->IsSet(XScatterer::setDispersion))
+      {
+        F000 += cont[i].count * xs->calc_sq_anomalous(0).mod();
+        processed = true;
+      }
+      else if (xs->IsSet(XScatterer::setDispersion)) {
+        f0 += xs->GetFpFdp();
+        F000 += cont[i].count * f0.mod();
+        processed = true;
+      }
+    }
+    if (!processed) {
+      try {
+        f0 += cont[i].element->CalcFpFdp(r_e);
+        f0.Re() -= cont[i].element->z;
+      }
+      catch (...) {
+        TBasicApp::NewLogEntry(logging) << "Failed to calculated DISP for " <<
+          cont[i].element->symbol;
+      }
+      F000 += cont[i].count * f0.mod();
+    }
+  }
+  return F000;
 }
 //.............................................................................
 const RefinementModel::HklStat& RefinementModel::GetMergeStat() {

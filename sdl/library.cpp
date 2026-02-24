@@ -60,9 +60,11 @@ ABasicFunction* TLibrary::Register(
     ABasicFunction* src = fs->get_value();
     fm->SetArgStateMask(fm->GetArgStateMask() | src->GetArgStateMask());
     if (src->HasOptions()) {
-      olxstr_dict<olxstr> options = src->GetOptions();
+      olxstr_dict<olxstr> options = src->GetOptions(),
+        aliases = src->GetOptionAliases();
       options.Merge(fm->GetOptions());
-      fm->SetOptions(options);
+      aliases.Merge(fm->GetOptionAliases());
+      fm->SetOptions(options, aliases);
     }
     IteratorJ<ABasicFunction*> itr(&fs->get_value(), fs->Iterate());
     while (itr.HasNext()) {

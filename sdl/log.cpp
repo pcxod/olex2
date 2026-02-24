@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -34,7 +34,7 @@ size_t TLog::Write(const void* Data, size_t size) {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-TLog::LogEntry::LogEntry(TLog& _parent, int _evt, bool annotate,
+TLog::LogEntry::LogEntry(TLog& _parent, Logging _evt, bool annotate,
   const olxstr &location)
   : parent(_parent), evt(_evt)
 {
@@ -95,13 +95,15 @@ TLog::LogEntry::~LogEntry() {
 }
 //..............................................................................
 TLog::LogEntry& TLog::LogEntry::operator << (const TExceptionBase &e) {
-  if (evt == logExceptionTrace) {
-    TStrList l;
-    e.GetException()->GetStackTrace(l);
-    buffer << l.Text(NewLineSequence());
-  }
-  else {
-    buffer << e.GetException()->GetFullMessage();
+  if (evt != Logging::logSkip) {
+    if (evt == logExceptionTrace) {
+      TStrList l;
+      e.GetException()->GetStackTrace(l);
+      buffer << l.Text(NewLineSequence());
+    }
+    else {
+      buffer << e.GetException()->GetFullMessage();
+    }
   }
   return *this;
 }

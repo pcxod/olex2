@@ -166,7 +166,8 @@ void XLibMacros::macTestR(TStrObjList &Cmds, const TParamList &Options,
 {
   TStopWatch sw(__FUNC__);
   sw.start("Initialising");
-  RefUtil::Stats rstat(Options.GetBoolOption('s', true, false), false);
+  RefUtil::Stats rstat(Options.GetBoolOption('s', true, false), false,
+    SFUtil::EXTIDest::Fc);
 
   TXApp& xapp = TXApp::GetInstance();
   TUnitCell::SymmSpace sp = xapp.XFile().GetUnitCell().GetSymmSpace();

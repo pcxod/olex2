@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -491,6 +491,8 @@ Friedel opposites of components 1 ... m
   }
   // the function does the atom fitting and clears the fragments
   void ProcessFrags();
+
+  double CalcF000(Logging logging=Logging::logSkip) const;
 
   const HklStat& GetMergeStat();
   // merged according to MERG

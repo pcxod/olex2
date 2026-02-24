@@ -1,3 +1,12 @@
+/******************************************************************************
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
+*                                                                             *
+* This file is part of the OlexSys Development Framework.                     *
+*                                                                             *
+* This source file is distributed under the terms of the licence located in   *
+* the root folder.                                                            *
+******************************************************************************/
+
 #include "refmodel.h"
 #include "refutil.h"
 #include "sfutil.h"
@@ -128,7 +137,7 @@ double ShelxWeightCalculator::Calculate(const TReflection& r, double Fc2) const 
 //.............................................................................
 //.............................................................................
 //.............................................................................
-Stats::Stats(bool update_scale, bool fcf)
+Stats::Stats(bool update_scale, const olxstr &fcf, SFUtil::EXTIDest extiDest)
 : sum_wsqd(0),
   partial_R1_cnt(0),
   min_hkl(1000),
@@ -138,7 +147,7 @@ Stats::Stats(bool update_scale, bool fcf)
   TXApp& xapp = TXApp::GetInstance();
   RefinementModel& rm = xapp.XFile().GetRM();
   double scale_k = 1. / olx_sqr(rm.Vars.GetVar(0).GetValue());
-  if (fcf) {
+  if (!fcf.IsEmpty()) {
     scale_k = 1;
     using namespace cif_dp;
     TCif cif;
@@ -179,7 +188,7 @@ Stats::Stats(bool update_scale, bool fcf)
     }
   }
   else {
-    xapp.CalcFsq(refs, Fsq, false);
+    xapp.CalcFsq(refs, Fsq, false, extiDest);
   }
   if (weights.IsEmpty()) {
     weights.Resize(refs.Count());

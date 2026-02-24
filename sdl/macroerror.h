@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -116,7 +116,7 @@ public:
 
   str_stack& GetStack() { return Stack; }
 
-  void PrintStack(int logEvt = logError, bool annotate = false,
+  void PrintStack(Logging logEvt = Logging::logError, bool annotate = false,
     const olxstr& prefix = EmptyString()) const;
 
   // the type is validated

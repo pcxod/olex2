@@ -51,6 +51,7 @@ const olxstr &esdl::FalseString()  { return CFalseString();  }
 //..............................................................................
 struct olx_print_i_cont {
   virtual olxstr ToString() = 0;
+  virtual ~olx_print_i_cont() {}
 };
 //..............................................................................
 template <typename T>

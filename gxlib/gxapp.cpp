@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2024 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -480,21 +480,25 @@ void TGXApp::Clear()  {
   GlBitmaps.Clear();
 }
 //..............................................................................
-void TGXApp::CreateXRefs()  {
-  if( !XReflections.IsEmpty() )  return;
+void TGXApp::CreateXRefs() {
+  if (!XReflections.IsEmpty()) {
+    return;
+  }
   TRefList refs;
   evecd Fsq;
   vec3d mind = GlRenderer->MinDim(),
-        maxd = GlRenderer->MaxDim();
-  RefinementModel::HklStat stats = CalcFsq(refs, Fsq, true);
-  for( size_t i=0; i < refs.Count(); i++ )  {
+    maxd = GlRenderer->MaxDim();
+  RefinementModel::HklStat stats = CalcFsq(refs, Fsq, true, SFUtil::EXTIDest::Fc);
+  for (size_t i = 0; i < refs.Count(); i++) {
     TXReflection* xr = new TXReflection(*GlRenderer, "XReflection",
       stats.MinI, stats.MaxI, refs[i],
       XFile().GetAsymmUnit());
-    if (olx_abs(refs[i].GetI()-Fsq[i])/(refs[i].GetS() + 1e-2) > 8)
+    if (olx_abs(refs[i].GetI() - Fsq[i]) / (refs[i].GetS() + 1e-2) > 8) {
       xr->Params()[1] = -1;
-    else
+    }
+    else {
       xr->Params()[1] = 1;
+    }
     xr->Create();
     XReflections.Add(*xr);
     vec3d::UpdateMinMax(xr->GetCenter(), mind, maxd);
@@ -507,8 +511,9 @@ size_t TGXApp::GetNetworks(TNetPList& nets) {
   for (size_t i=0; i < Files.Count(); i++) {
     size_t fc = Files[i].GetLattice().FragmentCount();
     c += fc;
-    for (size_t j=0; j < fc; j++)
+    for (size_t j = 0; j < fc; j++) {
       nets.Add(Files[i].GetLattice().GetFragment(j));
+    }
   }
   return c;
 }
