@@ -185,7 +185,7 @@ void TGlTextBox::Fit() {
       h -= tr.top * scale;
       h += olx_max(tr.height, glf.GetMaxHeight());
       if (tr.width > Width) {
-        Width = olx_round_t<double, uint16_t>(tr.width);
+        Width = olx_round_t<uint16_t, double>(tr.width);
       }
     }
     h += LineSpacer * (FBuffer.Count() - 1);

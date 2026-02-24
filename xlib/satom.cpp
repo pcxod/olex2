@@ -262,7 +262,7 @@ void TSAtom::Ref::ToDataItem(TDataItem& item, const class TXApp& app, bool use_i
 bool TSAtom::Ref::IsValid(const TXApp& app) const {
   const TAsymmUnit& au = app.XFiles()[au_id].GetAsymmUnit();
   index_t tag = au.GetAtom(atom_id).GetTag();
-  return tag >= 0 && tag < au.AtomCount();
+  return tag >= 0 && tag < static_cast<index_t>(au.AtomCount());
 }
 //..............................................................................
 void TSAtom::Ref::FromDataItem(const TDataItem& item, const TXApp& app) {

@@ -181,6 +181,7 @@ olxstr TEMacroLib::ProcessEvaluator(
           }
         }
       }
+      f->NormaliseOptions(Options);
       f->Run(Cmds, Options, me);
     }
     else {

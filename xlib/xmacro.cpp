@@ -836,6 +836,14 @@ void XLibMacros::Export(TLibrary& lib)  {
     "d-locate file format by content rather than extension",
     fpTwo,
     "Converts input file into the output");
+  xlib_InitMacro(CalcR, 
+    "fcf,f-uses FCF as data source&;"
+    "scale,s-applies scaling&;"
+    "exti,e-EXTi destination [Fo/Fc]&;"
+    ,
+    fpNone|fpOne|psFileLoaded,
+    "Calculates R1, R1 for I/sig >2 and wR2. Can be called as a function or a macro."
+    " FCF file name can be passed as an argument.");
   //_____________________________________________________________________________
 
   xlib_InitFunc(FileName, fpNone|fpOne,
@@ -910,9 +918,6 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitFunc(CCrd, fpAny|psFileLoaded,
     "Returns center of given (selected) atoms in fractional coordinates. The last "
     "argument can specify a multiplier. Like in 'echo ccrd(-1)'.");
-  xlib_InitFunc(CalcR, fpNone|fpOne|psFileLoaded,
-    "Calculates R1, R1 for I/sig >2 and wR2. If 'print' is provided - prints "
-    "detailed info");
   xlib_InitFunc(CalcAbs, fpNone | fpOne | psFileLoaded,
     "Calculates Flack X and Q params. If 'print' is provided - prints "
     "detailed info");
@@ -8536,29 +8541,42 @@ void XLibMacros::macUpdate(TStrObjList &Cmds, const TParamList &Options,
   app.XFile().EndUpdate();
 }
 //.............................................................................
-void XLibMacros::funCalcR(const TStrObjList& Params, TMacroData& E) {
+void XLibMacros::macCalcR(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& E)
+{
   TXApp& xapp = TXApp::GetInstance();
-  bool scale = false;
-  bool fcf = false;
-  if (!Params.IsEmpty()) {
-    if (Params[0].Contains("scale")) {
-      scale = true;
+  bool scale = Options.GetBoolOption("scale");
+  SFUtil::EXTIDest extiDest = SFUtil::EXTIDest::Fo;
+  if (Options.FindValue("exti", "Fo").Equalsi("Fc")) {
+    extiDest = SFUtil::EXTIDest::Fc;
+  }
+  //if (Options.FindValueA("exti", "e", "Fo").Equalsi("Fc")) {
+  //  extiDest = SFUtil::EXTIDest::Fc;
+  //}
+  olxstr fcf;
+  if (!Cmds.IsEmpty() || Options.GetBoolOption("fcf")) {
+    if (Cmds.IsEmpty()) {
+      fcf = TEFile::ChangeFileExt(xapp.XFile().GetFileName(), "fcf");
     }
-    if (Params[0].Contains("fcf")) {
-      fcf = true;
+    else {
+      fcf = Cmds[0];
+    }
+    if (!TEFile::Exists(fcf)) {
+      E.ProcessingError(__OlxSrcInfo, "FCF does not exist");
+      return;
     }
   }
-  RefUtil::Stats rstat(scale, fcf);
-  bool print = !Params.IsEmpty() && Params[0].Containsi("print");
-  if (print) {
-    xapp.NewLogEntry() << "R1 (All, " << rstat.refs.Count() << ") = "
-      << olxstr::FormatFloat(4, rstat.R1);
-    xapp.NewLogEntry() << "R1 (I/sig >= 2, " << rstat.partial_R1_cnt << ") = "
-      << olxstr::FormatFloat(4, rstat.R1_partial);
-    xapp.NewLogEntry() << "wR2 = " << olxstr::FormatFloat(4, rstat.wR2);
+  RefUtil::Stats rstat(scale, fcf, extiDest);
+  if (!E.IsMacroCall()) {
+    E.SetRetVal(
+      olxstr(rstat.R1) << ',' << rstat.R1_partial << ',' << rstat.wR2);
+    return;
   }
-  E.SetRetVal(
-    olxstr(rstat.R1) << ',' << rstat.R1_partial << ',' << rstat.wR2);
+  xapp.NewLogEntry() << "R1 (All, " << rstat.refs.Count() << ") = "
+    << olxstr::FormatFloat(4, rstat.R1);
+  xapp.NewLogEntry() << "R1 (I/sig >= 2, " << rstat.partial_R1_cnt << ") = "
+    << olxstr::FormatFloat(4, rstat.R1_partial);
+  xapp.NewLogEntry() << "wR2 = " << olxstr::FormatFloat(4, rstat.wR2);
 }
 //.............................................................................
 olxstr XLibMacros::GetCompilationInfo() {
@@ -8591,7 +8609,8 @@ void XLibMacros::funCalcAbs(const TStrObjList& Params, TMacroData& E) {
     return;
   }
   TBasicApp::NewLogEntry(logWarning) << "For testing only!";
-  RefUtil::Stats rstat(!Params.IsEmpty() && Params[0].Contains("scale"), false);
+  RefUtil::Stats rstat(!Params.IsEmpty() && Params[0].Contains("scale"), false,
+    SFUtil::EXTIDest::Fc);
   bool print = !Params.IsEmpty() && Params[0].Containsi("print");
   TStrList rv;
   // Flack

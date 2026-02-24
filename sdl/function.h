@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -76,38 +76,43 @@ private:
   };
   TPtrList<TProgramStateDescriptor> ProgramStates;
   TProgramStateDescriptor* FindState(uint32_t stateBit) {
-    for( size_t i=0; i < ProgramStates.Count(); i++ )
-      if( ProgramStates[i]->StateBit == stateBit )
+    for (size_t i = 0; i < ProgramStates.Count(); i++) {
+      if (ProgramStates[i]->StateBit == stateBit) {
         return ProgramStates[i];
-    return NULL;
+      }
+    }
+    return 0;
   }
 protected:
   void DefineState(uint32_t specialCheck, const olxstr& description) {
     TProgramStateDescriptor* ps = new TProgramStateDescriptor;
     ps->StateBit = specialCheck;
     ps->StateDescription = description;
-    ProgramStates.Add( ps );
+    ProgramStates.Add(ps);
   }
 public:
-  virtual ~ALibraryContainer()  {
-    for( size_t i=0; i < ProgramStates.Count(); i++ )
+  virtual ~ALibraryContainer() {
+    for (size_t i = 0; i < ProgramStates.Count(); i++) {
       delete ProgramStates[i];
+    }
   }
   olxstr GetStateName(uint32_t specialCheck) {
     olxstr stateDescr;
-    for (int i=16; i < 32; i++) {
+    for (int i = 16; i < 32; i++) {
       if (specialCheck & (1 << i)) {
         TProgramStateDescriptor* ps = FindState(1 << i);
-        if( ps != NULL )
+        if (ps != 0) {
           stateDescr << '[' << ps->StateDescription << ']';
-        else
+        }
+        else {
           throw TFunctionFailedException(__OlxSourceInfo, "unregistered state");
+        }
       }
     }
     return stateDescr;
   }
 
-  virtual class TLibrary&  GetLibrary() = 0;
+  virtual class TLibrary& GetLibrary() = 0;
   virtual bool CheckProgramState(uint32_t specialCheck) = 0;
 };
 
@@ -127,8 +132,11 @@ class ABasicFunction: public IOlxObject {
   olxstr Description;
 protected:
   void SetName(const olxstr& n) {  Name = n;  }
-  void ParseOptions(const olxstr& Options, olxstr_dict<olxstr>& list);
-  olxstr OptionsToString(const olxstr_dict<olxstr>& list) const;
+  void ParseOptions(const olxstr& Options,
+    olxstr_dict<olxstr>& list,
+    olxstr_dict<olxstr>& aliases);
+  olxstr OptionsToString(const olxstr_dict<olxstr>& list,
+    const olxstr_dict<olxstr>& aliases) const;
   uint32_t ArgStateMask;
   olxstr RunSignature;
 public:
@@ -146,13 +154,21 @@ public:
   virtual olxstr GetSignature() const;
   virtual bool HasOptions() const = 0;
   virtual const olxstr_dict<olxstr>& GetOptions() const = 0;
-  virtual void SetOptions(const olxstr_dict<olxstr>&) {
-    if (!HasOptions())
+  virtual const olxstr_dict<olxstr>& GetOptionAliases() const = 0;
+  virtual void SetOptions(const olxstr_dict<olxstr>& opts,
+    const olxstr_dict<olxstr> &aliases)
+  {
+    if (!HasOptions()) {
       throw TNotImplementedException(__OlxSourceInfo);
+    }
   }
   const olxstr& GetRuntimeSignature() const { return RunSignature; }
   virtual ABasicFunction* Replicate() const = 0;
   bool ValidateState(const TStrObjList &Params, TMacroData &E);
+  // repalces aliases with full names
+  void NormaliseOptions(TParamList& options) const {
+    options.Translate(GetOptionAliases());
+  }
 };
 //------------------------------------------------------------------------------
 class AFunction: public ABasicFunction {
@@ -171,6 +187,9 @@ public:
   }
   virtual bool HasOptions() const { return false; }
   virtual const olxstr_dict<olxstr>& GetOptions() const {
+    throw TNotImplementedException(__OlxSourceInfo);
+  }
+  virtual const olxstr_dict<olxstr>& GetOptionAliases() const {
     throw TNotImplementedException(__OlxSourceInfo);
   }
   virtual void Run(const TStrObjList &Params, class TMacroData& E);
@@ -221,7 +240,7 @@ protected:
 //------------------------------------------------------------------------------
 class AMacro: public ABasicFunction {
 protected:
-  olxstr_dict<olxstr> ValidOptions;
+  olxstr_dict<olxstr> ValidOptions, OptionAliases;
   virtual void DoRun(TStrObjList &Params, const TParamList &Options,
     TMacroData& E) = 0;
 public:
@@ -231,14 +250,20 @@ public:
     ArgStateMask = argc;
     SetName(macroName);
     SetDescription(desc);
-    ParseOptions(validOptions, ValidOptions);
+    ParseOptions(validOptions, ValidOptions, OptionAliases);
   }
   virtual bool HasOptions() const { return true; }
   virtual const olxstr_dict<olxstr>& GetOptions() const {
     return ValidOptions;
   }
-  virtual void SetOptions(const olxstr_dict<olxstr> &opts)  {
+  virtual const olxstr_dict<olxstr>& GetOptionAliases() const {
+    return OptionAliases;
+  }
+  virtual void SetOptions(const olxstr_dict<olxstr> &opts,
+    const olxstr_dict<olxstr>& aliases)
+  {
     ValidOptions = opts;
+    OptionAliases = aliases;
   }
   virtual void Run(const TStrObjList& Params, TMacroData& E)  {
     throw TNotImplementedException(__OlxSourceInfo);
@@ -265,10 +290,11 @@ public:
   {}
 
   virtual ABasicFunction* Replicate() const {
-    return new TMacro<Base>(
+    ABasicFunction* rv = new TMacro<Base>(
       BaseInstance, Macro, GetName(),
-      OptionsToString(ValidOptions), ArgStateMask,
-      GetDescription());
+      EmptyString(), ArgStateMask, GetDescription());
+    rv->SetOptions(ValidOptions, OptionAliases);
+    return rv;
   }
   const Base& GetBaseInstance() const { return BaseInstance; }
   Base& GetBaseInstance() { return BaseInstance; }
@@ -293,8 +319,10 @@ public:
   {}
 
   virtual ABasicFunction* Replicate() const {
-    return new TStaticMacro(Macro, GetName(), OptionsToString(ValidOptions),
-      ArgStateMask, GetDescription());
+    ABasicFunction* rv = new TStaticMacro(Macro, GetName(),
+      EmptyString(), ArgStateMask, GetDescription());
+    rv->SetOptions(ValidOptions, OptionAliases);
+    return rv;
   }
 protected:
   virtual void DoRun(TStrObjList &Params, const TParamList &Options,

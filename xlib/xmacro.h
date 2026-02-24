@@ -174,6 +174,7 @@ public:
   static DefMacro(ADPInfo)
   static DefMacro(Wigl)
   static DefMacro(Copy)
+  static DefMacro(CalcR) // calculates R factors
 
   static DefFunc(Lst)
   static DefFunc(FileName)
@@ -209,7 +210,6 @@ public:
 
   static DefFunc(CCrd) // cell coordinates of atoms
   static DefFunc(Crd) // cartesian coordinates of atoms
-  static DefFunc(CalcR) // calculates R factors
   static DefFunc(CalcAbs)
   static DefFunc(GetCompilationInfo)
   static DefFunc(SGList)

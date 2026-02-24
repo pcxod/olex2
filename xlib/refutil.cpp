@@ -137,7 +137,7 @@ double ShelxWeightCalculator::Calculate(const TReflection& r, double Fc2) const 
 //.............................................................................
 //.............................................................................
 //.............................................................................
-Stats::Stats(bool update_scale, bool fcf)
+Stats::Stats(bool update_scale, const olxstr &fcf, SFUtil::EXTIDest extiDest)
 : sum_wsqd(0),
   partial_R1_cnt(0),
   min_hkl(1000),
@@ -147,7 +147,7 @@ Stats::Stats(bool update_scale, bool fcf)
   TXApp& xapp = TXApp::GetInstance();
   RefinementModel& rm = xapp.XFile().GetRM();
   double scale_k = 1. / olx_sqr(rm.Vars.GetVar(0).GetValue());
-  if (fcf) {
+  if (!fcf.IsEmpty()) {
     scale_k = 1;
     using namespace cif_dp;
     TCif cif;
@@ -188,7 +188,7 @@ Stats::Stats(bool update_scale, bool fcf)
     }
   }
   else {
-    xapp.CalcFsq(refs, Fsq, false, SFUtil::EXTIDest::Fo);
+    xapp.CalcFsq(refs, Fsq, false, extiDest);
   }
   if (weights.IsEmpty()) {
     weights.Resize(refs.Count());

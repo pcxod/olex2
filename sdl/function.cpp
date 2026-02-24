@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -120,88 +120,117 @@ olxstr ABasicFunction::GetSignature() const {
 olxstr ABasicFunction::GetQualifiedName() const {
   olxstr res = GetName();
   ABasicLibrary* lib = this->GetParentLibrary();
-  while( lib && lib->GetParentLibrary() )  {
-    res.Insert(lib->GetName() + '.', 0 );
+  while (lib && lib->GetParentLibrary()) {
+    res.Insert(lib->GetName() + '.', 0);
     lib = lib->GetParentLibrary();
   }
   return res;
 }
 //.............................................................................
 void ABasicFunction::ParseOptions(const olxstr& Options,
-  olxstr_dict<olxstr>& list)
+  olxstr_dict<olxstr>& list, olxstr_dict<olxstr>& aliases)
 {
-  if( Options.IsEmpty() )  return;
+  if (Options.IsEmpty()) {
+    return;
+  }
   TStrList toks(Options, "&;");
   for( size_t i=0; i < toks.Count(); i++ )  {
     size_t mi = toks[i].IndexOf('-');
-    if( mi != InvalidIndex )
-      list.Add( toks[i].SubStringTo(mi), olxstr(toks[i].SubStringFrom(mi+1)));
-    else
-      list.Add( toks[i], EmptyString());
+    olxstr opt, value = EmptyString();
+    if (mi != InvalidIndex) {
+      opt = toks[i].SubStringTo(mi);
+      value = toks[i].SubStringFrom(mi + 1);
+    }
+    else {
+      opt = toks[i];
+    }
+    // parse aliases
+    if (opt.Contains(',')) {
+      TStrList toks(opt, ',');
+      opt = toks[0];
+      for (size_t j = 1; j < toks.Count(); j++) {
+        aliases.Add(toks[j], opt);
+      }
+    }
+    list.Add(opt, value);
   }
 }
 //.............................................................................
 olxstr ABasicFunction::OptionsToString(
-  const olxstr_dict<olxstr>& list) const
+  const olxstr_dict<olxstr>& list, const olxstr_dict<olxstr>& aliases) const
 {
   olxstr_buf rv;
-  olxstr sep1 = '-', sep2 = "&;";
-  for( size_t i=0; i < list.Count(); i++ )  {
+  olxstr sep1 = '-', sep2 = "&;", sep3 = ',';
+  for (size_t i = 0; i < list.Count(); i++) {
     rv << list.GetKey(i);
-    if( !list.GetValue(i).IsEmpty() )
+    for (size_t j = 0; j < aliases.Count(); j++) {
+      if (aliases.GetValue(j) == list.GetKey(i)) {
+        rv << sep3 << aliases.GetKey(j);
+      }
+    }
+    if (!list.GetValue(i).IsEmpty()) {
       rv << sep1 << list.GetValue(i);
+    }
     rv << sep2;
   }
   return rv;
 }
 //.............................................................................
-void AFunction::Run(const TStrObjList &Params, class TMacroData& E) {
-  if( !ValidateState(Params, E) )  return;
+//.............................................................................
+//.............................................................................
+void AFunction::Run(const TStrObjList& Params, class TMacroData& E) {
+  if (!ValidateState(Params, E))  return;
   const size_t argC = Params.Count();
-  try  {
+  try {
     RunSignature = olxstr(GetName(), 128);
     RunSignature << '(';
-    for( size_t i=0; i < argC; i++ )  {
-      RunSignature << '[' << Params[i] << ']';
-      if( i < (argC-1) )  RunSignature << ", ";
+    for (size_t i = 0; i < argC; i++) {
+      RunSignature << '[' << Params[i] << ']' << ", ";
+    }
+    if (!RunSignature.IsEmpty()) {
+      RunSignature.SetLength(RunSignature.Length() - 2);
     }
     RunSignature << ')';
     DoRun(Params, E);
   }
-  catch( TExceptionBase& exc )  {
+  catch (TExceptionBase& exc) {
     E.ProcessingException(*this, exc);
   }
-};
+}
 
 //.............................................................................
-void AMacro::Run(TStrObjList &Params, const TParamList &Options,
+void AMacro::Run(TStrObjList& Params, const TParamList& Options,
   TMacroData& E)
 {
-  if( !ValidateState(Params, E) )  return;
+  if (!ValidateState(Params, E))  return;
   const size_t argC = Params.Count();
-  if ((GetArgStateMask()&fpAny_Options) != fpAny_Options) {
-    for( size_t i=0; i < Options.Count(); i++ )  {
-      if( ValidOptions.IndexOf(Options.GetName(i)) == InvalidIndex )  {
-        E.WrongOption(*this, Options.GetName(i) );
-        return;
+  if ((GetArgStateMask() & fpAny_Options) != fpAny_Options) {
+    for (size_t i = 0; i < Options.Count(); i++) {
+      if (!ValidOptions.Contains(Options.GetName(i))) {
+        if (!OptionAliases.Contains(Options.GetName(i))) {
+          E.WrongOption(*this, Options.GetName(i));
+          return;
+        }
       }
     }
   }
-  try  {
+  try {
     RunSignature = olxstr(GetName(), 128);
     RunSignature << ' ';
-    for( size_t i=0; i < argC; i++ )  {
-      RunSignature << '[' << Params[i] << ']';
-      if( i < (argC-1) )  RunSignature << ", ";
+    for (size_t i = 0; i < argC; i++) {
+      RunSignature << '[' << Params[i] << ']' << ", ";
+    }
+    if (!RunSignature.IsEmpty()) {
+      RunSignature.SetLength(RunSignature.Length() - 2);
     }
     RunSignature << ' ';
-    for( size_t i=0; i < Options.Count(); i++ )  {
+    for (size_t i = 0; i < Options.Count(); i++) {
       RunSignature << '{' << Options.GetName(i) << '=' <<
         Options.GetValue(i) << '}';
     }
     DoRun(Params, Options, E);
   }
-  catch( TExceptionBase& exc )  {
+  catch (TExceptionBase& exc) {
     E.ProcessingException(*this, exc);
   }
 }
@@ -250,29 +279,33 @@ void FunctionChainer::RunMacro(TStrObjList &Params, const TParamList &Options,
 void FunctionChainer::RunFunction(const TStrObjList &Params, TMacroData& E) {
   for (size_t i = functions.Count()-1; i != InvalidIndex; i--) {
     functions[i]->Run(Params, E);
-    if (E.IsHandled() || !E.IsSuccessful())
+    if (E.IsHandled() || !E.IsSuccessful()) {
       break;
-    if (!E.IsHandled() && (i+1) < functions.Count())
+    }
+    if (!E.IsHandled() && (i + 1) < functions.Count()) {
       E.SetUnhandled(false);
+    }
   }
-  if (!E.IsHandled())
+  if (!E.IsHandled()) {
     E.ProcessingError(__OlxSourceInfo, "unhandled function call");
+  }
 }
 //.............................................................................
 void FunctionChainer::Update(TMacro<FunctionChainer> &m) {
   uint32_t args=0;
-  olxstr_dict<olxstr> options;
+  olxstr_dict<olxstr> options, aliases;
   TStrList description;
   description << NewLineSequence();
   for (size_t i=0; i < functions.Count(); i++) {
     args |= functions[i]->GetArgStateMask();
     options.Merge(functions[i]->GetOptions());
+    aliases.Merge(functions[i]->GetOptionAliases());
     description.Add() << '#' << (i+1);
     description.Add(functions[i]->GetDescription());
   }
   m.SetDescription(description.Text(NewLineSequence()));
   m.SetArgStateMask(args);
-  m.SetOptions(options);
+  m.SetOptions(options, aliases);
 }
 //.............................................................................
 void FunctionChainer::Update(TFunction<FunctionChainer> &f) {
