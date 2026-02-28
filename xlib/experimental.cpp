@@ -54,7 +54,7 @@ PyObject* ExperimentalDetails::PyExport() {
   PyObject* main = PyDict_New();
   PythonExt::SetDictItem(main, "radiation", Py_BuildValue("d", Radiation));
   olxstr rt;
-  if (RadiationType == radiaotion_type_neut) {
+  if (RadiationType == radiation_type_neut) {
     rt = "neutrons";
   }
   else if (RadiationType == radiaotion_type_ed) {

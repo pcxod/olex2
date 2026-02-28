@@ -22,17 +22,17 @@
 
 BeginXlibNamespace()
 
-enum {
+enum ERadiationType {
   radiaotion_type_xray = 1,
   radiaotion_type_ed = 2,
-  radiaotion_type_neut = 3,
+  radiation_type_neut = 3,
 };
 
 class ExperimentalDetails : public IOlxObject {
   double Radiation, RadiationEnergy;
   TEValueD TempValue;  // always in C
   vec3d CrystalSize;
-  int RadiationType;
+  ERadiationType RadiationType;
   bool SetSize(const olxstr& t);
   bool SetWL(const olxstr& t);
 public:
@@ -62,7 +62,7 @@ public:
   bool SetTemp(const olxstr& t);
   DefPropC(TEValueD, TempValue);
   DefPropC(vec3d, CrystalSize);
-  DefPropC(int, RadiationType);
+  DefPropC(ERadiationType, RadiationType);
   void SetCrystalSize(double x, double y, double z) {
     CrystalSize = vec3d(x, y, z);
   }

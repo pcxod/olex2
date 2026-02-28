@@ -3393,27 +3393,56 @@ void TMainForm::BadReflectionsTable(bool TableDef, bool Create)  {
   //TUtf8File::WriteLines( BadRefsFile, Output, false );
 }
 //..............................................................................
-void TMainForm::RefineDataTable(bool TableDef, bool Create)  {
+void TMainForm::RefineDataTable(bool TableDef, bool Create) {
   static const olxstr RefineDataFile("refinedata.htm");
-  if( !Create || !FXApp->CheckFileType<TIns>() )  {
-    TFileHandlerManager::AddMemoryBlock(RefineDataFile, NULL, 0, plStructure);
+  if (!Create || !FXApp->CheckFileType<TIns>()) {
+    TFileHandlerManager::AddMemoryBlock(RefineDataFile, 0, 0, plStructure);
     return;
   }
-  TTTable<TStrList> Table(8, 4);
+  TTTable<TStrList> Table(9, 4);
   TStrList Output;
-
-  const TLst& Lst = FXApp->XFile().GetLastLoader<TIns>().GetLst();
+  olxstr_dict<olxstr, true> params;
   olxstr m1 = "-1";
+  const TLst& Lst = FXApp->XFile().GetLastLoader<TIns>().GetLst();
+  if (Lst.IsLoaded()) {
+    params = Lst.params;
+  }
+  else {
+    const olxstr_dict<olxstr> &ii = FXApp->XFile().GetLastLoader<TIns>().RefinementInfo;
+    params("R1", ii.Find("R1_gt", m1));
+    params("R1all", ii.Find("R1_all", m1));
+    params("wR2", ii.Find("wR_ref", m1));
+    params("S", ii.Find("GOOF", m1));
+    params("Highest peak", ii.Find("Peak", m1));
+    params("Deepest hole", ii.Find("Hole", m1));
+    params("param_n", ii.Find("Parameters", m1));
+    params("ref_total", ii.Find("Reflections_all", m1));
+    params("ref_4sig", ii.Find("Reflections_gt", m1));
+    params("max_shift/esd", ii.Find("Shift_max", m1));
+    params("mean_shift/esd", ii.Find("Shift_mean", m1));
+    try {
+      RefinementModel& rm = FXApp->XFile().GetRM();
+      const RefinementModel::HklStat& hs = rm.GetMergeStat();
+      params("ref_unique", hs.UniqueReflections);
+      params("Rint", olxstr::FormatFloat(3, hs.Rint));
+      params("Rsig", olxstr::FormatFloat(3, hs.Rsigma));
+      params("F000", olxstr::FormatFloat(2, rm.CalcF000()));
+      params("Rho", olxstr::FormatFloat(3, rm.CalcDensity()));
+      params("Mu", olxstr::FormatFloat(3, rm.CalcMu()));
+    }
+    catch (const TExceptionBase&) {}
+
+  }
   double v[7] = {
-    Lst.params.Find("R1", m1).ToDouble(),
-    Lst.params.Find("R1all", m1).ToDouble(),
-    Lst.params.Find("wR2", m1).ToDouble(),
-    Lst.params.Find("S", m1).ToDouble(),
-    Lst.params.Find("rS", m1).ToDouble(),
-    Lst.params.Find("peak", m1).ToDouble(),
-    Lst.params.Find("hole", m1).ToDouble(),
+    params.Find("R1", m1).ToDouble(),
+    params.Find("R1all", m1).ToDouble(),
+    params.Find("wR2", m1).ToDouble(),
+    params.Find("S", m1).ToDouble(),
+    params.Find("rS", m1).ToDouble(),
+    params.Find("peak", m1).ToDouble(),
+    params.Find("hole", m1).ToDouble(),
   },
-  ev[7] = {0.1, 0.1, 0.2, -1, -1, 1.5, 1.5};
+  ev[7] = { 0.1, 0.1, 0.2, -1, -1, 1.5, 1.5 };
   const char* vl[7] = {
   "R1(Fo > 4sig(Fo))",
   "R1(all data)",
@@ -3421,19 +3450,19 @@ void TMainForm::RefineDataTable(bool TableDef, bool Create)  {
   "GooF",
   "GooF(restr)",
   "Highest peak",
-  "Deepest hole"
+  "Deepest hole",
   };
-  size_t coli=0, rowi=0;
-  for (size_t i=0; i < 7; i++) {
+  size_t coli = 0, rowi = 0;
+  for (size_t i = 0; i < 7; i++) {
     Table[rowi][coli] = vl[i];
     if ((ev[i] >= 0 && v[i] > ev[i]) ||
-        ((ev[i] < 0 && olx_abs(v[i]+ev[i]) > 0.5)) )
+      ((ev[i] < 0 && olx_abs(v[i] + ev[i]) > 0.5)))
     {
-      Table[rowi][coli+1] << "<font color=\'red\'>" <<
-        olxstr::FormatFloat(4,v[i]) << "</font>";
+      Table[rowi][coli + 1] << "<font color=\'red\'>" <<
+        olxstr::FormatFloat(4, v[i]) << "</font>";
     }
     else
-      Table[rowi][coli+1] = olxstr::FormatFloat(4, v[i]);
+      Table[rowi][coli + 1] = olxstr::FormatFloat(4, v[i]);
     if (coli == 2) {
       rowi++;
       coli = 0;
@@ -3442,31 +3471,36 @@ void TMainForm::RefineDataTable(bool TableDef, bool Create)  {
       coli = 2;
   }
   Table[3][2] = "Params";
-    Table[3][3] = Lst.params.Find("param_n", m1);
+  Table[3][3] = params.Find("param_n", m1);
   Table[4][0] = "Refs(total)";
-    Table[4][1] = Lst.params.Find("ref_total", m1);
+  Table[4][1] = params.Find("ref_total", m1);
   Table[4][2] = "Refs(uniq)";
-    Table[4][3] = Lst.params.Find("ref_unique", m1);
+  Table[4][3] = params.Find("ref_unique", m1);
   Table[5][0] = "Refs(Fo > 4sig(Fo))";
-    Table[5][1] = Lst.params.Find("ref_4sig", m1);
+  Table[5][1] = params.Find("ref_4sig", m1);
   Table[5][2] = "R(int)";
-    Table[5][3] = Lst.params.Find("Rint", m1);
+  Table[5][3] = params.Find("Rint", m1);
   Table[6][0] = "R(sigma)";
-    Table[6][1] = Lst.params.Find("Rsig", m1);
+  Table[6][1] = params.Find("Rsig", m1);
   Table[6][2] = "F000";
-    Table[6][3] = Lst.params.Find("F000", m1);
+  Table[6][3] = params.Find("F000", m1);
   Table[7][0] = "&rho;/g*cm<sup>-3</sup>";
-    Table[7][1] = Lst.params.Find("Rho", m1);
+  Table[7][1] = params.Find("Rho", m1);
   Table[7][2] = "&mu;/mm<sup>-1</sup>";
-    Table[7][3] = Lst.params.Find("Mu", m1);
+  Table[7][3] = params.Find("Mu", m1);
+
+  Table[8][0] = "Mean shift/esd";
+  Table[8][1] = params.Find("mean_shift/esd", m1);
+  Table[8][2] = "Max shift/esd";
+  Table[8][3] = params.Find("max_shift/esd", m1);
 
   Table.CreateHTMLList(Output, EmptyString(), false, false, TableDef);
   olxcstr cst = TUtf8::Encode(Output.Text('\n'));
   TFileHandlerManager::AddMemoryBlock(RefineDataFile, cst.c_str(),
     cst.Length(), plStructure);
-  if( TEFile::Exists(RefineDataFile) )
+  if (TEFile::Exists(RefineDataFile))
     TEFile::DelFile(RefineDataFile);
-//TUtf8File::WriteLines( RefineDataFile, Output, false );
+  //TUtf8File::WriteLines( RefineDataFile, Output, false );
 }
 //..............................................................................
 void TMainForm::OnMouseWheel(int x, int y, double delta) {

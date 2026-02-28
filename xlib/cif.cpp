@@ -306,7 +306,7 @@ void TCif::Initialize() {
       }
       tmp = GetParamAsString("_diffrn_radiation_type");
       if (tmp.Containsi("neutrons")) {
-        GetRM().expl.SetRadiationType(radiaotion_type_neut);
+        GetRM().expl.SetRadiationType(radiation_type_neut);
       }
     }
     catch (...) {}
@@ -1152,7 +1152,7 @@ bool TCif::Adopt(TXFile& XF, int flags) {
   SetParam("_diffrn_ambient_temperature",
     XF.GetRM().expl.IsTemperatureSet() ? temp_v.ToString() : olxstr('?'), false);
   SetParam("_diffrn_radiation_wavelength", XF.GetRM().expl.GetRadiation(), false);
-  if (XF.GetRM().expl.GetRadiationType() == radiaotion_type_neut) {
+  if (XF.GetRM().expl.GetRadiationType() == radiation_type_neut) {
     SetParam("_diffrn_radiation_type", "neutrons", false);
   }
   if (XF.GetRM().expl.GetCrystalSize().QLength() > 1.e-6) {

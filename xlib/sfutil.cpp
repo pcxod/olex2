@@ -391,7 +391,7 @@ void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
   TArrayList<TEComplex<double> >& F, bool UseFdp, bool anom_only)
 {
   TSpaceGroup &sg = xfile.GetLastLoaderSG();
-  bool neutrons = xfile.GetRM().expl.GetRadiationType() == radiaotion_type_neut;
+  bool neutrons = xfile.GetRM().expl.GetRadiationType() == radiation_type_neut;
   olx_object_ptr<ISF_Util> sf_util = GetSF_Util_Instance(sg);
   if (!sf_util.ok()) {
     throw TFunctionFailedException(__OlxSourceInfo, "invalid space group");

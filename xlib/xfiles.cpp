@@ -21,7 +21,6 @@
 #include "utf8file.h"
 #include "atomsort.h"
 #include "infotab.h"
-#include "absorpc.h"
 #include "analysis.h"
 #include "estopwatch.h"
 #include "olxvar.h"
@@ -1369,58 +1368,20 @@ void TXFile::LibDataName(const TStrObjList& Params, TMacroData& E) {
 }
 //..............................................................................
 void TXFile::LibGetMu(const TStrObjList& Params, TMacroData& E) {
-  cm_Absorption_Coefficient_Reg ac;
-  const ContentList &cont = GetRM().GetUserContent();
-  double mu = 0;
-  for (size_t i = 0; i < cont.Count(); i++) {
-    XScatterer *xs = GetRM().FindSfacData(cont[i].element->symbol);
-    if (xs != 0 && xs->IsSet(XScatterer::setMu)) {
-      mu += cont[i].count*xs->GetMu() / 10;
-    }
-    else {
-      olxstr symbol = cont[i].element->symbol;
-      if (symbol == 'D') {
-        symbol = 'H';
-      }
-      double v = ac.CalcMuOverRhoForE(
-        GetRM().expl.GetRadiationEnergy(), ac.get(symbol));
-      mu += (cont[i].count*cont[i].element->GetMr())*v / 6.022142;
-    }
-  }
-  mu /= GetAsymmUnit().CalcCellVolume();
-  E.SetRetVal(olxstr::FormatFloat(3, mu));
+  E.SetRetVal(olxstr::FormatFloat(3, GetRM().CalcMu(0, Logging::logWarning)));
 }
-//..............................................................................
-//..............................................................................
-double TXFile::CalcMass(const ContentList &cont) const {
-  double mass = 0;
-  for (size_t i = 0; i < cont.Count(); i++) {
-    XScatterer *xs = GetRM().FindSfacData(cont[i].element->symbol);
-    if (xs != 0 && xs->IsSet(XScatterer::setWt)) {
-      mass += cont[i].count*xs->GetWeight();
-    }
-    else {
-      mass += cont[i].count*cont[i].element->GetMr();
-    }
-  }
-  return mass;
-}
-//..............................................................................
 //..............................................................................
 void TXFile::LibGetMass(const TStrObjList& Params, TMacroData& E) {
-  E.SetRetVal(olxstr::FormatFloat(3,
-    CalcMass(GetRM().GetUserContent())/GetAsymmUnit().GetZ()));
+  E.SetRetVal(olxstr::FormatFloat(3, GetRM().CalcMass()/GetAsymmUnit().GetZ()));
 }
 //..............................................................................
 void TXFile::LibGetF000(const TStrObjList& Params, TMacroData& E) {
-  double F000 = GetRM().CalcF000(Logging::logWarning);
+  double F000 = GetRM().CalcF000(0, Logging::logWarning);
   E.SetRetVal(olxstr::FormatFloat(3, F000));
 }
 //..............................................................................
 void TXFile::LibGetDensity(const TStrObjList& Params, TMacroData& E) {
-  double mass = CalcMass(GetRM().GetUserContent());
-  mass /= 0.6022142;
-  E.SetRetVal(olxstr::FormatFloat(3, mass / GetAsymmUnit().CalcCellVolume()));
+  E.SetRetVal(olxstr::FormatFloat(3, GetRM().CalcDensity()));
 }
 //..............................................................................
 void TXFile::LibRefinementInfo(const TStrObjList& Params, TMacroData& E) {

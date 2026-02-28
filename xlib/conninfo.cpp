@@ -364,17 +364,17 @@ CXConnInfo& ConnInfo::GetConnInfo(const TCAtom& ca) const {
   return ci;
 }
 //........................................................................
-CXConnInfo& ConnInfo::GetConnInfo(const cm_Element& elm) const {
-  CXConnInfo& ci = *(new CXConnInfo);
+olx_object_ptr<CXConnInfo> ConnInfo::GetConnInfo(const cm_Element& elm) const {
+  olx_object_ptr<CXConnInfo> ci = new CXConnInfo();
   size_t ti_ind = TypeInfo.IndexOf(&elm);
   if (ti_ind != InvalidIndex) {
     const TypeConnInfo& aci = TypeInfo.GetValue(ti_ind);
-    ci.r = (aci.r < 0 ? elm.r_bonding : aci.r);
-    ci.maxBonds = aci.maxBonds;
+    ci->r = (aci.r < 0 ? elm.r_bonding : aci.r);
+    ci->maxBonds = aci.maxBonds;
   }
   else {
-    ci.r = elm.r_bonding;
-    ci.maxBonds = def_max_bonds;
+    ci->r = elm.r_bonding;
+    ci->maxBonds = def_max_bonds;
   }
   return ci;
 }

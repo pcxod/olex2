@@ -3526,11 +3526,14 @@ void XLibMacros::macFixUnit(TStrObjList &Cmds, const TParamList &Options,
 void XLibMacros::macGenDisp(TStrObjList& Cmds, const TParamList& Options,
   TMacroData& Error)
 {
-  const bool neutron = Options.GetBoolOption('n');
+  bool neutron = Options.GetBoolOption('n');
   const bool full = Options.GetBoolOption('f') || neutron;
   const bool force = Options.GetBoolOption("force");
 
   TXFile &xf = TXApp::GetInstance().XFile();
+  if( xf.GetRM().expl.GetRadiationType() == ERadiationType::radiation_type_neut) {
+    neutron = true;
+  }
   RefinementModel& rm = xf.GetRM();
   ContentList content = rm.GetUserContent();
   // merge contents lists if needed
@@ -3696,13 +3699,12 @@ void XLibMacros::macGenDisp(TStrObjList& Cmds, const TParamList& Options,
       try {
         double absorpc =
           ac.CalcMuOverRhoForE(en, ac.get(content[i].element->symbol));
-        CXConnInfo& ci = rm.Conn.GetConnInfo(*content[i].element);
+        olx_object_ptr<CXConnInfo> ci = rm.Conn.GetConnInfo(*content[i].element);
         if (!mu_set) {
           sc->SetMu(absorpc * content[i].element->GetMr() / 0.6022142);
         }
-        sc->SetR(ci.r);
+        sc->SetR(ci->r);
         sc->SetWeight(content[i].element->GetMr());
-        delete& ci;
       }
       catch (...) {
         TBasicApp::NewLogEntry() << "Could not locate absorption data for: " <<
@@ -3717,6 +3719,7 @@ void XLibMacros::macGenDisp(TStrObjList& Cmds, const TParamList& Options,
           sc->SetGaussians(
             cm_Gaussians(0, 0, 0, 0, 0, 0, 0, 0,
               content[i].element->neutron_scattering->coh.GetRe()));
+          sc->SetMu(content[i].element->neutron_scattering->xs / 0.6022142);
         }
       }
       rm.AddSfac(*sc);
@@ -5562,6 +5565,9 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
         }
       }
       src.LoadFromStream(is);
+    }
+    catch (const ParsingException &e) {
+      TBasicApp::NewLogEntry(logException) << e;
     }
     catch(...) {}  // most like the cif does not have cell, so pass it
     if (src.Count() == 0) {
@@ -8609,7 +8615,7 @@ void XLibMacros::funCalcAbs(const TStrObjList& Params, TMacroData& E) {
     return;
   }
   TBasicApp::NewLogEntry(logWarning) << "For testing only!";
-  RefUtil::Stats rstat(!Params.IsEmpty() && Params[0].Contains("scale"), false,
+  RefUtil::Stats rstat(!Params.IsEmpty() && Params[0].Contains("scale"), EmptyString(),
     SFUtil::EXTIDest::Fc);
   bool print = !Params.IsEmpty() && Params[0].Containsi("print");
   TStrList rv;
