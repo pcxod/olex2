@@ -25,6 +25,8 @@
 #include "encodings.h"
 #include "vcov.h"
 #include "olxvar.h"
+#include "absorpc.h"
+
 
 RefinementModel::RefinementModel(TAsymmUnit& au) :
   Omitted(*this),
@@ -1050,8 +1052,8 @@ const TRefList& RefinementModel::GetReflections() const {
   }
 }
 //.............................................................................
-double RefinementModel::CalcF000(Logging logging) const {
-  const ContentList& cont = GetUserContent();
+double RefinementModel::CalcF000(const ContentList* cont_, Logging logging) const {
+  const ContentList& cont = cont_ == 0 ? GetUserContent() : *cont_;
   double r_e = expl.GetRadiationEnergy();
   double F000 = 0;
   for (size_t i = 0; i < cont.Count(); i++) {
@@ -1084,6 +1086,67 @@ double RefinementModel::CalcF000(Logging logging) const {
     }
   }
   return F000;
+}
+//.............................................................................
+double RefinementModel::CalcMu(const ContentList* cont_, Logging logging) const {
+  const ContentList& cont = cont_ == 0 ? GetUserContent() : *cont_;
+  cm_Absorption_Coefficient_Reg ac;
+  double mu = 0, Mr = 0;
+  if (expl.GetRadiationType() == radiation_type_neut) {
+    Mr = CalcMass(&cont);
+  }
+  for (size_t i = 0; i < cont.Count(); i++) {
+    XScatterer* xs = FindSfacData(cont[i].element->symbol);
+    if (xs != 0 && xs->IsSet(XScatterer::setMu)) {
+      mu += cont[i].count * xs->GetMu() / 10;
+    }
+    else {
+      olxstr symbol = cont[i].element->symbol;
+      if (symbol == 'D') {
+        symbol = 'H';
+      }
+      if (expl.GetRadiationType() == radiation_type_neut) {
+        if (cont[i].element->neutron_scattering == 0) {
+          TBasicApp::NewLogEntry(logging) << "Could not locate neutron data for: " <<
+            cont[i].element->symbol;
+        }
+        else {
+          mu += cont[i].count * cont[i].element->neutron_scattering->xs / 6.022142;
+        }
+      }
+      else {
+        try {
+          double v = ac.CalcMuOverRhoForE(
+            expl.GetRadiationEnergy(), ac.get(symbol));
+          mu += (cont[i].count * cont[i].element->GetMr()) * v / 6.022142;
+        }
+        catch (...) {
+          TBasicApp::NewLogEntry(logging) << "Failed to calculated DISP for " <<
+            cont[i].element->symbol;
+        }
+      }
+    }
+  }
+  return mu / aunit.CalcCellVolume();
+}
+//.............................................................................
+double RefinementModel::CalcMass(const ContentList* cont_) const {
+  const ContentList& cont = cont_ == 0 ? GetUserContent() : *cont_;
+  double mass = 0;
+  for (size_t i = 0; i < cont.Count(); i++) {
+    XScatterer* xs = FindSfacData(cont[i].element->symbol);
+    if (xs != 0 && xs->IsSet(XScatterer::setWt)) {
+      mass += cont[i].count * xs->GetWeight();
+    }
+    else {
+      mass += cont[i].count * cont[i].element->GetMr();
+    }
+  }
+  return mass;
+}
+//.............................................................................
+double RefinementModel::CalcDensity(const ContentList* cont_) const {
+  return (CalcMass() / 0.6022142) / aunit.CalcCellVolume();
 }
 //.............................................................................
 const RefinementModel::HklStat& RefinementModel::GetMergeStat() {

@@ -79,7 +79,6 @@ protected:
     const IOlxObject *Data, TActionQueue *);
   void ValidateTabs();
   void PostLoad(const olxstr &fn, TBasicCFile *loader, bool replicated);
-  double CalcMass(const ContentList &) const;
   TDataItem const* data_source;
 public:
   TXFile(ASObjectProvider& Objects);
@@ -188,7 +187,6 @@ public:
   void LibEndUpdate(TStrObjList &Cmds, const TParamList &Options,
     TMacroData &E);
   void LibSaveSolution(const TStrObjList& Params, TMacroData& E);
-
   void LibGetMu(const TStrObjList& Params, TMacroData& E);
   void LibGetMass(const TStrObjList& Params, TMacroData& E);
   void LibGetF000(const TStrObjList& Params, TMacroData& E);

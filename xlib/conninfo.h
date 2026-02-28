@@ -86,8 +86,7 @@ public:
 
   // prepares a list of extra connectivity info for each atom of the AUnit
   CXConnInfo& GetConnInfo(const TCAtom& ca) const;
-  // an object created with new is returned always
-  CXConnInfo& GetConnInfo(const cm_Element& elm) const;
+  olx_object_ptr<CXConnInfo> GetConnInfo(const cm_Element& elm) const;
 
   void ProcessConn(TStrList& ins);
   // the atom's connetivity table to have no bonds

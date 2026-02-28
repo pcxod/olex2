@@ -492,7 +492,10 @@ Friedel opposites of components 1 ... m
   // the function does the atom fitting and clears the fragments
   void ProcessFrags();
 
-  double CalcF000(Logging logging=Logging::logSkip) const;
+  double CalcF000(const ContentList* cont=0, Logging logging=Logging::logSkip) const;
+  double CalcMu(const ContentList* cont = 0, Logging logging = Logging::logSkip) const;
+  double CalcMass(const ContentList* cont = 0) const;
+  double CalcDensity(const ContentList* cont = 0) const;
 
   const HklStat& GetMergeStat();
   // merged according to MERG
