@@ -9035,8 +9035,14 @@ void XLibMacros::macPart(TStrObjList &Cmds, const TParamList &Options,
         rm.Vars.AddVarRef(xv, ca, catom_var_name_Sof, relation_AsVar,
           1.0 / Atoms[i]->CAtom().GetDegeneracy());
         groups.Add(Atoms[i]->CAtom().GetId()).Add(ca);
+        if (occu != 0) {
+          rm.Vars.SetParam(ca, catom_var_name_Sof, occu);
+        }
       }
       else {
+        if (occu != 0) {
+          rm.Vars.SetParam(Atoms[i]->CAtom(), catom_var_name_Sof, occu);
+        }
         groups.Add(Atoms[i]->CAtom().GetId()).Add(Atoms[i]->CAtom());
       }
       Atoms[i]->CAtom().SetPart(part);
