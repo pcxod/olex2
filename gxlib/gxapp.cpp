@@ -2630,6 +2630,9 @@ void TGXApp::InfoList(const IStrList &Atoms, TStrList &Info, bool sort,
   TTypeList<olx_pair_t<vec3d, TCAtom*> > atoms;
   bool have_q = false;
   TXAtomPList AtomsList = FindXAtoms(Atoms, false);
+  if (AtomsList.IsEmpty()) { 
+    return;
+  }
   for (size_t i = 0; i < AtomsList.Count(); i++) {
     atoms.Add(Association::New(AtomsList[i]->ccrd(), &AtomsList[i]->CAtom()));
     if (AtomsList[i]->GetType() == iQPeakZ) {
@@ -2657,6 +2660,7 @@ void TGXApp::InfoList(const IStrList &Atoms, TStrList &Info, bool sort,
   }
   typedef AnAssociation3<double, double, size_t> count_t;
   olxdict<const cm_Element*, count_t, TPointerComparator> elements;
+  double U_iso_sum = 0;
   for (size_t i = 0; i < atoms.Count(); i++) {
     const TCAtom& A = *atoms[i].GetB();
     if (A.GetType() != iQPeakZ) {
@@ -2672,6 +2676,7 @@ void TGXApp::InfoList(const IStrList &Atoms, TStrList &Info, bool sort,
       Table[i][2 + ci] = olxstr::FormatFloat(precision, c[ci]);
     }
     Table[i][5] = olxstr::FormatFloat(3, A.GetUiso());
+    U_iso_sum += A.GetUiso();
     if (A.GetEllipsoid() != 0) {
       Table[i][6] << olxstr::FormatFloat(3,
         pow(A.GetEllipsoid()->GetNorms().Prod(), 2. / 3));
@@ -2731,6 +2736,9 @@ void TGXApp::InfoList(const IStrList &Atoms, TStrList &Info, bool sort,
     ec[2] += e.z * cnt.c;
     mc[2] += e.GetMr() * cnt.c;
   }
+
+  Info.Add("Mean Uiso: ") << olxstr::FormatFloat(3, U_iso_sum / atoms.Count());
+
   Info.Add("Formula (chemical occupancy):") << formula[1] << ", e count: " <<
     olxstr::FormatFloat(3, ec[1]).TrimFloat() <<
     ", mass: " << olxstr::FormatFloat(3, mc[1]);

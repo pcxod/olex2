@@ -1510,13 +1510,15 @@ void TNetwork::DoAlignAtoms(const TSAtomPList& atomsToTransform,
     const vec3d &center,
     const mat3d &m, const vec3d &shift)
 {
-  if (atomsToTransform.IsEmpty())  return;
+  if (atomsToTransform.IsEmpty()) {
+    return;
+  }
   TUnitCell& uc = atomsToTransform[0]->GetNetwork().GetLattice().GetUnitCell();
   const TAsymmUnit& au = uc.GetLattice().GetAsymmUnit();
   for (size_t i=0; i < atomsToTransform.Count(); i++) {
     vec3d v = au.Orthogonalise(atomsToTransform[i]->ccrd());
     atomsToTransform[i]->crd() = m*(v - center) + shift;
-    if (atomsToTransform[i]->GetEllipsoid() != NULL) {
+    if (atomsToTransform[i]->GetEllipsoid() != 0) {
       if (atomsToTransform[i]->GetEllipsoid()->GetTag() != 0) {
         TBasicApp::NewLogEntry(logError) << "Ellipsoid has already been rotated for: "
           << atomsToTransform[i]->GetLabel();

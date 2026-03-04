@@ -4953,6 +4953,17 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
         nets[i]->GetLattice().RestoreADPs();
       }
     }
+    {
+      TUnitCell& uc = app.XFile().GetUnitCell();
+      size_t elp_cnt = uc.EllpCount();
+      for (size_t i = 0; i < elp_cnt; i++) {
+        TEllipsoid* elp = uc.GetEllp(i);
+        if (elp == 0) {
+          continue;
+        }
+        elp->SetTag(0);
+      }
+    }
     TEBitArray matched(nets.Count());
     for (size_t i = 0; i < nets.Count(); i++) {
       if (!nets[i]->IsSuitableForMatching() || matched[i]) {
