@@ -62,7 +62,9 @@ public:
   }
 
   olxset &operator = (const const_olxset<object_t, cmp_t> &ad)  {
-    list_t::TakeOver(ad.Release(), true);
+    olxset& s = ad.Release();
+    list_t::TakeOver(s);
+    delete& s;
     return *this;
   }
 

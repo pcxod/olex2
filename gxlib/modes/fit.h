@@ -259,6 +259,8 @@ public:
       if (Restrain) {
         DistanceGenerator ds;
         ds.Generate(au, atom_set, true, Incl);
+        ds.distances_12 = ds.Filter(ds.distances_12, au, atom_map, 0.1);
+        ds.distances_13 = ds.Filter(ds.distances_13, au, atom_map, 0.1);
         ds.GenerateSADI(rm, atom_map, 0.02, 0.04);
       }
       if (RestrainU) {
