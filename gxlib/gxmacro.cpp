@@ -5417,6 +5417,20 @@ void GXLibMacros::macDefineVar(TStrObjList &Cmds, const TParamList &Options,
         .AddRef(*p1).AddRef(*p2, "c");
       msg = "Defined plane-plane parameters";
     }
+    else if ((g[0].Is<TXPlane>() && g[1].Is<TXAtom>()) ||
+      (g[1].Is<TXPlane>() && g[0].Is<TXAtom>()))
+    {
+      TXPlane& p = (TXPlane&)(g[g[0].Is<TXPlane>() ? 0 : 1]);
+      TXAtom& a = (TXAtom&)(g[g[0].Is<TXPlane>() ? 1 : 0]);
+      CalculatedVars::Object
+        * p1 = CalculatedVars::Object::create(p, cv),
+        * a1 = CalculatedVars::Object::create(a, cv);
+      cv.AddVar(new CalculatedVars::Var(cv_vt_distance, Cmds[0] + "ca"))
+        .AddRef(*p1, "c").AddRef(*a1, "c");
+      cv.AddVar(new CalculatedVars::Var(cv_vt_shift, Cmds[0] + "sa"))
+        .AddRef(*p1, "c").AddRef(*a1);
+      msg = "Defined plane-atom parameters";
+    }
     else if ((g[0].Is<TXPlane>() && g[1].Is<TXBond>()) ||
       (g[1].Is<TXPlane>() && g[0].Is<TXBond>()))
     {

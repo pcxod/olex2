@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2014 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -427,6 +427,9 @@ TEValueD CalculatedVars::Var::Calculate(class VcoVContainer &vcov) const {
     ObjectRef &r1 = refs[0], &r2 = refs[1];
     if (type == cv_vt_distance) {
       if (r1.object.type == cv_ot_centroid && r2.object.type == cv_ot_centroid) {
+        rv = vcov.CalcC2CDistance(atoms[0], atoms[1]);
+      }
+      else if (r1.object.type == cv_ot_plane && r2.object.type == cv_ot_centroid) {
         rv = vcov.CalcC2CDistance(atoms[0], atoms[1]);
       }
       else if (r1.object.type == cv_ot_plane && r2.object.type == cv_ot_plane) {
