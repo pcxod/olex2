@@ -25,7 +25,7 @@ private:
   wxCheckBox *cbLocalV, *cbTwoSide, *cbSmooth;
   TColorCtrl *tcAmbLM, *tcBgClr;
   TButton* tbEditFont;
-  TComboBox *cbLights, *cbFonts;
+  TChoice *cbLights, *cbFonts;
   TGlOption ConsoleFontColor, NotesFontColor, LabelsFontColor, XColor;
 protected:
   void OnOK(wxCommandEvent& event);
