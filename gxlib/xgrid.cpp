@@ -1928,7 +1928,7 @@ PyObject* pyImport(PyObject* self, PyObject* args) {
   char* data;
   int dim1, dim2, dim3, focus1, focus2, focus3;
   int type;
-  int len;
+  Py_ssize_t len;
   olxcstr format = PythonExt::UpdateBinaryFormat("(iii)(iii)s#i");
   if (!PyArg_ParseTuple(args, format.c_str(),
     &dim1, &dim2, &dim3,
