@@ -220,7 +220,7 @@ PyObject* runReadImage(PyObject* self, PyObject* args)  {
   if (!name.IsEmpty()) {
     olx_object_ptr<IDataInputStream> io = TFileHandlerManager::GetInputStream(name);
     if (io.ok()) {
-      const size_t is = io->GetAvailableSizeT();
+      const Py_ssize_t is = io->GetAvailableSizeT();
       olx_array_ptr<char> bf(is + 1);
       io->Read(bf, is);
       PyObject* po = Py_BuildValue(PythonExt::UpdateBinaryFormat("s#").c_str(),
