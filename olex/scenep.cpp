@@ -30,10 +30,11 @@ TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame)
   short Border = 2;
   // Fonts ********************************************************************
   wxStaticBox *boxFonts = new wxStaticBox(this, -1, wxT("Fonts"));
-  cbFonts = new TComboBox(wxComp(boxFonts, this));
+  cbFonts = new TChoice(wxComp(boxFonts, this));
   AGlScene& ascene = TGXApp::GetInstance().GetRenderer().GetScene();
-  for (size_t i=0; i < ascene.FontCount(); i++)
+  for (size_t i = 0; i < ascene.FontCount(); i++) {
     cbFonts->AddObject(ascene._GetFont(i).GetName(), &ascene._GetFont(i));
+  }
   cbFonts->SetSelection(0);
   cbFonts->OnChange.Add(this);
   tbEditFont = new TButton(wxComp(boxFonts, this));
@@ -140,10 +141,11 @@ TdlgSceneProps::TdlgSceneProps(TMainFrame *ParentFrame)
   TSizer0->Add(sizerLP, 1, wxEXPAND | wxALL, Border);//Light position frame
 
   //Light dropdown menu
-  cbLights = new TComboBox(wxComp(boxLS, this));
-  for (int i=0; i < 8; i++)
+  cbLights = new TChoice(wxComp(boxLS, this));
+  for (int i = 0; i < 8; i++) {
     cbLights->AddObject(olxstr("Light ") << (i + 1));
-  cbLights->SetValue(cbLights->GetItem(0).u_str());
+  }
+  cbLights->SetSelection(0);
   cbLights->OnChange.Add(this);
   //end Light dropdown menu
 

@@ -7677,7 +7677,7 @@ void XLibMacros::macClose(TStrObjList &Cmds, const TParamList &Options, TMacroDa
   TXApp::GetInstance().XFile().Close();
 }
 //.............................................................................
-void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
+void XLibMacros::macPiPi(TStrObjList& Cmds, const TParamList& Options, TMacroData& E) {
   TXApp& xapp = TXApp::GetInstance();
   TLattice latt(*(new SObjectProvider));
   RefinementModel rm(latt.GetAsymmUnit());
@@ -7687,7 +7687,7 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroDat
   latt.GetAsymmUnit().DetachAtomType(iQPeakZ, true);
   latt.GetAsymmUnit().DetachAtomType(iHydrogenZ, true);
   latt.Init();
-  latt.GrowFragments(false, NULL);
+  latt.GrowFragments(false, 0);
 
   TTypeList<ElementPList> ring_cont;
   //C6_ring(6), NC5_ring(6);
@@ -7695,15 +7695,15 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroDat
   ring_cont.AddNew(6);  // NC5
   ring_cont[0][0] = &XElementLib::GetByIndex(iCarbonIndex);
   ring_cont[1][0] = &XElementLib::GetByIndex(iNitrogenIndex);
-  for( int i=1; i < 6; i++ )
+  for (int i = 1; i < 6; i++)
     ring_cont[0][i] = ring_cont[1][i] = ring_cont[0][0];
   olxstr str_rings = Options.FindValue('r');
-  if( !str_rings.IsEmpty() )  {
+  if (!str_rings.IsEmpty()) {
     TStrList toks(str_rings, ',');
-    for( size_t i=0; i < toks.Count(); i++ )  {
+    for (size_t i = 0; i < toks.Count(); i++) {
       ElementPList* rc = new ElementPList;
-      try {  xapp.RingContentFromStr(toks[i], *rc);  }
-      catch(...)  {
+      try { xapp.RingContentFromStr(toks[i], *rc); }
+      catch (...) {
         TBasicApp::NewLogEntry(logError) << "Invalid ring definition: " << toks[i];
         delete rc;
         continue;
@@ -7712,54 +7712,59 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroDat
     }
   }
   TTypeList<TSAtomPList> rings;
-  for( size_t i=0; i < latt.FragmentCount(); i++ )  {
+  for (size_t i = 0; i < latt.FragmentCount(); i++) {
     TNetwork& frag = latt.GetFragment(i);
-    if( frag.NodeCount() < 5 )  continue;
-    for( size_t j=0; j < ring_cont.Count(); j++ )
+    if (frag.NodeCount() < 5) {
+      continue;
+    }
+    for (size_t j = 0; j < ring_cont.Count(); j++) {
       frag.FindRings(ring_cont[j], rings);
+    }
   }
   size_t plance_cnt = 0;
-  for( size_t i=0; i < rings.Count(); i++ )  {
+  for (size_t i = 0; i < rings.Count(); i++) {
     const double rms = TSPlane::CalcRMSD(rings[i]);
-    if( rms > 0.05 || !TNetwork::IsRingRegular(rings[i]) )  {
+    if (rms > 0.05 || !TNetwork::IsRingRegular(rings[i])) {
       olxstr rc = "Plane #";
       rc << ++plance_cnt << NewLineSequence();
-      for( size_t j=0; j < rings[i].Count(); j++ )  {
+      for (size_t j = 0; j < rings[i].Count(); j++) {
         rc << rings[i][j]->GetGuiLabel();
-        if( j < 5 )
+        if (j < 5) {
           rc << ' ';
+        }
       }
       TBasicApp::NewLogEntry() << rc;
       rings.NullItem(i);
       continue;
     }
     bool identity_based = false;
-    for( size_t j=0; j < rings[i].Count(); j++ )  {
-      if( rings[i][j]->IsAUAtom() )  {
+    for (size_t j = 0; j < rings[i].Count(); j++) {
+      if (rings[i][j]->IsAUAtom()) {
         identity_based = true;
         break;
       }
     }
-    if( !identity_based )  {
+    if (!identity_based) {
       rings.NullItem(i);
       continue;
     }
     olxstr rc = "Plane #";
     rc << ++plance_cnt << NewLineSequence();
-    for( size_t j=0; j < rings[i].Count(); j++ )  {
+    for (size_t j = 0; j < rings[i].Count(); j++) {
       rc << rings[i][j]->GetGuiLabel();
-      if( j < 5 )
+      if (j < 5) {
         rc << ' ';
+      }
     }
     TBasicApp::NewLogEntry() << rc;
   }
   rings.Pack();
-  if( rings.IsEmpty() )  {
+  if (rings.IsEmpty()) {
     TBasicApp::NewLogEntry() << "No C6 or NC5 or user specified regular rings could be found";
     return;
   }
   double max_d = 4, max_shift = 3;
-  if( Cmds.Count() == 2 )  {
+  if (Cmds.Count() == 2) {
     max_d = Cmds[0].ToDouble();
     max_shift = Cmds[1].ToDouble();
   }
@@ -7767,47 +7772,53 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroDat
   TArrayList<vec3d> plane_centres(rings.Count());
   const TUnitCell& uc = latt.GetUnitCell();
   const TAsymmUnit& au = latt.GetAsymmUnit();
-  for( size_t i=0; i < rings.Count(); i++ )  {
+  for (size_t i = 0; i < rings.Count(); i++) {
     TSPlane* sp = new TSPlane(&latt.GetNetwork());
-    TTypeList<olx_pair_t<TSAtom*,double> > ring_atoms;
-    for( size_t j=0; j < rings[i].Count(); j++ )
-      ring_atoms.AddNew(rings[i][j],1.0);
+    TTypeList<olx_pair_t<TSAtom*, double> > ring_atoms;
+    for (size_t j = 0; j < rings[i].Count(); j++) {
+      ring_atoms.AddNew(rings[i][j], 1.0);
+    }
     sp->Init(ring_atoms);
     planes.Set(i, sp);
     plane_centres[i] = sp->GetCenter();
     au.CartesianToCell(plane_centres[i]);
   }
   smatd_list transforms;
-  for( size_t i=0; i < planes.Count(); i++ )  {
-    TBasicApp::NewLogEntry() << "Considering plane #" << (i+1);
+  for (size_t i = 0; i < planes.Count(); i++) {
+    TBasicApp::NewLogEntry() << "Considering plane #" << (i + 1);
     size_t int_cnt = 0;
-    for( size_t j=i; j < planes.Count(); j++ )  {
-      for( size_t k=0; k < uc.MatrixCount(); k++ )  {
+    for (size_t j = i; j < planes.Count(); j++) {
+      for (size_t k = 0; k < uc.MatrixCount(); k++) {
         const smatd& __mat = uc.GetMatrix(k);
-        const vec3i tv = (__mat*plane_centres[j] - plane_centres[i]).Round<int>();
+        const vec3i tv = (__mat * plane_centres[j] - plane_centres[i]).Round<int>();
         smatd _mat = __mat;
         _mat.t -= tv;
-        for( int x=-2; x <= 2; x++ )  {
-          for( int y=-2; y <= 2; y++ )  {
-            for( int z=-2; z <= 2; z++ )  {
+        for (int x = -2; x <= 2; x++) {
+          for (int y = -2; y <= 2; y++) {
+            for (int z = -2; z <= 2; z++) {
               smatd mat = _mat;
-              mat.t += vec3d(x,y,z);
+              mat.t += vec3d(x, y, z);
               vec3d_list points;
-              for( size_t pi=0; pi < planes[j].Count(); pi++ )  {
-                points.AddNew(mat*planes[j].GetAtom(pi).ccrd());
+              for (size_t pi = 0; pi < planes[j].Count(); pi++) {
+                points.AddNew(mat * planes[j].GetAtom(pi).ccrd());
                 au.CellToCartesian(points.GetLast());
               }
               plane::mean<>::out po = plane::mean<>::calc(points);
               const double pccd = planes[i].GetCenter().DistanceTo(po.center);
-              if( pccd < 1 || pccd > max_d )  continue;
+              if (pccd < 1 || pccd > max_d) {
+                continue;
+              }
               const double pcpd = olx_abs(planes[i].DistanceTo(po.center));
-              if( pcpd < 1 )  continue;   // ajacent planes?
+              // ajacent planes?
+              if (pcpd < 1) {
+                continue;
+              }
               //const double plane_d = plane_params.DotProd(plane_center)/plane_params.Length()
               //plane_params.Normalise();
-              const double shift = sqrt(olx_max(0, pccd*pccd - pcpd*pcpd));
-              if( shift < max_shift )  {
+              const double shift = sqrt(olx_max(0, pccd * pccd - pcpd * pcpd));
+              if (shift < max_shift) {
                 int_cnt++;
-                TBasicApp::NewLogEntry() << '#' << (j+1) << '@' <<
+                TBasicApp::NewLogEntry() << '#' << (j + 1) << '@' <<
                   TSymmParser::MatrixToSymmCode(uc.GetSymmSpace(), mat) <<
                   " (" << TSymmParser::MatrixToSymmEx(mat) << ")";
                 TBasicApp::NewLogEntry() << "angle: " <<
@@ -7827,18 +7838,22 @@ void XLibMacros::macPiPi(TStrObjList &Cmds, const TParamList &Options, TMacroDat
       TBasicApp::NewLogEntry() << "No interactions found";
     }
   }
-  if( Options.Contains('g') && !transforms.IsEmpty() )  {
+  if (Options.Contains('g') && !transforms.IsEmpty()) {
     TLattice& xlatt = xapp.XFile().GetLattice();
     ASObjectProvider& objects = xlatt.GetObjects();
     const TUnitCell& uc = xlatt.GetUnitCell();
-    for( size_t i=0; i < transforms.Count(); i++ )
+    for (size_t i = 0; i < transforms.Count(); i++) {
       uc.InitMatrixId(transforms[i]);
+    }
     TCAtomPList iatoms;
-    for( size_t i=0; i < objects.atoms.Count(); i++ )  {
+    for (size_t i = 0; i < objects.atoms.Count(); i++) {
       TSAtom& sa = objects.atoms[i];
-      if( sa.IsDeleted() )  continue;
-      if( sa.IsAUAtom() )
+      if (sa.IsDeleted()) {
+        continue;
+      }
+      if (sa.IsAUAtom()) {
         iatoms.Add(sa.CAtom());
+      }
     }
     xlatt.GrowAtoms(iatoms, transforms);
   }
@@ -9035,8 +9050,14 @@ void XLibMacros::macPart(TStrObjList &Cmds, const TParamList &Options,
         rm.Vars.AddVarRef(xv, ca, catom_var_name_Sof, relation_AsVar,
           1.0 / Atoms[i]->CAtom().GetDegeneracy());
         groups.Add(Atoms[i]->CAtom().GetId()).Add(ca);
+        if (occu != 0) {
+          rm.Vars.SetParam(ca, catom_var_name_Sof, occu);
+        }
       }
       else {
+        if (occu != 0) {
+          rm.Vars.SetParam(Atoms[i]->CAtom(), catom_var_name_Sof, occu);
+        }
         groups.Add(Atoms[i]->CAtom().GetId()).Add(Atoms[i]->CAtom());
       }
       Atoms[i]->CAtom().SetPart(part);

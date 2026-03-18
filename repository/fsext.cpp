@@ -507,7 +507,7 @@ PyObject* fsext_pyNewFile(PyObject* self, PyObject* args) {
   char *data = 0;
   olxstr name;
   int persistenceId = 0;
-  int length = 0;
+  Py_ssize_t length = 0;
   olxcstr format = PythonExt::UpdateBinaryFormat("ws#|i");
   if (!PythonExt::ParseTuple(args, format.c_str(),
     &name, &data, &length, &persistenceId))
@@ -528,7 +528,7 @@ PyObject* fsext_pyReadFile(PyObject* self, PyObject* args) {
   }
   olx_object_ptr<IDataInputStream> io = TFileHandlerManager::GetInputStream(name);
   if (!name.IsEmpty() && io.ok())  {
-    const size_t is = io->GetAvailableSizeT();
+    const Py_ssize_t is = io->GetAvailableSizeT();
     olx_array_ptr<char> bf(is + 1);
     io->Read(bf, is);
     PyObject* po = Py_BuildValue(PythonExt::UpdateBinaryFormat("s#").c_str(),

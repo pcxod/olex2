@@ -22,7 +22,7 @@ TSameGroup::TSameGroup(TSameGroupList& parent, bool tmp)
 //.............................................................................
 TSameGroup::~TSameGroup() {
   // app has been destroyed, GetParent will fail and dynamic data to delete!
-  if (!TBasicApp::HasInstance()) {
+  if (parent.is_destroying() || !TBasicApp::HasInstance()) {
     return;
   }
   Clear();

@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -235,11 +235,15 @@ struct DistanceGenerator {
   static TTypeList<pair_list_t>::const_list_type GeneratePairList(
     const distance_set_t& d, const TAsymmUnit& au,
     const atom_map_N_t& atom_map);
-  
+
+  /* Threshold in fractions (%/100) */
+  static distance_set_t::const_set_type Filter(const distance_set_t& d,
+    const TAsymmUnit& au, const atom_map_1_t& atom_map,
+    double distance_threshold);
+
   // non-functional - for ferrying along the object
   olx_object_ptr<atom_map_N_t> atom_map_N;
   olx_object_ptr<atom_map_1_t> atom_map_1;
-
 private:
   static void GenerateSADI_(const distance_set_t &d, double esd,
     RefinementModel &rm, const atom_map_1_t &atom_map);

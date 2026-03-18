@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -49,7 +49,7 @@ public:
   otherwise it works as font chooser (default font-fontDescription). Returned
   string is the font Id string, or empty string if the dialog is canceled
   */
-  virtual olxstr ShowFontDialog(TGlFont* glf = NULL,
+  virtual olxstr ShowFontDialog(TGlFont* glf = 0,
     const olxstr& fontDescription=EmptyString()) = 0;
   virtual bool StartSelect(int x, int y, GLuint *Bf);
   // returns number of selection hits
@@ -67,25 +67,28 @@ public:
       throw TInvalidArgumentException(__OlxSourceInfo,
         olxstr("invalid small font index: ") << i);
     }
-    if( !SmallFonts[i]->IsCreated() )
+    if (!SmallFonts[i]->IsCreated()) {
       DoCreateFont(*SmallFonts[i], true);
+    }
     return *SmallFonts[i];
   }
   // the fonts is created if uninitialised
   TGlFont& GetFont(size_t i, bool use_default) const {
-    TGlFont* rv = NULL;
-    if( i >= Fonts.Count() )  {
-      if( use_default )
+    TGlFont* rv = 0;
+    if (i >= Fonts.Count()) {
+      if (use_default)
         rv = &GetDefaultFont();
     }
-    else
+    else {
       rv = Fonts[i];
-    if( rv == NULL ) {
+    }
+    if (rv == 0) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         olxstr("invalid font index: ") << i);
     }
-    if( !rv->IsCreated() )
+    if (!rv->IsCreated()) {
       DoCreateFont(*rv, false);
+    }
     return *rv;
   }
   TGlFont& GetDefaultFont() const {
@@ -98,7 +101,7 @@ public:
   */
   TGlFont& _GetFont(size_t i) const { return *Fonts[i]; }
   TGlFont* FindFont(const olxstr& name) {
-    return FontsDict.Find(name, NULL);
+    return FontsDict.Find(name, 0);
   }
   template <class T> TGlFont& RegisterFontForType(TGlFont& fnt) {
     FontRegistry.Add(&typeid(T), fnt.GetId());

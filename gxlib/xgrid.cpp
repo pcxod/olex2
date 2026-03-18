@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -255,6 +255,45 @@ bool TXGrid::TLegend::Orient(TGlPrimitive& P) {
     P.Vertices[3] = vec3d(P.Vertices[0][0], P.Vertices[2][1], z);
     return false;
   }
+}
+//.............................................................................
+void TXGrid::TLegend::LibReset(const TStrObjList& Params, TMacroData& E) {
+  TStrList toks(Params[0], ',');
+  if (toks.Count() == 2 && olx_list_and(toks, &olxstr::IsInt)) {
+    Left = toks[0].ToInt();
+    Top = toks[1].ToInt();
+  }
+  else {
+    int margin = 0;
+    bool bottom = Params[0].Contains("b"),
+      right = Params[0].Contains("r");
+    if (!toks.IsEmpty() && toks.GetLastString().IsInt()) {
+      margin = toks.GetLastString().ToInt();
+    }
+    int t = margin, l = margin;
+    if (right) {
+      TGlFont& glf = Parent.GetScene().GetFont(~0, true);
+      double tw = glf.TextWidth(text[0]);
+      if (glf.IsVectorFont()) {
+        tw *= 1. / Parent.GetScale();
+      }
+      l = Parent.GetWidth() - (Width + tw) - margin;
+    }
+    if (bottom) {
+      t = Parent.GetHeight() - Height - margin;
+    }
+    Left = l;
+    Top = t;
+  }
+  GetPrimitives().GetStyle().SetParam("Top", Top, true);
+  GetPrimitives().GetStyle().SetParam("Left", Left, true);
+  Update();
+}
+//..............................................................................
+void TXGrid::TLegend::ExportLibrary(TLibrary& lib) {
+  AGDrawObject::ExportLibrary(lib);
+  lib.Register(new TFunction<TXGrid::TLegend>(this, &TXGrid::TLegend::LibReset,
+    "Reset", fpOne, "Resets the legend position"));
 }
 //.............................................................................
 //.............................................................................
@@ -1889,7 +1928,7 @@ PyObject* pyImport(PyObject* self, PyObject* args) {
   char* data;
   int dim1, dim2, dim3, focus1, focus2, focus3;
   int type;
-  int len;
+  Py_ssize_t len;
   olxcstr format = PythonExt::UpdateBinaryFormat("(iii)(iii)s#i");
   if (!PyArg_ParseTuple(args, format.c_str(),
     &dim1, &dim2, &dim3,

@@ -3451,144 +3451,185 @@ void TMainForm::macPython(TStrObjList& Cmds, const TParamList& Options, TMacroDa
   PythonExt::GetInstance()->RunPython(tmp);
 }
 //..............................................................................
-void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
-  for( size_t i=0; i < Cmds.Count(); i++ )
+void TMainForm::macCreateMenu(TStrObjList& Cmds, const TParamList& Options, TMacroData& E) {
+  for (size_t i = 0; i < Cmds.Count(); i++) {
     Cmds[i].Replace("\\t", '\t');
+  }
   size_t ind = Cmds[0].LastIndexOf(';');
-  if( ind == InvalidIndex )
+  if (ind == InvalidIndex) {
     throw TInvalidArgumentException(__OlxSourceInfo, "menu name");
+  }
   olxstr menuName = Cmds[0].SubStringTo(ind);
 
   short itemType = mtNormalItem;
-  if( Options.Contains("r") )  itemType = mtRadioItem;
-  if( Options.Contains("c") )  itemType = mtCheckItem;
-  if( Options.Contains("#") )  itemType = mtSeparator;
+  if (Options.Contains("r")) {
+    itemType = mtRadioItem;
+  }
+  if (Options.Contains("c")) {
+    itemType = mtCheckItem;
+  }
+  if (Options.Contains("#")) {
+    itemType = mtSeparator;
+  }
   olxstr stateDependent = Options.FindValue("s");
   olxstr modeDependent = Options.FindValue("m");
-  TMenu* menu = Menus.Find(menuName, NULL);
-  if( menu == NULL )  {
+  TMenu* menu = Menus.Find(menuName, 0);
+  if (menu == 0) {
     TStrList toks;
-    toks.Strtok( Cmds[0], ';');
-    size_t mi=0;
-    while( (ind = menuName.LastIndexOf(';')) != InvalidIndex && ! menu )  {
+    toks.Strtok(Cmds[0], ';');
+    size_t mi = 0;
+    while ((ind = menuName.LastIndexOf(';')) != InvalidIndex && !menu) {
       menuName = menuName.SubStringTo(ind);
-      menu = Menus.Find(menuName, NULL);
+      menu = Menus.Find(menuName, 0);
       mi++;
-
-      if( menu )  break;
+      if (menu != 0) {
+        break;
+      }
     }
-    mi = (menu == NULL ? 0 : toks.Count() - 1 - mi);
-    for( size_t i=mi; i < toks.Count(); i++ )  {
-      if( (i+1) == toks.Count() )  {
+    mi = (menu == 0 ? 0 : toks.Count() - 1 - mi);
+    for (size_t i = mi; i < toks.Count(); i++) {
+      if ((i + 1) == toks.Count()) {
         int accell = AccMenus.GetLastId();
-        if( accell == 0 )
+        if (accell == 0) {
           accell = 1000;
-        else
+        }
+        else {
           accell++;
-        if( Cmds.Count() == 3 )  {
-          size_t insindex = menu->FindItem( Cmds[2].u_str() );
-          if( insindex == InvalidIndex )  insindex = 0;
-          if( itemType == mtSeparator )
+        }
+        if (Cmds.Count() == 3) {
+          size_t insindex = menu->FindItem(Cmds[2].u_str());
+          if (insindex == InvalidIndex) {
+            insindex = 0;
+          }
+          if (itemType == mtSeparator) {
             menu->InsertSeparator(insindex);
+          }
           else {
             TMenuItem* item = new TMenuItem(itemType, accell, menu, toks[i]);
-            if( !modeDependent.IsEmpty() ) {
+            if (!modeDependent.IsEmpty()) {
               item->SetActionQueue(TModeRegistry::GetInstance().OnChange,
                 modeDependent, TMenuItem::ModeDependent);
             }
-            if( !stateDependent.IsEmpty() ) {
+            if (!stateDependent.IsEmpty()) {
               item->SetActionQueue(TStateRegistry::GetInstance().OnChange,
                 stateDependent, TMenuItem::StateDependent);
             }
-            if( Cmds.Count() > 1 )  item->SetCommand( Cmds[1] );
-            menu->Insert(insindex, item );
-            AccMenus.AddAccell(accell, item );
+            if (Cmds.Count() > 1) {
+              item->SetCommand(Cmds[1]);
+            }
+            menu->Insert(insindex, item);
+            AccMenus.AddAccell(accell, item);
           }
         }
-        else  {
-          if( itemType == mtSeparator )  menu->AppendSeparator();
+        else {
+          if (itemType == mtSeparator) {
+            menu->AppendSeparator();
+          }
           else {
             TMenuItem* item = new TMenuItem(itemType, accell, menu, toks[i]);
-            if( !modeDependent.IsEmpty() ) {
+            if (!modeDependent.IsEmpty()) {
               item->SetActionQueue(TModeRegistry::GetInstance().OnChange,
                 modeDependent, TMenuItem::ModeDependent);
             }
-            if( !stateDependent.IsEmpty() ) {
+            if (!stateDependent.IsEmpty()) {
               item->SetActionQueue(TStateRegistry::GetInstance().OnChange,
                 stateDependent, TMenuItem::StateDependent);
             }
-            if( Cmds.Count() > 1 )  item->SetCommand(Cmds[1]);
-            menu->Append( item );
-            AccMenus.AddAccell(accell, item );
+            if (Cmds.Count() > 1)  item->SetCommand(Cmds[1]);
+            menu->Append(item);
+            AccMenus.AddAccell(accell, item);
           }
         }
       }
-      else  {
+      else {
         TMenu* smenu = new TMenu();
-        if( !menu )  {
-          if( Cmds.Count() == 3 )  {
+        if (menu == 0) {
+          if (Cmds.Count() == 3) {
             size_t insindex = MenuBar->FindMenu(Cmds[2].u_str());
-            if( insindex == InvalidIndex )  insindex = 0;
+            if (insindex == InvalidIndex) {
+              insindex = 0;
+            }
             MenuBar->Insert(insindex, smenu, toks[i].u_str());
           }
-          else
+          else {
             MenuBar->Append(smenu, toks[i].u_str());
+          }
         }
-        else
+        else {
           menu->Append(-1, toks[i].u_str(), (wxMenu*)smenu);
+        }
         olxstr addedMenuName;
-        for( size_t j=0; j <= i; j++ )  {
+        for (size_t j = 0; j <= i; j++) {
           addedMenuName << toks[j];
-          if( j < i )  addedMenuName << ';';
+          if (j < i) {
+            addedMenuName << ';';
+          }
         }
         Menus.Add(addedMenuName, smenu);
         menu = smenu;
       }
     }
   }
-  else  {
+  else {
     int accell = AccMenus.GetLastId();
-    if( accell == 0 )
+    if (accell == 0) {
       accell = 1000;
-    else
+    }
+    else {
       accell++;
-    menuName = Cmds[0].SubStringFrom(ind+1);
-    if( menuName == '#' )  menu->AppendSeparator();
-    else  {
+    }
+    menuName = Cmds[0].SubStringFrom(ind + 1);
+    if (menuName == '#') {
+      menu->AppendSeparator();
+    }
+    else {
       size_t insindex;
-      if( (insindex=menu->FindItem( menuName.u_str() )) != InvalidIndex )
+      if ((insindex = menu->FindItem(menuName.u_str())) != InvalidIndex) {
         throw TFunctionFailedException(__OlxSourceInfo, olxstr("duplicated name: ") << menuName);
-      if( Cmds.Count() == 3 )  {
-        if( insindex == InvalidIndex )  insindex = 0;
-        if( itemType == mtSeparator )  menu->InsertSeparator(insindex);
-        else  {
+      }
+      if (Cmds.Count() == 3) {
+        if (insindex == InvalidIndex) {
+          insindex = 0;
+        }
+        if (itemType == mtSeparator)  menu->InsertSeparator(insindex);
+        else {
           TMenuItem* item = new TMenuItem(itemType, accell, menu, menuName);
-          if( Cmds.Count() > 1 )  item->SetCommand( Cmds[1] );
-            if( !modeDependent.IsEmpty() ) {
-              item->SetActionQueue(TModeRegistry::GetInstance().OnChange,
-                modeDependent, TMenuItem::ModeDependent);
-            }
-            if( !stateDependent.IsEmpty() ) {
-              item->SetActionQueue(TStateRegistry::GetInstance().OnChange,
-                stateDependent, TMenuItem::StateDependent);
-            }
+          if (Cmds.Count() > 1) {
+            item->SetCommand(Cmds[1]);
+          }
+          if (!modeDependent.IsEmpty()) {
+            item->SetActionQueue(TModeRegistry::GetInstance().OnChange,
+              modeDependent, TMenuItem::ModeDependent);
+          }
+          if (!stateDependent.IsEmpty()) {
+            item->SetActionQueue(TStateRegistry::GetInstance().OnChange,
+              stateDependent, TMenuItem::StateDependent);
+          }
           menu->Insert(insindex, item);
           AccMenus.AddAccell(accell, item);
         }
       }
-      else  {
-        if( itemType == mtSeparator )  menu->AppendSeparator();
-        else  {
+      else {
+        if (itemType == mtSeparator) {
+          menu->AppendSeparator();
+        }
+        else {
+          if (menuName.IsEmpty()) {
+            TBasicApp::NewLogEntry(logWarning) << "Skipping empty menu name";
+            return;
+          }
           TMenuItem* item = new TMenuItem(itemType, accell, menu, menuName);
-            if( !modeDependent.IsEmpty() ) {
-              item->SetActionQueue(TModeRegistry::GetInstance().OnChange,
-                modeDependent, TMenuItem::ModeDependent);
-            }
-            if( !stateDependent.IsEmpty() ) {
-              item->SetActionQueue(TStateRegistry::GetInstance().OnChange,
-                stateDependent, TMenuItem::StateDependent);
-            }
-          if( Cmds.Count() > 1 )  item->SetCommand(Cmds[1]);
+          if (!modeDependent.IsEmpty()) {
+            item->SetActionQueue(TModeRegistry::GetInstance().OnChange,
+              modeDependent, TMenuItem::ModeDependent);
+          }
+          if (!stateDependent.IsEmpty()) {
+            item->SetActionQueue(TStateRegistry::GetInstance().OnChange,
+              stateDependent, TMenuItem::StateDependent);
+          }
+          if (Cmds.Count() > 1) {
+            item->SetCommand(Cmds[1]);
+          }
           menu->Append(item);
           AccMenus.AddAccell(accell, item);
         }
@@ -3597,17 +3638,23 @@ void TMainForm::macCreateMenu(TStrObjList &Cmds, const TParamList &Options, TMac
   }
 }
 //..............................................................................
-void TMainForm::macDeleteMenu(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
-  TMenu* menu = Menus.Find(Cmds[0], NULL);
-  if( menu == NULL )  {
+void TMainForm::macDeleteMenu(TStrObjList& Cmds, const TParamList& Options, TMacroData& E) {
+  TMenu* menu = Menus.Find(Cmds[0], 0);
+  if (menu == 0) {
     size_t ind = Cmds[0].LastIndexOf(';');
-    if( ind == InvalidIndex )  return;
+    if (ind == InvalidIndex) {
+      return;
+    }
     olxstr menuName = Cmds[0].SubStringTo(ind);
-    olxstr itemName =  Cmds[0].SubStringFrom(ind+1);
-    menu = Menus.Find(menuName, NULL);
-    if( menu == NULL )  return;
+    olxstr itemName = Cmds[0].SubStringFrom(ind + 1);
+    menu = Menus.Find(menuName, 0);
+    if (menu == 0) {
+      return;
+    }
     ind = menu->FindItem(itemName.u_str());
-    if( ind == InvalidIndex )  return;
+    if (ind == InvalidIndex) {
+      return;
+    }
     menu->Destroy((int)ind);
   }
   else
@@ -3627,51 +3674,75 @@ void TMainForm::macDeleteMenu(TStrObjList &Cmds, const TParamList &Options, TMac
   }
 }
 //..............................................................................
-void TMainForm::macEnableMenu(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
+void TMainForm::macEnableMenu(TStrObjList& Cmds, const TParamList& Options, TMacroData& E) {
   size_t ind = Cmds[0].LastIndexOf(';');
-  if( ind == InvalidIndex )  return;
+  if (ind == InvalidIndex) {
+    return;
+  }
   olxstr menuName = Cmds[0].SubStringTo(ind);
-  olxstr itemName =  Cmds[0].SubStringFrom(ind+1);
-  TMenu* menu = Menus.Find(menuName, NULL);
-  if( menu == NULL )  return;
+  olxstr itemName = Cmds[0].SubStringFrom(ind + 1);
+  TMenu* menu = Menus.Find(menuName, 0);
+  if (menu == 0) {
+    return;
+  }
   ind = menu->FindItem(itemName.u_str());
-  if( ind == InvalidIndex )  return;
+  if (ind == InvalidIndex) {
+    return;
+  }
   menu->Enable((int)ind, true);
 }
 //..............................................................................
 void TMainForm::macDisableMenu(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
   size_t ind = Cmds[0].LastIndexOf(';');
-  if( ind == InvalidIndex )  return;
+  if (ind == InvalidIndex) {
+    return;
+  }
   olxstr menuName = Cmds[0].SubStringTo(ind);
   olxstr itemName =  Cmds[0].SubStringFrom(ind+1);
-  TMenu* menu = Menus.Find(menuName, NULL);
-  if( menu == NULL )  return;
+  TMenu* menu = Menus.Find(menuName, 0);
+  if (menu == 0) {
+    return;
+  }
   ind = menu->FindItem(itemName.u_str());
-  if( ind == InvalidIndex )  return;
+  if (ind == InvalidIndex) {
+    return;
+  }
   menu->Enable((int)ind, false);
 }
 //..............................................................................
-void TMainForm::macCheckMenu(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
+void TMainForm::macCheckMenu(TStrObjList& Cmds, const TParamList& Options, TMacroData& E) {
   size_t ind = Cmds[0].LastIndexOf(';');
-  if( ind == InvalidIndex )  return;
+  if (ind == InvalidIndex) {
+    return;
+  }
   olxstr menuName = Cmds[0].SubStringTo(ind);
-  olxstr itemName =  Cmds[0].SubStringFrom(ind+1);
-  TMenu* menu = Menus.Find(menuName, NULL);
-  if( menu == NULL )  return;
+  olxstr itemName = Cmds[0].SubStringFrom(ind + 1);
+  TMenu* menu = Menus.Find(menuName, 0);
+  if (menu == 0) {
+    return;
+  }
   ind = menu->FindItem(itemName.u_str());
-  if( ind == InvalidIndex )  return;
+  if (ind == InvalidIndex) {
+    return;
+  }
   menu->Check((int)ind, true);
 }
 //..............................................................................
-void TMainForm::macUncheckMenu(TStrObjList &Cmds, const TParamList &Options, TMacroData &E) {
+void TMainForm::macUncheckMenu(TStrObjList& Cmds, const TParamList& Options, TMacroData& E) {
   size_t ind = Cmds[0].LastIndexOf(';');
-  if( ind == InvalidIndex )  return;
+  if (ind == InvalidIndex) {
+    return;
+  }
   olxstr menuName = Cmds[0].SubStringTo(ind);
-  olxstr itemName =  Cmds[0].SubStringFrom(ind+1);
-  TMenu* menu = Menus.Find(menuName, NULL);
-  if (menu == NULL)  return;
+  olxstr itemName = Cmds[0].SubStringFrom(ind + 1);
+  TMenu* menu = Menus.Find(menuName, 0);
+  if (menu == 0) {
+    return;
+  }
   ind = menu->FindItem(itemName.u_str());
-  if( ind == InvalidIndex )  return;
+  if (ind == InvalidIndex) {
+    return;
+  }
   menu->Check((int)ind, false);
 }
 //..............................................................................

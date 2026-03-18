@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -1227,6 +1227,33 @@ void DistanceGenerator::GenerateDFIX(TCAtomPList& atoms_, bool explict,
       d13.GetValue(i)->ConvertToImplicit();
     }
   }
+}
+//........................................................................
+DistanceGenerator::distance_set_t::const_set_type
+  DistanceGenerator::Filter(const distance_set_t& d,
+    const TAsymmUnit& au, const atom_map_1_t& atom_map,
+    double distance_th)
+{
+  distance_set_t rv;
+  for (size_t i = 0; i < d.Count(); i++) {
+    size_t a = atom_map.Find(d[i].a, d[i].a),
+      b = atom_map.Find(d[i].b, d[i].b);
+    // maps onto itself?
+    if (d[i].a == a && d[i].b == b) {
+      continue;
+    }
+      TCAtom& aa = au.GetAtom(d[i].a);
+      TCAtom& ab = au.GetAtom(d[i].b);
+      TCAtom& ac = au.GetAtom(atom_map.Find(d[i].a, d[i].a));
+      TCAtom& ad = au.GetAtom(atom_map.Find(d[i].b, d[i].b));
+      double d1 = au.Orthogonalise(aa.ccrd() - ab.ccrd()).Length();
+      double d2 = au.Orthogonalise(ac.ccrd() - ad.ccrd()).Length();
+      if (olx_abs(d2 - d1) / olx_max(d2, d1) > distance_th) {
+        continue;
+      }
+      rv.Add(d[i]);
+    }
+  return rv;
 }
 //........................................................................
 ///////////////////////////////////////////////////////////////////////////////

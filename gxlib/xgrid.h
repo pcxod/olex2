@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -52,6 +52,7 @@ class TXGrid : public AGDrawObject {
     virtual bool DoZoom(double zoom, bool inc) { return false; }
     const vec3d& GetCenter() const { return Center; }
     void Init(unsigned char* RGB, GLenum format);
+    void LibReset(const TStrObjList& Params, TMacroData& E);
   public:
     TLegend(TGlRenderer& Render, const olxstr& collectionName);
     void SetData(unsigned char* RGB, GLsizei width, GLsizei height,
@@ -63,6 +64,8 @@ class TXGrid : public AGDrawObject {
     virtual bool GetDimensions(vec3d &, vec3d &) { return false; }
     bool OnMouseUp(const IOlxObject *Sender, const TMouseData& Data);
     void UpdateLabel() { Fit(); }
+    void ExportLibrary(TLibrary& lib);
+
     TStrList text;
   };
 

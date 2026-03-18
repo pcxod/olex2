@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2025 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -21,6 +21,7 @@ protected:
   virtual void Add(AReleasable* item) = 0;
 public:
   virtual ~IReleasableContainer() {}
+  virtual bool is_destroying() const = 0;
   friend class AReleasable;
 };
 
@@ -44,6 +45,7 @@ public:
 
 template <class item_t>
 class AReleasableContainer : public IReleasableContainer {
+  bool destroying;
 protected:
   TTypeList<item_t> items;
   void Add(AReleasable* item) {
@@ -67,9 +69,14 @@ protected:
   virtual void OnRestore(item_t& item) = 0;
   //.............................................................................
   virtual void OnRelease(item_t& item) = 0;
+  virtual bool is_destroying() const { return destroying; }
 public:
-  virtual ~AReleasableContainer()
+  AReleasableContainer()
+    : destroying(false)
   {}
+  virtual ~AReleasableContainer() {
+    destroying = true;
+  }
   virtual void Clear() { items.Clear(); }
   //.............................................................................
   void Delete(AReleasable& i) {
