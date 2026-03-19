@@ -21,6 +21,7 @@
 #ifdef _PYTHON
   #undef HAVE_SSIZE_T
   #undef HAVE_WCHAR_H
+  #define PY_SSIZE_T_CLEAN
   #ifdef _DEBUG
     #undef _DEBUG
     #include "Python.h"
