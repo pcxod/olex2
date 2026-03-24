@@ -405,7 +405,7 @@ void DoLaunch(const TStrList &args_)  {
   static const olxcstr ld_var = "LD_LIBRARY_PATH";
 #  endif
   olxstr ld_path;
-  ld_path << bd << "lib:" << bd << "cctbx/cctbx_build/lib";
+  ld_path << bd << "lib:" << bd << "ilib:" << bd << "cctbx/cctbx_build/lib";
   olx_setenv(ld_var, ld_path);
   olx_setenv("PYTHONHOME", bd);
   const olxstr cmdl = bd + "olex2_exe";
