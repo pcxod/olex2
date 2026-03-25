@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2025 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -92,9 +92,7 @@ public:
   olxdict(const const_olxdict<KType, VType, Comparator>& ad)
     : SortedL(ad.obj().cmp)
   {
-    olxdict & d = ad.Release();
-    SortedL::TakeOver(d);
-    delete& d;
+    SortedL::TakeOver(ad.Release(), true);
   }
   void TakeOver(olxdict& d) { SortedL::TakeOver(d); }
   olxdict& operator = (const olxdict& ad) {
@@ -102,9 +100,7 @@ public:
     return *this;
   }
   olxdict& operator = (const const_olxdict<KType, VType, Comparator>& ad) {
-    olxdict& d = ad.Release();
-    SortedL::TakeOver(d);
-    delete& d;
+    SortedL::TakeOver(ad.Release(), true);
     return *this;
   }
   template <class T> VType& Get(const T& key) const {

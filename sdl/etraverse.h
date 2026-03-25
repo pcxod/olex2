@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2025 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -136,7 +136,7 @@ struct IIterator {
 
 
 template <typename value_t>
-struct AIterable {
+struct AIterable : public IOlxObject {
   typedef olx_object_ptr<IIterator<value_t> > iterator_t;
   virtual IIterator<value_t>* iterate() const = 0;
   iterator_t Iterate() const {

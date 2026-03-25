@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2025 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -16,9 +16,11 @@ BeginEsdlNamespace()
 
 template <typename, typename> class ConstSortedObjectList;
 template <typename, typename> class ConstSortedPointerList;
-// generic sorted list
+/* generic sorted list, need either virtual destructor or base class declaring one
+ for TakeOver+delete to work!
+ */
 template <class ListClass, class Comparator, typename TypeClass>
-class TTSortedListBase {
+class TTSortedListBase : public IOlxObject {
 protected:
   ListClass list;
   Comparator cmp;
