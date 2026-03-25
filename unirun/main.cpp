@@ -384,7 +384,7 @@ void DoLaunch(const TStrList &args_)  {
   olx_setenv("OLEX2_CCTBX_DIR", EmptyString());
   olx_setenv("OLEX2_DIR", EmptyString());
 #ifdef __WIN32__
-  olx_setenv("PYTHONHOME", bd + "Python27");
+  olx_setenv("PYTHONHOME", bd + "Python");
   const olxstr cmdl = bd + "olex2.dll";
 #else
   olx_setenv("BOOST_ADAPTBX_FPE_DEFAULT", "1");
@@ -405,7 +405,7 @@ void DoLaunch(const TStrList &args_)  {
   static const olxcstr ld_var = "LD_LIBRARY_PATH";
 #  endif
   olxstr ld_path;
-  ld_path << bd << "lib:" << bd << "ilib:" << bd << "cctbx/cctbx_build/lib";
+  ld_path << bd << "ilib:" << bd << "ilib:" << bd << "cctbx/cctbx_build/lib";
   olx_setenv(ld_var, ld_path);
   olx_setenv("PYTHONHOME", bd);
   const olxstr cmdl = bd + "olex2_exe";

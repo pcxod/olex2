@@ -51,7 +51,9 @@ public:
   olxset(const const_olxset<object_t, cmp_t>& ad)
     : list_t(ad.obj().cmp)
   {
-    list_t::TakeOver(ad.Release(), true);
+    olxset& s = ad.Release();
+    list_t::TakeOver(s);
+    delete& s;
   }
 
   void TakeOver(olxset &d)  { list_t::TakeOver(d); }
