@@ -500,7 +500,7 @@ Friedel opposites of components 1 ... m
   const HklStat& GetMergeStat();
   // merged according to MERG
   template <class SymSpace, class Merger>
-  HklStat GetRefinementRefList(const SymSpace& sp, TRefList& out)  {
+  HklStat GetRefinementRefList(const SymSpace& sp, TRefList& out) const {
     HklStat stats;
     TRefList refs;
     FilterHkl(refs, stats);
@@ -517,7 +517,7 @@ Friedel opposites of components 1 ... m
   }
   // Friedel pairs always merged
   template <class Symm, class Merger>
-  HklStat GetFourierRefList(const Symm& sp, TRefList& out) {
+  HklStat GetFourierRefList(const Symm& sp, TRefList& out) const {
     HklStat stats;
     TRefList refs;
     FilterHkl(refs, stats);
@@ -525,7 +525,7 @@ Friedel opposites of components 1 ... m
     return AdjustIntensity(out, stats);
   }
   // P-1 merged, filtered
-  template <class Merger> HklStat GetWilsonRefList(TRefList& out) {
+  template <class Merger> HklStat GetWilsonRefList(TRefList& out) const {
     HklStat stats;
     TRefList refs;
     FilterHkl(refs, stats);
@@ -535,7 +535,7 @@ Friedel opposites of components 1 ... m
     return AdjustIntensity(out, stats);
   }
   // P1 merged, unfiltered
-  template <class Merger> HklStat GetAllP1RefList(TRefList& out) {
+  template <class Merger> HklStat GetAllP1RefList(TRefList& out) const {
     HklStat stats;
     TRefList refs(GetReflections());
     vec3i_list empty_omits;
@@ -543,7 +543,7 @@ Friedel opposites of components 1 ... m
     return stats;
   }
   // P1 merged, filtered
-  template <class Merger> HklStat GetFilteredP1RefList(TRefList& out) {
+  template <class Merger> HklStat GetFilteredP1RefList(TRefList& out) const {
     HklStat stats;
     TRefList refs;
     FilterHkl(refs, stats);

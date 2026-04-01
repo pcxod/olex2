@@ -519,6 +519,18 @@ TLattice::GetFragmentGrowMatrices(const TCAtomPList& l, bool use_q_peaks,
     const smatd &ref_m = *q.Pop();
     for (size_t j = 0; j < l.Count(); j++) {
       TCAtom& a = *l[j];
+      for (size_t eqi = 0; eqi < a.EquivCount(); eqi++) {
+        smatd m = uc.MulMatrix(a.GetEquiv(eqi), ref_m);
+        olx_pair_t<size_t, bool> idx = res.AddUnique(m);
+        if (idx.b) {
+          q.Push(&res[idx.a]);
+        }
+        else {
+          if (polymeric != 0 && !*polymeric && m.t != res[idx.a].t) {
+            *polymeric = true;
+          }
+        }
+      }
       for (size_t k = 0; k < a.AttachedSiteCount(); k++) {
         TCAtom::Site &as = a.GetAttachedSite(k);
         if (as.atom->IsDeleted() ||
@@ -3120,14 +3132,24 @@ TLattice::CalcMoiety() const
     for (size_t i = 0; i < frags.Count(); i++) {
       const TCAtomPList& l = cfrags[frags[i].GetC()];
       bool polymeric = false;
-      const size_t generators = GetFragmentGrowMatrices(l, false, &polymeric).Count();
-      const int gd = int(generators == 0 ? 1 : generators);
+      int generators =(int) GetFragmentGrowMatrices(l, false, &polymeric).Count();
+      int gd = generators == 0 ? 1 : generators;
       double mult = polymeric ? zp_mult : gd;
-      if (!polymeric) {
-        frags[i].a *= zp_mult / gd;
+      if (generators == 1) {
+        for (size_t j = 0; j < frags[i].GetB().Count(); j++) {
+          frags[i].b[j].count *= mult;
+        }
+        if (!polymeric) {
+          frags[i].a *= zp_mult / gd;
+        }
       }
-      for (size_t j = 0; j < frags[i].GetB().Count(); j++) {
-        frags[i].b[j].count *= mult;
+      else {
+        for (size_t j = 0; j < frags[i].GetB().Count(); j++) {
+          frags[i].b[j].count *= frags[i].a * mult;
+        }
+        if (!polymeric) {
+          frags[i].a = zp_mult / gd;
+        }
       }
     }
   }
