@@ -311,11 +311,14 @@ public:
   */
   static olxstr CreateRelativePath(const olxstr& path,
     const olxstr& base=EmptyString());
+  // checks FS object mask (e.g. S_IFDIR), returns false if 'stat' fails
+  static bool CheckStat(const olxstr& fn, int mask, bool normalise = true);
   /* searches given file name in current folder and in path, if found returns
   full path to the file inclusive the file name, otherwise returns empty
   string. If the filename is absolute returns it straight away.
   */
-  static olxstr Which(const olxstr& filename);
+  static olxstr Which(const olxstr& filename, bool check_current=true,
+    bool check_base_dir=true, int mask=-1);
   static olxstr Which(const olxstr& filename, const TStrList &paths);
   /* returns a new object created with new using tmpnam (on non-windows
   systems), or properly named file object which is deleted upon the object

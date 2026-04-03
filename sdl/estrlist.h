@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -42,7 +42,7 @@ public:
 };
 
 template <typename T>
-class TICStrList {
+class TICStrList : public IOlxObject {
 public:
   virtual size_t Count() const = 0;
   virtual const T& operator [] (size_t idx) const = 0;
@@ -57,8 +57,7 @@ public:
 
 // string class, string container class
 template <class T> class TTStrList
-  : public TICStrList<typename T::string_type>,
-  public IOlxObject
+  : public TICStrList<typename T::string_type>
 {
 public:
   typedef typename T::string_type string_type;

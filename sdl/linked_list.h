@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2025 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -33,7 +33,7 @@ public:
 
 // primitive linked list
 template <typename T, class cleanupClass=DummyCleanup>
-class TLinkedList {
+class TLinkedList : public IOlxObject {
 protected:
   struct Entry {
     T data;
@@ -50,7 +50,7 @@ public:
     : count(0), first(0), last(0)
   {}
   
-  virtual ~TLinkedList() { Clear(); }
+  ~TLinkedList() { Clear(); }
   
   void Clear() {
     if (first == 0) {

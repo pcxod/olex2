@@ -922,6 +922,10 @@ void RefinementModel::SetReflections(const TRefList &refs) const {
   _FriedelPairCount = 0;
   _Reflections.SetCapacity(refs.Count());
   const bool use_batch = HKLF >= 5;
+  TUnitCell::SymmSpace sp =
+    aunit.GetLattice().GetUnitCell().GetSymmSpace();
+  SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
+
   for (size_t i = 0; i < refs.Count(); i++) {
     if (refs[i].IsOmitted()) {
       continue;
@@ -937,6 +941,7 @@ void RefinementModel::SetReflections(const TRefList &refs) const {
       r.SetI(r.GetI()*HKLF_s);
       r.SetS(r.GetS()*HKLF_s / HKLF_wt);
     }
+    r.SetAbsent(r.IsAbsent(sp));
     vec3i::UpdateMinMax(r.GetHkl(), _HklStat.FileMinInd, _HklStat.FileMaxInd);
   }
   size_t maxRedundancy = 0;
@@ -1352,6 +1357,10 @@ RefinementModel::HklStat& RefinementModel::FilterHkl(TRefList& out,
         break;
       }
       if (rsf.IsOutside(all_refs[j])) {
+        add = false;
+        break;
+      }
+      if (all_refs[j].IsAbsent()) {
         add = false;
         break;
       }
@@ -2471,7 +2480,7 @@ PyObject* RefinementModel::PyExport(bool export_conn) {
     Py_BuildValue("(ddd)(ddd)(ddd)", HKLF_mat[0][0], HKLF_mat[0][1], HKLF_mat[0][2],
       HKLF_mat[1][0], HKLF_mat[1][1], HKLF_mat[1][2],
       HKLF_mat[2][0], HKLF_mat[2][1], HKLF_mat[2][2]));
-  if (HKLF > 4) {  // special case, twin entry also has BASF!
+  if (HKLF == 2 || HKLF > 4) {  // special case, twin entry also has BASF!
     PyObject* basf = PyTuple_New(Vars.GetBASFCount());
     for (size_t i = 0; i < Vars.GetBASFCount(); i++) {
       PyTuple_SetItem(basf, i, Py_BuildValue("d", Vars.GetBASF(i).GetValue()));

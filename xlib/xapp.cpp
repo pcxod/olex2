@@ -261,6 +261,21 @@ void TXApp::CalcSFEx(const TRefList& refs, TArrayList<TEComplex<double> >& F,
         refs.TakeOver(twin.measured);
         rv = twin.ms;
       }
+      else if (rm.GetHKLF() == 2) {
+        RefinementModel::HklStat st;
+        rm.FilterHkl(refs, st);
+        Fsq.Resize(refs.Count());
+        TArrayList<compd> F(refs.Count());
+        SFUtil::CalcSF(XFile(), refs, F);
+        TArrayList<double> scales = rm.GetBASFAsDoubleList();
+        for (size_t i = 0; i < F.Count(); i++) {
+          Fsq[i] = F[i].qmod();
+          int sc = refs[i].GetBatch();
+          if (sc > 2) {
+            Fsq[i] *= scales[sc - 2];
+          }
+        }
+      }
       else {
         rv = rm.GetRefinementRefList<
           TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);

@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2025 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -62,9 +62,7 @@ public:
   }
 
   olxset &operator = (const const_olxset<object_t, cmp_t> &ad)  {
-    olxset& s = ad.Release();
-    list_t::TakeOver(s);
-    delete& s;
+    list_t::TakeOver(ad.Release(), true);
     return *this;
   }
 

@@ -26,7 +26,7 @@ struct LibFile {
   static void ChDir(const TStrObjList& Params, TMacroData& E);
   static void MkDir(const TStrObjList& Params, TMacroData& E);
   static void OSPath(const TStrObjList& Params, TMacroData& E);
-  static void Which(const TStrObjList& Params, TMacroData& E);
+  static void Which(TStrObjList& Cmds, const TParamList& Options, TMacroData& E);
   static void Age(const TStrObjList& Params, TMacroData& E);
   static void ListDirForGUI(const TStrObjList& Params, TMacroData& E);
   static void CreateRelativePath(const TStrObjList& Params, TMacroData& E);

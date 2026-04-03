@@ -1205,21 +1205,41 @@ olxstr TEFile::CreateRelativePath(const olxstr& path, const olxstr& _base)  {
   return rv;
 }
 //..............................................................................
-olxstr TEFile::Which(const olxstr& filename) {
+bool TEFile::CheckStat(const olxstr& fn_, int mask, bool normalise) {
+  if (mask == -1) {
+    return true;
+  }
+  olxstr fn = normalise ? OLX_OS_PATH(fn_) : fn_;
+  struct STAT_STR the_stat;
+  if (STAT(OLXSTR(fn), &the_stat) == 0) {
+    return(the_stat.st_mode & mask) == mask;
+  }
+  return false;
+}
+//..............................................................................
+olxstr TEFile::Which(const olxstr& filename, bool check_current,
+  bool check_base_dir, int mask)
+{
   if (TEFile::IsAbsolutePath(filename)) {
     return filename;
   }
-  olxstr fn = TEFile::CurrentDir();
-  TEFile::AddPathDelimeterI(fn) << filename;
-  // check current folder
-  if (Exists(fn)) {
-    return fn;
+  if (check_current) {
+    olxstr fn = TEFile::CurrentDir();
+    TEFile::AddPathDelimeterI(fn) << filename;
+    // check current folder
+    if (Exists(fn)) {
+      if (CheckStat(fn, mask, false)) {
+        return fn;
+      }
+    }
   }
   // check program folder
-  fn = TBasicApp::GetBaseDir();
-  fn << filename;
-  if (Exists(fn)) {
-    return fn;
+  if (check_base_dir) {
+    olxstr fn = TBasicApp::GetBaseDir();
+    fn << filename;
+    if (Exists(fn) && CheckStat(fn, mask, false)) {
+      return fn;
+    }
   }
   // check path then ...
   olxstr path = olx_getenv("PATH");
@@ -1229,7 +1249,7 @@ olxstr TEFile::Which(const olxstr& filename) {
   TStrList toks(path, OLX_ENVI_PATH_DEL);
   for (size_t i = 0; i < toks.Count(); i++) {
     TEFile::AddPathDelimeterI(toks[i]) << filename;
-    if (Exists(toks[i])) {
+    if (Exists(toks[i]) && CheckStat(toks[i], mask, false)) {
       return toks[i];
     }
   }

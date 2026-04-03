@@ -233,32 +233,52 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     }
     sw.start("Loading/Filtering/Merging HKL");
     if (rm.GetHKLF() < 5) {
-      RefinementModel::HklStat ms = rm.GetRefinementRefList<
-        TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
       sw.start("Calculating structure factors");
-      if (xapp.XFile().GetRM().Vars.HasBASF()) {
-        twinning::handler dt(info_ex, refs,
-          xapp.XFile().GetRM().GetBASFAsDoubleList(),
-          xapp.XFile().GetRM().GetTWIN_mat(),
-          xapp.XFile().GetRM().GetTWIN_n());
-        F.SetCount(dt.unique_indices.Count());
-        //TArrayList<compd> Fc(dt.unique_indices.Count());
-        CalcSF(xapp.XFile(), dt.unique_indices, F, true, anom_only);
-        dt.detwin(twinning::detwinner_shelx(), refs, F);
-        //dt.detwin_and_merge(twinning::detwinner_shelx(),
-        //  RefMerger::ShelxMerger(), refs, Fc, &F);
-
+      if (rm.GetHKLF() == 2) {
+        TRefList all_refs;
+        RefinementModel::HklStat st;
+        rm.FilterHkl(all_refs, st);
+        TArrayList<double> scales = rm.GetBASFAsDoubleList();
+        for (size_t i = 0; i < all_refs.Count(); i++) {
+          int sc = all_refs[i].GetBatch();
+          if (sc > 2) {
+            all_refs[i] *= 1./scales[sc - 2];
+          }
+        }
+        bool mergeFP = (rm.GetMERG() == 4 || rm.GetMERG() == 3) && !sp.IsCentrosymmetric();
+        RefinementModel::HklStat stats;
+        stats = RefMerger::Merge<RefMerger::ShelxMerger>(
+          sp, all_refs, refs, rm.GetOmits(), mergeFP);
         F.SetCount(refs.Count());
-        //CalcSF(xapp.XFile(), refs, F, true);
-        //xapp.XFile().GetRM().DetwinAlgebraic(refs, ms, info_ex);
+        CalcSF(xapp.XFile(), refs, F, true, anom_only);
       }
       else {
-        F.SetCount(refs.Count());
-        // this is a reference implementation for tests
-        //xapp.CalcSF(refs, F);
-        //sw.start("Calculation structure factors A");
-        //fastsymm version is just about 10% faster...
-        CalcSF(xapp.XFile(), refs, F, true, anom_only);
+        RefinementModel::HklStat ms = rm.GetRefinementRefList<
+          TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
+        if (xapp.XFile().GetRM().Vars.HasBASF()) {
+          twinning::handler dt(info_ex, refs,
+            xapp.XFile().GetRM().GetBASFAsDoubleList(),
+            xapp.XFile().GetRM().GetTWIN_mat(),
+            xapp.XFile().GetRM().GetTWIN_n());
+          F.SetCount(dt.unique_indices.Count());
+          //TArrayList<compd> Fc(dt.unique_indices.Count());
+          CalcSF(xapp.XFile(), dt.unique_indices, F, true, anom_only);
+          dt.detwin(twinning::detwinner_shelx(), refs, F);
+          //dt.detwin_and_merge(twinning::detwinner_shelx(),
+          //  RefMerger::ShelxMerger(), refs, Fc, &F);
+
+          F.SetCount(refs.Count());
+          //CalcSF(xapp.XFile(), refs, F, true);
+          //xapp.XFile().GetRM().DetwinAlgebraic(refs, ms, info_ex);
+        }
+        else {
+          F.SetCount(refs.Count());
+          // this is a reference implementation for tests
+          //xapp.CalcSF(refs, F);
+          //sw.start("Calculation structure factors A");
+          //fastsymm version is just about 10% faster...
+          CalcSF(xapp.XFile(), refs, F, true, anom_only);
+        }
       }
     }
     else {
