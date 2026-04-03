@@ -10,6 +10,7 @@
 #include "libfile.h"
 #include "efile.h"
 #include "bapp.h"
+#include <sys/stat.h>
 
 void LibFile::FileExists(const TStrObjList& Params, TMacroData& E) {
   E.SetRetVal(TEFile::Exists(Params[0]));
@@ -69,7 +70,7 @@ void LibFile::Which(TStrObjList& Cmds, const TParamList& Options, TMacroData& E)
   int mask = -1;
   olxstr type = Options.FindValue("type");
   if (type.Equalsi("file")) {
-    mask = _S_IFREG;
+    mask = S_IFREG;
   }
   else if (type.Equalsi("dir")) {
     mask = S_IFDIR;
