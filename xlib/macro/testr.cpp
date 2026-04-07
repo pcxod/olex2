@@ -184,7 +184,8 @@ void XLibMacros::macTestR(TStrObjList &Cmds, const TParamList &Options,
   xapp.NewLogEntry() << "wR2 = " << olxstr::FormatFloat(4, rstat.wR2);
 
   double oR = 0;
-  TRefPList testr = rstat.GetNBadRefs(50, &oR);
+  const size_t NR = 50;
+  TRefPList testr = rstat.GetNBadRefs(NR, &oR);
   {
     TTable ho(olx_min(10, testr.Count()), 5);
     ho.ColName(0) = "HKL";
@@ -204,7 +205,8 @@ void XLibMacros::macTestR(TStrObjList &Cmds, const TParamList &Options,
     TBasicApp::NewLogEntry() <<
       ho.CreateTXTList("10 Most disagreeable reflections", true, false, ' ');
   }
-  TBasicApp::NewLogEntry() << "Original wR2=" << olxstr::FormatFloat(3, oR);
+  TBasicApp::NewLogEntry() << "Original wR2 (" << NR << " bad refs)="
+    << olxstr::FormatFloat(3, oR);
   TArray3D<TReflection*> hkl3d(rstat.min_hkl, rstat.max_hkl);
   hkl3d.FastInitWith(0);
   for (size_t i = 0; i < rstat.refs.Count(); i++) {
