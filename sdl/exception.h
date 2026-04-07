@@ -12,6 +12,12 @@
 #include "ebase.h"
 BeginEsdlNamespace()
 
+#define AddStreaming(ET)\
+  template <typename T> ET& operator << (const T& m) {\
+    TBasicException::operator << (m);\
+    return *this;\
+  }
+
 class TBasicException: public TExceptionBase {
   olxstr Message,
     Location;
@@ -24,6 +30,14 @@ protected:
     this->Cause = toReplicate.Cause != 0
       ? static_cast<TBasicException *>(toReplicate.Cause->Replicate())
       : 0;
+  }
+  template <typename T>
+  TBasicException& operator << (const T& extra_msg) {
+    if (!Message.IsEmpty()) {
+      Message << ' ';
+    }
+    Message << extra_msg;
+    return *this;
   }
 public:
   TBasicException() : Cause(0) {}
@@ -99,22 +113,23 @@ public:
   }
 };
 //.............................................................................
-class TFunctionFailedException: public TBasicException {
+class TFunctionFailedException : public TBasicException {
 public:
   TFunctionFailedException(const olxstr& location, const olxstr& msg)
-    : TBasicException(location, msg )
+    : TBasicException(location, msg)
   {}
   TFunctionFailedException(const olxstr& location, const TExceptionBase& cause,
-    const olxstr& msg=EmptyString())
-    : TBasicException(location, cause, msg )
+    const olxstr& msg = EmptyString())
+    : TBasicException(location, cause, msg)
   {}
   TFunctionFailedException(const olxstr& location, IOlxObject* cause)
-    : TBasicException(location, cause )
+    : TBasicException(location, cause)
   {}
-  virtual const char* GetNiceName() const {  return "Failed";  }
+  virtual const char* GetNiceName() const { return "Failed"; }
   virtual IOlxObject* Replicate() const {
     return new TFunctionFailedException(*this);
   }
+  AddStreaming(TFunctionFailedException);
 };
 //.............................................................................
 class TInvalidArgumentException: public TBasicException {
@@ -130,6 +145,7 @@ public:
   virtual IOlxObject* Replicate() const {
     return new TInvalidArgumentException(*this);
   }
+  AddStreaming(TInvalidArgumentException);
 };
 //.............................................................................
 class TNotImplementedException: public TBasicException {
@@ -147,8 +163,9 @@ public:
 //......................IO exceptions..........................................
 class TIOException: public TBasicException {
 public:
-  TIOException(const olxstr& location, const olxstr &msg):
-    TBasicException(location, msg )  {    }
+  TIOException(const olxstr& location, const olxstr &msg)
+    : TBasicException(location, msg)
+  {}
 };
 //.............................................................................
 class TFileException: public TIOException {
@@ -166,7 +183,7 @@ public:
 class TFileDoesNotExistException: public TFileException {
 public:
   TFileDoesNotExistException(const olxstr& location, const olxstr& fileName)
-    : TFileException(location, fileName, EmptyString() )
+    : TFileException(location, fileName, EmptyString())
   {}
   virtual const char* GetNiceName() const { return "File does not exist"; }
   virtual IOlxObject* Replicate() const {
@@ -285,12 +302,12 @@ public:
   }
 };
 
-//checks if the index within bounds
+//checks if the index is within bounds
 #define OLX_VALIDATE_RANGE(index, min_index, max_index) \
   if((index) < min_index || (index) >= max_index) \
     throw TIndexOutOfRangeException(__OlxSourceInfo, index, min_index, max_index);
 
-//checks if the range [index, index+count) within bounds
+//checks if the range [index, index+count) wis ithin bounds
 #define OLX_VALIDATE_SUBRANGE(index, count, min_index, max_index) \
   if((index) < min_index || (index) >= max_index) \
     throw TIndexOutOfRangeException(__OlxSourceInfo, index, min_index, max_index);\

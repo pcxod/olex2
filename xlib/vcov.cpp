@@ -155,7 +155,7 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au) {
       else {
         if (ua_index != 0) {
           throw TInvalidArgumentException(__OlxSourceInfo,
-            "U for isotropic atom");
+            "U for isotropic atom") << toks[4];
         }
         atom->SetUisoEsd(toks[2].ToDouble());
       }
@@ -193,10 +193,10 @@ void VcoVMatrix::ReadShelxMat(const olxstr& fileName, TAsymmUnit& au) {
     }
   }
   for (size_t i = 0; i < Index.Count(); i++) {
-    TCAtom* ca = au.FindCAtom(Index[i].GetA());
+    TCAtom* ca = au.FindCAtom(Index[i].GetA(), 0, true);
     if (ca == 0) {
       throw TFunctionFailedException(__OlxSourceInfo,
-        "matrix is not upto date");
+        "matrix is not upto date") << "could not locate" << Index[i].GetA();
     }
     Index[i].c = ca->GetId();
     size_t j = i;
