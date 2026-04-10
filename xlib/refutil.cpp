@@ -31,9 +31,6 @@ _stats(0)
   if (rm.HasSHEL() && SHEL_hr > min_d) {
     min_d = SHEL_hr;
   }
-  else {
-    min_d = 0;
-  }
   max_d = SHEL_lr;
   standardise_for_omit = rm.GetHKLF() < 5 && rm.GetMERG() != 0;
   if (standardise_for_omit) {
