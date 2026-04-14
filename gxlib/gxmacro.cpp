@@ -1716,7 +1716,7 @@ void GXLibMacros::macDetach(TStrObjList &Cmds, const TParamList &Options,
 }
 //.............................................................................
 int GXLibMacros::QPeakSortA(const TCAtom &a, const TCAtom &b)  {
-  int v = olx_cmp(a.GetQPeak(), b.GetQPeak());
+  int v = olx_cmp(olx_abs(a.GetQPeak()), olx_abs(b.GetQPeak()));
   if (v == 0 && a.GetLabel().Length() > 1 && b.GetLabel().Length() > 1) {
     if (a.GetLabel().SubStringFrom(1).IsNumber() &&
         b.GetLabel().SubStringFrom(1).IsNumber())
@@ -1741,8 +1741,9 @@ void GXLibMacros::macShowQ(TStrObjList &Cmds, const TParamList &Options,
     TAsymmUnit& au = app.XFile().GetAsymmUnit();
     TCAtomPList qpeaks;
     for (size_t i=0; i < au.AtomCount(); i++) {
-      if (!au.GetAtom(i).IsDeleted() && au.GetAtom(i).GetType() == iQPeakZ)
+      if (!au.GetAtom(i).IsDeleted() && au.GetAtom(i).GetType() == iQPeakZ) {
         qpeaks.Add(au.GetAtom(i));
+      }
     }
     QuickSorter::SortSF(qpeaks, &GXLibMacros::QPeakSortD);
     index_t d_cnt = 0;
@@ -1758,9 +1759,12 @@ void GXLibMacros::macShowQ(TStrObjList &Cmds, const TParamList &Options,
       return;
     }
     d_cnt += (index_t)(wheel);
-    if (d_cnt < 0)  d_cnt = 0;
-    if (d_cnt > (index_t)qpeaks.Count())
+    if (d_cnt < 0) {
+      d_cnt = 0;
+    }
+    if (d_cnt > (index_t)qpeaks.Count()) {
       d_cnt = qpeaks.Count();
+    }
     for (size_t i = 0; i < qpeaks.Count(); i++) {
       qpeaks[i]->SetDetached(i >= (size_t)d_cnt);
     }
@@ -4336,7 +4340,7 @@ void GXLibMacros::funExtraZoom(const TStrObjList& Params, TMacroData &E) {
 void GXLibMacros::macKill(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
-  if (TModeRegistry::GetInstance().GetCurrent() != NULL) {
+  if (TModeRegistry::GetInstance().GetCurrent() != 0) {
     Error.ProcessingError(__OlxSrcInfo, "Kill inaccessible from within a mode");
     return;
   }
@@ -4392,11 +4396,14 @@ void GXLibMacros::macKill(TStrObjList &Cmds, const TParamList &Options,
     else {
       TXAtomPList Atoms = app.FindXAtoms(Cmds, true, false),
         Selected;
-      if (Atoms.IsEmpty() && Cmds.Count() == 1) {
-        TGPCollection *col = app.GetRenderer().FindCollection(Cmds[0]);
-        if (col != 0) {
-          for (size_t i = 0; i < col->ObjectCount(); i++) {
-            col->GetObject(i).SetVisible(false);
+      if (Atoms.IsEmpty()) {
+        for (size_t i = 0; i < Cmds.Count(); i++) {
+          TGPCollection* col = app.GetRenderer().FindCollection(Cmds[i]);
+          if (col == 0) {
+            continue;
+          }
+          for (size_t j = 0; j < col->ObjectCount(); j++) {
+            col->GetObject(j).SetVisible(false);
           }
         }
         return;

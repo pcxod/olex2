@@ -747,8 +747,10 @@ void TMainForm::XApp(Olex2App *XA)  {
     "Loads cell information from provided file and displays it on screen as "
     "lattice points/grid");
   this_InitMacroD(AddObject,
-    "g-grow for spheres using current model",
-    fpAny^(fpNone|fpOne|fpTwo),
+    "g-grow for spheres using current model&;"
+    "c-given coordinates are Cartesioan [false]&;"
+    ,
+    fpAny^(fpNone|fpOne),
     "Adds a new user defined object to the graphical scene");
   this_InitMacroD(DelObject, EmptyString(), fpOne,
     "Deletes graphical object by name");

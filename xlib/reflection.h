@@ -32,6 +32,7 @@ public:
 private:
   vec3i hkl;
   double I, S;
+  double* w; // optional wavekength
   // first 8 bits - flags, next 8 - multiplicity, then batch number
   uint32_t Flags;
   void _init(int batch = NoBatchSet) {
@@ -43,57 +44,54 @@ private:
   }
 public:
   TReflection()
-    : I(0), S(0)
+    : I(0), S(0), w(0)
   {
     _init();
   }
-  TReflection(const TReflection& r) { *this = r; }
-  TReflection(const TReflection& r, int bacth_n) {
+  TReflection(const TReflection& r)
+  : w(0)
+  {
+    *this = r;
+  }
+  TReflection(const TReflection& r, int bacth_n)
+  : w(0)
+  {
     *this = r;
     SetBatch(bacth_n);
   }
   TReflection(const TReflection& r, const vec3i& _hkl, int batch_n = NoBatchSet)
-    : hkl(_hkl), I(r.I), S(r.S), Flags(r.Flags)
+    : hkl(_hkl), I(r.I), S(r.S), w(olx_copy(r.w)), Flags(r.Flags)
   {
     SetBatch(batch_n);
   }
   TReflection(int h, int k, int l)
-    : hkl(h, k, l), I(0), S(0)
+    : hkl(h, k, l), I(0), S(0), w(0)
   {
     _init();
   }
   TReflection(const vec3i& _hkl)
-    : hkl(_hkl), I(0), S(0)
+    : hkl(_hkl), I(0), S(0), w(0)
   {
     _init();
   }
-  TReflection(int h, int k, int l, double _I, double _S, int batch = NoBatchSet)
-    : hkl(h, k, l), I(_I), S(_S)
+  TReflection(int h, int k, int l, double _I, double _S, int batch = NoBatchSet, double *w=0)
+    : hkl(h, k, l), I(_I), S(_S), w(olx_copy(w))
   {
     _init(batch);
   }
-  TReflection(int h, int k, int l, const olx_pair_t<double, double>& IS,
-    int batch = NoBatchSet)
-    : hkl(h, k, l), I(IS.a), S(IS.b)
+  TReflection(const vec3i& _hkl, double _I, double _S, int batch = NoBatchSet, double *w=0)
+    : hkl(_hkl), I(_I), S(_S), w(olx_copy(w))
   {
     _init(batch);
   }
-  TReflection(const vec3i& _hkl, double _I, double _S, int batch = NoBatchSet)
-    : hkl(_hkl), I(_I), S(_S)
-  {
-    _init(batch);
+  virtual ~TReflection() {
+    olx_del_obj(w);
   }
-  TReflection(const vec3i& _hkl, olx_pair_t<double, double>& IS,
-    int batch = NoBatchSet)
-    : hkl(_hkl), I(IS.a), S(IS.a)
-  {
-    _init(batch);
-  }
-  virtual ~TReflection() {}
   TReflection& operator = (const TReflection& r) {
     hkl = r.hkl;
     I = r.I;
     S = r.S;
+    olx_set(w, r.w);
     Flags = r.Flags;
     SetTag(r.GetTag());
     return *this;
@@ -114,11 +112,18 @@ public:
   static uint64_t CalcHKLHash64(const vec3i& hkl);
   uint64_t GetHKLHash64() const { return CalcHKLHash64(hkl); }
   //...........................................................................
-  DefPropP(double, I)
-    DefPropP(double, S)
-    void SetI(const olx_pair_t<double, double>& IS) {
+  DefPropP(double, I);
+  DefPropP(double, S);
+  void SetI(const olx_pair_t<double, double>& IS) {
     I = IS.a;
     S = IS.b;
+  }
+  // 
+  double* GetW() const {
+    return w;
+  }
+  void SetW(double w) {
+    olx_set(this->w, w);
   }
   // scaling
   TReflection& operator *= (double s) {
@@ -131,11 +136,11 @@ public:
   }
   //...........................................................................
   // these values are intialised by Analyse
-  DefPropBFIsSet(Centric, Flags, bitCentric)
-    DefPropBFIsSet(Absent, Flags, bitAbsent)
-    DefPropBFIsSet(Omitted, Flags, bitOmitted)
-    //...........................................................................
-    template <class VC>
+  DefPropBFIsSet(Centric, Flags, bitCentric);
+  DefPropBFIsSet(Absent, Flags, bitAbsent);
+  DefPropBFIsSet(Omitted, Flags, bitOmitted);
+  //...........................................................................
+  template <class VC>
   bool EqHkl(const VC& v) const {
     return ((int)v[0] == hkl[0]) && ((int)v[1] == hkl[1]) &&
       ((int)v[2] == hkl[2]);

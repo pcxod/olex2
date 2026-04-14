@@ -6469,13 +6469,8 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
       RefinementModel::SWAT::Shelxl scr = rm.GetShelxSWATCorrector();
       if (ecr.IsValid() || scr.IsValid()) {
         for (size_t i = 0; i < F.Count(); i++) {
-          if (list_n == 4) {
-            if (ecr.IsValid()) {
-              refs[i] *= ecr.CalcForFo2(refs[i].GetHkl(), F[i].qmod());
-            }
-            else {
-              refs[i] *= scr.CalcForFo2(refs[i].GetHkl());
-            }
+          if (list_n == 4 && ecr.IsValid()) {
+            refs[i] *= ecr.CalcForFo2(refs[i].GetHkl(), F[i].qmod(), refs[i].GetW());
           }
           else {
             if (ecr.IsValid()) {

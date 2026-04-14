@@ -651,18 +651,38 @@ Friedel opposites of components 1 ... m
       );
     }
     struct Shelxl {
-      const double l_sq_o_4, k;
+      const double l_sq_o_4, k, e;
       const mat3d hkl2cart;
-      Shelxl(double l, double x, const mat3d &hkl2cart)
-        : l_sq_o_4(l*l*0.25), k(l*l*l*x*0.001 / 2), hkl2cart(hkl2cart)
+      Shelxl(double l, double e, const mat3d &hkl2cart)
+        : l_sq_o_4(l*l*0.25), k(l*l*l*e*0.001 / 2), e(e), hkl2cart(hkl2cart)
       {}
-      double CalcForFo2(const vec3i &mi, double Fc_sq) const {
-        const double x = EXTI::HklToCart(mi, hkl2cart).QLength()*l_sq_o_4;
-        return sqrt(1 + Fc_sq * k / sqrt(x*(1 - x)));
+      double CalcForFo2(const vec3i &mi, double Fc_sq, double *wl=0) const {
+        double x = EXTI::HklToCart(mi, hkl2cart).QLength(),
+          k_;
+        if (wl == 0) {
+          x *= l_sq_o_4;
+          k_ = k;
+        }
+        else {
+          k_ = (*wl) * (*wl);
+          x *= k_ * 0.25;
+          k_ *= (*wl) * e * 0.001 / 2;
+        }
+        return sqrt(1 + Fc_sq * k_ / sqrt(olx_abs(x*(1 - x))));
       }
-      double CalcForFc(const vec3i &mi, double Fc_sq) const {
-        const double x = EXTI::HklToCart(mi, hkl2cart).QLength()*l_sq_o_4;
-        return pow(1 + Fc_sq * k / sqrt(x*(1 - x)), -0.25);
+      double CalcForFc(const vec3i &mi, double Fc_sq, double *wl=0) const {
+        double x = EXTI::HklToCart(mi, hkl2cart).QLength(),
+          k_;
+        if (wl == 0) {
+          x *= l_sq_o_4;
+          k_ = k;
+        }
+        else {
+          k_ = (*wl) * (*wl);
+          x *= k_ * 0.25;
+          k_ *= (*wl) * e * 0.001 / 2;
+        }
+        return pow(1 + Fc_sq * k_ / sqrt(olx_abs(x*(1 - x))), -0.25);
       }
       bool IsValid() const { return k != 0; }
     };

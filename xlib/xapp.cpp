@@ -251,7 +251,7 @@ void TXApp::CalcSFEx(const TRefList& refs, TArrayList<TEComplex<double> >& F,
     TUnitCell::SymmSpace sp = XFile().GetUnitCell().GetSymmSpace();
     const TDoubleList basf = rm.GetBASFAsDoubleList();
     SymmSpace::InfoEx info_ex = SymmSpace::Compact(sp);
-    if (!basf.IsEmpty()) {
+    if (!basf.IsEmpty() || rm.GetHKLF() == 2) {
       if (rm.GetHKLF() >= 5) {
         twinning::handler twin(info_ex, rm.GetReflections(),
           RefUtil::ResolutionAndSigmaFilter(rm), basf);
@@ -271,8 +271,8 @@ void TXApp::CalcSFEx(const TRefList& refs, TArrayList<TEComplex<double> >& F,
         for (size_t i = 0; i < F.Count(); i++) {
           Fsq[i] = F[i].qmod();
           int sc = refs[i].GetBatch();
-          if (sc > 2) {
-            Fsq[i] *= scales[sc - 2];
+          if (sc > 2 && sc - 2 < scales.Count()) {
+            refs[i] *= 1. / scales[sc - 2];
           }
         }
       }
@@ -306,10 +306,10 @@ void TXApp::CalcSFEx(const TRefList& refs, TArrayList<TEComplex<double> >& F,
       RefinementModel::EXTI::Shelxl cr = rm.GetShelxEXTICorrector();
       for (size_t i = 0; i < refs.Count(); i++) {
         if (extiDest == SFUtil::EXTIDest::Fc) {
-          Fsq[i] *= olx_sqr(cr.CalcForFc(refs[i].GetHkl(), Fsq[i]));
+          Fsq[i] *= olx_sqr(cr.CalcForFc(refs[i].GetHkl(), Fsq[i], refs[i].GetW()));
         }
         else {
-          refs[i] *= cr.CalcForFo2(refs[i].GetHkl(), Fsq[i]);
+          refs[i] *= cr.CalcForFo2(refs[i].GetHkl(), Fsq[i], refs[i].GetW());
         }
       }
     }
@@ -324,8 +324,7 @@ void TXApp::CalcSFEx(const TRefList& refs, TArrayList<TEComplex<double> >& F,
       rv.MaxI = 100;
       rv.MaxI = -100;
       for (size_t i = 0; i < refs.Count(); i++) {
-        refs[i].SetI(refs[i].GetI()*scale_k);
-        refs[i].SetS(refs[i].GetS()*scale_k);
+        refs[i] *= scale_k;
         olx_update_min_max(refs[i].GetI(), rv.MinI, rv.MaxI);
       }
     }

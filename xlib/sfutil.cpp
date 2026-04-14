@@ -239,18 +239,34 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
         RefinementModel::HklStat st;
         rm.FilterHkl(all_refs, st);
         TArrayList<double> scales = rm.GetBASFAsDoubleList();
-        for (size_t i = 0; i < all_refs.Count(); i++) {
-          int sc = all_refs[i].GetBatch();
-          if (sc > 2) {
-            all_refs[i] *= 1./scales[sc - 2];
-          }
-        }
+
         bool mergeFP = (rm.GetMERG() == 4 || rm.GetMERG() == 3) && !sp.IsCentrosymmetric();
         RefinementModel::HklStat stats;
         stats = RefMerger::Merge<RefMerger::ShelxMerger>(
           sp, all_refs, refs, rm.GetOmits(), mergeFP);
         F.SetCount(refs.Count());
         CalcSF(xapp.XFile(), refs, F, true, anom_only);
+        olxdict<vec3i, size_t, TComparableComparator> f_map;
+        for (size_t i = 0; i < refs.Count(); i++) {
+          f_map(refs[i].GetHkl(), i);
+        }
+        RefinementModel::EXTI::Shelxl exti_cr = rm.GetShelxEXTICorrector();
+        for (size_t i = 0; i < all_refs.Count(); i++) {
+          int sc = all_refs[i].GetBatch();
+          if (sc > 2 && sc - 2 < scales.Count()) {
+            all_refs[i] *= 1. / scales[sc - 2];
+          }
+          if (exti_cr.IsValid()) {
+            size_t hi = f_map[TReflection::Standardise(all_refs[i].GetHkl(), sp)];
+            all_refs[i] *= exti_cr.CalcForFo2(all_refs[i].GetHkl(), F[hi].qmod(), all_refs[i].GetW());
+            if (all_refs[i].GetI() != all_refs[i].GetI()) {
+              hi = -1;
+            }
+          }
+        }
+        refs.Clear();
+        stats = RefMerger::Merge<RefMerger::ShelxMerger>(
+          sp, all_refs, refs, rm.GetOmits(), mergeFP);
       }
       else {
         RefinementModel::HklStat ms = rm.GetRefinementRefList<
@@ -294,15 +310,15 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     //xapp.XFile().GetRM().DetwinAlgebraic(refs, ms, info_ex);
     RefinementModel::EXTI::Shelxl exti_cr = rm.GetShelxEXTICorrector();
     RefinementModel::SWAT::Shelxl swat_cr = rm.GetShelxSWATCorrector();
-    if (exti_cr.IsValid() || swat_cr.IsValid()) {
+    if (rm.GetHKLF() != 2 && (exti_cr.IsValid() || swat_cr.IsValid())) {
       sw.start("EXTI/SWAT");
       for (size_t i = 0; i < F.Count(); i++) {
         if (exti_cr.IsValid()) {
           if (extiDest == EXTIDest::Fc) {
-            F[i] *= exti_cr.CalcForFc(refs[i].GetHkl(), F[i].qmod());
+            F[i] *= exti_cr.CalcForFc(refs[i].GetHkl(), F[i].qmod(), refs[i].GetW());
           }
           else {
-            refs[i] *= exti_cr.CalcForFo2(refs[i].GetHkl(), F[i].qmod());
+            refs[i] *= exti_cr.CalcForFo2(refs[i].GetHkl(), F[i].qmod(), refs[i].GetW());
           }
         }
         else {

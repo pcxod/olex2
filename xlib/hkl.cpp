@@ -33,7 +33,7 @@ THklFile::THklFile(const mat3d& hkl_transformation)
 }
 //..............................................................................
 void THklFile::Init() {
-  Hkl3D = NULL;
+  Hkl3D = 0;
   HKLF = -1;
 }
 //..............................................................................
@@ -218,7 +218,8 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
       }
     }
     bool ZeroRead = false,
-      HasBatch = false;
+      HasBatch = false,
+      HasWavelength = false;
     size_t line_length = crystals_data_off == InvalidIndex ?
       0 : SL[crystals_data_off].Length(),
       i = crystals_data_off == InvalidIndex ? 0 : crystals_data_off;
@@ -229,14 +230,14 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
     for (; i < line_cnt; i++) {
       const olxstr& line = SL[i];
       if (i == 0) {
-        if (line.Length() >= fmt_len +4) {
+        line_length = line.Length();
+        if (line_length >= fmt_len + 4) {
           HasBatch = true;
-          line_length = line.Length();
+          if (line_length >= fmt_len + 12) {
+            HasWavelength = true;
+          }
         }
-        else if (line.Length() >= fmt_len) {
-          line_length = line.Length();
-        }
-        else {
+        else if (line_length < fmt_len) {
           throw TInvalidArgumentException(__OlxSourceInfo, "file content");
         }
       }
@@ -259,16 +260,14 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
           ZeroRead = true;
           continue;
         }
-        TReflection* ref = HasBatch ?
-          new TReflection(h, k, l,
-            line.SubString(fidx3,fl[3]).ToDouble(),
-            // trim  fix for field overrun for -0.0 by CrystalClear
-            line.SubString(fidx4,fl[4]).TrimL('0').ToDouble(),
-            line.SubString(fidx5,4).IsNumber() ? line.SubString(fidx5,4).ToInt()
-            : 1)
-          :
-          new TReflection(h, k, l, line.SubString(fidx3,fl[3]).ToDouble(),
-            line.SubString(fidx4,fl[4]).ToDouble());
+        TReflection* ref = new TReflection(h, k, l, line.SubString(fidx3, fl[3]).ToDouble(),
+          line.SubString(fidx4, fl[4]).ToDouble());
+        if (HasBatch) {
+          ref->SetBatch(line.SubString(fidx5, 4).ToInt());
+          if (HasWavelength) {
+            ref->SetW(line.SubString(fidx5+4, 8).ToDouble());
+          }
+        }
         ref->SetOmitted(ZeroRead);
         if (apply_basis) {
           vec3d nh = Basis*vec3d(ref->GetHkl());

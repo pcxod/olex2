@@ -31,9 +31,6 @@ _stats(0)
   if (rm.HasSHEL() && SHEL_hr > min_d) {
     min_d = SHEL_hr;
   }
-  else {
-    min_d = 0;
-  }
   max_d = SHEL_lr;
   standardise_for_omit = rm.GetHKLF() < 5 && rm.GetMERG() != 0;
   if (standardise_for_omit) {
@@ -67,11 +64,20 @@ void ResolutionAndSigmaFilter::SetStats(RefinementModel::HklStat& stats) const {
 //.............................................................................
 bool ResolutionAndSigmaFilter::IsOutside(const TReflection& r) const {
   const double d = 1 / r.ToCart(rm.aunit.GetHklToCartesian()).Length();
-  if ((h_o_s > 0 && r.GetI() < h_o_s * r.GetS()) || d >= max_d || d <= min_d) {
+  if (h_o_s > 0 && r.GetI() < h_o_s * r.GetS()) {
+    
     if (_stats != 0) {
       _stats->FilteredOff++;
     }
     return true;
+  }
+  if (d >= max_d || d <= min_d) {
+    if (rm.HasSHEL() && rm.GetOMIT_2t() != 180) {
+      if (_stats != 0) {
+        _stats->FilteredOff++;
+      }
+      return true;
+    }
   }
   if (_stats != 0) {
     olx_update_min_max(r.GetI(), _stats->MinI, _stats->MaxI);
