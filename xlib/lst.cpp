@@ -403,8 +403,10 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
             TEValueD(toks[1].ToDouble(), toks[2].ToDouble()).ToString());
         }
         else if (toks[4].Equalsi("EXTI")) {
-          params("exti",
-            TEValueD(toks[1].ToDouble(), toks[2].ToDouble()).ToString());
+          TEValueD exti(toks[1].ToDouble(), toks[2].ToDouble());
+          params("exti", exti.ToString());
+          // important to keep the 'insigificant' digits!
+          params("exti_val", exti.GetV());
         }
         else if (toks[4].Equalsi("BASF")) {
           if (HasTwin && InvTwin) {

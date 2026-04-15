@@ -100,7 +100,7 @@ void TIns::LoadFromFile(const olxstr& fileName) {
         olxstr str_exti = Lst.params.Find("exti", EmptyString());
         if (!str_exti.IsEmpty()) {
           TEValueD exti = str_exti;
-          GetRM().Vars.SetEXTI(exti.GetV(), exti.GetE());
+          GetRM().Vars.SetEXTI(Lst.params["exti_val"].ToDouble(), exti.GetE());
         }
       }
       olxstr val_n = "basf_", val;

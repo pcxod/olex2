@@ -6490,10 +6490,20 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
     scale  = 1. / olx_sqr(xapp.XFile().GetRM().Vars.GetVar(0).GetValue());
   }
   else if (scale_str.Equalsi("sigma")) {
-    scale = RefUtil::CalcFsqScaleSigma(rm, F, refs);
+    if (F.IsEmpty()) {
+      scale = RefUtil::CalcFsqScaleSigma(rm, F_sq, refs);
+    }
+    else {
+      scale = RefUtil::CalcFsqScaleSigma(rm, F, refs);
+    }
   }
   else if (scale_str.Equalsi("shelx")) {
-    scale = RefUtil::CalcFsqScaleShelx(rm, F, refs);
+    if (F.IsEmpty()) {
+      scale = RefUtil::CalcFsqScaleShelx(rm, F_sq, refs);
+    }
+    else {
+      scale = RefUtil::CalcFsqScaleShelx(rm, F, refs);
+    }
   }
   else if (scale_str.Equalsi("none")) {
     ;

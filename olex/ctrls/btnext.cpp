@@ -89,24 +89,39 @@ void TButton::MouseLeaveEvent(wxMouseEvent& event) {
 void TButton::PaintEvent(wxPaintEvent& evt) {
   if (IsBeingDeleted() || drawParams.IsEmpty()) {
     evt.Skip();
+#ifdef __MAC__
+    wxPaintDC dc(this);
+    dc.SetBrush(wxBrush(GetBackgroundColour(), wxBRUSHSTYLE_SOLID));
+    dc.SetTextForeground(GetForegroundColour());
+    wxSize sz = dc.GetTextExtent(GetLabel());
+    dc.DrawText(GetLabel(), (WI.GetWidth() - sz.GetWidth()) / 2,
+      (WI.GetHeight() - sz.GetHeight()) / 2);
+    evt.Skip(false);
+#endif
     return;
   }
-  int alpha = drawParams.Find("border.lightness",
-    CustomDraw_Border_Lightness).ToInt();
-  wxColor bg;
+  wxPaintDC dc(this);
+  wxColor bg = GetBackgroundColour();
+  int border_width = drawParams.Find("border.width", "1").ToInt();
   bool in_wnd = GetScreenRect().Contains(wxGetMousePosition());
   if (in_wnd) {
     int alpha1 = drawParams.Find("highlight.lightness",
       CustomDraw_Highlight_Lightness).ToInt();
     bg = GetBackgroundColour().ChangeLightness(alpha1);
   }
-  else {
-    bg = GetBackgroundColour();
-  }
-  wxPaintDC dc(this);
   dc.SetBrush(wxBrush(bg, wxBRUSHSTYLE_SOLID));
-  dc.SetPen(wxPen(GetBackgroundColour().ChangeLightness(alpha), 1, wxPENSTYLE_SOLID));
-  dc.DrawRectangle(0, 0, WI.GetWidth(), WI.GetHeight());
+  if (border_width > 0) {
+    int alpha = drawParams.Find("border.lightness",
+      CustomDraw_Border_Lightness).ToInt();
+    double border_r = drawParams.Find("border.radius", "0").ToDouble();
+    dc.SetPen(wxPen(GetBackgroundColour().ChangeLightness(alpha), 1, wxPENSTYLE_SOLID));
+    if (border_r > 0) {
+      dc.DrawRoundedRectangle(0, 0, WI.GetWidth(), WI.GetHeight(), border_r);
+    }
+    else {
+      dc.DrawRectangle(0, 0, WI.GetWidth(), WI.GetHeight());
+    }
+  }
   wxSize sz = dc.GetTextExtent(GetLabel());
   dc.DrawText(GetLabel(), (WI.GetWidth() - sz.GetWidth()) / 2,
     (WI.GetHeight()-sz.GetHeight())/2);
