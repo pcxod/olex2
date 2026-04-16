@@ -4396,14 +4396,29 @@ void GXLibMacros::macKill(TStrObjList &Cmds, const TParamList &Options,
     else {
       TXAtomPList Atoms = app.FindXAtoms(Cmds, true, false),
         Selected;
+      TGlRenderer& renderer = app.GetRenderer();
       if (Atoms.IsEmpty()) {
         for (size_t i = 0; i < Cmds.Count(); i++) {
-          TGPCollection* col = app.GetRenderer().FindCollection(Cmds[i]);
-          if (col == 0) {
-            continue;
+          if (Wildcard::IsMask(Cmds[i])) {
+            Wildcard wc(Cmds[i]);
+            for (size_t ci = 0; ci < renderer.CollectionCount(); ci++) {
+              TGPCollection& col = renderer.GetCollection(ci);
+              if (!wc.DoesMatch(col.GetName())) {
+                continue;
+              }
+              for (size_t oi = 0; oi < col.ObjectCount(); oi++) {
+                col.GetObject(oi).SetVisible(false);
+              }
+            }
           }
-          for (size_t j = 0; j < col->ObjectCount(); j++) {
-            col->GetObject(j).SetVisible(false);
+          else {
+            TGPCollection* col = renderer.FindCollection(Cmds[i]);
+            if (col == 0) {
+              continue;
+            }
+            for (size_t j = 0; j < col->ObjectCount(); j++) {
+              col->GetObject(j).SetVisible(false);
+            }
           }
         }
         return;

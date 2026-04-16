@@ -259,9 +259,6 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
           if (exti_cr.IsValid()) {
             size_t hi = f_map[TReflection::Standardise(all_refs[i].GetHkl(), sp)];
             all_refs[i] *= exti_cr.CalcForFo2(all_refs[i].GetHkl(), F[hi].qmod(), all_refs[i].GetW());
-            if (all_refs[i].GetI() != all_refs[i].GetI()) {
-              hi = -1;
-            }
           }
         }
         refs.Clear();
