@@ -113,6 +113,7 @@ void TIns::LoadFromFile(const olxstr& fileName) {
           if (olx_abs(GetRM().Vars.GetBASF(cnt - 1).GetValue() -
             dv.GetV()) < dv.GetE())
           {
+            dv.V() = Lst.params[olxstr(val_n) << "val" << cnt].ToDouble();
             GetRM().Vars.GetBASF(cnt - 1).Update(dv);
           }
           else {
@@ -131,8 +132,9 @@ void TIns::LoadFromFile(const olxstr& fileName) {
       {
         if (GetRM().Vars.VarCount() >= cnt) {
           TEValueD dv = val;
-          if (olx_abs(GetRM().Vars.GetVar(cnt - 1).GetValue() - dv.GetV()) < dv.GetE())
+          if (olx_abs(GetRM().Vars.GetVar(cnt - 1).GetValue() - dv.GetV()) < dv.GetE()) {
             GetRM().Vars.GetVar(cnt - 1).SetEsd(dv.GetE());
+          }
           else
             break;
           cnt++;

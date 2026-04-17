@@ -217,13 +217,13 @@ void AMacro::Run(TStrObjList& Params, const TParamList& Options,
   try {
     RunSignature = olxstr(GetName(), 128);
     RunSignature << ' ';
-    for (size_t i = 0; i < argC; i++) {
-      RunSignature << '[' << Params[i] << ']' << ", ";
-    }
-    if (!RunSignature.IsEmpty()) {
+    if (argC > 0) {
+      for (size_t i = 1; i < argC; i++) {
+        RunSignature << '[' << Params[i] << ']' << ", ";
+      }
       RunSignature.SetLength(RunSignature.Length() - 2);
+      RunSignature << ' ';
     }
-    RunSignature << ' ';
     for (size_t i = 0; i < Options.Count(); i++) {
       RunSignature << '{' << Options.GetName(i) << '=' <<
         Options.GetValue(i) << '}';

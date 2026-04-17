@@ -406,7 +406,7 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
           TEValueD exti(toks[1].ToDouble(), toks[2].ToDouble());
           params("exti", exti.ToString());
           // important to keep the 'insigificant' digits!
-          params("exti_val", exti.GetV());
+          params("exti_val", toks[1]);
         }
         else if (toks[4].Equalsi("BASF")) {
           if (HasTwin && InvTwin) {
@@ -414,13 +414,15 @@ bool TLst::LoadFromFile(const olxstr &FN)  {
               TEValueD(toks[1].ToDouble(), toks[2].ToDouble()).ToString());
           }
           if (toks.Count() == 6) {
-            params(olxstr("basf_") << toks[5],
-              TEValueD(toks[1].ToDouble(), toks[2].ToDouble()).ToString());
+            TEValueD basf(toks[1].ToDouble(), toks[2].ToDouble());
+            params(olxstr("basf_") << toks[5],basf.ToString());
+            params(olxstr("basf_val") << toks[5], toks[1]);
           }
         }
         else if (toks[4].Equalsi("FVAR") && toks.Count() == 6) {
-          params(olxstr("fvar_") << toks[5],
-            TEValueD(toks[1].ToDouble(), toks[2].ToDouble()).ToString());
+          TEValueD fvar(toks[1].ToDouble(), toks[2].ToDouble());
+          params(olxstr("fvar_") << toks[5], fvar.ToString());
+          params(olxstr("fvar_val") << toks[5], toks[1]);
         }
       }
       params_found++;

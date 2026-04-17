@@ -257,7 +257,10 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
             all_refs[i] *= 1. / scales[sc - 2];
           }
           if (exti_cr.IsValid()) {
-            size_t hi = f_map[TReflection::Standardise(all_refs[i].GetHkl(), sp)];
+            size_t hi = f_map.Find(TReflection::Standardise(all_refs[i].GetHkl(), sp), InvalidIndex);
+            if (hi == InvalidIndex) { // Omitted from the merged set
+              continue;
+            }
             all_refs[i] *= exti_cr.CalcForFo2(all_refs[i].GetHkl(), F[hi].qmod(), all_refs[i].GetW());
           }
         }
