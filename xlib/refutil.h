@@ -113,6 +113,7 @@ namespace RefUtil {
     const FList& F, const RefList& refs,
     const weight_t& weights, const filter_t filter)
   {
+    refs.ForEach(ACollectionItem::IndexTagSetter());
     double swXX = 0, swXY = 0;
     for (size_t i = 0; i < F.Count(); i++) {
       const TReflection& r = olx_ref::get(refs[i]);
@@ -234,7 +235,6 @@ namespace RefUtil {
     return CalcScaleSigma(rm, RefUtil::Fsq_evaluator(), fcs, refs);
   }
 
-  /* Requires an instance of TXApp */
   struct Stats {
     TRefList refs;
     evecd Fsq;
@@ -245,7 +245,14 @@ namespace RefUtil {
     double partical_threshold; // = 2;
     size_t partial_R1_cnt;
     vec3i min_hkl, max_hkl;
+    /* Requires an instance of TXApp */
     Stats(bool update_scale, const olxstr &fcf, SFUtil::EXTIDest extiDest);
+
+    Stats(const TRefList& refs, const evecd& Fsq, const evecd &weights, double scale)
+      : refs(refs), Fsq(Fsq), weights(weights)
+    {
+      init(scale);
+    }
 
     double UpdatePartialR1(double threshold);
 
@@ -259,6 +266,7 @@ namespace RefUtil {
     TRefPList::const_list_type GetBadRefs_(size_t N, double th,
       bool use_n,
       double *wR2) const;
+    void init(double scale);
   };
 };  // end of namespace RefUtil
 

@@ -271,7 +271,7 @@ void TXApp::CalcSFEx(const TRefList& refs, TArrayList<TEComplex<double> >& F,
         for (size_t i = 0; i < F.Count(); i++) {
           Fsq[i] = F[i].qmod();
           int sc = refs[i].GetBatch();
-          if (sc > 2 && sc - 2 < scales.Count()) {
+          if (sc >= 2 && sc - 2 < scales.Count()) {
             refs[i] *= 1. / scales[sc - 2];
           }
         }

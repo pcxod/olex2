@@ -2711,7 +2711,7 @@ void XLibMacros::macGraphPD(TStrObjList &Cmds, const TParamList &Options,
   }
 
   TArrayList<compd> F(refs.Count());
-  SFUtil::CalcSF(xapp.XFile(), MillerIndexList<TRefList>(refs), F);
+  SFUtil::CalcSF(xapp.XFile(), refs, F);
   TEFile out(TEFile::ExtractFilePath(xapp.XFile().GetFileName()) <<
     "olx_pd_calc.csv", "w+b");
   TTypeList< olx_pair_t<double,double> > gd;
@@ -6420,7 +6420,7 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
   if (convert) {
     olxstr err = SFUtil::GetSF(refs, F, SFUtil::MapType::Calc,
       SFUtil::SFOrigin::Fcf,
-      SFUtil::ScaleType::External, 1);
+      SFUtil::ScaleType::External);
     if (!err.IsEmpty()) {
       Error.ProcessingError(__OlxSrcInfo, err);
       return;
@@ -6428,29 +6428,14 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
   }
   olxstr col_names = "_refln_index_h,_refln_index_k,_refln_index_l,";
   if (list_n == 4) {
-    if (!convert) {
-      // no need as xapp.CalcFsq populates the list
-      /*
-      xapp.XFile().GetRM().GetRefinementRefList<
-        TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
-      */
-    }
     col_names << "_refln_F_squared_calc,_refln_F_squared_meas,"
       "_refln_F_squared_sigma,_refln_F_squared_weight,_refln_observed_status";
   }
   else if (list_n == 6) {
-    if (!convert) {
-      xapp.XFile().GetRM().GetRefinementRefList<
-        TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
-    }
     col_names << "_refln_F_squared_meas,_refln_F_squared_sigma,"
       "_refln_F_calc,_refln_phase_calc";
   }
   else if (list_n == 3) {
-    if (!convert) {
-      xapp.XFile().GetRM().GetFourierRefList<
-        TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
-    }
     col_names << "_refln_F_meas,_refln_F_sigma,_refln_A_calc,_refln_B_calc";
   }
   else {
@@ -6463,24 +6448,10 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
       xapp.CalcFsq(refs, F_sq, false, SFUtil::EXTIDest::Fo);
     }
     else {
-      F.SetCount(refs.Count());
-      SFUtil::CalcSF(xapp.XFile(), refs, F);
-      RefinementModel::EXTI::Shelxl ecr = rm.GetShelxEXTICorrector();
-      RefinementModel::SWAT::Shelxl scr = rm.GetShelxSWATCorrector();
-      if (ecr.IsValid() || scr.IsValid()) {
-        for (size_t i = 0; i < F.Count(); i++) {
-          if (list_n == 4 && ecr.IsValid()) {
-            refs[i] *= ecr.CalcForFo2(refs[i].GetHkl(), F[i].qmod(), refs[i].GetW());
-          }
-          else {
-            if (ecr.IsValid()) {
-              F[i] *= ecr.CalcForFc(refs[i].GetHkl(), F[i].qmod());
-            }
-            else {
-              F[i] *= scr.CalcForFc(refs[i].GetHkl());
-            }
-          }
-        }
+      olxstr err = SFUtil::GetSF(refs, F, SFUtil::MapType::Calc, SFUtil::SFOrigin::Olex2);
+      if (!err.IsEmpty()) {
+        Error.ProcessingError(__OlxSrcInfo, err);
+        return;
       }
     }
   }
@@ -8539,12 +8510,12 @@ void HKLCreate(TStrObjList &Cmds, const TParamList &Options,
   }
   TXApp& app = TXApp::GetInstance();
   vec3i idx = app.XFile().GetRM().CalcMaxHklIndexForD(r);
-  MillerIndexArray ma = MillerIndexArray(-idx, idx);
-  TArrayList<compd> F(ma.Count());
+  olx_object_ptr<IMillerIndexList> ma = MillerIndces::Make(-idx, idx);
+  TArrayList<compd> F(ma->Count());
   SFUtil::CalcSF(app.XFile(), ma, F);
   TRefList refs(F.Count(), false);
   for (size_t i = 0; i < F.Count(); i++) {
-    refs.Set(i, new TReflection(ma[i], F[i].qmod(), 0.0));
+    refs.Set(i, new TReflection((*ma)[i], F[i].qmod(), 0.0));
     refs[i].SetS((rand()%10)*refs[i].GetI()/100 + 0.01);
   }
   THklFile hkl;

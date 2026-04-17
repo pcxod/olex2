@@ -439,36 +439,63 @@ public:
   virtual vec3i operator [] (size_t i) const = 0;
 };
 
-// generates miller indices in given range
-class MillerIndexArray : public IMillerIndexList {
-  vec3i min_i, max_i;
-  size_t h_sz, hk_sz, hkl_sz;
-public:
-  MillerIndexArray(const vec3i& mi, const vec3i& mx) : min_i(mi), max_i(mx) {
-    h_sz = (mx[0]-mi[0]+1);
-    hk_sz = h_sz*(mx[1]-mi[1]+1);
-    hkl_sz = hk_sz*(mx[2]-mi[2]+1);
-  }
-  size_t Count() const {  return hkl_sz;  }
-  vec3i operator [] (size_t i) const {
-    size_t pi = i/hk_sz, ipi = i%hk_sz;
-    return vec3i(
-      min_i[0]+(int)(ipi%h_sz),
-      min_i[1]+(int)(ipi/h_sz),
-      min_i[2]+(int)pi);
-  }
-};
-// could be wrapper around list of vec3i or TReflection
-template <class RefList> class MillerIndexList : public IMillerIndexList {
-  const RefList& src;
-public:
-  MillerIndexList(const RefList& r)
-    : src(r)
-  {}
-  size_t Count() const {  return src.Count();  }
-  vec3i operator [] (size_t i) const {  return TReflection::GetHkl(src[i]); }
-};
+struct MillerIndces {
 
+  static olx_object_ptr<IMillerIndexList> Make(const vec3i& mi, const vec3i& mx) {
+    return new MillerIndexArray(mi, mx);
+  }
+
+  template<class RefListT>
+  static olx_object_ptr<IMillerIndexList> Make(const RefListT & refs) {
+    return new MillerIndexList<RefListT>(refs);
+  }
+
+  template<class RefListT>
+  static olx_object_ptr<IMillerIndexList> Make(const RefListT& refs, const TSizeList &indices) {
+    return new MillerIndexSelector<RefListT>(refs, indices);
+  }
+
+  // generates miller indices in given range
+  class MillerIndexArray : public IMillerIndexList {
+    vec3i min_i, max_i;
+    size_t h_sz, hk_sz, hkl_sz;
+  public:
+    MillerIndexArray(const vec3i& mi, const vec3i& mx) : min_i(mi), max_i(mx) {
+      h_sz = (mx[0] - mi[0] + 1);
+      hk_sz = h_sz * (mx[1] - mi[1] + 1);
+      hkl_sz = hk_sz * (mx[2] - mi[2] + 1);
+    }
+    size_t Count() const { return hkl_sz; }
+    vec3i operator [] (size_t i) const {
+      size_t pi = i / hk_sz, ipi = i % hk_sz;
+      return vec3i(
+        min_i[0] + (int)(ipi % h_sz),
+        min_i[1] + (int)(ipi / h_sz),
+        min_i[2] + (int)pi);
+    }
+  };
+  // could be wrapper around list of vec3i or TReflection
+  template <class RefList> class MillerIndexList : public IMillerIndexList {
+    const RefList& src;
+  public:
+    MillerIndexList(const RefList& r)
+      : src(r)
+    {}
+    size_t Count() const { return src.Count(); }
+    vec3i operator [] (size_t i) const { return TReflection::GetHkl(src[i]); }
+  };
+
+  template <class RefList> class MillerIndexSelector : public IMillerIndexList {
+    const RefList& src;
+    const TSizeList& indices;
+  public:
+    MillerIndexSelector(const RefList& r, const TSizeList& indices)
+      : src(r), indices(indices)
+    {}
+    size_t Count() const { return indices.Count(); }
+    vec3i operator [] (size_t i) const { return TReflection::GetHkl(src[indices[i]]); }
+  };
+};
 typedef TPtrList<TReflection> TRefPList;
 typedef TTypeList<TReflection> TRefList;
 
@@ -481,13 +508,7 @@ struct RefListUtil {
     olx_pair_t<double, double> m;
     m.b = m.a = olx_ref::get(l[0]).GetI();
     for (size_t i = 1; i < l.Count(); i++) {
-      TReflection &r = olx_ref::get(l[i]);
-      if (r.GetI() > m.b) {
-        m.b = r.GetI();
-      }
-      if (r.GetI() < m.a) {
-        m.a = r.GetI();
-      }
+      olx_update_min_max(olx_ref::get(l[i]).GetI(), m.a, m.b);
     }
     return m;
   }

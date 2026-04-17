@@ -35,6 +35,7 @@
 #include "glalg.h"
 #include "listalg.h"
 #include "xangle.h"
+#include "refutil.h"
 
 #define gxlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.Register(\
@@ -90,13 +91,14 @@ void GXLibMacros::Export(TLibrary& lib) {
     "calc-calculates calculated map&;"
     "fcfmc-calculates FCF Fc-Fc map&;"
     "scale-scale to use for difference maps, [external], external-forced, sigma,"
-    " shelx. External may be replace with shelxl if the two differ too much.&;"
+    " shelx. External may be replace with shelx if the two differ too much.&;"
     "anom_only-Create Fc Map only using anomalous dispersion scattering factor,"
     " neglecting atom contribution&;"
     "r-resolution in Angstrems&;"
     "i-integrates the map&;"
     "m-mask the structure&;"
-    "map-show map[true]"
+    "map-show map[true]&;"
+    "stats-only prints stats on the calculated map ignoring any other options but 'scale'&;"
     , fpNone | psFileLoaded,
   "Calculates fourier map of selected type");
 
@@ -825,7 +827,7 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
   TArrayList<compd> F;
   st.start("Obtaining structure factors");
   SFUtil::ScaleType scale = SFUtil::ScaleType::Shelx;
-  double scale_value = 0;
+  double scale_value = 1;
   {
     olxstr str_scale = Options.FindValue("scale", EmptyString())
       .ToLowerCase();
@@ -853,8 +855,36 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
   if (anom_only) {
     src = SFUtil::SFOrigin::Olex2;
   }
+  if (Options.GetBoolOption("stats")) {
+    olxstr err = SFUtil::GetSF(refs, F, SFUtil::MapType::Calc, src,
+      scale, &scale_value, SFUtil::FPMerge::Merge, false);
+    if (!err.IsEmpty()) {
+      E.ProcessingError(__OlxSrcInfo, err);
+      return;
+    }
+    const RefinementModel& rm = app.XFile().GetRM();
+    evecd weights(refs.Count());
+    evecd Fsq(refs.Count());
+    RefUtil::ShelxWeightCalculator weight_c(rm.used_weight,
+      rm.aunit.GetHklToCartesian(), olx_sqr(scale_value));
+    for (size_t i = 0; i < refs.Count(); i++) {
+      weights[i] = weight_c.Calculate(refs[i], Fsq[i] = F[i].qmod());
+    }
+
+    double scale_k = RefUtil::CalcScale(RefUtil::Fsq_evaluator(), Fsq, refs,
+      RefUtil::CustomWeightCalculator::make(weights),
+      TReflection::DummyFilter());
+
+    RefUtil::Stats rstat(refs, Fsq, weights, olx_sqr(scale_value));
+    TBasicApp::NewLogEntry() << "R1 (All, " << rstat.refs.Count() << ") = "
+      << olxstr::FormatFloat(4, rstat.R1);
+    TBasicApp::NewLogEntry() << "R1 (I/sig >= 2, " << rstat.partial_R1_cnt << ") = "
+      << olxstr::FormatFloat(4, rstat.R1_partial);
+    TBasicApp::NewLogEntry() << "wR2 = " << olxstr::FormatFloat(4, rstat.wR2);
+    return;
+  }
   olxstr err = SFUtil::GetSF(refs, F, mapType, src,
-    scale, scale_value, SFUtil::FPMerge::Merge, anom_only);
+    scale, &scale_value, SFUtil::FPMerge::Merge, anom_only);
   if (!err.IsEmpty()) {
     E.ProcessingError(__OlxSrcInfo, err);
     return;

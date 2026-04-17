@@ -469,6 +469,18 @@ public:
     return *this;
   }
   //..............................................................................
+  template <class size_t_list_t>
+  ConstTypeListExt<T, DestructCast> Select(const size_t_list_t& indices) const {
+    TTypeListExt rv(indices.Count(), false);
+    for (size_t i = 0; i < indices.Count(); i++) {
+      T* v = List[indices[i]];
+      if (v != 0) {
+        rv.List[i] = new T(*v);
+      }
+    }
+    return rv;
+  }
+  //..............................................................................
     // cyclic shift to the left
   TTypeListExt& ShiftL(size_t cnt) { List.ShiftL(cnt);  return *this; }
   //..............................................................................
@@ -556,6 +568,10 @@ public:
   bool Contains(const T& v) const { return IndexOf(v) != InvalidIndex; }
   //..............................................................................
   bool Contains(const T* v) const { return IndexOf(v) != InvalidIndex; }
+  //..............................................................................
+  const TPtrList<T>& AsPtrList() const {
+    return List;
+  }
   //..............................................................................
   struct Accessor {
     static T* get(TTypeListExt<T, DestructCast>& l, size_t i) {

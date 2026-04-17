@@ -229,6 +229,33 @@ class RefMerger {
     return stats;
   }
 
+  template <class Comparator>
+  static TSizeList::const_list_type _Map2ASU(const SymmSpace::InfoEx& info_ex,
+    TRefPList& refs, const vec3i_list& omits, const Comparator& cmp, bool remove_sys_abs)
+  {
+    const size_t ref_cnt = refs.Count();
+    TSizeList rv(olx_reserve(ref_cnt));
+    for (size_t i = 0; i < ref_cnt; i++) {
+      refs[i]->Standardise(info_ex);
+    }
+    refs.ForEach(ACollectionItem::IndexTagSetter());
+    QuickSorter::Sort(refs, cmp);
+    for (size_t i = 0; i < ref_cnt;) {
+      TReflection* ref = refs[i];
+      size_t from = i++;
+      while ((i < ref_cnt) && (cmp.Compare(ref, refs[i]) == 0)) {
+        i++;
+      }
+      if (omits.Contains(ref->GetHkl()) ||
+        (remove_sys_abs && ref->IsAbsent()))
+      {
+        continue;
+      }
+      rv << ref->GetTag();
+    }
+    return rv.Fit();
+  }
+
   template <class MatList, class Comparator, bool UseBatch>
   static MergeStats _DoDrySGFilter(const MatList& ml, TRefPList& refs,
     const vec3i_list& omits, const Comparator &cmp, double gt_v)
@@ -438,7 +465,7 @@ public:
     double gt_v = 2)
   {
     TStopWatch sw(__FUNC__);
-    TRefPList refs(Refs);
+    TRefPList refs(Refs.AsPtrList());
     return _DoMerge<RefListMerger>(si, refs, omits, output, cmp, gt_v);
   }
   template <class RefListMerger, class MatList, class RefList, class Comparator>
@@ -448,7 +475,9 @@ public:
   {
     TStopWatch sw(__FUNC__);
     SymmSpace::InfoEx info_ex = SymmSpace::Compact(ml);
-    if (mergeFP)  info_ex.centrosymmetric = true;
+    if (mergeFP) {
+      info_ex.centrosymmetric = true;
+    }
     return MergeExS<RefListMerger>(info_ex, Refs, output, omits, cmp, gt_v);
   }
 
@@ -476,7 +505,7 @@ public:
     const vec3i_list& omits, const Comparator &cmp, double gt_v)
   {
     TStopWatch sw(__FUNC__);
-    TRefPList refs(Refs);
+    TRefPList refs(Refs.AsPtrList());
     return _DryMerge<RefListMerger>(si, refs, omits, cmp, gt_v);
   }
   template <class RefListMerger, class MatList, class RefList, class Comparator>
@@ -552,7 +581,7 @@ public:
     const vec3i_list& omits, const Comparator &cmp, double gt_v = 2)
   {
     TStopWatch sw(__FUNC__);
-    TRefPList refs(Refs);
+    TRefPList refs(Refs.AsPtrList());
     if (use_batch) {
       return _DoDrySGFilter<MatList,Comparator,true>(ml.SubListFrom(ml[0].IsI() ? 1 : 0),
         refs, omits, cmp, gt_v);
@@ -567,8 +596,18 @@ public:
     const vec3i_list& omits, double gt_v = 2)
   {
     TStopWatch sw(__FUNC__);
-    return DrySGFilterEx(ml, Refs, omits,
-      FunctionComparator::Make(&TReflection::Compare), gt_v);
+    return DrySGFilterEx(ml, Refs, omits, TComparableComparator(), gt_v);
+  }
+  // Changes Reflection Tags and standardises them!
+  template <class RefList>
+  static TSizeList::const_list_type MapToASU(const SymmSpace::InfoEx& si, RefList& Refs,
+    const vec3i_list& omits, bool remove_sys_abs)
+  {
+    TStopWatch sw(__FUNC__);
+    TRefPList refs(Refs.AsPtrList());
+    return _Map2ASU(si, refs, omits,
+      FunctionComparator::Make(&TReflection::Compare),
+      remove_sys_abs);
   }
 
   struct MergerOut {

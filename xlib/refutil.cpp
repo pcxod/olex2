@@ -146,12 +146,7 @@ double ShelxWeightCalculator::Calculate(const TReflection& r, double Fc2) const 
 //.............................................................................
 //.............................................................................
 //.............................................................................
-Stats::Stats(bool update_scale, const olxstr &fcf, SFUtil::EXTIDest extiDest)
-: sum_wsqd(0),
-  partial_R1_cnt(0),
-  min_hkl(1000),
-  max_hkl(-1000)
-{
+Stats::Stats(bool update_scale, const olxstr &fcf, SFUtil::EXTIDest extiDest) {
   partical_threshold = 2;
   TXApp& xapp = TXApp::GetInstance();
   RefinementModel& rm = xapp.XFile().GetRM();
@@ -218,12 +213,18 @@ Stats::Stats(bool update_scale, const olxstr &fcf, SFUtil::EXTIDest extiDest)
       CustomWeightCalculator::make(weights),
       TReflection::DummyFilter());
   }
-  
+  init(scale_k);
+}
+//.............................................................................
+void Stats::init(double scale) {
+  sum_wsqd = partial_R1_cnt = 0;
+  min_hkl = vec3i(1000);
+  max_hkl = vec3i(-1000);
   double wR2d = 0, R1u = 0, R1d = 0, R1up = 0, R1dp = 0;
   wsqd.Resize(refs.Count());
   for (size_t i = 0; i < refs.Count(); i++) {
     TReflection& r = refs[i];
-    r *= scale_k;
+    r *= scale;
     vec3i::UpdateMinMax(r.GetHkl(), min_hkl, max_hkl);
     const double Fc2 = Fsq[i];
     const double Fc = sqrt(Fc2);

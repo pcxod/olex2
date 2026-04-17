@@ -92,8 +92,8 @@ void SFUtil::FindMinMax(const TArrayList<StructureFactor>& F,
 //..............................................................................
 olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
   MapType mapType, SFOrigin sfOrigin,
-  ScaleType  scaleType,
-  double scale,
+  ScaleType scaleType,
+  double *e_scale,
   FPMerge friedelMerge,
   bool anom_only,
   EXTIDest extiDest)
@@ -240,24 +240,24 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
         rm.FilterHkl(all_refs, st);
         TArrayList<double> scales = rm.GetBASFAsDoubleList();
 
-        bool mergeFP = (rm.GetMERG() == 4 || rm.GetMERG() == 3) && !sp.IsCentrosymmetric();
+        info_ex.centrosymmetric = (rm.GetMERG() == 4 || rm.GetMERG() == 3) || sp.IsCentrosymmetric();
         RefinementModel::HklStat stats;
-        stats = RefMerger::Merge<RefMerger::ShelxMerger>(
-          sp, all_refs, refs, rm.GetOmits(), mergeFP);
-        F.SetCount(refs.Count());
-        CalcSF(xapp.XFile(), refs, F, true, anom_only);
+        TSizeList uniq = RefMerger::MapToASU(info_ex, all_refs, rm.GetOmits(), true);
+        F.SetCount(uniq.Count());
+        CalcSF(xapp.XFile(), MillerIndces::Make(all_refs, uniq), F, true, anom_only);
         olxdict<vec3i, size_t, TComparableComparator> f_map;
-        for (size_t i = 0; i < refs.Count(); i++) {
-          f_map(refs[i].GetHkl(), i);
+        for (size_t i = 0; i < uniq.Count(); i++) {
+          f_map(all_refs[uniq[i]].GetHkl(), i);
         }
         RefinementModel::EXTI::Shelxl exti_cr = rm.GetShelxEXTICorrector();
         for (size_t i = 0; i < all_refs.Count(); i++) {
           int sc = all_refs[i].GetBatch();
-          if (sc > 2 && sc - 2 < scales.Count()) {
+          if (sc >= 2 && sc - 2 < scales.Count()) {
             all_refs[i] *= 1. / scales[sc - 2];
           }
           if (exti_cr.IsValid()) {
-            size_t hi = f_map.Find(TReflection::Standardise(all_refs[i].GetHkl(), sp), InvalidIndex);
+            TReflection& r = all_refs[i];
+            size_t hi = f_map.Find(all_refs[i].GetHkl(), InvalidIndex);
             if (hi == InvalidIndex) { // Omitted from the merged set
               continue;
             }
@@ -266,7 +266,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
         }
         refs.Clear();
         stats = RefMerger::Merge<RefMerger::ShelxMerger>(
-          sp, all_refs, refs, rm.GetOmits(), mergeFP);
+          info_ex, all_refs, refs, rm.GetOmits());
       }
       else {
         RefinementModel::HklStat ms = rm.GetRefinementRefList<
@@ -330,6 +330,7 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     if (mapType != MapType::Calc) {
       // find a linear scale between F
       double scale_k = 1;
+      double scale = e_scale == 0 ? 1.0 : *e_scale;
       if (scaleType == ScaleType::External) {
         double sc = RefUtil::CalcFScaleShelx(rm, F, refs);
         if (olx_abs((sc - scale) / (sc + scale)) > 0.01) {
@@ -367,6 +368,9 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
         else if (mapType == MapType::Obs) {
           F[i] = compd::polar(Fo, F[i].arg());
         }
+      }
+      if (e_scale != 0) {
+        *e_scale = scale_k;
       }
     }
   }
@@ -423,7 +427,7 @@ void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U,
   }
 }
 //..............................................................................
-void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
+void SFUtil::CalcSF(const TXFile& xfile, olx_object_ptr<IMillerIndexList> refs_,
   TArrayList<TEComplex<double> >& F, bool UseFdp, bool anom_only)
 {
   TSpaceGroup &sg = xfile.GetLastLoaderSG();
@@ -432,6 +436,7 @@ void SFUtil::_CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
   if (!sf_util.ok()) {
     throw TFunctionFailedException(__OlxSourceInfo, "invalid space group");
   }
+  IMillerIndexList& refs = *refs_;
   TAsymmUnit& au = xfile.GetAsymmUnit();
   olx_array_ptr<double> U = new double[6*au.AtomCount() + 1];
   TPtrList<TCAtom> alist;
