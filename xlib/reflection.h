@@ -433,7 +433,7 @@ public:
 
 };
 
-class IMillerIndexList {
+class IMillerIndexList : public IOlxObject {
 public:
   virtual size_t Count() const = 0;
   virtual vec3i operator [] (size_t i) const = 0;

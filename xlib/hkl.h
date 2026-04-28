@@ -287,10 +287,17 @@ public:
   }
 };
 
-class TMillerArray {
-  TArrayList<vec3i> indices;
-  TArrayList<double> I, s;
-};
+// Consider solid arrays for performace tasks...
+//struct TMillerArray : public IMillerIndexList {
+//  TArrayList<vec3i> indices;
+//  TArrayList<double> I, s, w;
+//  TArrayList<int16_t> BN;
+//  //TMillerArray()
+//  size_t Count() const { return indices.Count(); }
+//  virtual vec3i operator [] (size_t i) const {
+//    return indices[i];
+//  }
+//};
 //---------------------------------------------------------------------------
 
 EndXlibNamespace()
