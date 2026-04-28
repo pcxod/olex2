@@ -1018,7 +1018,7 @@ bool TEFile::IsSameFolder(const olxstr& _f1, const olxstr& _f2) {
 bool TEFile::IsSubFolder(const olxstr& _f1, const olxstr& _f2) {
   olxstr f1 = OLX_OS_PATH(_f1);
   olxstr f2 = OLX_OS_PATH(_f2);
-  return f2.IsSubStringAt(f2, 0);
+  return f1.IsSubStringAt(f2, 0);
 }
 //..............................................................................
 olxstr TEFile::UNCFileName(const olxstr& LocalFN) {

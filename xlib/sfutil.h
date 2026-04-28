@@ -99,7 +99,7 @@ namespace SFUtil {
   void FindMinMax(const TArrayList<StructureFactor>& F,
     vec3i& min, vec3i& max);
   /* prepares the list of hkl and structure factors, return error message or
- empty string
+ empty string. scale is for Fc ~ scale*(Fo^0.5)
  */
   olxstr GetSF(TRefList& refs, TArrayList<compd>& F,
     MapType mt, SFOrigin sfOrigin=SFOrigin::Olex2,

@@ -874,7 +874,7 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
     double scale_k = RefUtil::CalcScale(RefUtil::Fsq_evaluator(), Fsq, refs,
       RefUtil::CustomWeightCalculator::make(weights),
       TReflection::DummyFilter());
-
+    TBasicApp::NewLogEntry() << "Statistics for reflections for Fourier maps";
     RefUtil::Stats rstat(refs, Fsq, weights, olx_sqr(scale_value));
     TBasicApp::NewLogEntry() << "R1 (All, " << rstat.refs.Count() << ") = "
       << olxstr::FormatFloat(4, rstat.R1);

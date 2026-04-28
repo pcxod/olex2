@@ -361,17 +361,14 @@ void THklFile::InitHkl3D() {
 ConstPtrList<TReflection> THklFile::AllRefs(const vec3i& idx,
   const smatd_list& ml)
 {
-  TRefPList rv;
-  SortedObjectList<vec3i, TComparableComparator> ri;
-  for (size_t i=0; i < ml.Count(); i++) {
-    ri.AddUnique(TReflection::MulHkl(idx, ml[i]));
-  }
   InitHkl3D();
-  for (size_t j=0; j < ri.Count(); j++) {
-    if (!Hkl3D->IsInRange(ri[j])) {
+  TRefPList rv;
+  for (size_t i=0; i < ml.Count(); i++) {
+    vec3i mi = TReflection::MulHkl(idx, ml[i]);
+    if (!Hkl3D->IsInRange(mi)) {
       continue;
     }
-    TRefPList* r = Hkl3D->Value(ri[j]);
+    TRefPList* r = Hkl3D->Value(mi);
     if (r != 0) {
       rv.AddAll(*r);
     }
@@ -395,7 +392,9 @@ void THklFile::Append(const THklFile& hkls)  {
 }
 //..............................................................................
 void THklFile::SaveToFile(const olxstr& FN, const TRefPList& refs) {
-  if (refs.IsEmpty()) return;
+  if (refs.IsEmpty()) {
+    return;
+  }
   //if (Append && TEFile::Exists(FN)) {
   //  THklFile F;
   //  F.LoadFromFile(FN, false);
@@ -492,12 +491,18 @@ olx_object_ptr<THklFile::ref_list> THklFile::FromTonto(const TStrList &l_) {
     key_keys("keys="),
     key_data("data=");
   size_t idx = data.IndexOf(key_rdata);
-  if (idx == InvalidIndex) return rv;
+  if (idx == InvalidIndex) {
+    return rv;
+  }
   idx = data.FirstIndexOf(key_keys, idx+key_rdata.Length());
-  if (idx == InvalidIndex) return rv;
+  if (idx == InvalidIndex) {
+    return rv;
+  }
   // extract the key legend
   idx = data.FirstIndexOf('{', idx+key_keys.Length());
-  if (idx == InvalidIndex) return rv;
+  if (idx == InvalidIndex) {
+    return rv;
+  }
   olxstr keys;
   if (!parser_util::parse_brackets(data, keys, idx)) {
     return rv;
@@ -521,12 +526,17 @@ olx_object_ptr<THklFile::ref_list> THklFile::FromTonto(const TStrList &l_) {
     return rv;
   }
   idx = data.FirstIndexOfi(key_data, idx);
-  if (idx == InvalidIndex) return rv;
-  idx = data.FirstIndexOf('{', idx + key_data.Length());
-  if (idx == InvalidIndex) return rv;
-  olxstr data_data;
-  if (!parser_util::parse_brackets(data, data_data, idx))
+  if (idx == InvalidIndex) {
     return rv;
+  }
+  idx = data.FirstIndexOf('{', idx + key_data.Length());
+  if (idx == InvalidIndex) {
+    return rv;
+  }
+  olxstr data_data;
+  if (!parser_util::parse_brackets(data, data_data, idx)) {
+    return rv;
+  }
   TStrList dtoks(data_data, ' ');
   if ((dtoks.Count() % ktoks.Count()) != 0) {
     return rv;
