@@ -99,23 +99,23 @@ namespace SFUtil {
   void FindMinMax(const TArrayList<StructureFactor>& F,
     vec3i& min, vec3i& max);
   /* prepares the list of hkl and structure factors, return error message or
- empty string
+ empty string. scale is for Fc ~ scale*(Fo^0.5)
  */
   olxstr GetSF(TRefList& refs, TArrayList<compd>& F,
     MapType mt, SFOrigin sfOrigin=SFOrigin::Olex2,
     ScaleType  scaleType= ScaleType::External,
-    double scale = 0,
+    double *scale = 0,
     FPMerge friedelMerge=FPMerge::Default,
     bool anom_only = false,
     EXTIDest extiDest=EXTIDest::Fc);
   // calculates the structure factors for given reflections
-  void _CalcSF(const TXFile& xfile, const IMillerIndexList& refs,
-    TArrayList<compd>& F, bool UseFpFdp, bool anom_only = false);
+  void CalcSF(const TXFile& xfile, olx_object_ptr<IMillerIndexList> refs,
+    TArrayList<compd>& F, bool UseFpFdp = true, bool anom_only = false);
   template <class IndexList>
   void CalcSF(const TXFile& xfile, const IndexList& refs,
     TArrayList<compd>& F, bool UseFdp = true, bool anom_only = false)
   {
-    _CalcSF(xfile, MillerIndexList<IndexList>(refs), F, UseFdp, anom_only);
+    CalcSF(xfile, MillerIndces::Make(refs), F, UseFdp, anom_only);
   }
   /* returns an instance according to __OLX_USE_FASTSYMM, must be deleted with
  delete

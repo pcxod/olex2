@@ -4813,8 +4813,8 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
       Error.ProcessingError(__OlxSrcInfo, "too few parameters");
       return;
     }
-    TDUnitCell* uc = NULL;
-    TSpaceGroup* sg = NULL;
+    TDUnitCell* uc = 0;
+    TSpaceGroup* sg = 0;
     if (!Cmds[2].IsNumber()) {
       Error.ProcessingError(__OlxSrcInfo, "invalid unit cell reference");
       return;
@@ -4855,6 +4855,9 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
             center[0] = Cmds[4].ToDouble();
             center[1] = Cmds[5].ToDouble();
             center[2] = Cmds[6].ToDouble();
+          }
+          if (Options.GetBoolOption('c', true, false)) {
+            center = FXApp->XFile().GetAsymmUnit().Orthogonalise(center);
           }
           uo->Basis.Translate(center);
         }

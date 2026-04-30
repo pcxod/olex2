@@ -226,6 +226,9 @@ void RefinementModel::UpdateUsedSymm(const TUnitCell& uc) {
 }
 //.............................................................................
 void RefinementModel::TransformUsedSymm(const smatd& rm) {
+  if (rm.r.Determinant() == 0) {
+    return;
+  }
   smatd rm_t = rm.r.GetInverse();
   for (size_t i = 0; i < UsedSymm.Count(); i++) {
     smatd neq = rm_t * UsedSymm.GetValue(i).symop * rm;

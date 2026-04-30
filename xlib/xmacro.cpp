@@ -2711,7 +2711,7 @@ void XLibMacros::macGraphPD(TStrObjList &Cmds, const TParamList &Options,
   }
 
   TArrayList<compd> F(refs.Count());
-  SFUtil::CalcSF(xapp.XFile(), MillerIndexList<TRefList>(refs), F);
+  SFUtil::CalcSF(xapp.XFile(), refs, F);
   TEFile out(TEFile::ExtractFilePath(xapp.XFile().GetFileName()) <<
     "olx_pd_calc.csv", "w+b");
   TTypeList< olx_pair_t<double,double> > gd;
@@ -3209,7 +3209,9 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg,
   }
   au.ChangeSpaceGroup(new_sg);
   au.InitMatrices();
-  xapp.XFile().LastLoader()->GetRM().TransformUsedSymm(tm);
+  if (tm == TMatrix33<int>(tm)) {
+    xapp.XFile().LastLoader()->GetRM().TransformUsedSymm(tm);
+  }
   xapp.XFile().LastLoaderChanged();
   if (save) {
     xapp.XFile().SaveToFile(xapp.XFile().GetFileName());
@@ -3320,19 +3322,21 @@ void XLibMacros::macSGS(TStrObjList& Cmds, const TParamList& Options,
       }
     }
     if (!tm.IsI()) {
-      const TAsymmUnit& au = xapp.XFile().GetAsymmUnit();
-      smatd_list ml;
-      TSymmLib::GetInstance().ExpandLatt(ml, au.GetMatices(), au.GetLatt());
-      smatd sg_r = tm,
-        sg_r_t = tm.GetInverse();
-      for (size_t i = 0; i < au.MatrixCount(); i++) {
-        ml[i] = sg_r_t * ml[i] * sg_r;
+      if (sg == 0) {
+        const TAsymmUnit& au = xapp.XFile().GetAsymmUnit();
+        smatd_list ml;
+        TSymmLib::GetInstance().ExpandLatt(ml, au.GetMatices(), au.GetLatt());
+        smatd sg_r = tm,
+          sg_r_t = tm.GetInverse();
+        for (size_t i = 0; i < au.MatrixCount(); i++) {
+          ml[i] = sg_r_t * ml[i] * sg_r;
+        }
+        SymmSpace::Info si = SymmSpace::GetInfo(ml);
+        sg = &TSymmLib::GetInstance().CreateNew(si);
       }
-      SymmSpace::Info si = SymmSpace::GetInfo(ml);
-      TSpaceGroup& sg = TSymmLib::GetInstance().CreateNew(si);
-      ChangeCell(tm, sg, hkl_fn);
+      ChangeCell(tm, *sg, hkl_fn);
       TBasicApp::NewLogEntry() << "The cell, atomic coordinates and ADP's are "
-        "transformed using given transformation. New space group: " << sg.GetName();
+        "transformed using given transformation. New space group: " << sg->GetName();
       if (tm.Determinant() < 0) {
         TBasicApp::NewLogEntry(logWarning) <<
           "Note that the transformation matrix has a negative determinant";
@@ -6420,7 +6424,7 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
   if (convert) {
     olxstr err = SFUtil::GetSF(refs, F, SFUtil::MapType::Calc,
       SFUtil::SFOrigin::Fcf,
-      SFUtil::ScaleType::External, 1);
+      SFUtil::ScaleType::External);
     if (!err.IsEmpty()) {
       Error.ProcessingError(__OlxSrcInfo, err);
       return;
@@ -6428,29 +6432,14 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
   }
   olxstr col_names = "_refln_index_h,_refln_index_k,_refln_index_l,";
   if (list_n == 4) {
-    if (!convert) {
-      // no need as xapp.CalcFsq populates the list
-      /*
-      xapp.XFile().GetRM().GetRefinementRefList<
-        TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
-      */
-    }
     col_names << "_refln_F_squared_calc,_refln_F_squared_meas,"
       "_refln_F_squared_sigma,_refln_F_squared_weight,_refln_observed_status";
   }
   else if (list_n == 6) {
-    if (!convert) {
-      xapp.XFile().GetRM().GetRefinementRefList<
-        TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
-    }
     col_names << "_refln_F_squared_meas,_refln_F_squared_sigma,"
       "_refln_F_calc,_refln_phase_calc";
   }
   else if (list_n == 3) {
-    if (!convert) {
-      xapp.XFile().GetRM().GetFourierRefList<
-        TUnitCell::SymmSpace, RefMerger::ShelxMerger>(sp, refs);
-    }
     col_names << "_refln_F_meas,_refln_F_sigma,_refln_A_calc,_refln_B_calc";
   }
   else {
@@ -6463,29 +6452,10 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
       xapp.CalcFsq(refs, F_sq, false, SFUtil::EXTIDest::Fo);
     }
     else {
-      F.SetCount(refs.Count());
-      SFUtil::CalcSF(xapp.XFile(), refs, F);
-      RefinementModel::EXTI::Shelxl ecr = rm.GetShelxEXTICorrector();
-      RefinementModel::SWAT::Shelxl scr = rm.GetShelxSWATCorrector();
-      if (ecr.IsValid() || scr.IsValid()) {
-        for (size_t i = 0; i < F.Count(); i++) {
-          if (list_n == 4) {
-            if (ecr.IsValid()) {
-              refs[i] *= ecr.CalcForFo2(refs[i].GetHkl(), F[i].qmod());
-            }
-            else {
-              refs[i] *= scr.CalcForFo2(refs[i].GetHkl());
-            }
-          }
-          else {
-            if (ecr.IsValid()) {
-              F[i] *= ecr.CalcForFc(refs[i].GetHkl(), F[i].qmod());
-            }
-            else {
-              F[i] *= scr.CalcForFc(refs[i].GetHkl());
-            }
-          }
-        }
+      olxstr err = SFUtil::GetSF(refs, F, SFUtil::MapType::Calc, SFUtil::SFOrigin::Olex2);
+      if (!err.IsEmpty()) {
+        Error.ProcessingError(__OlxSrcInfo, err);
+        return;
       }
     }
   }
@@ -6495,10 +6465,20 @@ void XLibMacros::macFcfCreate(TStrObjList &Cmds, const TParamList &Options,
     scale  = 1. / olx_sqr(xapp.XFile().GetRM().Vars.GetVar(0).GetValue());
   }
   else if (scale_str.Equalsi("sigma")) {
-    scale = RefUtil::CalcFsqScaleSigma(rm, F, refs);
+    if (F.IsEmpty()) {
+      scale = RefUtil::CalcFsqScaleSigma(rm, F_sq, refs);
+    }
+    else {
+      scale = RefUtil::CalcFsqScaleSigma(rm, F, refs);
+    }
   }
   else if (scale_str.Equalsi("shelx")) {
-    scale = RefUtil::CalcFsqScaleShelx(rm, F, refs);
+    if (F.IsEmpty()) {
+      scale = RefUtil::CalcFsqScaleShelx(rm, F_sq, refs);
+    }
+    else {
+      scale = RefUtil::CalcFsqScaleShelx(rm, F, refs);
+    }
   }
   else if (scale_str.Equalsi("none")) {
     ;
@@ -8534,12 +8514,12 @@ void HKLCreate(TStrObjList &Cmds, const TParamList &Options,
   }
   TXApp& app = TXApp::GetInstance();
   vec3i idx = app.XFile().GetRM().CalcMaxHklIndexForD(r);
-  MillerIndexArray ma = MillerIndexArray(-idx, idx);
-  TArrayList<compd> F(ma.Count());
+  olx_object_ptr<IMillerIndexList> ma = MillerIndces::Make(-idx, idx);
+  TArrayList<compd> F(ma->Count());
   SFUtil::CalcSF(app.XFile(), ma, F);
   TRefList refs(F.Count(), false);
   for (size_t i = 0; i < F.Count(); i++) {
-    refs.Set(i, new TReflection(ma[i], F[i].qmod(), 0.0));
+    refs.Set(i, new TReflection((*ma)[i], F[i].qmod(), 0.0));
     refs[i].SetS((rand()%10)*refs[i].GetI()/100 + 0.01);
   }
   THklFile hkl;

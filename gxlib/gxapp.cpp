@@ -1333,8 +1333,8 @@ olxstr TGXApp::GetObjectInfoAt(int x, int y) const {
   else if (G->Is<TDUserObj>()) {
     TDUserObj &o = *(TDUserObj*)G;
     if (o.GetType() == sgloSphere && !o.Params().IsEmpty()) {
-      double r=o.Params()[0]*o.Basis.GetZoom();
-      rv << "Sphere volume/radius, A: " <<
+      double r = o.Params()[0]*o.Basis.GetZoom();
+      rv << o.GetCollectionName() << ": " << "Sphere volume/radius, A: " <<
         olxstr::FormatFloat(3, olx_sphere_volume(r)) << '/' <<
         olxstr::FormatFloat(3, r);
     }

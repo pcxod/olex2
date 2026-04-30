@@ -35,6 +35,7 @@
 #include "glalg.h"
 #include "listalg.h"
 #include "xangle.h"
+#include "refutil.h"
 
 #define gxlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.Register(\
@@ -90,13 +91,14 @@ void GXLibMacros::Export(TLibrary& lib) {
     "calc-calculates calculated map&;"
     "fcfmc-calculates FCF Fc-Fc map&;"
     "scale-scale to use for difference maps, [external], external-forced, sigma,"
-    " shelx. External may be replace with shelxl if the two differ too much.&;"
+    " shelx. External may be replace with shelx if the two differ too much.&;"
     "anom_only-Create Fc Map only using anomalous dispersion scattering factor,"
     " neglecting atom contribution&;"
     "r-resolution in Angstrems&;"
     "i-integrates the map&;"
     "m-mask the structure&;"
-    "map-show map[true]"
+    "map-show map[true]&;"
+    "stats-only prints stats on the calculated map ignoring any other options but 'scale'&;"
     , fpNone | psFileLoaded,
   "Calculates fourier map of selected type");
 
@@ -825,7 +827,7 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
   TArrayList<compd> F;
   st.start("Obtaining structure factors");
   SFUtil::ScaleType scale = SFUtil::ScaleType::Shelx;
-  double scale_value = 0;
+  double scale_value = 1;
   {
     olxstr str_scale = Options.FindValue("scale", EmptyString())
       .ToLowerCase();
@@ -853,8 +855,36 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
   if (anom_only) {
     src = SFUtil::SFOrigin::Olex2;
   }
+  if (Options.GetBoolOption("stats")) {
+    olxstr err = SFUtil::GetSF(refs, F, SFUtil::MapType::Calc, src,
+      scale, &scale_value, SFUtil::FPMerge::Merge, false);
+    if (!err.IsEmpty()) {
+      E.ProcessingError(__OlxSrcInfo, err);
+      return;
+    }
+    const RefinementModel& rm = app.XFile().GetRM();
+    evecd weights(refs.Count());
+    evecd Fsq(refs.Count());
+    RefUtil::ShelxWeightCalculator weight_c(rm.used_weight,
+      rm.aunit.GetHklToCartesian(), olx_sqr(scale_value));
+    for (size_t i = 0; i < refs.Count(); i++) {
+      weights[i] = weight_c.Calculate(refs[i], Fsq[i] = F[i].qmod());
+    }
+
+    double scale_k = RefUtil::CalcScale(RefUtil::Fsq_evaluator(), Fsq, refs,
+      RefUtil::CustomWeightCalculator::make(weights),
+      TReflection::DummyFilter());
+    TBasicApp::NewLogEntry() << "Statistics for reflections for Fourier maps";
+    RefUtil::Stats rstat(refs, Fsq, weights, olx_sqr(scale_value));
+    TBasicApp::NewLogEntry() << "R1 (All, " << rstat.refs.Count() << ") = "
+      << olxstr::FormatFloat(4, rstat.R1);
+    TBasicApp::NewLogEntry() << "R1 (I/sig >= 2, " << rstat.partial_R1_cnt << ") = "
+      << olxstr::FormatFloat(4, rstat.R1_partial);
+    TBasicApp::NewLogEntry() << "wR2 = " << olxstr::FormatFloat(4, rstat.wR2);
+    return;
+  }
   olxstr err = SFUtil::GetSF(refs, F, mapType, src,
-    scale, scale_value, SFUtil::FPMerge::Merge, anom_only);
+    scale, &scale_value, SFUtil::FPMerge::Merge, anom_only);
   if (!err.IsEmpty()) {
     E.ProcessingError(__OlxSrcInfo, err);
     return;
@@ -1716,7 +1746,7 @@ void GXLibMacros::macDetach(TStrObjList &Cmds, const TParamList &Options,
 }
 //.............................................................................
 int GXLibMacros::QPeakSortA(const TCAtom &a, const TCAtom &b)  {
-  int v = olx_cmp(a.GetQPeak(), b.GetQPeak());
+  int v = olx_cmp(olx_abs(a.GetQPeak()), olx_abs(b.GetQPeak()));
   if (v == 0 && a.GetLabel().Length() > 1 && b.GetLabel().Length() > 1) {
     if (a.GetLabel().SubStringFrom(1).IsNumber() &&
         b.GetLabel().SubStringFrom(1).IsNumber())
@@ -1741,8 +1771,9 @@ void GXLibMacros::macShowQ(TStrObjList &Cmds, const TParamList &Options,
     TAsymmUnit& au = app.XFile().GetAsymmUnit();
     TCAtomPList qpeaks;
     for (size_t i=0; i < au.AtomCount(); i++) {
-      if (!au.GetAtom(i).IsDeleted() && au.GetAtom(i).GetType() == iQPeakZ)
+      if (!au.GetAtom(i).IsDeleted() && au.GetAtom(i).GetType() == iQPeakZ) {
         qpeaks.Add(au.GetAtom(i));
+      }
     }
     QuickSorter::SortSF(qpeaks, &GXLibMacros::QPeakSortD);
     index_t d_cnt = 0;
@@ -1758,9 +1789,12 @@ void GXLibMacros::macShowQ(TStrObjList &Cmds, const TParamList &Options,
       return;
     }
     d_cnt += (index_t)(wheel);
-    if (d_cnt < 0)  d_cnt = 0;
-    if (d_cnt > (index_t)qpeaks.Count())
+    if (d_cnt < 0) {
+      d_cnt = 0;
+    }
+    if (d_cnt > (index_t)qpeaks.Count()) {
       d_cnt = qpeaks.Count();
+    }
     for (size_t i = 0; i < qpeaks.Count(); i++) {
       qpeaks[i]->SetDetached(i >= (size_t)d_cnt);
     }
@@ -4336,7 +4370,7 @@ void GXLibMacros::funExtraZoom(const TStrObjList& Params, TMacroData &E) {
 void GXLibMacros::macKill(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
-  if (TModeRegistry::GetInstance().GetCurrent() != NULL) {
+  if (TModeRegistry::GetInstance().GetCurrent() != 0) {
     Error.ProcessingError(__OlxSrcInfo, "Kill inaccessible from within a mode");
     return;
   }
@@ -4392,11 +4426,29 @@ void GXLibMacros::macKill(TStrObjList &Cmds, const TParamList &Options,
     else {
       TXAtomPList Atoms = app.FindXAtoms(Cmds, true, false),
         Selected;
-      if (Atoms.IsEmpty() && Cmds.Count() == 1) {
-        TGPCollection *col = app.GetRenderer().FindCollection(Cmds[0]);
-        if (col != 0) {
-          for (size_t i = 0; i < col->ObjectCount(); i++) {
-            col->GetObject(i).SetVisible(false);
+      TGlRenderer& renderer = app.GetRenderer();
+      if (Atoms.IsEmpty()) {
+        for (size_t i = 0; i < Cmds.Count(); i++) {
+          if (Wildcard::IsMask(Cmds[i])) {
+            Wildcard wc(Cmds[i]);
+            for (size_t ci = 0; ci < renderer.CollectionCount(); ci++) {
+              TGPCollection& col = renderer.GetCollection(ci);
+              if (!wc.DoesMatch(col.GetName())) {
+                continue;
+              }
+              for (size_t oi = 0; oi < col.ObjectCount(); oi++) {
+                col.GetObject(oi).SetVisible(false);
+              }
+            }
+          }
+          else {
+            TGPCollection* col = renderer.FindCollection(Cmds[i]);
+            if (col == 0) {
+              continue;
+            }
+            for (size_t j = 0; j < col->ObjectCount(); j++) {
+              col->GetObject(j).SetVisible(false);
+            }
           }
         }
         return;

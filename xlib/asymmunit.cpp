@@ -1851,7 +1851,8 @@ void TAsymmUnit::LibOrthogonolise(const TStrObjList& Params, TMacroData& E) {
     }
     rv = vec3d(toks[0].ToDouble(), toks[1].ToDouble(), toks[2].ToDouble());
   }
-  E.SetRetVal(Orthogonalise(rv).ToString());
+  rv = Orthogonalise(rv);
+  E.SetRetVal(olxstr(olxstr(rv[0]).stream(' ') << rv[1] << rv[2]));
 }
 //..............................................................................
 void TAsymmUnit::LibFractionalise(const TStrObjList& Params, TMacroData& E) {
@@ -1868,7 +1869,8 @@ void TAsymmUnit::LibFractionalise(const TStrObjList& Params, TMacroData& E) {
     }
     rv = vec3d(toks[0].ToDouble(), toks[1].ToDouble(), toks[2].ToDouble());
   }
-  E.SetRetVal(Fractionalise(rv).ToString());
+  rv = Fractionalise(rv);
+  E.SetRetVal(olxstr(olxstr(rv[0]).stream(' ') << rv[1] << rv[2]));
 }
 //..............................................................................
 void TAsymmUnit::LibSetAtomDisp(const TStrObjList& Params, TMacroData& E) {

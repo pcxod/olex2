@@ -45,7 +45,9 @@ public:
   void Append(const THklFile& hkls);
   template <class list_t>
   void Append(const list_t& hkls) {
-    if (hkls.IsEmpty()) return;
+    if (hkls.IsEmpty()) {
+      return;
+    }
     for (size_t i = 0; i < hkls.Count(); i++) {
       TReflection &r = olx_ref::get(hkls[i]);
       UpdateMinMax(r);
@@ -284,6 +286,18 @@ public:
     return InvalidIndex;
   }
 };
+
+// Consider solid arrays for performace tasks...
+//struct TMillerArray : public IMillerIndexList {
+//  TArrayList<vec3i> indices;
+//  TArrayList<double> I, s, w;
+//  TArrayList<int16_t> BN;
+//  //TMillerArray()
+//  size_t Count() const { return indices.Count(); }
+//  virtual vec3i operator [] (size_t i) const {
+//    return indices[i];
+//  }
+//};
 //---------------------------------------------------------------------------
 
 EndXlibNamespace()

@@ -115,7 +115,10 @@ bool TReflection::FromString(const olxstr& str) {
     I = str.SubString(12, 8).ToDouble();
     S = str.SubString(20, 8).ToDouble();
     if (str.Length() > 28) {
-      SetBatch(str.SubStringFrom(28).ToInt());
+      SetBatch(str.SubStringFrom(28, 4).ToInt());
+      if (str.Length() > 32) {
+        olx_set(w, str.SubStringFrom(32, 8).ToDouble());
+      }
     }
     return true;
   }
@@ -138,40 +141,76 @@ bool TReflection::FromNString(const olxstr& str) {
   // returns a string: h k l I S [f]
 //..............................................................................
 TIString TReflection::ToString() const {
-  olx_array_ptr<olxch> bf(new olxch[128]);
+  olx_array_ptr<olxch> bf(128);
   const olxch *f1 = olxT("%4i%4i%4i%8.2lf%8.2lf");
   const olxch *f2 = olxT("%4i%4i%4i%8.2lf%8.2lf%4i");
+  const olxch* f3 = olxT("%4i%4i%4i%8.2lf%8.2lf%4i%8.4lf");
   int16_t batch = GetBatch();
 #ifdef _UNICODE
 #ifdef _MSC_VER
-  if (batch == NoBatchSet)
+  if (batch == NoBatchSet) {
     swprintf_s(bf, 128, f1, hkl[0], hkl[1], hkl[2], I, S);
-  else
-    swprintf_s(bf, 128, f2, hkl[0], hkl[1], hkl[2], I, S, batch);
+  }
+  else {
+    if (w == 0) {
+      swprintf_s(bf, 128, f2, hkl[0], hkl[1], hkl[2], I, S, batch);
+    }
+    else {
+      swprintf_s(bf, 128, f3, hkl[0], hkl[1], hkl[2], I, S, batch, *w);
+    }
+  }
 #else
 #ifdef __WIN32__ // gcc on windows - different signature!
-  if (batch == NoBatchSet)
+  if (batch == NoBatchSet) {
     swprintf(bf, f1, hkl[0], hkl[1], hkl[2], I, S);
-  else
-    swprintf(bf, f2, hkl[0], hkl[1], hkl[2], I, S, batch);
+  }
+  else {
+    if (w == 0) {
+      swprintf(bf, f2, hkl[0], hkl[1], hkl[2], I, S, batch);
+    }
+    else {
+      swprintf(bf, f3, hkl[0], hkl[1], hkl[2], I, S, batch, *w);
+    }
+  }
 #else
-  if (batch == NoBatchSet)
+  if (batch == NoBatchSet) {
     swprintf(bf, 128, f1, hkl[0], hkl[1], hkl[2], I, S);
-  else
-    swprintf(bf, 128, f2, hkl[0], hkl[1], hkl[2], I, S, batch);
+  }
+  else {
+    if (w == 0) {
+      swprintf(bf, 128, f2, hkl[0], hkl[1], hkl[2], I, S, batch);
+    }
+    else {
+      swprintf(bf, 128, f3, hkl[0], hkl[1], hkl[2], I, S, batch, *w);
+    }
+  }
 #endif
 #endif
 #else
 #ifdef _MSC_VER
-  if (batch == NoBatchSet)
+  if (batch == NoBatchSet) {
     sprintf_s(bf, 128, f1, hkl[0], hkl[1], hkl[2], I, S);
-  else
-    sprintf_s(bf, 128, f2, hkl[0], hkl[1], hkl[2], I, S, batch);
+  }
+  else {
+    if (w == 0) {
+      sprintf_s(bf, 128, f2, hkl[0], hkl[1], hkl[2], I, S, batch);
+    }
+    else {
+      sprintf_s(bf, 128, f3, hkl[0], hkl[1], hkl[2], I, S, batch, *w);
+    }
+  }
 #else
-  if (batch == NoBatchSet)
+  if (batch == NoBatchSet) {
     sprintf(bf, f1, hkl[0], hkl[1], hkl[2], I, S);
-  else
-    sprintf(bf, f2, hkl[0], hkl[1], hkl[2], I, S, batch);
+  }
+  else {
+    if (w == 0) {
+      sprintf(bf, f2, hkl[0], hkl[1], hkl[2], I, S, batch);
+    }
+    else {
+      sprintf(bf, f3, hkl[0], hkl[1], hkl[2], I, S, batch, *w);
+    }
+  }
 #endif
 #endif
   return olxstr::FromExternal(bf.release());
@@ -180,20 +219,31 @@ TIString TReflection::ToString() const {
 char* TReflection::ToCBuffer(char* bf, size_t sz, double k) const {
   const char *f1 = "%4i%4i%4i%8.2lf%8.2lf";
   const char *f2 = "%4i%4i%4i%8.2lf%8.2lf%4i";
+  const char* f3 = "%4i%4i%4i%8.2lf%8.2lf%4i%8.4lf";
   int16_t batch = GetBatch();
 #ifdef _MSC_VER
   if (batch == NoBatchSet) {
     sprintf_s(bf, sz, f1, hkl[0], hkl[1], hkl[2], I*k, S*k);
   }
   else {
-    sprintf_s(bf, sz, f2, hkl[0], hkl[1], hkl[2], I*k, S*k, batch);
+    if (w == 0) {
+      sprintf_s(bf, sz, f2, hkl[0], hkl[1], hkl[2], I * k, S * k, batch);
+    }
+    else {
+      sprintf_s(bf, sz, f3, hkl[0], hkl[1], hkl[2], I * k, S * k, batch, *w);
+    }
   }
 #else
   if (batch == NoBatchSet) {
     sprintf(bf, f1, hkl[0], hkl[1], hkl[2], I*k, S*k);
   }
   else {
-    sprintf(bf, f2, hkl[0], hkl[1], hkl[2], I*k, S*k, batch);
+    if (w == 0) {
+      sprintf(bf, f2, hkl[0], hkl[1], hkl[2], I * k, S * k, batch);
+    }
+    else {
+      sprintf(bf, f3, hkl[0], hkl[1], hkl[2], I * k, S * k, batch, *w);
+    }
   }
 #endif
   return bf;

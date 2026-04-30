@@ -287,12 +287,12 @@ olxstr TShellUtil::PickFile(const olxstr& Title, const olxstr &Filter,
   ofn.Flags = OFN_ENABLESIZING;
   if (open) {
     ofn.Flags |= OFN_FILEMUSTEXIST;
-    if (GetSaveFileName(&ofn) == TRUE) {
+    if (GetOpenFileName(&ofn) == TRUE) {
       return olxstr::FromExternal(bf.release());
     }
   }
   else {
-    if (GetOpenFileName(&ofn) == TRUE) {
+    if (GetSaveFileName(&ofn) == TRUE) {
       return olxstr::FromExternal(bf.release());
     }
   }

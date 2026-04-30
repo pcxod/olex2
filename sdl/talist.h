@@ -522,6 +522,18 @@ public:
     return *this;
   }
   //..............................................................................
+  TArrayList& Fit() {
+    cap.capacity = FCount;
+    if (cap.capacity == 0) {
+      olx_free(Items);
+      Items = 0;
+    }
+    else {
+      Items = olx_realloc<T>(Items, cap.capacity);
+    }
+    return *this;
+  }
+  //..............................................................................
   static TListTraverser<TArrayList<T> > Traverser;
 public:
   struct InternalAccessor {

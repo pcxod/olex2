@@ -64,11 +64,20 @@ void ResolutionAndSigmaFilter::SetStats(RefinementModel::HklStat& stats) const {
 //.............................................................................
 bool ResolutionAndSigmaFilter::IsOutside(const TReflection& r) const {
   const double d = 1 / r.ToCart(rm.aunit.GetHklToCartesian()).Length();
-  if ((h_o_s > 0 && r.GetI() < h_o_s * r.GetS()) || d >= max_d || d <= min_d) {
+  if (h_o_s > 0 && r.GetI() < h_o_s * r.GetS()) {
+    
     if (_stats != 0) {
       _stats->FilteredOff++;
     }
     return true;
+  }
+  if (d >= max_d || d <= min_d) {
+    if (rm.HasSHEL() && rm.GetOMIT_2t() != 180) {
+      if (_stats != 0) {
+        _stats->FilteredOff++;
+      }
+      return true;
+    }
   }
   if (_stats != 0) {
     olx_update_min_max(r.GetI(), _stats->MinI, _stats->MaxI);
@@ -137,12 +146,7 @@ double ShelxWeightCalculator::Calculate(const TReflection& r, double Fc2) const 
 //.............................................................................
 //.............................................................................
 //.............................................................................
-Stats::Stats(bool update_scale, const olxstr &fcf, SFUtil::EXTIDest extiDest)
-: sum_wsqd(0),
-  partial_R1_cnt(0),
-  min_hkl(1000),
-  max_hkl(-1000)
-{
+Stats::Stats(bool update_scale, const olxstr &fcf, SFUtil::EXTIDest extiDest) {
   partical_threshold = 2;
   TXApp& xapp = TXApp::GetInstance();
   RefinementModel& rm = xapp.XFile().GetRM();
@@ -209,12 +213,18 @@ Stats::Stats(bool update_scale, const olxstr &fcf, SFUtil::EXTIDest extiDest)
       CustomWeightCalculator::make(weights),
       TReflection::DummyFilter());
   }
-  
+  init(scale_k);
+}
+//.............................................................................
+void Stats::init(double scale) {
+  sum_wsqd = partial_R1_cnt = 0;
+  min_hkl = vec3i(1000);
+  max_hkl = vec3i(-1000);
   double wR2d = 0, R1u = 0, R1d = 0, R1up = 0, R1dp = 0;
   wsqd.Resize(refs.Count());
   for (size_t i = 0; i < refs.Count(); i++) {
     TReflection& r = refs[i];
-    r *= scale_k;
+    r *= scale;
     vec3i::UpdateMinMax(r.GetHkl(), min_hkl, max_hkl);
     const double Fc2 = Fsq[i];
     const double Fc = sqrt(Fc2);

@@ -126,6 +126,32 @@ struct olx_obj_deleter_safe {
     olx_del_obj(o);
   }
 };
+// copies null or obeject instance using copy constructor
+template <typename T> T* olx_copy(const T* src) {
+  if (src == 0) {
+    return 0;
+  }
+  return new T(*src);
+}
+template <typename T> void olx_set(T*& dest, const T* src) {
+  if (dest != 0) {
+    delete dest;
+    if (src == 0) {
+      dest = 0;
+      return;
+    }
+  }
+  if (src == 0) {
+    return;
+  }
+  dest = new T(*src);
+}
+template <typename T> void olx_set(T*& dest, const T& src) {
+  if (dest != 0) {
+    delete dest;
+  }
+  dest = new T(src);
+}
 #if defined(__GNUC__) && defined(__linux__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstringop-overflow"

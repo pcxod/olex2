@@ -674,6 +674,23 @@ public:
     return *this;
   }
   //..............................................................................
+  template <class size_t_list_t>
+  ConstPtrList<T> Select(const size_t_list_t& indices) const {
+    TPtrList rv(indices.Count());
+    for (size_t i = 0; i < indices.Count(); i++) {
+#ifdef OLX_DEBUG
+      TIndexOutOfRangeException::ValidateRange(__POlxSourceInfo,
+        indices[i], 0, FCount);
+#endif
+      rv[i] = Items[indices[i]];
+    }
+    return rv;
+  }
+  //..............................................................................
+  const TPtrList<T>& AsPtrList() const {
+    return *this;
+  }
+  //..............................................................................
   static TListTraverser<TPtrList<T> > Traverser;
 public:
   struct InternalAccessor {
