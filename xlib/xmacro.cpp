@@ -3209,7 +3209,9 @@ void XLibMacros::ChangeCell(const mat3d& tm, const TSpaceGroup& new_sg,
   }
   au.ChangeSpaceGroup(new_sg);
   au.InitMatrices();
-  xapp.XFile().LastLoader()->GetRM().TransformUsedSymm(tm);
+  if (tm == TMatrix33<int>(tm)) {
+    xapp.XFile().LastLoader()->GetRM().TransformUsedSymm(tm);
+  }
   xapp.XFile().LastLoaderChanged();
   if (save) {
     xapp.XFile().SaveToFile(xapp.XFile().GetFileName());
@@ -3320,19 +3322,21 @@ void XLibMacros::macSGS(TStrObjList& Cmds, const TParamList& Options,
       }
     }
     if (!tm.IsI()) {
-      const TAsymmUnit& au = xapp.XFile().GetAsymmUnit();
-      smatd_list ml;
-      TSymmLib::GetInstance().ExpandLatt(ml, au.GetMatices(), au.GetLatt());
-      smatd sg_r = tm,
-        sg_r_t = tm.GetInverse();
-      for (size_t i = 0; i < au.MatrixCount(); i++) {
-        ml[i] = sg_r_t * ml[i] * sg_r;
+      if (sg == 0) {
+        const TAsymmUnit& au = xapp.XFile().GetAsymmUnit();
+        smatd_list ml;
+        TSymmLib::GetInstance().ExpandLatt(ml, au.GetMatices(), au.GetLatt());
+        smatd sg_r = tm,
+          sg_r_t = tm.GetInverse();
+        for (size_t i = 0; i < au.MatrixCount(); i++) {
+          ml[i] = sg_r_t * ml[i] * sg_r;
+        }
+        SymmSpace::Info si = SymmSpace::GetInfo(ml);
+        sg = &TSymmLib::GetInstance().CreateNew(si);
       }
-      SymmSpace::Info si = SymmSpace::GetInfo(ml);
-      TSpaceGroup& sg = TSymmLib::GetInstance().CreateNew(si);
-      ChangeCell(tm, sg, hkl_fn);
+      ChangeCell(tm, *sg, hkl_fn);
       TBasicApp::NewLogEntry() << "The cell, atomic coordinates and ADP's are "
-        "transformed using given transformation. New space group: " << sg.GetName();
+        "transformed using given transformation. New space group: " << sg->GetName();
       if (tm.Determinant() < 0) {
         TBasicApp::NewLogEntry(logWarning) <<
           "Note that the transformation matrix has a negative determinant";
