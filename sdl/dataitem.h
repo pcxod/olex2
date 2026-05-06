@@ -94,7 +94,7 @@ public:
   template <class T> TDataItem& GetItemByName(const T& Name) const {
     size_t i = Items.IndexOf(Name);
     if (i == InvalidIndex) {
-      throw TFunctionFailedException(__OlxSourceInfo,
+      throw TNonexistingDataItemException(__OlxSourceInfo,
         olxstr("Required item does not exist: ").quote() << Name);
     }
     return *Items.GetObject(i);
@@ -133,7 +133,7 @@ public:
   template <class T> const olxstr& GetFieldByName(const T& Name) const {
     const size_t i = Fields.IndexOf(Name);
     if (i == InvalidIndex) {
-      throw TFunctionFailedException(__OlxSourceInfo,
+      throw TNonexistingDataItemException(__OlxSourceInfo,
         olxstr("Required attribute is missing: ").quote() << Name);
     }
     return Fields.GetValue(i).GetA();

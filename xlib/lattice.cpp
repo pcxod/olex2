@@ -3150,6 +3150,9 @@ TLattice::CalcMoiety() const
         if (!polymeric) {
           frags[i].a = zp_mult / gd;
         }
+        else {
+          frags[i].a *= zp_mult;
+        }
       }
     }
   }
