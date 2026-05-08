@@ -1835,12 +1835,14 @@ void TGXApp::PasteSelection() {
   Draw();
 }
 //..............................................................................
-void TGXApp::RestoreSelection()  {
-  if( !SelectionCopy[0].IsEmpty() || SelectionCopy[1].IsEmpty() )
+void TGXApp::RestoreSelection() {
+  if (!SelectionCopy[0].IsEmpty() || SelectionCopy[1].IsEmpty()) {
     return;
+  }
   SelectionCopy[0] = SelectionCopy[1];
   GetRenderer().SelectAll(false);
   RestoreGroup(GetSelection(), SelectionCopy[1]);
+  GetSelection().GetObjects().ForEach(AGDrawObject::FlagSetter(sgdoSelected, true));
 }
 //..............................................................................
 ConstPtrList<TXAtom> TGXApp::GetSelectedXAtoms(bool Clear) {
@@ -3786,18 +3788,22 @@ void TGXApp::UpdateBondPrimitives(int Mask, TXBondPList* Bonds,
   if (HBondsOnly) {
     for (size_t i = 0; i < bonds.Count(); i++) {
       if (bonds[i]->GetType() != sotHBond)  continue;
-      if ((size_t)bonds[i]->GetPrimitives().GetTag() == i)
+      if ((size_t)bonds[i]->GetPrimitives().GetTag() == i) {
         bonds[i]->UpdatePrimitives(Mask);
+      }
     }
   }
   else {
     for (size_t i = 0; i < bonds.Count(); i++) {
-      if (bonds[i]->GetType() == sotHBond)  continue;
-      if ((size_t)bonds[i]->GetPrimitives().GetTag() == i)
+      if (bonds[i]->GetType() == sotHBond) {
+        continue;
+      }
+      if ((size_t)bonds[i]->GetPrimitives().GetTag() == i) {
         bonds[i]->UpdatePrimitives(Mask);
+      }
     }
   }
-  if (Bonds == NULL)  {
+  if (Bonds == 0) {
     //for( size_t i=0; i < IndividualCollections.Count(); i++ )
     //  if( IndividualCollections[i].IndexOf('-') != InvalidIndex )
     //    IndividualCollections[i].SetLength(0);
@@ -3814,7 +3820,7 @@ void TGXApp::SetAtomDrawingStyle(short ADS, TXAtomPList* Atoms) {
   FillXAtomList(atoms, Atoms);
   for (size_t i=0; i < atoms.Count(); i++)
     atoms[i]->DrawStyle(ADS);
-  if (Atoms == NULL) {
+  if (Atoms == 0) {
     CalcProbFactor(FProbFactor);
     TXAtom::GetSettings(GetRenderer()).SetDS(ADS);
   }
