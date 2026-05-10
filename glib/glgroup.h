@@ -80,6 +80,7 @@ public:
   AGDrawObject& GetObject(size_t i) const { return *Objects[i]; }
   AGDrawObject& operator [] (size_t i) const { return *Objects[i]; }
   void SortObjectsByTag();
+  const AGDObjList& GetObjects() const { return Objects; }
   /* returns true if there are at least two groupable objects, moving the
   ungroupable ones to the provided list
   */

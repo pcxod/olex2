@@ -34,7 +34,7 @@ static const double
   def_OMIT_s  = -2,
   def_OMIT_2t = 180.0,
   def_SHEL_hr = 0,
-  def_SHEL_lr = 100;  // ['infinity' in A]
+  def_SHEL_lr = 999;  // ['infinity' in A]
 
 enum {
   def_HKLF_m = 0,
@@ -268,7 +268,9 @@ public:
   const vec3i& GetOmitted(size_t i) const {  return Omits[i];  }
   void Omit(const vec3i& r);
   void ClearOmits() { Omits.Clear(); }
-  void ClearOmit() { OMIT_set = false; }
+  void ClearOmit() {
+    OMIT_s = def_OMIT_s; OMIT_2t = def_OMIT_2t; OMIT_set = false;
+  }
   const vec3i_list& GetOmits() const {  return Omits;  }
   void SetOmits(const vec3i_list& omits) {
     Omits = omits;
@@ -310,7 +312,9 @@ public:
   void SetSHEL_hr(double v)  {  SHEL_hr = v;  SHEL_set = true;  }
   bool HasSHEL() const {  return SHEL_set;  }
   void SetSHEL(const TStrList& shel);
-  void ClearSHEL() { SHEL_set = false; }
+  void ClearSHEL() {
+    SHEL_lr = def_SHEL_lr; SHEL_hr = def_SHEL_hr; SHEL_set = false;
+  }
   olxstr GetSHELStr() const {  return olxstr(SHEL_lr) << ' ' << SHEL_hr;  }
 
   TDoubleList::const_list_type GetBASFAsDoubleList() const;

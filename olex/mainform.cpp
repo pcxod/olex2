@@ -887,8 +887,8 @@ void TMainForm::XApp(Olex2App *XA)  {
     "dialog with that font; the first argument may be just 'olex2' or 'system'"
     " to enforce choosing the Olex2/System font (the font information can be "
     "provided in the second argument then)");
-  this_InitFuncD(GetFont, fpOne,
-    "Returns specified font");
+  this_InitFuncD(GetFont, fpOne|fpTwo,
+    "Returns specified font [encoded if needed]. Add 'decoded' to get the decoded string.");
 
   GetLibrary().Register(
     new TFunction<TMainForm>(this, &TMainForm::funGetMaterial, "GetMaterial",
@@ -1328,7 +1328,7 @@ void TMainForm::StartupInit() {
   if (FGlCanvas != 0) {
     FGlCanvas->XApp(FXApp);
   }
-  wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
+  wxFont Font(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);//|wxFONTFLAG_ANTIALIASED);
   TGlMaterial glm("2049;0.698,0.698,0.698,1.000");
   AGlScene& gls = FXApp->GetRenderer().GetScene();
   TGlFont &fnt_def = gls.CreateFont("Default", Font.GetNativeFontInfoDesc());
@@ -2115,17 +2115,26 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
   }
   else if (MsgId == ID_DELINS) {
     if (Data != 0 && Data->Is<olxstr>()) {
-      if (((olxstr*)Data)->Equalsi("OMIT")) {
+      olxstr data = *(olxstr*)Data;
+      if (data.Equalsi("OMIT") || data.Equalsi("SHEL")) {
         BadReflectionsTable(false);
+        processMacro("spy.make_HOS(True)");
         processMacro("html.update");
       }
     }
   }
   else if (MsgId == ID_ADDINS) {
     if (Data != 0 && Data->Is<olxstr>()) {
-      if (((olxstr*)Data)->Equalsi("OMIT")) {
-        BadReflectionsTable(false);
-        processMacro("html.update");
+      olxstr data = *(olxstr*)Data;
+      if (data.StartsFromi("OMIT") || data.StartsFromi("SHEL")) {
+        if (data.Equalsi("OMITR")) {
+          BadReflectionsTable(false);
+          processMacro("html.update");
+        }
+        else {
+          processMacro("spy.make_HOS(True)");
+          processMacro("html.update");
+        }
       }
     }
   }
@@ -3690,7 +3699,7 @@ void TMainForm::SetUserCursor(const olxstr& param, const olxstr& mode)  {
   Pen.SetColour(*wxRED);
   memDC.SetPen(Pen);
   wxFont Font = memDC.GetFont();
-  Font.SetFamily(wxSWISS);
+  Font.SetFamily(wxFONTFAMILY_SWISS);
 #if defined(__WIN32__)
   Font.SetPointSize(10);
 #else

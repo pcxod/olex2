@@ -72,7 +72,7 @@ bool ResolutionAndSigmaFilter::IsOutside(const TReflection& r) const {
     return true;
   }
   if (d >= max_d || d <= min_d) {
-    if (rm.HasSHEL() && rm.GetOMIT_2t() != 180) {
+    if (rm.HasSHEL() || rm.HasOMIT()) {
       if (_stats != 0) {
         _stats->FilteredOff++;
       }

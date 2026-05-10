@@ -13,6 +13,7 @@
 #include "glfont.h"
 #include "glrender.h"
 #include "efile.h"
+#include "state_manager.h"
 
 //#include "ft2build.h"
 //#include FT_FREETYPE_H
@@ -40,8 +41,8 @@ protected:
   wxChoice* cbFileName;
   wxComboBox* cbSize;
 public:
-  dlgEditOlexFont(const olxstr& fntId, const TStrList& fntFiles) :
-    wxDialog(0, -1, wxT("Olex2 Font"), wxDefaultPosition)
+  dlgEditOlexFont(const olxstr& fntId, const TStrList& fntFiles)
+    : wxDialog(0, -1, wxT("Olex2 Font"), wxDefaultPosition)
   {
     TwxGlScene::MetaFont mf(fntId);
     wxBoxSizer* AASizer = new wxBoxSizer(wxHORIZONTAL);
@@ -220,7 +221,7 @@ TGlFont& TwxGlScene::DoCreateFont(TGlFont& glf, bool half_size) const {
   // LINUZ port - ... native font string is system dependent...
   wxFont Font;
   if (!Font.SetNativeFontInfo((glf.GetIdString().u_str()))) {
-    Font = wxFont(10, wxMODERN, wxNORMAL, wxNORMAL);
+    Font = wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
   }
   if (Font.GetPointSize() <= 1) {
     Font.SetPointSize(10);
@@ -344,7 +345,7 @@ void TwxGlScene_RipFontA(wxFont& fnt, TGlFont& glf, wxZipOutputStream& zos) {
   zos.CloseEntry();
 }
 void TwxGlScene::ExportFont(const olxstr& name, const olxstr& fileName) const {
-  wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
+  wxFont Font(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);//|wxFONTFLAG_ANTIALIASED);
   TStrList toks(name, '&');
   TGlFont Fnt(const_cast<TwxGlScene&>(*this), 0, name);
   wxFileOutputStream fos(fileName.u_str());
@@ -513,47 +514,49 @@ void TwxGlScene::RestoreFontScale() {
 }
 //.............................................................................
 olxstr TwxGlScene::ShowFontDialog(TGlFont* glf, const olxstr& fntDesc) {
-  olxstr rv(EmptyString());
   olxstr fntId((glf != 0) ? glf->GetIdString() : fntDesc);
   if (MetaFont::IsOlexFont(fntId)) {
-    if (fntId.CharAt(fntId.Length() - 1) == ':') { // default font
+    if (fntId.GetLast() == ':') { // default font
       fntId << MetaFont::BuildOlexFontId(EmptyString(), 12, true, false, false);
     }
     TStrList fntFiles;
     TEFile::ListDir(FontsFolder, fntFiles, "*.fnt", sefFile);
     dlgEditOlexFont* dlg = new dlgEditOlexFont(fntId, fntFiles);
+    olx_finally f = olx_finally::make(*dlg, &dlgEditOlexFont::Destroy);
+    olxstr rv;
     if (dlg->ShowModal() == wxID_OK) {
       if (glf != 0) { // recreate, if provided
         CreateFont(glf->GetName(), dlg->GetIdString());
       }
       rv = dlg->GetIdString();
     }
-    dlg->Destroy();
+    return rv;
   }
-  else {
-    wxFontData fnt_data;
-    wxFont Fnt(12, wxMODERN, wxNORMAL, wxNORMAL);
-    if (!fntId.IsEmpty())  // is not default?
-      Fnt.SetNativeFontInfo(fntId.u_str());
-    fnt_data.SetInitialFont(Fnt);
-    fnt_data.EnableEffects(false);
-    wxFontDialog fD(0, fnt_data);
-    if (fD.ShowModal() == wxID_OK) {
-      Fnt = fD.GetFontData().GetChosenFont();
-      if (glf != 0) { // recreate if provided
-        CreateFont(glf->GetName(), Fnt.GetNativeFontInfoDesc());
-      }
-      rv = Fnt.GetNativeFontInfoDesc();
+  wxFontData fnt_data;
+  wxFont Fnt(12, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+  if (!fntId.IsEmpty()) { // is not default?
+    Fnt.SetNativeFontInfo(fntId.u_str());
+  }
+  fnt_data.SetInitialFont(Fnt);
+  fnt_data.EnableEffects(false);
+  wxFontDialog fD(0, fnt_data);
+  if (fD.ShowModal() == wxID_OK) {
+    Fnt = fD.GetFontData().GetChosenFont();
+    if (glf != 0) { // recreate if provided
+      CreateFont(glf->GetName(), Fnt.GetNativeFontInfoDesc());
     }
+    return Fnt.GetNativeFontInfoDesc();
   }
-  return rv;
+  return EmptyString();
 }
 //.............................................................................
 //.............................................................................
 //.............................................................................
-bool TwxGlScene::MetaFont::SetIdString(const olxstr& idstr) {
-  if (AGlScene::MetaFont::SetIdString(idstr))
+bool TwxGlScene::MetaFont::SetIdString(const olxstr& idstr_) {
+  if (AGlScene::MetaFont::SetIdString(idstr_)) {
     return true;
+  }
+  olxstr idstr = this->decode_id(idstr_);
   wxFont f(idstr.u_str());
   if (!f.IsOk()) {
     throw TFunctionFailedException(__OlxSourceInfo, "invalid font ID");

@@ -7426,10 +7426,9 @@ void XLibMacros::macStandardise(TStrObjList &Cmds, const TParamList &Options,
 void XLibMacros::macOmit(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
-  static olxstr sig("OMIT");
   TXApp &app = TXApp::GetInstance();
   RefinementModel& rm = app.XFile().GetRM();
-  bool processed = false;
+  bool processed = false, update_refs = false;
   if (Cmds.Count() == 1) {
     if (Cmds[0].IsNumber()) {
       const double th = Cmds[0].ToDouble();
@@ -7442,7 +7441,7 @@ void XLibMacros::macOmit(TStrObjList &Cmds, const TParamList &Options,
           rm.Omit(bad_refs[i].index);
         }
       }
-      processed = true;
+      update_refs = processed = true;
     }
   }
   else if (Cmds.Count() == 2 && olx_list_and(Cmds, &olxstr::IsNumber)) {
@@ -7456,20 +7455,29 @@ void XLibMacros::macOmit(TStrObjList &Cmds, const TParamList &Options,
       }
       else {
         Error.ProcessingError(__OlxSrcInfo, "3 integers are expected");
+        return;
       }
-      return;
     }
-    rm.AddOMIT(Cmds);
+    else {
+      rm.AddOMIT(Cmds);
+    }
+    update_refs = true;
   }
-  OnAddIns().Exit(NULL, &sig);
+  olxstr sig("OMIT");
+  if (update_refs) {
+    sig << 'R';
+  }
+  OnAddIns().Exit(0, &sig);
 }
 //.............................................................................
 void XLibMacros::macShel(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
+  olxstr sig("SHEL");
   TXApp &app = TXApp::GetInstance();
   RefinementModel& rm = app.XFile().GetRM();
   rm.SetSHEL(TStrList(Cmds));
+  OnAddIns().Exit(0, &sig);
 }
 //.............................................................................
 void XLibMacros::funLst(const TStrObjList &Cmds, TMacroData &E) {

@@ -68,7 +68,7 @@ handler::handler(const SymmSpace::InfoEx& _sym_info, const TRefList& refs,
   for (size_t i = 0; i < refs.Count(); i++) {
     olx_object_ptr<TTypeList<twin_component> > comp =
       new TTypeList<twin_component>();
-    bool omit = false;
+    bool omit = false, sys_abs = false;
     while (i < refs.Count() && refs[i].GetBatch() < 0) {
       size_t bi = olx_abs(refs[i].GetBatch()) - 1;
       if (bi >= scales.Count()) {
@@ -99,6 +99,13 @@ handler::handler(const SymmSpace::InfoEx& _sym_info, const TRefList& refs,
     }
     // becomes incomplete set for detwinning
     if (omit) {
+      continue;
+    }
+    if (sys_abs) {
+      continue;
+    }
+    if (refs[i].IsAbsent()) {
+      ms.SystematicAbsencesRemoved++;
       continue;
     }
     if (olx_abs(refs[i].GetBatch()) >= scales.Count() + 1) {

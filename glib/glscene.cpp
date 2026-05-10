@@ -10,6 +10,7 @@
 #include "glrender.h"
 #include "povdraw.h"
 #include "glscene.h"
+#include "encodings.h"
 
 AGlScene::~AGlScene()  {
   Fonts.DeleteItems();
@@ -74,7 +75,8 @@ void AGlScene::ToDataItem(TDataItem &di) const {
   FParent->LightModel.ToDataItem(di.AddItem("LightModel"));
   TDataItem &fonts = di.AddItem("Fonts");
   for (size_t i = 0; i < FontCount(); i++) {
-    fonts.AddItem(_GetFont(i).GetName(), _GetFont(i).GetIdString());
+    fonts.AddItem(_GetFont(i).GetName(),
+      MetaFont::encode_id(_GetFont(i).GetIdString()));
   }
   TDataItem &mats = di.AddItem("Materials");
   for (size_t i = 0; i < materials.Count(); i++) {
@@ -96,7 +98,7 @@ void AGlScene::FromDataItem(const TDataItem &di) {
     if (fd.IsEmpty()) {
       fd = fonts.GetItemByIndex(i).FindField("id");
     }
-    CreateFont(fonts.GetItemByIndex(i).GetName(), fd);
+    CreateFont(fonts.GetItemByIndex(i).GetName(), MetaFont::decode_id(fd));
   }
   TDataItem *mats = di.FindItem("Materials");
   if (mats != 0) {
@@ -155,8 +157,9 @@ olxstr AGlScene::MetaFont::BuildOlexFontId(const olxstr& fileName, short size,
   bool fixed, bool bold, bool italic)
 {
   olxstr prefix, suffix;
-  if (!fileName.IsEmpty())
+  if (!fileName.IsEmpty()) {
     prefix << '#' << fileName << ':';
+  }
   suffix << (fixed ? "f" : "n");
   if (italic) {
     suffix << "i";
@@ -221,6 +224,20 @@ olxstr AGlScene::MetaFont::GetFileIdString() const {
     return BuildOlexFontId(EmptyString(), Size, Fixed, Bold, Italic);
   }
   throw TInvalidArgumentException(__OlxSourceInfo, "Olex2 font is expected");
+}
+//.............................................................................
+olxstr AGlScene::MetaFont::encode_id(const olxstr& id) {
+  if (id.ContainAnyOf("<\"'")) {
+    return olxstr('=') << encoding::base64::encode(id);
+  }
+  return id;
+}
+//.............................................................................
+olxstr AGlScene::MetaFont::decode_id(const olxstr& id) {
+  if (id.StartsFrom('=')) {
+    return encoding::base64::decode(id.SubStringFrom(1));
+  }
+  return id;
 }
 //.............................................................................
 //.............................................................................

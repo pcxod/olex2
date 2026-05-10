@@ -111,7 +111,7 @@ public:
     return FontRegistry.Find(&typeid(T), def_ind);
   }
 
-  class MetaFont {
+  class MetaFont : public IOlxObject {
   protected:
     short Size;
     bool Bold, Italic, Fixed, Underlined;
@@ -126,20 +126,23 @@ public:
     otherwise
     */
     virtual bool SetIdString(const olxstr& idstr);
+    DefPropC(olxstr, FileName);
+    DefPropBIsSet(Bold);
+    DefPropBIsSet(Fixed);
+    DefPropBIsSet(Italic);
+    bool IsUnderlined() const {  return Underlined;  }
+    DefPropP(short, Size);
     static bool IsOlexFont(const olxstr& fntId) {
-      return fntId.IsEmpty()? false : fntId.CharAt(0) == '#';
+      return fntId.IsEmpty() ? false : fntId.CharAt(0) == '#';
     }
     static bool IsVectorFont(const olxstr& fntId) {
-      return fntId.IsEmpty()? false : fntId.CharAt(0) == '@';
+      return fntId.IsEmpty() ? false : fntId.CharAt(0) == '@';
     }
     static olxstr BuildOlexFontId(const olxstr& fileName, short size,
       bool fixed, bool bold, bool italic);
-    DefPropC(olxstr, FileName)
-    DefPropBIsSet(Bold)
-    DefPropBIsSet(Fixed)
-    DefPropBIsSet(Italic)
-    bool IsUnderlined() const {  return Underlined;  }
-    DefPropP(short, Size)
+    // ensure no XML in the id by encoding in base64 and prepending with '='
+    static olxstr encode_id(const olxstr& id);
+    static olxstr decode_id(const olxstr& id);
   };
 
   /* named set of user defined materials.

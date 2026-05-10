@@ -89,8 +89,18 @@ struct olx_finally {
     return olx_finally(new FunctionFinally<rv_t, base_t>(base, func));
   }
 
-  template<typename rv_t, typename base_t>
+  template<typename rv_t, class base_t, class parent_t>
+  static olx_finally make(base_t& base, rv_t(parent_t::* func)()) {
+    return olx_finally(new FunctionFinally<rv_t, base_t>(base, func));
+  }
+
+  template<typename rv_t, class base_t>
   static olx_finally make_const(const base_t& base, rv_t(base_t::* func)() const) {
+    return olx_finally(new FunctionFinallyConst<rv_t, base_t>(base, func));
+  }
+
+  template<typename rv_t, class base_t, class parent_t>
+  static olx_finally make_const(const base_t& base, rv_t(parent_t::* func)() const) {
     return olx_finally(new FunctionFinallyConst<rv_t, base_t>(base, func));
   }
 };

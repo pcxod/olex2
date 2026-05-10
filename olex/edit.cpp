@@ -28,7 +28,7 @@ TdlgEdit::TdlgEdit(TMainFrame *ParentFrame, bool MultiLine):
   }
   Text = new wxTextCtrl(this, -1, wxT(""), wxDefaultPosition, wxSize(width, height), flags);
   //Text->SetSize(width, height);
-  wxFont fnt(fontSize, wxMODERN, wxNORMAL, wxNORMAL);
+  wxFont fnt(fontSize, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
   Text->SetFont(fnt);
 
   wxBoxSizer *GlobalSizer = new wxBoxSizer(wxVERTICAL );
