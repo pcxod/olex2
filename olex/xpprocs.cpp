@@ -3426,6 +3426,7 @@ void TMainForm::macPopup(TStrObjList& Cmds, const TParamList& Options, TMacroDat
 void TMainForm::macPython(TStrObjList& Cmds, const TParamList& Options, TMacroData& E) {
   if (Options.Contains('i') || Options.Contains('l')) {
     TdlgStyledEdit* dlg = new TdlgStyledEdit(this, true);
+    olx_finally f_ = olx_finally::make(*dlg, &TdlgStyledEdit::Destroy);
     dlg->SetTitle(wxT("Python script editor"));
     dlg->SetLexer(wxSTC_LEX_PYTHON);
     if (Options.Contains('l')) {
@@ -3438,16 +3439,18 @@ void TMainForm::macPython(TStrObjList& Cmds, const TParamList& Options, TMacroDa
         dlg->SetText(TEFile::ReadLines(FN).Text('\n'));
       }
     }
-    else
+    else {
       dlg->SetText(wxT("import olex\n"));
+    }
     if (dlg->ShowModal() == wxID_OK) {
       PythonExt::GetInstance()->RunPython(dlg->GetText());
     }
-    dlg->Destroy();
   }
   olxstr tmp = Cmds.Text(' ');
   tmp.Replace("\\n", "\n");
-  if (!tmp.EndsWith('\n'))  tmp << '\n';
+  if (!tmp.EndsWith('\n')) {
+    tmp << '\n';
+  }
   PythonExt::GetInstance()->RunPython(tmp);
 }
 //..............................................................................
@@ -3834,7 +3837,7 @@ void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options,
     dc.SetBackground(wxBrush(*wxRED, wxBRUSHSTYLE_SOLID));
     //dc.SetPen(wxPen(*wxWHITE));
     dc.Clear();
-    wxFont fnt(18, wxMODERN, wxNORMAL, wxNORMAL);
+    wxFont fnt(18, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
     dc.SetFont(fnt);
     dc.SetTextForeground(*wxWHITE);
     dc.DrawLabel(Cmds[1].u_str(), wxRect(0, 0, 255, 31));
@@ -4514,23 +4517,31 @@ void TMainForm::macSchedule(TStrObjList &Cmds, const TParamList &Options,
 //..............................................................................
 void TMainForm::funChooseElement(const TStrObjList& Params, TMacroData &E) {
   TPTableDlg *Dlg = new TPTableDlg(this);
-  if( Dlg->ShowModal() == wxID_OK )
+  if (Dlg->ShowModal() == wxID_OK) {
     E.SetRetVal(Dlg->GetSelected()->symbol);
-  else
+  }
+  else {
     E.SetRetVal(EmptyString());
+  }
   Dlg->Destroy();
 }
 //..............................................................................
 void TMainForm::funChooseDir(const TStrObjList& Params, TMacroData &E) {
   olxstr title = "Choose directory",
            defPath = TEFile::CurrentDir();
-  if( Params.Count() > 0 )  title = Params[0];
-  if( Params.Count() > 1 )  defPath = Params[1];
+  if (Params.Count() > 0) {
+    title = Params[0];
+  }
+  if (Params.Count() > 1) {
+    defPath = Params[1];
+  }
   wxDirDialog dlg(this, title.u_str(), defPath.u_str());
-  if( dlg.ShowModal() == wxID_OK )
+  if (dlg.ShowModal() == wxID_OK) {
     E.SetRetVal<olxstr>(dlg.GetPath());
-  else
+  }
+  else {
     E.ProcessingError(__OlxSrcInfo, EmptyString());
+  }
 }
 //..............................................................................
 typedef double comp_t;
@@ -5034,15 +5045,17 @@ void TMainForm::macDelObject(TStrObjList &Cmds, const TParamList &Options, TMacr
   throw TNotImplementedException(__OlxSourceInfo);
 }
 //..............................................................................
-void TMainForm::macTextm(TStrObjList &Cmds, const TParamList &Options, TMacroData &Error)  {
-  if( !TEFile::Exists( Cmds[0] )  )  {
+void TMainForm::macTextm(TStrObjList& Cmds, const TParamList& Options, TMacroData& Error) {
+  if (!TEFile::Exists(Cmds[0])) {
     Error.ProcessingError(__OlxSrcInfo, "file does not exist");
     return;
   }
   TStrList sl = TEFile::ReadLines(Cmds[0]);
-  for( size_t i=0; i < sl.Count(); i++ )  {
+  for (size_t i = 0; i < sl.Count(); i++) {
     Macros.ProcessMacro(sl[i], Error);
-    if( !Error.IsSuccessful() )  break;
+    if (!Error.IsSuccessful()) {
+      break;
+    }
   }
 }
 //..............................................................................
@@ -5051,24 +5064,24 @@ void TMainForm::macOnRefine(TStrObjList &Cmds, const TParamList &Options, TMacro
 }
 //..............................................................................
 //..............................................................................
-class MTTestTh : public AOlxThread  {
+class MTTestTh : public AOlxThread {
   olxcstr msg;
   compd cd_res;
   compf cf_res;
 public:
-  MTTestTh() {  Detached = false;  }
-  int Run()  {
+  MTTestTh() { Detached = false; }
+  int Run() {
 #ifdef _DEBUG
-    for( size_t i=0; i < 10000; i++ )  {
+    for (size_t i = 0; i < 10000; i++) {
 #else
-    for( size_t i=0; i < 250000; i++ )  {
+    for (size_t i = 0; i < 250000; i++) {
 #endif
       msg = SHA256::Digest(MD5::Digest(msg));
-      for( size_t j=0; j < 1000; j++ )  {
-        cd_res = (cd_res + compd(1.2, 1.4))*compd(1.00000001, 0.9999999);
+      for (size_t j = 0; j < 1000; j++) {
+        cd_res = (cd_res + compd(1.2, 1.4)) * compd(1.00000001, 0.9999999);
         cd_res /= compd(1.001, 0.999);
         cd_res -= 1;
-        cf_res = (cf_res + compf(1.2, 1.4))*compf(1.00000001, 0.9999999);
+        cf_res = (cf_res + compf(1.2, 1.4)) * compf(1.00000001, 0.9999999);
         cf_res /= compf(1.001, 0.999);
         cf_res -= 1;
       }
@@ -5078,27 +5091,31 @@ public:
   DefPropC(olxcstr, msg);
 };
 
-void TMainForm::macTestMT(TStrObjList &Cmds, const TParamList &Options, TMacroData &Error)  {
+void TMainForm::macTestMT(TStrObjList& Cmds, const TParamList& Options, TMacroData& Error) {
   uint64_t times[8], min_t;
   MTTestTh threads[8];
   size_t max_th = 1;
-  memset(times, 0, sizeof(uint64_t)*8);
+  memset(times, 0, sizeof(uint64_t) * 8);
   TBasicApp::NewLogEntry() << "Testing multithreading compatibility...";
-  for( size_t i=1; i <= 8; i++ )  {
+  for (size_t i = 1; i <= 8; i++) {
     uint64_t st = TETime::msNow();
-    for( size_t j=0; j < i; j++ )
+    for (size_t j = 0; j < i; j++) {
       threads[j].Start();
-   for( size_t j=0; j < i; j++ )
+    }
+    for (size_t j = 0; j < i; j++) {
       threads[j].Join();
-    times[i-1] = TETime::msNow() - st;
-    if( i == 1 )
+    }
+    times[i - 1] = TETime::msNow() - st;
+    if (i == 1) {
       min_t = times[0];
-    else if( times[i-1] < min_t )
-      min_t = times[i-1];
-    TBasicApp::NewLogEntry() << i << " threads " << times[i-1] << " ms";
+    }
+    else if (times[i - 1] < min_t) {
+      min_t = times[i - 1];
+    }
+    TBasicApp::NewLogEntry() << i << " threads " << times[i - 1] << " ms";
     TBasicApp::GetInstance().Update();
-    if( i > 1 && ((double)times[i-1]/min_t) > 1.4 )  {
-      max_th = i-1;
+    if (i > 1 && ((double)times[i - 1] / min_t) > 1.4) {
+      max_th = i - 1;
       break;
     }
   }
@@ -5109,7 +5126,7 @@ void TMainForm::macTestMT(TStrObjList &Cmds, const TParamList &Options, TMacroDa
 void TMainForm::macSetFont(TStrObjList &Cmds, const TParamList &Options, TMacroData &E) {
   TwxGlScene& scene = dynamic_cast<TwxGlScene&>(FXApp->GetRenderer().GetScene());
   TGlFont* glf = scene.FindFont(Cmds[0]);
-  if (glf == NULL) {
+  if (glf == 0) {
     E.ProcessingError(__OlxSrcInfo, olxstr("undefined font ") << Cmds[0]);
     return;
   }
@@ -5138,42 +5155,47 @@ void TMainForm::macSetFont(TStrObjList &Cmds, const TParamList &Options, TMacroD
   }
 }
 //..............................................................................
-void TMainForm::funChooseFont(const TStrObjList &Params, TMacroData &E)  {
+void TMainForm::funChooseFont(const TStrObjList& Params, TMacroData& E) {
   olxstr fntId;
-  if( !Params.IsEmpty() )  {
-    if( Params[0].Equalsi("olex2") )  {
-      if( Params.Count() == 2 && TwxGlScene::MetaFont::IsOlexFont(Params[1]) )
+  if (!Params.IsEmpty()) {
+    if (Params[0].Equalsi("olex2")) {
+      if (Params.Count() == 2 && TwxGlScene::MetaFont::IsOlexFont(Params[1])) {
         fntId = Params[1];
-      else
+      }
+      else {
         fntId = TwxGlScene::MetaFont::BuildOlexFontId("olex2.fnt", 12, true, false, false);
+      }
     }
-    else if( Params[0].Equalsi("system") )  {
-      if( Params.Count() == 2 && !TwxGlScene::MetaFont::IsOlexFont(Params[1]) )
+    else if (Params[0].Equalsi("system")) {
+      if (Params.Count() == 2 && !TwxGlScene::MetaFont::IsOlexFont(Params[1])) {
         fntId = Params[1];
-      else  {
-        wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);
+      }
+      else {
+        wxFont Font(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
         fntId = Font.GetNativeFontInfoDesc();
       }
     }
-    else
+    else {
       fntId = Params[0];
+    }
   }
-  olxstr rv(FXApp->GetRenderer().GetScene().ShowFontDialog(NULL, fntId));
+  olxstr rv = FXApp->GetRenderer().GetScene().ShowFontDialog(0,
+    AGlScene::MetaFont::decode_id( fntId));
   E.SetRetVal(rv);
 }
 //..............................................................................
-void TMainForm::funGetFont(const TStrObjList &Params, TMacroData &E)  {
+void TMainForm::funGetFont(const TStrObjList& Params, TMacroData& E) {
   TGlFont* glf = FXApp->GetRenderer().GetScene().FindFont(Params[0]);
-  if( glf == NULL )  {
+  if (glf == 0) {
     E.ProcessingError(__OlxSrcInfo, olxstr("undefined font ") << Params[0]);
     return;
   }
-  E.SetRetVal(glf->GetIdString());
+  E.SetRetVal(AGlScene::MetaFont::encode_id(glf->GetIdString()));
 }
 //..............................................................................
 void TMainForm::macEditMaterial(TStrObjList &Cmds, const TParamList &Options, TMacroData &E) {
-  TGlMaterial* mat = NULL, *smat = NULL;
-  TGPCollection* gpc = NULL;
+  TGlMaterial* mat = 0, *smat = 0;
+  TGPCollection* gpc = 0;
   if (Cmds[0] == "helpcmd") {
     mat = &HelpFontColorCmd;
   }
@@ -5211,7 +5233,7 @@ void TMainForm::macEditMaterial(TStrObjList &Cmds, const TParamList &Options, TM
       }
     }
   }
-  if (mat == NULL && (gpc == NULL || gpc->ObjectCount() == 0)) {
+  if (mat == 0 && (gpc == 0 || gpc->ObjectCount() == 0)) {
     E.ProcessingError(__OlxSrcInfo, olxstr("undefined material/control ") << Cmds[0]);
     return;
   }
@@ -5224,10 +5246,10 @@ void TMainForm::macEditMaterial(TStrObjList &Cmds, const TParamList &Options, TM
   }
 
   if (MatProp->ShowModal() == wxID_OK) {
-    if (mat != NULL) {
+    if (mat != 0) {
       *mat = MatProp->GetCurrent();
     }
-    if (smat != NULL) {
+    if (smat != 0) {
       *smat = *mat;
     }
   }
@@ -5235,17 +5257,22 @@ void TMainForm::macEditMaterial(TStrObjList &Cmds, const TParamList &Options, TM
 }
 //..............................................................................
 void TMainForm::macSetMaterial(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
-  TGlMaterial* mat = NULL;
-  if (Cmds[0] == "helpcmd")
+  TGlMaterial* mat = 0;
+  if (Cmds[0] == "helpcmd") {
     mat = &HelpFontColorCmd;
-  else if (Cmds[0] == "helptxt")
+  }
+  else if (Cmds[0] == "helptxt") {
     mat = &HelpFontColorTxt;
-  else if (Cmds[0] == "execout")
+  }
+  else if (Cmds[0] == "execout") {
     mat = &ExecFontColor;
-  else if (Cmds[0] == "error")
+  }
+  else if (Cmds[0] == "error") {
     mat = &ErrorFontColor;
-  else if (Cmds[0] == "exception")
+  }
+  else if (Cmds[0] == "exception") {
     mat = &ExceptionFontColor;
+  }
   else if (Cmds[0].Equalsi("SingleCone")) {
     const olxstr sn = "Single cone";
     TXBond::Settings &st = TXBond::Settings::GetInstance(FXApp->GetRenderer());
@@ -5262,7 +5289,9 @@ void TMainForm::macSetMaterial(TStrObjList &Cmds, const TParamList &Options, TMa
     if (m.ok()) {
       while (bi.HasNext()) {
         TXBond &b = bi.Next();
-        if (b.GetPrimitiveMask() != 1) continue;
+        if (b.GetPrimitiveMask() != 1) {
+          continue;
+        }
         TGPCollection &gpc = b.GetPrimitives();
         if (processed.Contains(&gpc)) {
           continue;
@@ -5275,7 +5304,9 @@ void TMainForm::macSetMaterial(TStrObjList &Cmds, const TParamList &Options, TMa
     else {
       while (bi.HasNext()) {
         TXBond &b = bi.Next();
-        if (b.GetPrimitiveMask() != 1) continue;
+        if (b.GetPrimitiveMask() != 1) {
+          continue;
+        }
         TGPCollection &gpc = b.GetPrimitives();
         if (!processed.Contains(&gpc)) {
           gpc.GetStyle().Clear();
@@ -5296,77 +5327,88 @@ void TMainForm::macSetMaterial(TStrObjList &Cmds, const TParamList &Options, TMa
   }
 }
 //..............................................................................
-void TMainForm::funChooseMaterial(const TStrObjList &Params, TMacroData &E)  {
+void TMainForm::funChooseMaterial(const TStrObjList& Params, TMacroData& E) {
   TGlMaterial glm;
-  if( Params.Count() == 1 )
+  if (Params.Count() == 1) {
     glm.FromString(Params[0]);
+  }
   TdlgMatProp* MatProp = new TdlgMatProp(this, glm);
-  if( MatProp->ShowModal() == wxID_OK )
+  if (MatProp->ShowModal() == wxID_OK) {
     E.SetRetVal(MatProp->GetCurrent().ToString());
-  else
+  }
+  else {
     E.ProcessingError(__OlxSrcInfo, EmptyString());
+  }
   MatProp->Destroy();
 }
 //..............................................................................
 void TMainForm::funGetMaterial(const TStrObjList &Params, TMacroData &E)  {
-  const TGlMaterial* mat = NULL;
-  if (Params[0] == "helpcmd")
+  const TGlMaterial* mat = 0;
+  if (Params[0] == "helpcmd") {
     mat = &HelpFontColorCmd;
-  else if (Params[0] == "helptxt")
+  }
+  else if (Params[0] == "helptxt") {
     mat = &HelpFontColorTxt;
-  else if (Params[0] == "execout")
+  }
+  else if (Params[0] == "execout") {
     mat = &ExecFontColor;
-  else if (Params[0] == "error")
+  }
+  else if (Params[0] == "error") {
     mat = &ErrorFontColor;
-  else if (Params[0] == "exception")
+  }
+  else if (Params[0] == "exception") {
     mat = &ExceptionFontColor;
-  if (mat == NULL) {
+  }
+  if (mat == 0) {
     E.SetUnhandled(true);
     return;
   }
   else {
-    if (Params.Count() == 2)
+    if (Params.Count() == 2) {
       E.SetRetVal(mat->ToPOV());
-    else
+    }
+    else {
       E.SetRetVal(mat->ToString());
+    }
   }
 }
 //..............................................................................
-void TMainForm::funGetMouseX(const TStrObjList &Params, TMacroData &E)  {
-  E.SetRetVal( ::wxGetMousePosition().x );
+void TMainForm::funGetMouseX(const TStrObjList& Params, TMacroData& E) {
+  E.SetRetVal(::wxGetMousePosition().x);
 }
 //..............................................................................
-void TMainForm::funGetMouseY(const TStrObjList &Params, TMacroData &E)  {
-  E.SetRetVal( ::wxGetMousePosition().y );
+void TMainForm::funGetMouseY(const TStrObjList& Params, TMacroData& E) {
+  E.SetRetVal(::wxGetMousePosition().y);
 }
 //..............................................................................
-void TMainForm::funGetWindowSize(const TStrObjList &Params, TMacroData &E)  {
-  if( Params.IsEmpty() || Params[0].Equalsi("main") )  {
+void TMainForm::funGetWindowSize(const TStrObjList& Params, TMacroData& E) {
+  if (Params.IsEmpty() || Params[0].Equalsi("main")) {
     wxRect sz = GetRect();
-    E.SetRetVal( olxstr(sz.x) << ',' << sz.y << ',' << sz.width << ',' << sz.height);
+    E.SetRetVal(olxstr(sz.x) << ',' << sz.y << ',' << sz.width << ',' << sz.height);
   }
-  else if( Params[0].Equalsi("gl") ) {
+  else if (Params[0].Equalsi("gl")) {
     wxRect sz = FGlCanvas->GetRect();
-    E.SetRetVal( olxstr(sz.x) << ',' << sz.y << ',' << sz.width << ',' << sz.height);
+    E.SetRetVal(olxstr(sz.x) << ',' << sz.y << ',' << sz.width << ',' << sz.height);
   }
-  else if( Params[0].Equalsi("html") ) {
+  else if (Params[0].Equalsi("html")) {
     wxRect sz = HtmlManager.main->GetRect();
-    E.SetRetVal( olxstr(sz.x) << ',' << sz.y << ',' << sz.width << ',' << sz.height);
+    E.SetRetVal(olxstr(sz.x) << ',' << sz.y << ',' << sz.width << ',' << sz.height);
   }
-  else if( Params[0].Equalsi("main-cs") ) {
-    if( Params.Count() == 1 )  {
-      int w=0, h=0;
+  else if (Params[0].Equalsi("main-cs")) {
+    if (Params.Count() == 1) {
+      int w = 0, h = 0;
       GetClientSize(&w, &h);
-      E.SetRetVal( olxstr('0') << ',' << '0' << ',' << w << ',' << h);
+      E.SetRetVal(olxstr('0') << ',' << '0' << ',' << w << ',' << h);
     }
-    else if( Params.Count() == 3 )  {
-      int w=Params[1].ToInt(), h=Params[2].ToInt();
+    else if (Params.Count() == 3) {
+      int w = Params[1].ToInt(), h = Params[2].ToInt();
       ClientToScreen(&w, &h);
-      E.SetRetVal( olxstr(w) << ',' << h);
+      E.SetRetVal(olxstr(w) << ',' << h);
     }
   }
-  else
+  else {
     E.ProcessingError(__OlxSrcInfo, "undefined window");
+  }
 }
 //..............................................................................
 void TMainForm::macShowSymm(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {

@@ -1328,7 +1328,7 @@ void TMainForm::StartupInit() {
   if (FGlCanvas != 0) {
     FGlCanvas->XApp(FXApp);
   }
-  wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
+  wxFont Font(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);//|wxFONTFLAG_ANTIALIASED);
   TGlMaterial glm("2049;0.698,0.698,0.698,1.000");
   AGlScene& gls = FXApp->GetRenderer().GetScene();
   TGlFont &fnt_def = gls.CreateFont("Default", Font.GetNativeFontInfoDesc());
@@ -3690,7 +3690,7 @@ void TMainForm::SetUserCursor(const olxstr& param, const olxstr& mode)  {
   Pen.SetColour(*wxRED);
   memDC.SetPen(Pen);
   wxFont Font = memDC.GetFont();
-  Font.SetFamily(wxSWISS);
+  Font.SetFamily(wxFONTFAMILY_SWISS);
 #if defined(__WIN32__)
   Font.SetPointSize(10);
 #else

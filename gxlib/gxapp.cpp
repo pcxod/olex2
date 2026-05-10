@@ -306,7 +306,7 @@ TGXApp::TGXApp(const olxstr &FileName, AGlScene *scene)
   if (GlScene == 0) {
 #ifdef __WXWIDGETS__
     GlScene = new TwxGlScene(GetBaseDir() + "etc/Fonts/");
-    wxFont Font(10, wxMODERN, wxNORMAL, wxNORMAL);//|wxFONTFLAG_ANTIALIASED);
+    wxFont Font(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);//|wxFONTFLAG_ANTIALIASED);
     GlScene->CreateFont("Default", Font.GetNativeFontInfoDesc()).SetMaterial(glm);
 #else
     GlScene = new TWGlScene();
