@@ -5190,7 +5190,12 @@ void TMainForm::funGetFont(const TStrObjList& Params, TMacroData& E) {
     E.ProcessingError(__OlxSrcInfo, olxstr("undefined font ") << Params[0]);
     return;
   }
-  E.SetRetVal(AGlScene::MetaFont::encode_id(glf->GetIdString()));
+  if (Params.Count() > 1 && Params[1].Equalsi("decoded")) {
+    E.SetRetVal(glf->GetIdString());
+  }
+  else {
+    E.SetRetVal(AGlScene::MetaFont::encode_id(glf->GetIdString()));
+  }
 }
 //..............................................................................
 void TMainForm::macEditMaterial(TStrObjList &Cmds, const TParamList &Options, TMacroData &E) {
