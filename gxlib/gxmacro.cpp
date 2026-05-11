@@ -5408,8 +5408,8 @@ void GXLibMacros::funGetMaterial(const TStrObjList &Params, TMacroData &E) {
   }
   if (gpc != 0) {
     if (prm_name.IsEmpty()) {
-      if (gpc->Is<TGlGroup>()) {
-        mat = &((TGlGroup*)gpc)->GetGlM();
+      if (!gpc->IsEmpty() && gpc->GetObject(0).Is<TGlGroup>()) {
+        mat = &dynamic_cast<TGlGroup&>(gpc->GetObject(0)).GetGlM();
       }
     }
     else {
