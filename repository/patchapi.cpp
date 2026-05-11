@@ -223,7 +223,7 @@ olxstr PatchAPI::GetSharedDir(bool refresh) {
   if (GetDDSetting().is_static) {
     return rv;
   }
-#ifdef __WIN32__
+#if defined(__WIN32__) || defined(__linux__)
   return rv << "Olex2Data/";
 #else
   return rv << "data/";

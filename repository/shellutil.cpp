@@ -179,7 +179,11 @@ olxstr TShellUtil::GetSpecialFolderLocation(short folderId) {
   olxstr retVal;
   switch (folderId) {
   case fiAppData:
-    retVal = wxStandardPaths::Get().GetUserDataDir();
+#ifdef __linux__ // somehow cannot write to .olex2 any longer by default???
+    retVal = wxStandardPaths::Get().GetUserConfigDir();
+#else
+  retVal = wxStandardPaths::Get().GetUserDataDir();
+#endif
     break;
   case fiMyDocuments:
     retVal = wxStandardPaths::Get().GetDocumentsDir();
