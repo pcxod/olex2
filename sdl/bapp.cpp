@@ -304,7 +304,7 @@ void TBasicApp::SetInstanceDir(const olxstr &d) {
   //  ReadOptions(InstanceDir + ".options");
 }
 //..............................................................................
-void TBasicApp::SetConfigdDir(const olxstr &cd) {
+void TBasicApp::SetConfigDir(const olxstr &cd) {
   ConfigDir = (TEFile::IsAbsolutePath(cd) ? cd : _GetInstanceDir() + cd);
   TEFile::AddPathDelimeterI(ConfigDir);
   if (!TEFile::Exists(ConfigDir)) {

@@ -45,13 +45,13 @@ void UpdateThread::DoInit() {
         *(new TOSFileSystem(TBasicApp::GetBaseDir())));
       properties = uapi.EvaluateProperties();
       srcFS->OnProgress.Add(new TActionProxy(OnDownload));
-
       return;
     }
     Index = new TFSIndex(*srcFS);
     destFS = new TUpdateFS(PatchDir,
       *(new TOSFileSystem(TBasicApp::GetBaseDir())));
     properties = uapi.EvaluateProperties();
+    TBasicApp::NewLogEntry(logInfo) << "Update properties: " << properties;
     srcFS->OnProgress.Add(new TActionProxy(OnDownload));
     Index->OnAction.Add(new TActionProxy(OnAction));
   }

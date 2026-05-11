@@ -130,7 +130,7 @@ public:
     olxstr new_shared_dir = shared_dir;
     const olxstr base_dir = _base_dir.IsEmpty() ? TBasicApp::GetBaseDir() :
       TEFile::AddPathDelimeter(_base_dir);
-#ifdef __WIN32__
+#if defined(__WIN32__) || defined(__linux__)
     new_shared_dir << "Olex2Data/";
 #else
     new_shared_dir << "data/";

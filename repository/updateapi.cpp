@@ -394,7 +394,6 @@ TStrList::const_list_type UpdateAPI::EvaluateProperties() const {
 #    endif
 #  endif
 #elif __MAC__
-
 #  if defined(__LP64__) || defined(__x86_64__)
 #    if defined( __arm64__)
         platform = "mac64-arm";

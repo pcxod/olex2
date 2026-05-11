@@ -1113,8 +1113,6 @@ void TMainForm::macEcho(TStrObjList &Cmds, const TParamList &Options,
     Cmds = TStrList(Cmds[0], '\n');
   }
   FGlConsole->PrintText(Cmds, mat, true);
-  FGlConsole->SetSkipPosting(true);
-  TBasicApp::NewLogEntry() << Cmds;
   if (Options.GetBoolOption('c')) {
     FXApp->ToClipboard(Cmds.Text(NewLineSequence()));
   }
