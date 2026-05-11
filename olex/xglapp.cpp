@@ -181,7 +181,7 @@ bool TGlXApp::OnInit() {
       XApp->SetInstanceDir(patcher::PatchAPI::GetInstanceDir());
       olxstr config_dir = olx_getenv("OLEX2_CONFIGDIR");
       if (!config_dir.IsEmpty()) {
-        XApp->SetConfigdDir(config_dir);
+        XApp->SetConfigDir(config_dir);
       }
     }
     XApp->ReadOptions(XApp->GetConfigDir() + ".options");

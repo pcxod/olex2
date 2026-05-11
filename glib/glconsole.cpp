@@ -182,11 +182,7 @@ bool TGlConsole::Orient(TGlPrimitive& P) {
         }
         olxstr line = FBuffer[i].SubStringTo(Fnt.LengthForWidth(FBuffer[i],
           Parent.GetWidth()));
-        // drawing spaces is not required ...
-        size_t stlen = line.Length();
-        while (line.CharAt(stlen - 1) == ' ' && stlen > 1) stlen--;
-        line = line.SubStringTo(stlen);
-        if (stlen == 0) {
+        if (line.TrimWhiteChars(false, true).IsEmpty()) {
           T[1] += empty_line_height;
           LinesVisible++;
           continue;
@@ -436,41 +432,42 @@ void TGlConsole::PrintText(const olxstr &S, TGlMaterial *M, bool Hyphenate) {
       SingleLine = true;
   }
   if (!Hyphenate || SingleLine) {
-    TGlMaterial *GlM = NULL;
-    if (M != NULL) GlM = new TGlMaterial(*M);
+    TGlMaterial *GlM = 0;
+    if (M != 0) {
+      GlM = new TGlMaterial(*M);
+    }
     if (!FBuffer.IsEmpty() && FBuffer.GetLastString().IsEmpty()) {
       FBuffer.GetLastString() = S;
       /* this line is added after memory leak analysis by Compuware DevPartner 8.2 trial */
-      if (FBuffer.GetLast().Object != NULL)
+      if (FBuffer.GetLast().Object != 0) {
         delete FBuffer.GetLast().Object;
+      }
       FBuffer.GetLast().Object = GlM;
     }
-    else
+    else {
       FBuffer.Add(S, GlM);
+    }
     OnPost.Execute(dynamic_cast<IOlxObject*>((AActionHandler*)this), &S);
   }
   KeepSize();
   FTxtPos = FBuffer.Count()-1;
 }
 //..............................................................................
-void TGlConsole::PrintText(const IStrList &SL, TGlMaterial *M, bool Hyphenate)  {
-  if( IsSkipPosting() )  {
-    //SetSkipPosting(false);
+void TGlConsole::PrintText(const IStrList& SL, TGlMaterial* M, bool Hyphenate) {
+  if (IsSkipPosting()) {
     return;
   }
   const size_t sz = GetFont().MaxTextLength(Parent.GetWidth());
-  if( sz <= 0 )  return;
-  TStrList Txt;
-  for( size_t i=0; i < SL.Count(); i++ )  {
-    if( Hyphenate )  {
+  for (size_t i = 0; i < SL.Count(); i++) {
+    if (Hyphenate && sz != 0) {
       TStrList Txt;
       Txt.Hyphenate(SL[i], sz, true);
-      for( size_t j=0; j < Txt.Count(); j++ )  {
-        TGlMaterial *GlM = 0;
+      for (size_t j = 0; j < Txt.Count(); j++) {
+        TGlMaterial* GlM = 0;
         if (M != 0) {
           GlM = new TGlMaterial(*M);
         }
-        if( j == 0 && !FBuffer.IsEmpty() && FBuffer.GetLastString().IsEmpty() )  {
+        if (j == 0 && !FBuffer.IsEmpty() && FBuffer.GetLastString().IsEmpty()) {
           FBuffer.GetLastString() = Txt[j];
           FBuffer.GetLast().Object = GlM;
         }
@@ -480,12 +477,12 @@ void TGlConsole::PrintText(const IStrList &SL, TGlMaterial *M, bool Hyphenate)  
         OnPost.Execute(dynamic_cast<IOlxObject*>((AActionHandler*)this), &Txt[j]);
       }
     }
-    else  {
-      TGlMaterial *GlM = 0;
+    else {
+      TGlMaterial* GlM = 0;
       if (M != 0) {
         GlM = new TGlMaterial(*M);
       }
-      if( !FBuffer.IsEmpty() && FBuffer.GetLastString().IsEmpty() )  {
+      if (!FBuffer.IsEmpty() && FBuffer.GetLastString().IsEmpty()) {
         FBuffer.GetLastString() = SL[i];
         FBuffer.GetLast().Object = GlM;
       }
@@ -496,7 +493,7 @@ void TGlConsole::PrintText(const IStrList &SL, TGlMaterial *M, bool Hyphenate)  
     }
   }
   KeepSize();
-  FTxtPos = FBuffer.Count()-1;
+  FTxtPos = FBuffer.Count() - 1;
   FBuffer.Add(EmptyString());
 }
 //..............................................................................
@@ -707,11 +704,11 @@ size_t TGlConsole::Write(const TTIString<olxch>& str) {
   return 1;
 }
 //..............................................................................
-IOutputStream& TGlConsole::operator << (IInputStream &is)  {
+IOutputStream& TGlConsole::operator << (IInputStream& is) {
   throw TNotImplementedException(__OlxSourceInfo);
 }
 //..............................................................................
-bool TGlConsole::GetDimensions(vec3d &Max, vec3d &Min)  {
+bool TGlConsole::GetDimensions(vec3d& Max, vec3d& Min) {
   Max = vec3d(0.5, 0.5, 0);
   Min = vec3d(-0.5, -0.5, 0);
   return true;

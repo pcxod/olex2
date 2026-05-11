@@ -115,7 +115,7 @@ public:
   /* If the path is absolute - it is used as is, otherwise it is considered to
   be relative to the InstanceDir
   */
-  void SetConfigdDir(const olxstr &path);
+  void SetConfigDir(const olxstr &path);
   bool HasConfigDir() { return !ConfigDir.IsEmpty(); }
   const olxstr &GetConfigDir() const {
     return ConfigDir.IsEmpty() ? _GetInstanceDir() : ConfigDir;
