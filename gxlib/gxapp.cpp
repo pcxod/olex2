@@ -4424,6 +4424,9 @@ void TGXApp::Individualise(const TXAtomPList& _atoms, short _level, int32_t mask
     TXAtomPList& atoms = toi.GetValue(i);
     // no need?
     if (gpc.ObjectCount() == atoms.Count()) {
+      if (mask >= 0) {
+        atoms[0]->UpdatePrimitives(mask);
+      }
       continue;
     }
     const int cl = TXAtom::LegendLevel(gpc.GetName());

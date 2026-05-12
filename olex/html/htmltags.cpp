@@ -676,130 +676,68 @@ TAG_HANDLER_PROC(tag) {
   }
 /******************* COMBOBOX *************************************************/
   else if (TagName.Equalsi("combo")) {
+    long style = wxTE_PROCESS_ENTER;
     if (GetBoolAttribute(tag, "READONLY")) {
-      TChoice *Box = new TChoice(html, wxID_ANY,
-        wxDefaultPosition, wxSize(ax, ay));
-      Box->SetFont(m_WParser->GetDC()->GetFont());
-      AdjustSize(*Box);
-      CreatedObject = Box;
-      CreatedWindow = Box;
-      if (tag.HasParam(wxT("ITEMS"))) {
-        olxstr Items = tag.GetParam(wxT("ITEMS"));
-        op->processFunction(Items, SrcInfo, true);
-        Box->AddItems(TStrList(Items, ';'));
+      style = wxCB_READONLY;
+    }
+    TComboBox *Box = new TComboBox(html, wxID_ANY, wxEmptyString, wxDefaultPosition,
+      wxSize(ax, ay), style);
+    Box->SetFont(m_WParser->GetDC()->GetFont());
+    AdjustSize(*Box);
+    CreatedObject = Box;
+    CreatedWindow = Box;
+    if (tag.HasParam(wxT("ITEMS"))) {
+      olxstr Items = ExpandMacroShortcuts(tag.GetParam(wxT("ITEMS")), macro_map);
+      op->processFunction(Items, SrcInfo, true);
+      TStrList SL(Items, ';');
+      Box->AddItems(SL);
+    }
+    else {
+      Box->AddObject(Value);
+    }
+    Box->SetText(Value);
+    Box->SetData(Data);
+    if (tag.HasParam(wxT("ONCHANGE"))) {
+      Box->OnChange.data =
+        ExpandMacroShortcuts(tag.GetParam(wxT("ONCHANGE")), macro_map);
+      Box->OnChange.Add(&html->Manager);
+      Box->SetOnChangeAlways(GetBoolAttribute(tag, "ONCHANGEALWAYS"));
+    }
+    if (tag.HasParam(wxT("ONLEAVE"))) {
+      Box->OnLeave.data =
+        ExpandMacroShortcuts(tag.GetParam(wxT("ONLEAVE")), macro_map);
+      Box->OnLeave.Add(&html->Manager);
+    }
+    if (tag.HasParam(wxT("ONENTER"))) {
+      Box->OnEnter.data =
+        ExpandMacroShortcuts(tag.GetParam(wxT("ONENTER")), macro_map);
+      Box->OnEnter.Add(&html->Manager);
+    }
+    if (tag.HasParam(wxT("ONRETURN"))) {
+      Box->OnReturn.data =
+        ExpandMacroShortcuts(tag.GetParam(wxT("ONRETURN")), macro_map);
+      Box->OnReturn.Add(&html->Manager);
+    }
+    if (!Label.IsEmpty()) {
+      wxHtmlContainerCell* contC =
+        new wxHtmlContainerCell(m_WParser->GetContainer());
+      THtml::WordCell* wc =
+        new THtml::WordCell(Label.u_str(), *m_WParser->GetDC());
+      if (LinkInfo != 0) {
+        wc->SetLink(*LinkInfo);
       }
-      else {
-        Box->AddObject(Value);
+      wc->SetDescent(0);
+      contC->InsertCell(wc);
+      contC->InsertCell(new THtmlWidgetCell(Box, fl));
+      if (valign != -1) {
+        contC->SetAlignVer(valign);
       }
-      Box->SetHasDefault(GetBoolAttribute(tag, "SETDEFAULT"));
-      Box->SetText(Value);
-      if (Box->GetSelection() == -1 && Box->HasDefault() &&
-        !Box->IsEmpty())
-      {
-        Box->SetSelection(0);
-      }
-      Box->SetData(Data);
-      if (tag.HasParam(wxT("CUSTOM"))) {
-        Box->SetCustomDrawParams(tag.GetParam(wxT("CUSTOM")));
-      }
-      if (tag.HasParam(wxT("ONCHANGE"))) {
-        Box->OnChange.data =
-          ExpandMacroShortcuts(tag.GetParam(wxT("ONCHANGE")), macro_map);
-        Box->OnChange.Add(&html->Manager);
-        Box->SetOnChangeAlways(GetBoolAttribute(tag, "ONCHANGEALWAYS"));
-      }
-      if (tag.HasParam(wxT("ONLEAVE"))) {
-        Box->OnLeave.data =
-          ExpandMacroShortcuts(tag.GetParam(wxT("ONLEAVE")), macro_map);
-        Box->OnLeave.Add(&html->Manager);
-      }
-      if (tag.HasParam(wxT("ONENTER"))) {
-        Box->OnEnter.data =
-          ExpandMacroShortcuts(tag.GetParam(wxT("ONENTER")), macro_map);
-        Box->OnEnter.Add(&html->Manager);
-      }
-      if (!Label.IsEmpty()) {
-        wxHtmlContainerCell* contC =
-          new wxHtmlContainerCell(m_WParser->GetContainer());
-        THtml::WordCell* wc =
-          new THtml::WordCell(Label.u_str(), *m_WParser->GetDC());
-        if (LinkInfo != 0) {
-          wc->SetLink(*LinkInfo);
-        }
-        wc->SetDescent(0);
-        contC->InsertCell(wc);
-        contC->InsertCell(new THtmlWidgetCell(Box, fl));
-        if (valign != -1) {
-          contC->SetAlignVer(valign);
-        }
-        if (halign != -1) {
-          contC->SetAlignHor(halign);
-        }
-      }
-      else {
-        m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Box, fl));
+      if (halign != -1) {
+        contC->SetAlignHor(halign);
       }
     }
     else {
-      TComboBox *Box = new TComboBox(html, wxID_ANY, wxEmptyString, wxDefaultPosition,
-        wxSize(ax, ay));
-      Box->SetFont(m_WParser->GetDC()->GetFont());
-      AdjustSize(*Box);
-      CreatedObject = Box;
-      CreatedWindow = Box;
-      if (tag.HasParam(wxT("ITEMS"))) {
-        olxstr Items = ExpandMacroShortcuts(tag.GetParam(wxT("ITEMS")), macro_map);
-        op->processFunction(Items, SrcInfo, true);
-        TStrList SL(Items, ';');
-        Box->AddItems(SL);
-      }
-      else {
-        Box->AddObject(Value);
-      }
-      Box->SetText(Value);
-      Box->SetData(Data);
-      if (tag.HasParam(wxT("ONCHANGE"))) {
-        Box->OnChange.data =
-          ExpandMacroShortcuts(tag.GetParam(wxT("ONCHANGE")), macro_map);
-        Box->OnChange.Add(&html->Manager);
-        Box->SetOnChangeAlways(GetBoolAttribute(tag, "ONCHANGEALWAYS"));
-      }
-      if (tag.HasParam(wxT("ONLEAVE"))) {
-        Box->OnLeave.data =
-          ExpandMacroShortcuts(tag.GetParam(wxT("ONLEAVE")), macro_map);
-        Box->OnLeave.Add(&html->Manager);
-      }
-      if (tag.HasParam(wxT("ONENTER"))) {
-        Box->OnEnter.data =
-          ExpandMacroShortcuts(tag.GetParam(wxT("ONENTER")), macro_map);
-        Box->OnEnter.Add(&html->Manager);
-      }
-      if (tag.HasParam(wxT("ONRETURN"))) {
-        Box->OnReturn.data =
-          ExpandMacroShortcuts(tag.GetParam(wxT("ONRETURN")), macro_map);
-        Box->OnReturn.Add(&html->Manager);
-      }
-      if (!Label.IsEmpty()) {
-        wxHtmlContainerCell* contC =
-          new wxHtmlContainerCell(m_WParser->GetContainer());
-        THtml::WordCell* wc =
-          new THtml::WordCell(Label.u_str(), *m_WParser->GetDC());
-        if (LinkInfo != 0) {
-          wc->SetLink(*LinkInfo);
-        }
-        wc->SetDescent(0);
-        contC->InsertCell(wc);
-        contC->InsertCell(new THtmlWidgetCell(Box, fl));
-        if (valign != -1) {
-          contC->SetAlignVer(valign);
-        }
-        if (halign != -1) {
-          contC->SetAlignHor(halign);
-        }
-      }
-      else {
-        m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Box, fl));
-      }
+      m_WParser->GetContainer()->InsertCell(new THtmlWidgetCell(Box, fl));
     }
   }
 /******************* SPIN CONTROL AND SLIDER **********************************/
