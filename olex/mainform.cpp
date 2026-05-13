@@ -709,7 +709,9 @@ void TMainForm::XApp(Olex2App *XA)  {
   this_InitMacro(StoreParam, , fpTwo|fpThree);
   this_InitMacro(SelBack, a&;o&;x, fpNone);
 
-  this_InitMacro(CreateBitmap, r, fpTwo|fpThree,
+  this_InitMacroD(CreateBitmap,
+    "r-do not resize",
+    fpTwo | fpThree,
     "Creates a bitmap in the GL window at a default position, "
     "[l]eft_[r]ight_[t]op_[b]ottom_[c]enter or given [x,y] coordinates");
   this_InitMacro(DeleteBitmap, , fpOne);

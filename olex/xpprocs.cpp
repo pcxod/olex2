@@ -3849,14 +3849,16 @@ void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options,
     E.ProcessingError(__OlxSrcInfo, "Invalid image file: ") << Cmds[1];
     return;
   }
-  int owidth = img.GetWidth(), oheight = img.GetHeight();
-  int l = CalcL(img.GetWidth());
-  int swidth = (int)pow((double)2, (double)l);
-  l = CalcL(img.GetHeight());
-  int sheight = (int)pow((double)2, (double)l);
+  if (Options.GetBoolOption('r', false, true)) {
+    int owidth = img.GetWidth(), oheight = img.GetHeight();
+    int l = CalcL(img.GetWidth());
+    int swidth = (int)pow((double)2, (double)l);
+    l = CalcL(img.GetHeight());
+    int sheight = (int)pow((double)2, (double)l);
 
-  if (swidth != owidth || sheight != oheight) {
-    img.Rescale(swidth, sheight);
+    if (swidth != owidth || sheight != oheight) {
+      img.Rescale(swidth, sheight);
+    }
   }
 
   int cl = 3, bmpType = GL_RGB;
