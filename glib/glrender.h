@@ -250,6 +250,12 @@ public:
   int GetHeight() const {  return Height;  }
   int GetLeft() const {  return Left;  }
   int GetTop() const {  return Top;  }
+  /* 'Decodes' enc string that could be like
+  [l]eft_[r]ight_[t]op_[b]ottom_[c]enter or coordinates [x,y]
+  Like: 'lt', 'c' or '0,0'. Optionally a margin can be added like 'lt,1'
+  Returns left and top coordinates.
+  */
+  olx_pair_t<int> DecodeAlignment(const olxstr& enc, int width, int height) const;
   /*an "advanced" drawing procedure which draws an object on a static image
   . Used to implement faster drawing for such objects as text input controls
   and frames...  Be sure that the object is of "a modal" type, e.g. no

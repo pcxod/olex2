@@ -3841,8 +3841,6 @@ void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options,
     dc.DrawLabel(Cmds[1].u_str(), wxRect(0, 0, 255, 31));
     dc.SelectObject(wxNullBitmap);
     img = bmp.ConvertToImage();
-    //E.ProcessingError(__OlxSrcInfo, "Image file does not exist: ").quote() << Cmds[1];
-    //return;
   }
   else {
     img = wxImage(*inf->GetStream());
@@ -3882,23 +3880,30 @@ void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options,
   }
   bool Created = (FXApp->FindGlBitmap(Cmds[0]) == 0);
   TGlBitmap* glB = FXApp->CreateGlBitmap(Cmds[0], 0, 0, swidth, sheight, RGBData, bmpType);
-  int Top = FInfoBox->IsVisible() ? (FInfoBox->GetTop() + FInfoBox->GetHeight()) : 0;
-  if (Created) {
-    for (size_t i = 0; i < FXApp->GlBitmapCount(); i++) {
-      TGlBitmap& b = FXApp->GlBitmap(i);
-      if (&b == glB) {
-        continue;
+  if (Cmds.Count() == 3) {
+    olx_pair_t<int> pos = FXApp->GetRenderer().DecodeAlignment(Cmds[2],
+      glB->GetWidth(), glB->GetHeight());
+    glB->SetLeft(pos.a);
+    glB->SetTop(pos.b);
+  }
+  else { // auto-align from the top, skip info_box
+    int Top = 0;
+    if (Created) { // stack image at the bottom
+      for (size_t i = 0; i < FXApp->GlBitmapCount(); i++) {
+        TGlBitmap& b = FXApp->GlBitmap(i);
+        if (&b == glB) {
+          continue;
+        }
+        Top += (b.GetHeight() + 2);
       }
-      Top += (b.GetHeight() + 2);
     }
+    if (Created) {
+      glB->SetWidth(owidth);
+      glB->SetHeight(oheight);
+    }
+    glB->SetLeft(FXApp->GetRenderer().GetWidth() - glB->GetWidth());
+    glB->SetTop(Top);
   }
-
-  if (Created) {
-    glB->SetWidth(owidth);
-    glB->SetHeight(oheight);
-  }
-  glB->SetTop(Top);
-  glB->SetLeft(FXApp->GetRenderer().GetWidth() - glB->GetWidth());
   FXApp->Draw();
 }
 //..............................................................................
@@ -5323,7 +5328,25 @@ void TMainForm::macSetMaterial(TStrObjList &Cmds, const TParamList &Options, TMa
     return;
   }
   if (mat == 0) {
-    E.SetUnhandled(true);
+    olxstr name = Cmds[0].TrimWhiteChars();
+    if (name.IsEmpty()) {
+      E.SetUnhandled(true);
+      return;
+    }
+    TGlMaterial glm(Cmds[1]);
+    TStrList toks(name, '.');
+    if (toks.Count() == 1) { // special case, just set 'mat'
+      FXApp->GetRenderer().GetStyles().NewStyle(Cmds[0])
+        .SetMaterial("mat", glm);
+    }
+    else {
+      TGraphicsStyles& styles = FXApp->GetRenderer().GetStyles();
+      TGraphicsStyle* s = &styles.NewStyle(toks[0]);
+      for (size_t i = 1; i < toks.Count() - 1; i++) {
+        s = &s->NewStyle(toks[i]);
+      }
+      s->SetMaterial(toks.GetLastString(), glm);
+    }
   }
   else {
     *mat = TGlMaterial(Cmds[1]);
