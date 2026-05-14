@@ -3109,7 +3109,7 @@ TUndoData* TGXApp::DeleteXAtoms(TXAtomPList& L) {
             if (SH1.IsDeleted() || SH1.GetType() != iHydrogenZ) {
               continue;
             }
-            if (SH1.CAtom().GetParentAfixGroup() != NULL &&
+            if (SH1.CAtom().GetParentAfixGroup() != 0 &&
               SH1.CAtom().GetParentAfixGroup()->GetM() != 0 &&
               TNetwork::IsBondAllowed(XA->CAtom(), SH1.CAtom()))
             {

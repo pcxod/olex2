@@ -4383,7 +4383,7 @@ void GXLibMacros::macKill(TStrObjList &Cmds, const TParamList &Options,
       if (sel[i].Is<TXAtom>()) {
         out << ((TXAtom&)sel[i]).GetLabel();
       }
-      if (sel[i].Is<TGlGroup>()) {
+      else if (sel[i].Is<TGlGroup>()) {
         if (!group_deletion) {
           group_deletion = true;
           TBasicApp::NewLogEntry() << "Please ungroup groups using 'group -u' before deleting";
