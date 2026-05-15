@@ -6135,10 +6135,10 @@ TGlGroup *TGXApp::GroupSelection(const olxstr& name) {
 }
 //..............................................................................
 void TGXApp::UngroupSelection()  {
-  TGlGroup& sel = GetSelection();
-  for (size_t i=0; i < sel.Count(); i++) {
-    if (sel[i].Is<TGlGroup>()) {
-      TGlGroup& G = (TGlGroup&)sel[i];
+  AGDObjList objects = GetSelection().GetObjects();
+  for (size_t i=0; i < objects.Count(); i++) {
+    if (objects[i]->Is<TGlGroup>()) {
+      TGlGroup& G = *dynamic_cast<TGlGroup*>(objects[i]);
       size_t i = GroupDict.IndexOf(&G);
       if (i != InvalidIndex)  {
         GroupDefs.Delete(GroupDict.GetValue(i));
