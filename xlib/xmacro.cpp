@@ -9566,19 +9566,31 @@ XLibMacros::MacroInput XLibMacros::ExtractSelection(const TStrObjList &Cmds_,
     SObjectPtrList sel = app.GetSelected(unselect);
     for( size_t i=0; i < sel.Count(); i++ )  {
       TSBond* sb = dynamic_cast<TSBond*>(sel[i]);
-      if (sb != NULL) {
+      if (sb != 0) {
         bonds << sb;
         continue;
       }
       TSAtom* sa = dynamic_cast<TSAtom*>(sel[i]);
-      if (sa != NULL)
+      if (sa != 0) {
         atoms << sa;
+      }
       TSPlane* sp = dynamic_cast<TSPlane*>(sel[i]);
-      if (sp != NULL)
+      if (sp != 0) {
         planes << sp;
+      }
     }
   }
   return XLibMacros::MacroInput(atoms, bonds, planes);
+}
+TTypeList<double>::const_list_type ExtractNumbers(TStrObjList& Cmds) {
+  TTypeList<double> rv;
+  for (size_t i = 0; i < Cmds.Count(); i++) {
+    if (Cmds[i].IsNumber()) {
+      rv << Cmds[i].ToDouble();
+      Cmds.Delete(i--);
+    }
+  }
+  return rv;
 }
 //.............................................................................
 void XLibMacros::macDfix(TStrObjList& Cmds, const TParamList& Options,
@@ -10247,10 +10259,11 @@ void XLibMacros::macRRings(TStrObjList& Cmds, const TParamList& Options,
     cmd = Cmds[0];
   }
   try {
-    
     app.FindRings(cmd, rings);
     if (rings.Count() == 0) {
       TBasicApp::NewLogEntry() << "No rings found, stopping...";
+      TBasicApp::NewLogEntry(logWarning) <<
+        "Note that Q-peaks may affect this functionality";
       return;
     }
   }
@@ -10715,24 +10728,26 @@ void XLibMacros::macRestrain(TStrObjList &Cmds, const TParamList &Options,
   if (Cmds[0].Equalsi("ADP") && Cmds.Count() > 1) {
     olxstr target = Cmds[1];
     Cmds.DeleteRange(0, 2);
-    double value = -1;
-    if (Cmds.Count() > 0 && Cmds[0].IsNumber()) {
-      value = Cmds[0].ToDouble();
-      Cmds.Delete(0);
-    }
+    TTypeList<double> params = ExtractNumbers(Cmds);
     MacroInput mi = ExtractSelection(Cmds, true);
     TSimpleRestraint *r = 0;
     if (target.Equalsi("Ueq")) {
-      if (mi.atoms.Count() < 2 && value < 0) {
+      if (mi.atoms.Count() < 2 && params.IsEmpty()) {
         E.ProcessingError(__OlxSrcInfo, "at least two atoms are expected");
         return;
       }
-      if (value > 0) {
+      if (params.Count() == 2) {
         r = &rm.rFixedUeq.AddNew();
-        r->SetValue(value);
+        r->SetValue(params[0]);
+        if (params[1] > 0) {
+          r->SetEsd(params[1]);
+        }
       }
       else {
         r = &rm.rSimilarUeq.AddNew();
+        if (!params.IsEmpty()) {
+          r->SetEsd(params[0]);
+        }
       }
     }
     else if (target.Equalsi("volume")) {
@@ -10741,6 +10756,9 @@ void XLibMacros::macRestrain(TStrObjList &Cmds, const TParamList &Options,
         return;
       }
       r = &rm.rSimilarAdpVolume.AddNew();
+      if (!params.IsEmpty()) {
+        r->SetEsd(params[0]);
+      }
     }
     if (r != 0) {
       for (size_t i = 0; i < mi.atoms.Count(); i++) {
@@ -10750,10 +10768,10 @@ void XLibMacros::macRestrain(TStrObjList &Cmds, const TParamList &Options,
   }
   else if (Cmds[0].Equalsi("bond")) {
     Cmds.Delete(0);
-    MacroInput mi = ExtractSelection(Cmds, true);
     double val = -1, esd = 0.02;
     TSimpleRestraint *r = 0;
     size_t set_cnt = XLibMacros::Parse(Cmds, "dd", &val, &esd);
+    MacroInput mi = ExtractSelection(Cmds, true);
     TSAtomPList atoms = mi.atoms;
     if (atoms.IsEmpty()) {
       for (size_t i = 0; i < mi.bonds.Count(); i++) {
@@ -10782,8 +10800,9 @@ void XLibMacros::macRestrain(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else if (Cmds[0].Equalsi("angle") && Cmds.Count() > 1) {
-    double val = Cmds[1].ToDouble();
-    Cmds.DeleteRange(0, 2);
+    Cmds.Delete(0);
+    double val = -1, esd = 0.02;
+    size_t set_cnt = XLibMacros::Parse(Cmds, "dd", &val, &esd);
     MacroInput mi = ExtractSelection(Cmds, true);
     TSAtomPList atoms = mi.atoms;
     if (atoms.IsEmpty()) {
@@ -10811,14 +10830,20 @@ void XLibMacros::macRestrain(TStrObjList &Cmds, const TParamList &Options,
     if (!atoms.IsEmpty()) {
       TSimpleRestraint &sr = rm.rAngle.AddNew();
       sr.SetValue(val);
+      if (set_cnt == 2) {
+        sr.SetEsd(esd);
+      }
       for (size_t i = 0; i < atoms.Count(); i++) {
         sr.AddAtom(atoms[i]->CAtom(), &atoms[i]->GetMatrix());
       }
     }
   }
-  else if (Cmds[0].Equalsi("dihedral") && Cmds.Count() > 1) {
-    double val = Cmds[1].ToDouble();
-    Cmds.DeleteRange(0, 2);
+  else if ((Cmds[0].Equalsi("dihedral") || Cmds[0].Equalsi("torsion")) &&
+    Cmds.Count() > 1)
+  {
+    Cmds.Delete(0);
+    double val = -1, esd = 0.02;
+    size_t set_cnt = XLibMacros::Parse(Cmds, "dd", &val, &esd);
     MacroInput mi = ExtractSelection(Cmds, true);
     TSAtomPList atoms = mi.atoms;
     TTypeList<TSAtomPList> quadruplets;
@@ -10835,8 +10860,9 @@ void XLibMacros::macRestrain(TStrObjList &Cmds, const TParamList &Options,
             << " and " << mi.bonds[i + 1]->A().GetLabel()
             << '-' << mi.bonds[i + 1]->B().GetLabel() << " skiping...";
         }
-        else
+        else {
           quadruplets.AddNew(dh);
+        }
       }
     }
     else {
@@ -10854,6 +10880,9 @@ void XLibMacros::macRestrain(TStrObjList &Cmds, const TParamList &Options,
     if (!quadruplets.IsEmpty()) {
       TSimpleRestraint &sr = rm.rDihedralAngle.AddNew();
       sr.SetValue(val);
+      if (set_cnt == 2) {
+        sr.SetEsd(esd);
+      }
       for (size_t i = 0; i < quadruplets.Count(); i++) {
         for (size_t j = 0; j < quadruplets[i].Count(); j++) {
           sr.AddAtom(quadruplets[i][j]->CAtom(),

@@ -624,11 +624,10 @@ public:
   void SelectAtoms(const IStrList& Names, glSelectionFlag flag);
   olx_object_ptr<TXAtomPList> FindXAtomsWhere(const olxstr& Where);
   olx_object_ptr< TXBondPList> FindXBondsWhere(const olxstr& Where);
-  /* allows selcting rings: Condition describes the rings to select:
-    C5N - content and 1-4, substitutions..
-    SelectRing( "C6 1-4") selects all 1,4 substituted benzene rings
+  /* allows selecting rings: Condition describes the rings to select like C5N. 
+    Return false if nothing has been selected.
   */
-  void SelectRings(const olxstr& Condition, glSelectionFlag flag);
+  bool SelectRings(const olxstr& Condition, glSelectionFlag flag);
   TTypeList<TSAtomPList>& FindRings(const olxstr& Condition,
     TTypeList<TSAtomPList>& rings);
   ConstTypeList<TSAtomPList> FindRings(const olxstr& Condition) {
