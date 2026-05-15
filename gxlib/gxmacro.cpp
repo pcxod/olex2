@@ -2239,6 +2239,10 @@ void GXLibMacros::macMpln(TStrObjList & Cmds, const TParamList & Options,
   }
   else {
     TTypeList<TSAtomPList> rings = app.FindRings(rings_name);
+    if (rings.IsEmpty()) {
+      TBasicApp::NewLogEntry(logWarning) <<
+        "Note that Q-peaks may affect this functionality";
+    }
     olxstr name = "Plane";
     name << app.XFile().GetLattice().GetObjects().planes.Count() << '_';
     size_t cnt=0;
@@ -2265,6 +2269,10 @@ void GXLibMacros::macCent(TStrObjList &Cmds, const TParamList &Options,
   }
   else {
     TTypeList<TSAtomPList> rings = app.FindRings(rings_name);
+    if (rings.IsEmpty()) {
+      TBasicApp::NewLogEntry(logWarning) <<
+        "Note that Q-peaks may affect this functionality";
+    }
     for (size_t i = 0; i < rings.Count(); i++) {
       atoms.AddAll(app.AddCentroid(TXAtomPList(rings[i], DynamicCastAccessor<TXAtom>())).obj());
     }
@@ -2974,7 +2982,10 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     }
     if (!processed && (idx = Cmds.IndexOf("rings")) != InvalidIndex) {
       Cmds.Delete(idx);
-      app.SelectRings(Cmds.Text(' '), flag);
+      if (!app.SelectRings(Cmds.Text(' '), flag)) {
+        TBasicApp::NewLogEntry(logWarning) <<
+          "Note that Q-peaks may affect this functionality";
+      }
       processed = true;
     }
     if (!processed && (idx = Cmds.IndexOf("collection")) != InvalidIndex) {
@@ -5092,6 +5103,10 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
   }
   else {
     TBasicApp::NewLogEntry() << "No matching fragments found";
+    if (app.AreQPeaksVisible()) {
+      TBasicApp::NewLogEntry(logWarning) <<
+        "Note that Q-peaks and H-atoms may affect this functionality";
+    }
   }
 }
 //..............................................................................

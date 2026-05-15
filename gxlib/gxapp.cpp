@@ -3315,7 +3315,7 @@ void SortRing(TSAtomPList& atoms) {
   }
 }
 
-void TGXApp::SelectRings(const olxstr& Condition, glSelectionFlag flag) {
+bool TGXApp::SelectRings(const olxstr& Condition, glSelectionFlag flag) {
   if (Condition.StartsFrom('*')) {
     TXAtomPList atoms = FindXAtoms(TStrList(Condition.SubStringFrom(1), ' '),
       false, false);
@@ -3333,7 +3333,7 @@ void TGXApp::SelectRings(const olxstr& Condition, glSelectionFlag flag) {
     }
   }
   else {
-    TTypeList< TSAtomPList > rings;
+    TTypeList<TSAtomPList> rings;
     try {
       FindRings(Condition, rings);
     }
@@ -3341,7 +3341,7 @@ void TGXApp::SelectRings(const olxstr& Condition, glSelectionFlag flag) {
       throw TFunctionFailedException(__OlxSourceInfo, exc);
     }
     if (rings.IsEmpty()) {
-      return;
+      return false;
     }
     TXAtomPList all;
     all.SetCapacity(rings.Count()*rings[0].Count());
@@ -3358,6 +3358,7 @@ void TGXApp::SelectRings(const olxstr& Condition, glSelectionFlag flag) {
       }
     }
   }
+  return true;
 }
 //..............................................................................
 void TGXApp::SelectAtoms(const IStrList &Names, glSelectionFlag flag) {
