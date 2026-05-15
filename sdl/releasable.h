@@ -54,10 +54,14 @@ protected:
   }
   void Release(AReleasable& item) {
     items.Release(item.GetReleasableId());
+    UpdateIds();
+    OnRelease(dynamic_cast<item_t&>(item));
+    item.SetReleasableId(InvalidIndex);
+  }
+  void UpdateIds() {
     for (size_t i = 0; i < items.Count(); i++) {
       items[i].SetReleasableId(i);
     }
-    OnRelease(dynamic_cast<item_t&>(item));
   }
   //.............................................................................
   void Restore(AReleasable& item) {

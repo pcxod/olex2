@@ -86,6 +86,7 @@ public:
   size_t DependentCount() const { return Dependent.Count(); }
   TSameGroup& GetDependent(size_t i) { return *Dependent[i]; }
   const TSameGroup& GetDependent(size_t i) const { return *Dependent[i]; }
+  const TPtrList<TSameGroup> &GetDependent() const { return Dependent; }
   void PackDependent(index_t tag) {
     Dependent.Pack(ACollectionItem::TagAnalyser(tag));
   }
@@ -201,6 +202,12 @@ public:
   void Analyse();
   void FixOverlapping();
   void PrepareSave();
+  /* locates all same groups that reference given atoms, if to_extend is not NULL
+  all atoms referenced by the same groups are added (could be the same list as
+  atoms)
+  */
+  TPtrList<TSameGroup>::const_list_type
+    Match(const TCAtomPList& atoms, TCAtomPList* to_extend=0) const;
   // works on Reference groups only
   TPtrList<TSameGroup>::const_list_type
     FindSupergroups(const TSameGroup& sg,
@@ -216,8 +223,9 @@ public:
   void Expand(TStrList *log=0);
 
   void ToDataItem(TDataItem& item) const;
-  // fo INS header - easy to read and update
-  void ToDataItem_HRF(TDataItem& item) const;
+  // for INS header - easy to read and update
+  void ToDataItem_HRF(TDataItem& item, const TCAtomPList *atoms=0,
+    TPtrList<AReleasable>* processed=0) const;
 #ifdef _PYTHON
   PyObject* PyExport(TPtrList<PyObject>& atoms, TPtrList<PyObject>& equiv);
   TPtrList<PyObject>::const_list_type PyExportAsSADI(

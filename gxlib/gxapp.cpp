@@ -3109,7 +3109,7 @@ TUndoData* TGXApp::DeleteXAtoms(TXAtomPList& L) {
             if (SH1.IsDeleted() || SH1.GetType() != iHydrogenZ) {
               continue;
             }
-            if (SH1.CAtom().GetParentAfixGroup() != NULL &&
+            if (SH1.CAtom().GetParentAfixGroup() != 0 &&
               SH1.CAtom().GetParentAfixGroup()->GetM() != 0 &&
               TNetwork::IsBondAllowed(XA->CAtom(), SH1.CAtom()))
             {
@@ -4424,6 +4424,9 @@ void TGXApp::Individualise(const TXAtomPList& _atoms, short _level, int32_t mask
     TXAtomPList& atoms = toi.GetValue(i);
     // no need?
     if (gpc.ObjectCount() == atoms.Count()) {
+      if (mask >= 0) {
+        atoms[0]->UpdatePrimitives(mask);
+      }
       continue;
     }
     const int cl = TXAtom::LegendLevel(gpc.GetName());
@@ -6132,10 +6135,10 @@ TGlGroup *TGXApp::GroupSelection(const olxstr& name) {
 }
 //..............................................................................
 void TGXApp::UngroupSelection()  {
-  TGlGroup& sel = GetSelection();
-  for (size_t i=0; i < sel.Count(); i++) {
-    if (sel[i].Is<TGlGroup>()) {
-      TGlGroup& G = (TGlGroup&)sel[i];
+  AGDObjList objects = GetSelection().GetObjects();
+  for (size_t i=0; i < objects.Count(); i++) {
+    if (objects[i]->Is<TGlGroup>()) {
+      TGlGroup& G = *dynamic_cast<TGlGroup*>(objects[i]);
       size_t i = GroupDict.IndexOf(&G);
       if (i != InvalidIndex)  {
         GroupDefs.Delete(GroupDict.GetValue(i));

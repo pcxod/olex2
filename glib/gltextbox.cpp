@@ -170,11 +170,10 @@ void TGlTextBox::Fit() {
   if (glf.IsVectorFont()) {
     scale = 1. / Parent.GetScale();
   }
+  Height = Width = 0;
   if (FBuffer.Count() > 1) {
     const uint16_t th = glf.TextHeight(EmptyString());
     const double LineSpacer = (0.05 + LineSpacing - 1) * th;
-    Height = 0;
-    Width = 0;
     double h = 0;
     for (size_t i = 0; i < FBuffer.Count(); i++) {
       TTextRect tr = glf.GetTextRect(FBuffer[FBuffer.Count()-i-1]);
@@ -197,11 +196,8 @@ void TGlTextBox::Fit() {
       tr.height *= scale;
       tr.width *= scale;
     }
-    Height = (uint16_t)olx_round(tr.height);
+    Height = (uint16_t)olx_max(olx_round(tr.height), glf.GetMaxHeight());
     Width = (uint16_t)olx_round(tr.width);
-  }
-  else {
-    Height = Width = 0;
   }
 }
 //..............................................................................
@@ -229,26 +225,8 @@ TGlFont& TGlTextBox::GetFont() const {
 //..............................................................................
 //..............................................................................
 void TGlTextBox::LibReset(const TStrObjList& Params, TMacroData& E) {
-  TStrList toks(Params[0], ',');
-  if (toks.Count() == 2 && olx_list_and(toks, &olxstr::IsInt)) {
-    SetPosition(toks[0].ToInt(), toks[1].ToInt());
-  }
-  else {
-    int margin = 0;
-    bool bottom = Params[0].Contains("b"),
-      right = Params[0].Contains("r");
-    if (!toks.IsEmpty() && toks.GetLastString().IsInt()) {
-      margin = toks.GetLastString().ToInt();
-    }
-    int t = margin, l = margin;
-    if (right) {
-      l = Parent.GetWidth() - GetWidth() - margin;
-    }
-    if (bottom) {
-      t = Parent.GetHeight() - GetHeight() - margin;
-    }
-    SetPosition(l, t);
-  }
+  olx_pair_t<int> pos = Parent.DecodeAlignment(Params[0], GetWidth(), GetHeight());
+  SetPosition(pos.a, pos.b);
   Update();
 }
 //..............................................................................
@@ -264,6 +242,7 @@ void TGlTextBox::LibPostText(const TStrObjList& Params, TMacroData& E) {
   else {
     PostText(Params[0]);
   }
+  Fit();
 }
 //..............................................................................
 void TGlTextBox::LibClear(const TStrObjList& Params, TMacroData& E) {

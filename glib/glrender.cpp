@@ -1595,6 +1595,40 @@ double TGlRenderer::CalcZoom(bool for_selection) const {
   }
 }
 //..............................................................................
+olx_pair_t<int> TGlRenderer::DecodeAlignment(const olxstr& enc, int width, int height) const
+{
+  TStrList toks(enc, ',');
+  if (toks.Count() >= 2 && olx_list_and(toks, &olxstr::IsInt)) {
+    int margin = 0;
+    if (toks.Count() > 2) {
+      margin = toks[2].ToInt();
+    }
+    return olx_pair::make(toks[0].ToInt() + margin, toks[1].ToInt() + margin);
+  }
+  else {
+    int margin = 0;
+    if (!toks.IsEmpty() && toks.GetLastString().IsInt()) {
+      margin = toks.GetLastString().ToInt();
+    }
+    int t = margin, l = margin;
+    if (enc == 'c') {
+      l = (GetWidth() - width) / 2 - margin;
+      t = (GetHeight() - height) / 2 - margin;
+    }
+    else {
+      bool bottom = enc.Contains("b"),
+        right = enc.Contains("r");
+      if (right) {
+        l = GetWidth() - width - margin;
+      }
+      if (bottom) {
+        t = GetHeight() - height - margin;
+      }
+    }
+    return olx_pair::make(l, t);
+  }
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 void TGlRenderer::LibCompile(const TStrObjList& Params, TMacroData& E) {

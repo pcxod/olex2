@@ -4383,7 +4383,7 @@ void GXLibMacros::macKill(TStrObjList &Cmds, const TParamList &Options,
       if (sel[i].Is<TXAtom>()) {
         out << ((TXAtom&)sel[i]).GetLabel();
       }
-      if (sel[i].Is<TGlGroup>()) {
+      else if (sel[i].Is<TGlGroup>()) {
         if (!group_deletion) {
           group_deletion = true;
           TBasicApp::NewLogEntry() << "Please ungroup groups using 'group -u' before deleting";
@@ -5967,19 +5967,9 @@ void GXLibMacros::macLegend(TStrObjList &Cmds, const TParamList &Options,
 {
   olxstr reset = Options.FindValue("r", "-");
   if (reset != '-') {
-    TStrList toks(reset, ',');
-    if (toks.Count() == 2 && olx_list_and(toks, &olxstr::IsInt)) {
-      app.AtomLegend().SetPosition(toks[0].ToInt(), toks[1].ToInt());
-    }
-    else {
-      int margin = 0;
-      bool bottom = reset.Contains("b"),
-        right = reset.Contains("r");
-      if (!toks.IsEmpty() && toks.GetLastString().IsInt()) {
-        margin = toks.GetLastString().ToInt();
-      }
-      app.AtomLegend().ResetPosition(right, bottom, margin);
-    }
+    olx_pair_t<int> pos = app.GetRenderer().DecodeAlignment(reset,
+      app.AtomLegend().GetWidth(), app.AtomLegend().GetHeight());
+    app.AtomLegend().SetPosition(pos.a, pos.b);
     app.AtomLegend().Update();
     app.AtomLegend().SetVisible(true);
     return;
