@@ -2802,7 +2802,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
     }
     l << ' ' << rm.rSAME[i].GetAtoms().GetExpression();
     if (processed != 0) {
-      processed->Add(rm.rSAME[i]);
+      processed->AddUnique(rm.rSAME[i]);
     }
   }
   SL.Add(EmptyString());
