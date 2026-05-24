@@ -664,7 +664,7 @@ void TSameGroupList::ToDataItem_HRF(TDataItem& item, const TCAtomPList* atoms,
   for (size_t i = 0; i < groups.Count(); i++) {
     if (groups[i]->GetTag() >= 0) {
       if (processed != 0) {
-        processed->Add(groups[i]);
+        processed->AddUnique(groups[i]);
       }
       if (groups[i]->IsReference()) {
         groups[i]->ToDataItem_HRF(item.AddItem("ref"));
