@@ -423,6 +423,7 @@ private:
   DefMacro(Update)
   DefMacro(Reload)
   DefMacro(StoreParam)
+  DefMacro(ClearParam)
   DefMacro(SelBack)
 
   DefMacro(CreateBitmap)

@@ -3823,6 +3823,18 @@ void TMainForm::macStoreParam(TStrObjList &Cmds, const TParamList &Options,
     SaveSettings(FXApp->GetInstanceDir() + FLastSettingsFile);
 }
 //..............................................................................
+void TMainForm::macClearParam(TStrObjList &Cmds, const TParamList &Options,
+    TMacroData &E)
+{
+    const size_t ind = StoredParams.IndexOf(Cmds[0]);
+    if (ind == InvalidIndex)
+        return;
+    else
+        StoredParams.Remove(Cmds[0]);
+    if (Cmds.Count() == 2 && Cmds[1].ToBool())
+        SaveSettings(FXApp->GetInstanceDir() + FLastSettingsFile);
+}
+//..............................................................................
 void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {

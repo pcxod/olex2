@@ -707,6 +707,7 @@ void TMainForm::XApp(Olex2App *XA)  {
     "Does check for the updates");
   this_InitMacro(Reload, , fpOne);
   this_InitMacro(StoreParam, , fpTwo|fpThree);
+  this_InitMacro(ClearParam, , fpOne|fpTwo);
   this_InitMacro(SelBack, a&;o&;x, fpNone);
 
   this_InitMacro(CreateBitmap, r, fpTwo);
