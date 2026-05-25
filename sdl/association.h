@@ -14,7 +14,7 @@
 this :), but for more flexibility still Association3 is provided
 */
 
-template <typename Ac, typename Bc>
+template <typename Ac, typename Bc=Ac>
 struct olx_pair_t {
   Ac a;
   Bc b;

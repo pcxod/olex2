@@ -53,11 +53,18 @@ protected:
     items.Add((item_t*)item);
   }
   void Release(AReleasable& item) {
+    if (item.GetReleasableId() == InvalidIndex) {
+      return;
+    }
     items.Release(item.GetReleasableId());
+    UpdateIds();
+    OnRelease(dynamic_cast<item_t&>(item));
+    item.SetReleasableId(InvalidIndex);
+  }
+  void UpdateIds() {
     for (size_t i = 0; i < items.Count(); i++) {
       items[i].SetReleasableId(i);
     }
-    OnRelease(dynamic_cast<item_t&>(item));
   }
   //.............................................................................
   void Restore(AReleasable& item) {

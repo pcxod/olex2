@@ -1861,17 +1861,24 @@ const_strlist RefinementModel::Describe() {
       if (ratoms.IsEmpty()) {
         continue;
       }
+      bool added = false;
       for (size_t j = 0; j < sg.DependentCount(); j++) {
         if (!sg.GetDependent(j).IsValidForSave()) {
           continue;
         }
         TAtomRefList atoms = sg.GetDependent(j).GetAtoms().ExpandList(*this);
+        if (atoms.Count() != ratoms.Count()) {
+          continue;
+        }
         lst.Add('{') << AtomListToStr(atoms, InvalidSize, ", ") << '}' <<
           " sigma for 1-2: " << sg.GetDependent(j).Esd12 << ", 1-3: " <<
           sg.GetDependent(j).Esd13;
+        added = true;
       }
-      lst.Add("as in");
-      lst.Add('{') << AtomListToStr(ratoms, InvalidSize, ", ") << '}';
+      if (added) {
+        lst.Add("as in");
+        lst.Add('{') << AtomListToStr(ratoms, InvalidSize, ", ") << '}';
+      }
     }
     for (size_t i = 0; i < rSAME.Count(); i++) {
       TSameGroup& sg = rSAME[i];
@@ -2918,7 +2925,7 @@ olxstr RefinementModel::WriteInsExtras(const TCAtomPList* atoms,
     }
     if (explicit_same && rSAME.Count() > 0) {
       TDataItem& si = ri.AddItem("SAME");
-      rSAME.ToDataItem_HRF(si);
+      rSAME.ToDataItem_HRF(si, atoms, processed);
       if (si.ItemCount() == 0) {
         ri.DeleteItem(&si);
       }

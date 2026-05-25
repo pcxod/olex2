@@ -83,14 +83,15 @@ struct ItemTagHolder {
   }
 
   template <class list_t, class accessor_t>
-  ItemTagHolder& copy_to(const list_t& src, list_t& dest, const accessor_t &acc) {
+  ItemTagHolder& copy_to(const list_t& src, list_t& dest, const accessor_t &acc, bool size_must_match=true) {
     size_t i = data.IndexOf((const void*)&src);
     if (i != InvalidIndex) {
       ACIList& tl = *data.GetValue(i);
-      if (dest.Count() != tl.tags.Count()) {
+      if (size_must_match && dest.Count() != tl.tags.Count()) {
         throw TFunctionFailedException(__OlxSrcInfo, "assert");
       }
-      for (size_t i = 0; i < tl.tags.Count(); i++) {
+      const size_t len = olx_min(dest.Count(), tl.tags.Count());
+      for (size_t i = 0; i < len; i++) {
         olx_ref::get(acc(dest[i])).SetTag(tl.tags[i]);
       }
     }
@@ -101,8 +102,8 @@ struct ItemTagHolder {
   }
 
   template <class list_t>
-  ItemTagHolder& copy_to(const list_t& src, list_t& dest) {
-    return copy_to(src, dest, DummyAccessor());
+  ItemTagHolder& copy_to(const list_t& src, list_t& dest, bool size_must_match = true) {
+    return copy_to(src, dest, DummyAccessor(), size_must_match);
   }
 
   void restore_all() {

@@ -2239,6 +2239,10 @@ void GXLibMacros::macMpln(TStrObjList & Cmds, const TParamList & Options,
   }
   else {
     TTypeList<TSAtomPList> rings = app.FindRings(rings_name);
+    if (rings.IsEmpty()) {
+      TBasicApp::NewLogEntry(logWarning) <<
+        "Note that Q-peaks may affect this functionality";
+    }
     olxstr name = "Plane";
     name << app.XFile().GetLattice().GetObjects().planes.Count() << '_';
     size_t cnt=0;
@@ -2265,6 +2269,10 @@ void GXLibMacros::macCent(TStrObjList &Cmds, const TParamList &Options,
   }
   else {
     TTypeList<TSAtomPList> rings = app.FindRings(rings_name);
+    if (rings.IsEmpty()) {
+      TBasicApp::NewLogEntry(logWarning) <<
+        "Note that Q-peaks may affect this functionality";
+    }
     for (size_t i = 0; i < rings.Count(); i++) {
       atoms.AddAll(app.AddCentroid(TXAtomPList(rings[i], DynamicCastAccessor<TXAtom>())).obj());
     }
@@ -2974,7 +2982,10 @@ void GXLibMacros::macSel(TStrObjList &Cmds, const TParamList &Options,
     }
     if (!processed && (idx = Cmds.IndexOf("rings")) != InvalidIndex) {
       Cmds.Delete(idx);
-      app.SelectRings(Cmds.Text(' '), flag);
+      if (!app.SelectRings(Cmds.Text(' '), flag)) {
+        TBasicApp::NewLogEntry(logWarning) <<
+          "Note that Q-peaks may affect this functionality";
+      }
       processed = true;
     }
     if (!processed && (idx = Cmds.IndexOf("collection")) != InvalidIndex) {
@@ -4383,7 +4394,7 @@ void GXLibMacros::macKill(TStrObjList &Cmds, const TParamList &Options,
       if (sel[i].Is<TXAtom>()) {
         out << ((TXAtom&)sel[i]).GetLabel();
       }
-      if (sel[i].Is<TGlGroup>()) {
+      else if (sel[i].Is<TGlGroup>()) {
         if (!group_deletion) {
           group_deletion = true;
           TBasicApp::NewLogEntry() << "Please ungroup groups using 'group -u' before deleting";
@@ -5092,6 +5103,10 @@ void GXLibMacros::macMatch(TStrObjList &Cmds, const TParamList &Options,
   }
   else {
     TBasicApp::NewLogEntry() << "No matching fragments found";
+    if (app.AreQPeaksVisible()) {
+      TBasicApp::NewLogEntry(logWarning) <<
+        "Note that Q-peaks and H-atoms may affect this functionality";
+    }
   }
 }
 //..............................................................................
@@ -5967,19 +5982,9 @@ void GXLibMacros::macLegend(TStrObjList &Cmds, const TParamList &Options,
 {
   olxstr reset = Options.FindValue("r", "-");
   if (reset != '-') {
-    TStrList toks(reset, ',');
-    if (toks.Count() == 2 && olx_list_and(toks, &olxstr::IsInt)) {
-      app.AtomLegend().SetPosition(toks[0].ToInt(), toks[1].ToInt());
-    }
-    else {
-      int margin = 0;
-      bool bottom = reset.Contains("b"),
-        right = reset.Contains("r");
-      if (!toks.IsEmpty() && toks.GetLastString().IsInt()) {
-        margin = toks.GetLastString().ToInt();
-      }
-      app.AtomLegend().ResetPosition(right, bottom, margin);
-    }
+    olx_pair_t<int> pos = app.GetRenderer().DecodeAlignment(reset,
+      app.AtomLegend().GetWidth(), app.AtomLegend().GetHeight());
+    app.AtomLegend().SetPosition(pos.a, pos.b);
     app.AtomLegend().Update();
     app.AtomLegend().SetVisible(true);
     return;

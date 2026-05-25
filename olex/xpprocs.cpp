@@ -2317,7 +2317,7 @@ olx_pair_t<bool,bool> RunExternalEdit(TStrList &SL, const olxstr& fn_) {
   // synchronise atom names etc
   TAsymmUnit& au = FXApp->XFile().GetAsymmUnit();
   RefinementModel& rm = FXApp->XFile().GetRM();
-  TIns::ValidateRestraintsAtomNames(FXApp->XFile().GetRM(), false);
+  TIns::ValidateRestraintsAtomNames(rm, false);
   FXApp->XFile().UpdateAtomIds();
   if (Ins != 0) {
     Ins->UpdateParams();
@@ -2359,32 +2359,6 @@ olx_pair_t<bool,bool> RunExternalEdit(TStrList &SL, const olxstr& fn_) {
     }
   }
   TXApp::UnifyPAtomList(CAtoms);
-  TPtrList<AReleasable> released;
-  olxset<TSameGroup *, TPointerComparator> sameGroups;
-  for (size_t i = 0; i < CAtoms.Count(); i++) {
-    if (olx_is_valid_index(CAtoms[i]->GetSameId())) {
-      TSameGroup* sg = &rm.rSAME[CAtoms[i]->GetSameId()];
-      if (sameGroups.Contains(sg)) {
-        continue;
-      }
-      if (sg->GetParentGroup() != 0) {
-        sg = sg->GetParentGroup();
-      }
-      sameGroups.Add(sg);
-      for (size_t j = 0; j < sg->DependentCount(); j++) {
-        sameGroups.Add(&sg->GetDependent(j));
-      }
-    }
-  }
-  // process SAME's
-  released.AddAll(sameGroups);
-  for (size_t i = 0; i < sameGroups.Count(); i++) {
-    TSameGroup &sg = *sameGroups[i];
-    TAtomRefList atoms = sg.GetAtoms().ExpandList(rm);
-    for (size_t j = 0; j < atoms.Count(); j++) {
-      CAtoms.Add(atoms[j].GetAtom());
-    }
-  }
   for (size_t i = 0; i < rm.AfixGroups.Count(); i++) {
     rm.AfixGroups[i].SetTag(0);
   }
@@ -2414,6 +2388,14 @@ olx_pair_t<bool,bool> RunExternalEdit(TStrList &SL, const olxstr& fn_) {
     }
   }
   // make sure that the list is unique
+  TXApp::UnifyPAtomList(CAtoms);
+  TPtrList<AReleasable> released;
+  // process SAME's - expand atom list and get involved groups list
+  TPtrList<TSameGroup> same_groups = rm.rSAME.Match(CAtoms, &CAtoms);
+  // explicit_same are released by SaveAtomsToStrings
+  if (!(TXApp::DoUseExternalExplicitSAME() || TXApp::DoUseExplicitSAME())) {
+    released.AddAll(same_groups);
+  }
   TXApp::UnifyPAtomList(CAtoms);
   TStrList SL;
   TStringToList<olxstr, TStrList* > RemovedIns;
@@ -2458,7 +2440,7 @@ olx_pair_t<bool,bool> RunExternalEdit(TStrList &SL, const olxstr& fn_) {
   QuickSorter::Sort(CAtoms, ComplexComparator::Make(
     FunctionAccessor::MakeConst(&TCAtom::GetId),
     TPrimitiveComparator()));
-  TIns::SaveAtomsToStrings(FXApp->XFile().GetRM(), CAtoms, atomIndex, SL,
+  TIns::SaveAtomsToStrings(rm, CAtoms, atomIndex, SL,
     &released);
   for (size_t i = 0; i < released.Count(); i++) {
     released[i]->Release();
@@ -2480,19 +2462,19 @@ olx_pair_t<bool,bool> RunExternalEdit(TStrList &SL, const olxstr& fn_) {
     dlg->Destroy();
   }
   if (!res.a) {
-    FXApp->XFile().GetRM().Vars.Clear();
+    rm.Vars.Clear();
     TStrList NewIns;
     //SL = SL.SubListFrom(3);
     try {
       TIns ins_;
-      ins_.UpdateAtomsFromStrings(FXApp->XFile().GetRM(), atomIndex, SL, NewIns);
+      ins_.UpdateAtomsFromStrings(rm, atomIndex, SL, NewIns);
       if (Ins != 0) {
         for (size_t i = 0; i < NewIns.Count(); i++) {
           NewIns[i] = NewIns[i].Trim(' ');
           if (NewIns[i].IsEmpty()) {
             continue;
           }
-          Ins->AddIns(NewIns[i], FXApp->XFile().GetRM());
+          Ins->AddIns(NewIns[i], rm);
         }
       }
       FXApp->XFile().EndUpdate();
@@ -2507,7 +2489,7 @@ olx_pair_t<bool,bool> RunExternalEdit(TStrList &SL, const olxstr& fn_) {
     if (Ins != 0) {
       for (size_t i = 0; i < RemovedIns.Count(); i++) {
         Ins->AddIns(RemovedIns[i], *RemovedIns.GetObject(i),
-          FXApp->XFile().GetRM(), false);
+          rm, false);
       }
     }
     for (size_t i = 0; i < released.Count(); i++) {
@@ -3853,8 +3835,6 @@ void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options,
     dc.DrawLabel(Cmds[1].u_str(), wxRect(0, 0, 255, 31));
     dc.SelectObject(wxNullBitmap);
     img = bmp.ConvertToImage();
-    //E.ProcessingError(__OlxSrcInfo, "Image file does not exist: ").quote() << Cmds[1];
-    //return;
   }
   else {
     img = wxImage(*inf->GetStream());
@@ -3863,14 +3843,19 @@ void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options,
     E.ProcessingError(__OlxSrcInfo, "Invalid image file: ") << Cmds[1];
     return;
   }
-  int owidth = img.GetWidth(), oheight = img.GetHeight();
-  int l = CalcL(img.GetWidth());
-  int swidth = (int)pow((double)2, (double)l);
-  l = CalcL(img.GetHeight());
-  int sheight = (int)pow((double)2, (double)l);
 
-  if (swidth != owidth || sheight != oheight) {
-    img.Rescale(swidth, sheight);
+  int owidth = img.GetWidth(),
+    swidth = owidth;
+  int oheight = img.GetHeight(),
+    sheight = oheight;
+  if (Options.GetBoolOption('r', false, true)) {
+    int l = CalcL(img.GetWidth());
+    swidth = (int)pow((double)2, (double)l);
+    l = CalcL(img.GetHeight());
+    sheight = (int)pow((double)2, (double)l);
+    if (swidth != owidth || sheight != oheight) {
+      img.Rescale(swidth, sheight);
+    }
   }
 
   int cl = 3, bmpType = GL_RGB;
@@ -3894,23 +3879,30 @@ void TMainForm::macCreateBitmap(TStrObjList &Cmds, const TParamList &Options,
   }
   bool Created = (FXApp->FindGlBitmap(Cmds[0]) == 0);
   TGlBitmap* glB = FXApp->CreateGlBitmap(Cmds[0], 0, 0, swidth, sheight, RGBData, bmpType);
-  int Top = FInfoBox->IsVisible() ? (FInfoBox->GetTop() + FInfoBox->GetHeight()) : 0;
-  if (Created) {
-    for (size_t i = 0; i < FXApp->GlBitmapCount(); i++) {
-      TGlBitmap& b = FXApp->GlBitmap(i);
-      if (&b == glB) {
-        continue;
+  if (Cmds.Count() == 3) {
+    olx_pair_t<int> pos = FXApp->GetRenderer().DecodeAlignment(Cmds[2],
+      glB->GetWidth(), glB->GetHeight());
+    glB->SetLeft(pos.a);
+    glB->SetTop(pos.b);
+  }
+  else { // auto-align from the top, skip info_box
+    int Top = 0;
+    if (Created) { // stack image at the bottom
+      for (size_t i = 0; i < FXApp->GlBitmapCount(); i++) {
+        TGlBitmap& b = FXApp->GlBitmap(i);
+        if (&b == glB) {
+          continue;
+        }
+        Top += (b.GetHeight() + 2);
       }
-      Top += (b.GetHeight() + 2);
     }
+    if (Created) {
+      glB->SetWidth(owidth);
+      glB->SetHeight(oheight);
+    }
+    glB->SetLeft(FXApp->GetRenderer().GetWidth() - glB->GetWidth());
+    glB->SetTop(Top);
   }
-
-  if (Created) {
-    glB->SetWidth(owidth);
-    glB->SetHeight(oheight);
-  }
-  glB->SetTop(Top);
-  glB->SetLeft(FXApp->GetRenderer().GetWidth() - glB->GetWidth());
   FXApp->Draw();
 }
 //..............................................................................
@@ -5335,7 +5327,25 @@ void TMainForm::macSetMaterial(TStrObjList &Cmds, const TParamList &Options, TMa
     return;
   }
   if (mat == 0) {
-    E.SetUnhandled(true);
+    olxstr name = Cmds[0].TrimWhiteChars();
+    if (name.IsEmpty()) {
+      E.SetUnhandled(true);
+      return;
+    }
+    TGlMaterial glm(Cmds[1]);
+    TStrList toks(name, '.');
+    if (toks.Count() == 1) { // special case, just set 'mat'
+      FXApp->GetRenderer().GetStyles().NewStyle(Cmds[0])
+        .SetMaterial("mat", glm);
+    }
+    else {
+      TGraphicsStyles& styles = FXApp->GetRenderer().GetStyles();
+      TGraphicsStyle* s = &styles.NewStyle(toks[0]);
+      for (size_t i = 1; i < toks.Count() - 1; i++) {
+        s = &s->NewStyle(toks[i]);
+      }
+      s->SetMaterial(toks.GetLastString(), glm);
+    }
   }
   else {
     *mat = TGlMaterial(Cmds[1]);

@@ -134,7 +134,8 @@ public:
   inline void operator += (const T a) { _A += a; }
   inline void operator -= (const T a) { _A -= a; }
   inline void operator *= (const T a) { _A *= a;  _B *= a; }
-  inline void operator /= (const T a) { _A /= a;  _A /= a; }
+  // thanks to Claude
+  inline void operator /= (const T a) { _A /= a;  _B /= a; }
 
   inline TEComplex operator + (const TEComplex& _compl) const {
     return TEComplex<T>(_A + _compl._A, _B + _compl._B);
