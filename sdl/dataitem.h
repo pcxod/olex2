@@ -19,7 +19,7 @@ BeginEsdlNamespace()
 
 class TEStrBuffer;
 
-class TDataItem: public AReferencible  {
+class TDataItem : public AReferencible {
   TStringToList<olxstr, TDataItem*> Items;
   typedef olx_pair_t<olxstr, size_t> field_t;
   olxstr_dict<field_t, false> Fields;
@@ -30,61 +30,70 @@ class TDataItem: public AReferencible  {
   void UpdateFieldIndices(size_t deleted);
 protected:
   TDataItem& Root();
-  TDataItem *DotItem(const olxstr& DotName, TStrList* Log);
-  olxstr *DotField(const olxstr& DotName, olxstr &RefFieldName);
+  TDataItem* DotItem_(const olxstr& DotName, TStrList* Log);
+  olxstr* DotField(const olxstr& DotName, olxstr& RefFieldName);
   TDataItem& AddItem(TDataItem& Item);
-  olxstr* FieldPtr(const olxstr &Name) {
+  olxstr* FieldPtr(const olxstr& Name) {
     const size_t i = Fields.IndexOf(Name);
     return (i != InvalidIndex) ? &Fields.GetValue(i).a : 0;
   }
   // to be called from the parser
   void _AddField(const olxstr& name, const olxstr& val) {
-    field_t & f = Fields.Add(name, exparse::parser_util::unescape(val));
-    f.SetB(Fields.Count()-1);
+    field_t& f = Fields.Add(name, exparse::parser_util::unescape(val));
+    f.SetB(Fields.Count() - 1);
   }
-  void SetParent(TDataItem* p)  {  Parent = p;  }
+  void SetParent(TDataItem* p) { Parent = p; }
   TEStrBuffer& writeFullName(TEStrBuffer& bf) const;
 public:
-  TDataItem(TDataItem *Parent, const olxstr& Name,
-    const olxstr& value=EmptyString());
+  TDataItem(TDataItem* Parent, const olxstr& Name,
+    const olxstr& value = EmptyString());
   virtual ~TDataItem();
   void Clear();
   // sorts fields and items - improve the access by name performance
   void Sort();
   void ResolveFields(TStrList* Log); // resolves referenced fields
-  size_t LoadFromString(size_t start, const olxstr &Data, TStrList* Log);
-  size_t LoadFromXMLString(size_t start, const olxstr &Data, TStrList* Log);
+  size_t LoadFromString(size_t start, const olxstr& Data, TStrList* Log);
+  size_t LoadFromXMLString(size_t start, const olxstr& Data, TStrList* Log);
   void ValueFieldToValue();
-  void SaveToStrBuffer(TEStrBuffer &Data) const;
-  void SaveToXMLStrBuffer(TEStrBuffer &Data) const;
+  void SaveToStrBuffer(TEStrBuffer& Data) const;
+  void SaveToXMLStrBuffer(TEStrBuffer& Data) const;
 
-  TDataItem& AddItem(const olxstr& Name, const olxstr& value=EmptyString());
+  TDataItem& AddItem(const olxstr& Name, const olxstr& value = EmptyString());
   /* if extend is true the item's content is extended instead of being
   overwritten. This function creates a refence to the original item values
   rather than copying them!
   */
-  void AddContent(TDataItem& DI, bool extend=false);
+  void AddContent(TDataItem& DI, bool extend = false);
   /* Adds a copy if DI to current item, if extend is true and an item with the
   * same name exists - its content will be extended otherwise this may create
   * items with the same name
   */
   void AddCopy(const TDataItem& DI, bool extend = false);
   // implementation of the include instruction object.item
-  TDataItem& AddItem(const olxstr &Name, TDataItem *Reference);
+  TDataItem& AddItem(const olxstr& Name, TDataItem* Reference);
   void DeleteItem(TDataItem *Item);
+  void DeleteItemByIndex(size_t idx);
+  // recursive find and delete of item or attribute, item.value is set to ""
+  bool DeleteByName(const olxstr& name);
   // does recursive search
   TDataItem* FindAnyItem(const olxstr& Name) const;
   // does recursive search
   TDataItem* FindAnyItemi(const olxstr& Name) const;
-  // returns an item by name using recursive search within subitems as well
-  // as in the current item
+
+  template <class T> size_t ItemIndex(const T& Name) const {
+    return Items.IndexOf(Name);
+  }
+  const TDataItem* DotItem(const olxstr& DotName) const {
+    return const_cast<TDataItem*>(this)->DotItem_(DotName, 0);
+  }
+
   template <class T> TDataItem* FindItemi(const T& Name,
-    TDataItem *def=0) const
+    TDataItem* def = 0) const
   {
     return Items.FindPointeri(Name, def);
   }
   template <class T> TDataItem* FindItem(const T& Name,
-    TDataItem *def=0) const
+    TDataItem* def = 0) const
   {
     return Items.FindPointer(Name, def);
   }
@@ -105,21 +114,21 @@ public:
   }
   void FindSimilarItems(const olxstr& StartsFrom, TPtrList<TDataItem>& List);
   size_t ItemCount() const { return Items.Count(); }
-  template <class T> bool ItemExists(const T &Name) const {
+  template <class T> bool ItemExists(const T& Name) const {
     return Items.IndexOf(Name) != InvalidIndex;
   }
 
-  size_t IndexOf(TDataItem *I) const { return Items.IndexOfObject(I); }
+  size_t IndexOf(TDataItem* I) const { return Items.IndexOfObject(I); }
   size_t FieldCount() const { return Fields.Count(); }
 
   template <class T> size_t FieldIndex(const T& Name) const {
     return Fields.IndexOf(Name);
   }
   template <typename T>
-  TDataItem & AddField(const T& fieldName, const olxstr& newValue) {
+  TDataItem& AddField(const T& fieldName, const olxstr& newValue) {
     const size_t i = Fields.IndexOf(fieldName);
     if (i == InvalidIndex) {
-      field_t &f = Fields.Add(fieldName, newValue);
+      field_t& f = Fields.Add(fieldName, newValue);
       f.SetB(Fields.Count() - 1);
     }
     else {
@@ -160,23 +169,27 @@ public:
     return false;
   }
   template <class T> const olxstr& FindField(const T& Name,
-    const olxstr& Default=EmptyString()) const
+    const olxstr& Default = EmptyString()) const
   {
     const size_t i = Fields.IndexOf(Name);
-    return (i==InvalidIndex) ? Default : Fields.GetValue(i).GetA();
+    return (i == InvalidIndex) ? Default : Fields.GetValue(i).GetA();
   }
 
   template <class T> bool FieldExists(const T& Name) {
-    return Fields.IndexOf(Name) != InvalidIndex;
+    return Fields.Contains(Name);
   }
+
+  // recursively finds, created the path and sets the field
+  void SetFieldValue(const olxstr& name, const olxstr &value);
+
   const_strstrlist GetOrderedFieldList() const;
 
   TDataItem* GetParent() const { return Parent; }
   size_t GetLevel() const { return Level; }
-  olxstr GetFullName(const olxstr &sep='.', const TDataItem *upto=0) const;
+  olxstr GetFullName(const olxstr& sep = '.', const TDataItem* upto = 0) const;
   DefPropC(olxstr, Name);
-  const olxstr &GetValue() const {  return Value; }
-  void SetValue(const olxstr &V)  {  Value = V; }
+  const olxstr& GetValue() const { return Value; }
+  void SetValue(const olxstr& V) { Value = V; }
   // for use with whatsoever, initialised twith NULL
   DefPropP(void*, Data);
 
@@ -184,9 +197,9 @@ public:
 
   TDataItem& operator = (const TDataItem& i);
 
-  class TNonexistingDataItemException: public TBasicException  {
+  class TNonexistingDataItemException : public TBasicException {
   public:
-    TNonexistingDataItemException(const olxstr& location, const olxstr &Msg):
+    TNonexistingDataItemException(const olxstr& location, const olxstr& Msg) :
       TBasicException(location, Msg)
       {}
     virtual IOlxObject* Replicate() const {

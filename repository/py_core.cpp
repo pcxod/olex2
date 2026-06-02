@@ -759,6 +759,100 @@ PyObject* pyGetStoredParams(PyObject* self, PyObject* args) {
   return PythonExt::PyNone();
 }
 //..............................................................................
+PyObject* pyFindStoredParam(PyObject* self, PyObject* args) {
+  olxstr name;
+  if (!PythonExt::ParseTuple(args, "w", &name)) {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
+  }
+  try {
+    size_t di = name.LastIndexOf('.');
+    if (di == InvalidIndex) {
+      return PythonExt::PyNone();
+    }
+    olxstr attr_name = name.SubStringFrom(di + 1);
+    name.SetLength(di);
+    const TDataItem& gs = TXApp::GetInstance().XFile().GetRM().GetGenericStore();
+    TDataItem *i = gs.FindAnyItem(name);
+    if (i == 0) {
+      return PythonExt::PyNone();
+    }
+    if (attr_name == "value") {
+      return PythonExt::BuildString(i->GetValue());
+    }
+    di = i->FieldIndex(attr_name);
+    if (di == InvalidIndex) {
+      return PythonExt::PyNone();
+    }
+    return PythonExt::BuildString(i->GetFieldByIndex(di));
+  }
+  catch (const TExceptionBase& e) {
+    TBasicApp::NewLogEntry(logException) << e;
+  }
+  return PythonExt::PyNone();
+}
+//..............................................................................
+PyObject* pyHasStoredParam(PyObject* self, PyObject* args) {
+  olxstr name;
+  if (!PythonExt::ParseTuple(args, "w", &name)) {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
+  }
+  try {
+    const TDataItem& gs = TXApp::GetInstance().XFile().GetRM().GetGenericStore();
+    size_t di = name.LastIndexOf('.');
+    if (di == InvalidIndex) {
+      return PythonExt::PyBool(gs.FindItem(name) != 0);
+    }
+    olxstr attr_name = name.SubStringFrom(di + 1);
+    name.SetLength(di);
+    const TDataItem* i = gs.DotItem(name);
+    if (i == 0) {
+      return PythonExt::PyFalse();
+    }
+    if (attr_name == "value") {
+      return PythonExt::PyTrue();
+    }
+    di = i->FieldIndex(attr_name);
+    if (di == InvalidIndex) {
+      return PythonExt::PyBool(i->FindItem(attr_name) != 0);
+    }
+    return PythonExt::PyTrue();
+  }
+  catch (const TExceptionBase& e) {
+    TBasicApp::NewLogEntry(logException) << e;
+  }
+  return PythonExt::PyFalse();
+}
+//..............................................................................
+PyObject* pyDeleteStoredParam(PyObject* self, PyObject* args) {
+  olxstr name;
+  if (!PythonExt::ParseTuple(args, "w", &name)) {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w");
+  }
+  try {
+    TDataItem& gs = TXApp::GetInstance().XFile().GetRM().GetGenericStore();
+    return PythonExt::PyBool(gs.DeleteByName(name));
+  }
+  catch (const TExceptionBase& e) {
+    TBasicApp::NewLogEntry(logException) << e;
+  }
+  return PythonExt::PyFalse();
+}
+//..............................................................................
+PyObject* pySetStoredParam(PyObject* self, PyObject* args) {
+  olxstr name, val;
+  if (!PythonExt::ParseTuple(args, "ww", &name, &val)) {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "ww");
+  }
+  try {
+    TDataItem& gs = TXApp::GetInstance().XFile().GetRM().GetGenericStore();
+    gs.SetFieldValue(name, val);
+  }
+  catch (const TExceptionBase& e) {
+    TBasicApp::NewLogEntry(logException) << e;
+  }
+  return PythonExt::PyNone();
+}
+//..............................................................................
 //..............................................................................
 //..............................................................................
 static PyMethodDef CORE_Methods[] = {
@@ -820,8 +914,16 @@ static PyMethodDef CORE_Methods[] = {
   "Returns a list of ([(iii)][D]) of current mask if in the loaded CIF" },
   { "GetStoredParams", pyGetStoredParams, METH_VARARGS,
   "Returns parameters stored in the INS header or in the given XLD block" },
+  { "FindStoredParam", pyFindStoredParam, METH_VARARGS,
+  "Finds a particular value in header params, return None if does not exist" },
+  { "HasStoredParam", pyHasStoredParam, METH_VARARGS,
+  "Checks if the given param/attribute exist" },
+  { "DeleteStoredParam", pyDeleteStoredParam, METH_VARARGS,
+  "Delets given item/attribute" },
+  { "SetStoredParam", pySetStoredParam, METH_VARARGS,
+  "Sets a field/value, creating recursively if needed" },
   { NULL, NULL, 0, NULL }
-   };
+};
 
 //..............................................................................
 olxcstr &OlexPyCore::ModuleName() {

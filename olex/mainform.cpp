@@ -1807,7 +1807,7 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
       FXApp->GetRenderer().GetBasis().RotateZ(
         FXApp->GetRenderer().GetBasis().GetRZ() + FRotationIncrement*FRotationVector[2]);
       FRotationAngle -= olx_abs(FRotationVector.Length()*FRotationIncrement);
-      if (FRotationAngle < 0) {
+      if (FRotationAngle <= 0) {
         FMode ^= mRota;
       }
       Draw = true;
@@ -2554,6 +2554,9 @@ void TMainForm::OnKeyDown(wxKeyEvent& m) {
       if (!ImportFrag(content)) {
         olxstr trimmed_content = content;
         trimmed_content.Trim(' ').Trim('\n').Trim('\r');
+        if (trimmed_content.Contains('\n')) {
+          trimmed_content = olxstr("run(") << trimmed_content.Replace('\n', " >> ") << ')';
+        }
         size_t ip;
         if (CmdLineVisible) {
           ip = FCmdLine->GetInsertionPoint() -
@@ -2563,10 +2566,10 @@ void TMainForm::OnKeyDown(wxKeyEvent& m) {
           ip = FGlConsole->GetCmdInsertPosition();
         }
         if (ip >= cmdl.Length()) {
-          cmdl << content;
+          cmdl << trimmed_content;
         }
         else {
-          cmdl.Insert(content, ip);
+          cmdl.Insert(trimmed_content, ip);
         }
         if (CmdLineVisible) {
           FCmdLine->SetCommand(cmdl);

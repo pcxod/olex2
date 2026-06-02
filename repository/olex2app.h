@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -105,16 +105,16 @@ public:
     if (!TEFile::Exists(PluginFileName)) {
       return false;
     }
-    df.LoadFromXLFile(PluginFileName, NULL);
+    df.LoadFromXLFile(PluginFileName, 0);
     TDataItem *pir = df.Root().FindItem("Plugin");
     if (pir == 0) {
       return false;
     }
-    TDataItem *pi = pir->FindItemi(pn);
-    if (pi == 0) {
+    size_t pii = pir->ItemIndex(pn);
+    if (pii == InvalidIndex) {
       return false;
     }
-    pir->DeleteItem(pi);
+    pir->DeleteItemByIndex(pii);
     df.SaveToXLFile(PluginFileName);
     return true;
   }
@@ -125,7 +125,7 @@ public:
     if (!plugins.Contains(pn)) return false;
     TDataFile df;
     if (TEFile::Exists(PluginFileName))
-      df.LoadFromXLFile(PluginFileName, NULL);
+      df.LoadFromXLFile(PluginFileName, 0);
     TDataItem *pi = df.Root().FindItem("Plugin");
     if (pi == 0) {
       return false;

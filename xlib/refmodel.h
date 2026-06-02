@@ -620,6 +620,9 @@ Friedel opposites of components 1 ... m
   const TDataItem& GetGenericStore() const {
     return GenericStore;
   }
+  TDataItem& GetGenericStore() {
+    return GenericStore;
+  }
   void LibHasOccu(const TStrObjList& Params, TMacroData& E);
   void LibOSF(const TStrObjList& Params, TMacroData& E);
   void LibBASF(const TStrObjList& Params, TMacroData& E);

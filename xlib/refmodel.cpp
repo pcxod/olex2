@@ -1063,7 +1063,9 @@ const TRefList& RefinementModel::GetReflections() const {
 double RefinementModel::CalcF000(const ContentList* cont_, Logging logging) const {
   const ContentList& cont = cont_ == 0 ? GetUserContent() : *cont_;
   double r_e = expl.GetRadiationEnergy();
+  bool compute_fp_fdp = r_e <= 30000;
   double F000 = 0;
+  size_t skipped_fp_fdp = 0;
   for (size_t i = 0; i < cont.Count(); i++) {
     XScatterer* xs = FindSfacData(cont[i].element->GetChargedLabel(cont[i].charge));
     compd f0 = round(cont[i].element->gaussians->calc_sq(0));
@@ -1083,8 +1085,13 @@ double RefinementModel::CalcF000(const ContentList* cont_, Logging logging) cons
     }
     if (!processed) {
       try {
-        f0 += cont[i].element->CalcFpFdp(r_e);
-        f0.Re() -= cont[i].element->z;
+        if (compute_fp_fdp) {
+          f0 += cont[i].element->CalcFpFdp(r_e);
+          f0.Re() -= cont[i].element->z;
+        }
+        else {
+          skipped_fp_fdp++;
+        }
       }
       catch (...) {
         TBasicApp::NewLogEntry(logging) << "Failed to calculated DISP for " <<
@@ -1092,6 +1099,10 @@ double RefinementModel::CalcF000(const ContentList* cont_, Logging logging) cons
       }
       F000 += cont[i].count * f0.mod();
     }
+  }
+  if (!compute_fp_fdp && skipped_fp_fdp > 0) {
+    TBasicApp::NewLogEntry(logWarning) <<
+      "No anomaloud dispersion data available for this wavelength";
   }
   return F000;
 }
