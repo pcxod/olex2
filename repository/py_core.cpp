@@ -772,7 +772,7 @@ PyObject* pyFindStoredParam(PyObject* self, PyObject* args) {
     olxstr attr_name = name.SubStringFrom(di + 1);
     name.SetLength(di);
     const TDataItem& gs = TXApp::GetInstance().XFile().GetRM().GetGenericStore();
-    TDataItem *i = gs.FindAnyItem(name);
+    const TDataItem *i = gs.DotItem(name);
     if (i == 0) {
       return PythonExt::PyNone();
     }
@@ -781,6 +781,14 @@ PyObject* pyFindStoredParam(PyObject* self, PyObject* args) {
     }
     di = i->FieldIndex(attr_name);
     if (di == InvalidIndex) {
+      if (attr_name == "fields") {
+        PyObject* f = PyDict_New();
+        for (size_t j = 0; j < i->FieldCount(); j++) {
+          PythonExt::SetDictItem(f, PythonExt::BuildString(i->GetFieldName(j)),
+            PythonExt::BuildString(i->GetFieldByIndex(j)));
+        }
+        return f;
+      }
       return PythonExt::PyNone();
     }
     return PythonExt::BuildString(i->GetFieldByIndex(di));
