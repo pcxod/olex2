@@ -2555,7 +2555,11 @@ void TMainForm::OnKeyDown(wxKeyEvent& m) {
         olxstr trimmed_content = content;
         trimmed_content.Trim(' ').Trim('\n').Trim('\r');
         if (trimmed_content.Contains('\n')) {
-          trimmed_content = olxstr("run(") << trimmed_content.Replace('\n', " >> ") << ')';
+          trimmed_content = trimmed_content.Replace('\n', ">>");
+          if (trimmed_content.ContainAnyOf("\"'")) {
+            trimmed_content = olxstr("'''") << trimmed_content << "'''";
+          }
+          trimmed_content = olxstr("run(") << trimmed_content << ')';
         }
         size_t ip;
         if (CmdLineVisible) {

@@ -709,7 +709,7 @@ void TXGrid::DeleteObjects() {
     ColorData = 0;
   }
   if (TextData != 0) {
-    delete TextData;
+    delete [] TextData;
     TextData = 0;
   }
   triangles.Clear();
@@ -1666,7 +1666,7 @@ void TXGrid::ToDataItem(TDataItem& item, IOutputStream& zos) const {
     item.AddField("extended", Extended);
     item.AddField("boxed", Boxed);
     item.AddField("ext_min", PersUtil::VecToStr(ExtMin));
-    item.AddField("ext_max", PersUtil::VecToStr(ExtMin));
+    item.AddField("ext_max", PersUtil::VecToStr(ExtMax));
     item.AddField("scale", Scale);
     item.AddField("max_x", MaxX);
     item.AddField("max_y", MaxY);
@@ -1700,8 +1700,8 @@ void TXGrid::FromDataItem(const TDataItem& item, IInputStream& zis) {
   ExtMax = vec3f(1, 1, 1);
   const size_t ed_i = item.FieldIndex("ext_max");
   if (ed_i != InvalidIndex) {
-    PersUtil::VecFromStr(item.GetFieldByIndex(ed_i), ExtMin);
-    PersUtil::VecFromStr(item.GetFieldByName("ext_min"), ExtMax);
+    PersUtil::VecFromStr(item.GetFieldByIndex(ed_i), ExtMax);
+    PersUtil::VecFromStr(item.GetFieldByName("ext_min"), ExtMin);
   }
   Scale = item.GetFieldByName("scale").ToFloat();
   InitGrid(item.GetFieldByName("max_x").ToInt(),
