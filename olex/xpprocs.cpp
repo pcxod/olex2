@@ -2572,20 +2572,22 @@ void TMainForm::macEditIns(TStrObjList &Cmds, const TParamList &Options, TMacroD
   ins_p.reset();
 }
 //..............................................................................
-const_strlist macHklEdit_SaveRef(THklFile &Hkl, TRefPList &refs, bool hklf5) {
+template <class ref_list_t>
+const_strlist macHklEdit_SaveRef(THklFile &Hkl, const ref_list_t&refs, bool hklf5) {
   TStrList SL;
   for (size_t i = 0; i < refs.Count(); i++) {
-    if (refs[i]->GetTag() == 0) {
+    const TReflection& ref = olx_ref::get(refs[i]);
+    if (ref.GetTag() == 0) {
       continue;
     }
     if (hklf5) {
-      size_t r_start = olx_abs(refs[i]->GetTag()) - 1,
+      size_t r_start = olx_abs(ref.GetTag()) - 1,
         r_end = r_start;
       // find reflection start
       while (--r_start < InvalidIndex && Hkl[r_start].GetBatch() < 0) {
       }
       r_start++;
-      if (refs[i]->GetBatch() < 0) {
+      if (ref.GetBatch() < 0) {
         // find the end
         while (++r_end < Hkl.RefCount() && Hkl[r_end].GetBatch() < 0) {
         }
@@ -2599,7 +2601,7 @@ const_strlist macHklEdit_SaveRef(THklFile &Hkl, TRefPList &refs, bool hklf5) {
       }
     }
     else {
-      SL.Add(refs[i]->ToNString());
+      SL.Add(ref.ToNString());
     }
   }
   return SL;
@@ -2623,14 +2625,16 @@ void TMainForm::macHklEdit(TStrObjList& Cmds, const TParamList& Options,
     Hkl[i].SetTag(i + 1);
   }
   sw.start("Preparing input");
-  const bool hklf5 = FXApp->XFile().GetRM().GetHKLF() >= 5;
+  RefinementModel& rm = FXApp->XFile().GetRM();
+  bool hklf5 = rm.GetHKLF() >= 5;
   TStrList SL;
   SL.Add("REM Please put \'-\' char in the front of reflections you wish to omit");
   SL.Add("REM and remove '-' char if you want the reflection to be used in the refinement");
   SL.Add();
+  bool update_data = true;
   if (Cmds.Count() != 3 && FXApp->CheckFileType<TIns>()) {
     const TTypeList<RefinementModel::BadReflection>& bad_refs =
-      FXApp->XFile().GetRM().GetBadReflectionList();
+      rm.GetBadReflectionList();
     for (size_t i = 0; i < bad_refs.Count(); i++) {
       olxstr& Tmp = SL.Add("REM   ");
       Tmp.stream(' ') << bad_refs[i].index[0] << bad_refs[i].index[1] <<
@@ -2644,7 +2648,29 @@ void TMainForm::macHklEdit(TStrObjList& Cmds, const TParamList& Options,
     TRefPList refs = Hkl.AllRefs(
       TReflection(Cmds[0].ToInt(), Cmds[1].ToInt(), Cmds[2].ToInt()),
       matrices);
-    SL.AddAll(macHklEdit_SaveRef(Hkl, refs, hklf5).obj());
+    RefinementModel::EXTI::Shelxl exti_cr = rm.GetShelxEXTICorrector();
+    if (rm.GetHKLF() == 2 && exti_cr.IsValid()) {
+      TDoubleList basf = rm.GetBASFAsDoubleList();
+      SL.Add("The I values are corrected for extinction and scaled, any updates to data will be ignored");
+      TRefList u_refs;
+      for (size_t i = 0; i < refs.Count(); i++) {
+        u_refs.AddNew(*refs[i]);
+      }
+      TArrayList<compd> F(u_refs.Count());
+      FXApp->CalcSF(u_refs, F);
+      for (size_t i = 0; i < u_refs.Count(); i++) {
+        double s = exti_cr.CalcForFo2(u_refs[i].GetHkl(), F[i].qmod(), u_refs[i].GetW());
+        u_refs[i] *= s;
+        if (u_refs[i].GetBatch() > 1 && basf.size() + 2 < u_refs[i].GetBatch()) {
+          u_refs[i] *= basf[u_refs[i].GetBatch() - 2];
+        }
+      }
+      SL.AddAll(macHklEdit_SaveRef(Hkl, u_refs, hklf5).obj());
+      update_data = false;
+    }
+    else {
+      SL.AddAll(macHklEdit_SaveRef(Hkl, refs, hklf5).obj());
+    }
   }
   sw.stop();
   TdlgEdit* dlg = new TdlgEdit(this, true);
@@ -2665,7 +2691,7 @@ void TMainForm::macHklEdit(TStrObjList& Cmds, const TParamList& Options,
       continue;
     }
     R.FromNString(SL[i]);
-    Hkl.UpdateRef(R);
+    Hkl.UpdateRef(R, update_data);
     // make sure the mates have the same fate
     if (hklf5 && R.GetBatch() >= 0) {
       bool omit = R.GetTag() < 0;

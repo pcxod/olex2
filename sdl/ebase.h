@@ -98,20 +98,26 @@ template <typename T> T *olx_malloc(size_t sz) {
 template <typename T> T *olx_realloc(T *a, size_t sz) {
   return (T*)olx_realloc_(a, sz*sizeof(T));
 }
-template <typename T> void olx_free(T *a) {
+template <typename T> bool olx_free(T *a) {
   if (a != 0) {
     free(a);
+    return true;
   }
+  return false;
 }
-template <typename T> void olx_del_obj(T *a) {
+template <typename T> bool olx_del_obj(T *a) {
   if (a != 0) {
     delete a;
+    return true;
   }
+  return false;
 }
-template <typename T> void olx_del_arr(T *a) {
+template <typename T> bool olx_del_arr(T *a) {
   if (a != 0) {
     delete[] a;
+    return true;
   }
+  return false;
 }
 struct olx_obj_deleter {
   template <typename obj_t>
@@ -126,13 +132,14 @@ struct olx_obj_deleter_safe {
     olx_del_obj(o);
   }
 };
-// copies null or obeject instance using copy constructor
+// copies null or object instance using copy constructor
 template <typename T> T* olx_copy(const T* src) {
   if (src == 0) {
     return 0;
   }
   return new T(*src);
 }
+// deleted dest if not 0 and copies src into it (if not 0) using copy constructor
 template <typename T> void olx_set(T*& dest, const T* src) {
   if (dest != 0) {
     delete dest;

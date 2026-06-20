@@ -1721,3 +1721,37 @@ void TNetwork::AddBond(TSBond& B) {
   B.SetIdInNetwork(BondCount());
   Bonds.Add(B);
 }
+//..............................................................................
+TTypeList<olx_pair_t<TSAtom*, TSAtom*> >::const_list_type
+  TNetwork::MatchNets(const TSAtom& a, const TSAtom& b)
+{
+  typedef TTypeList<olx_pair_t<TSAtom*, TSAtom*> > rv_t;
+  TNetwork& netA = a.GetNetwork(),
+    & netB = b.GetNetwork();
+  if (&netA == &netB) {
+    return rv_t();
+  }
+  TTypeList<olx_pair_t<size_t, size_t> > res;
+  if (!netA.DoMatch(netB, res, false, &TSAtom::weight_unit)) {
+    return rv_t();
+  }
+  TTypeList<olx_pair_t<TSAtom*, TSAtom*> > matoms(res.Count());
+  for (size_t i = 0; i < res.Count(); i++) {
+    matoms.Set(i, new olx_pair_t<TSAtom*, TSAtom*>(
+      &netA.Node(res[i].GetA()), &netB.Node(res[i].GetB())));
+  }
+  TNetwork::AlignInfo rv =
+    TNetwork::GetAlignmentRMSD(matoms, false, &TSAtom::weight_unit);
+
+  TTypeList<olx_pair_t<TSAtom*, TSAtom*> > imatoms(res.Count());
+  res.Clear();
+  netA.DoMatch(netB, res, true, &TSAtom::weight_unit);
+  for (size_t i = 0; i < res.Count(); i++) {
+    imatoms.Set(i, new olx_pair_t<TSAtom*, TSAtom*>(
+      &netA.Node(res[i].GetA()), &netB.Node(res[i].GetB())));
+  }
+  TNetwork::AlignInfo irv =
+    TNetwork::GetAlignmentRMSD(imatoms, true, &TSAtom::weight_unit);
+  return (rv.rmsd.GetV() < irv.rmsd.GetV() ? matoms : imatoms);
+}
+//..............................................................................

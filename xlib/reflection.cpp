@@ -115,9 +115,12 @@ bool TReflection::FromString(const olxstr& str) {
     I = str.SubString(12, 8).ToDouble();
     S = str.SubString(20, 8).ToDouble();
     if (str.Length() > 28) {
-      SetBatch(str.SubStringFrom(28, 4).ToInt());
+      SetBatch(str.SubString(28, 4).ToInt());
       if (str.Length() > 32) {
-        olx_set(w, str.SubStringFrom(32, 8).ToDouble());
+        olx_set(w, str.SubString(32, 8).ToDouble());
+        if (str.Length() > 40) {
+          SetExtras(str.SubStringFrom(40));
+        }
       }
     }
     return true;
@@ -213,13 +216,18 @@ TIString TReflection::ToString() const {
   }
 #endif
 #endif
-  return olxstr::FromExternal(bf.release());
+  olxstr rv = olxstr::FromExternal(bf.release());
+  if (extras != 0) {
+    rv << *extras;
+  }
+  return rv;
 }
 //..............................................................................
 char* TReflection::ToCBuffer(char* bf, size_t sz, double k) const {
   const char *f1 = "%4i%4i%4i%8.2lf%8.2lf";
   const char *f2 = "%4i%4i%4i%8.2lf%8.2lf%4i";
   const char* f3 = "%4i%4i%4i%8.2lf%8.2lf%4i%8.4lf";
+  const char* f4 = "%4i%4i%4i%8.2lf%8.2lf%4i%8.4lf%s";
   int16_t batch = GetBatch();
 #ifdef _MSC_VER
   if (batch == NoBatchSet) {
@@ -230,7 +238,12 @@ char* TReflection::ToCBuffer(char* bf, size_t sz, double k) const {
       sprintf_s(bf, sz, f2, hkl[0], hkl[1], hkl[2], I * k, S * k, batch);
     }
     else {
-      sprintf_s(bf, sz, f3, hkl[0], hkl[1], hkl[2], I * k, S * k, batch, *w);
+      if (extras == 0) {
+        sprintf_s(bf, sz, f3, hkl[0], hkl[1], hkl[2], I * k, S * k, batch, *w);
+      }
+      else {
+        sprintf_s(bf, sz, f4, hkl[0], hkl[1], hkl[2], I * k, S * k, batch, *w, extras->c_str());
+      }
     }
   }
 #else
@@ -242,7 +255,12 @@ char* TReflection::ToCBuffer(char* bf, size_t sz, double k) const {
       sprintf(bf, f2, hkl[0], hkl[1], hkl[2], I * k, S * k, batch);
     }
     else {
-      sprintf(bf, f3, hkl[0], hkl[1], hkl[2], I * k, S * k, batch, *w);
+      if (extras == 0) {
+        sprintf(bf, f3, hkl[0], hkl[1], hkl[2], I * k, S * k, batch, *w);
+      }
+      else {
+        sprintf(bf, sz, f4, hkl[0], hkl[1], hkl[2], I * k, S * k, batch, *w, extras->c_str());
+      }
     }
   }
 #endif

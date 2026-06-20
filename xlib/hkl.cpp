@@ -219,7 +219,8 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
     }
     bool ZeroRead = false,
       HasBatch = false,
-      HasWavelength = false;
+      HasWavelength = false,
+      HasExtras = false;
     size_t line_length = crystals_data_off == InvalidIndex ?
       0 : SL[crystals_data_off].Length(),
       i = crystals_data_off == InvalidIndex ? 0 : crystals_data_off;
@@ -235,6 +236,9 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
           HasBatch = true;
           if (line_length >= fmt_len + 12) {
             HasWavelength = true;
+            if (line_length >= fmt_len + 20) {
+              HasExtras = true;
+            }
           }
         }
         else if (line_length < fmt_len) {
@@ -242,6 +246,19 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
         }
       }
       if (line.Length() != line_length) {
+        if (!ZeroRead && line.Length() >= fidx3) {
+          olxstr s = line.SubString(0, fl[0]).ToInt();
+          if (s.IsInt() && s.ToInt() == 0) {
+            s = line.SubString(fl[0], fl[1]);
+            if (s.IsInt() && s.ToInt() == 0) {
+              s = line.SubString(fidx2, fl[2]);
+              if (s.IsInt() && s.ToInt() == 0) {
+                ZeroRead = true;
+                continue;
+              }
+            }
+          }
+        }
         if (line_cnt - i > 50 && !ZeroRead) {
           if (crystals_data_off != InvalidIndex) {
             continue;
@@ -266,6 +283,9 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
           ref->SetBatch(line.SubString(fidx5, 4).ToInt());
           if (HasWavelength) {
             ref->SetW(line.SubString(fidx5+4, 8).ToDouble());
+            if (HasExtras) {
+              ref->SetExtras(line.SubStringFrom(fidx5 + 12));
+            }
           }
         }
         ref->SetOmitted(ZeroRead);
@@ -331,13 +351,15 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
   return rv;
 }
 //..............................................................................
-void THklFile::UpdateRef(const TReflection& R) {
+void THklFile::UpdateRef(const TReflection& R, bool update_data) {
   size_t ind = olx_abs(R.GetTag()) - 1;
   if (ind >= Refs.Count()) {
     throw TInvalidArgumentException(__OlxSourceInfo, "reflection tag");
   }
-  Refs[ind].SetI(R.GetI());
-  Refs[ind].SetS(R.GetS());
+  if (update_data) {
+    Refs[ind].SetI(R.GetI());
+    Refs[ind].SetS(R.GetS());
+  }
   Refs[ind].SetOmitted(R.IsOmitted());
 }
 //..............................................................................

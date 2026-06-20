@@ -87,7 +87,7 @@ public:
   void SaveToFile(const olxstr& FN) {
     THklFile::SaveToFile(FN, Refs);
   }
-  void UpdateRef(const TReflection& R);
+  void UpdateRef(const TReflection& R, bool update_data=true);
   // returns reflections owned by this object
   TRefPList::const_list_type AllRefs(const TReflection& R,
     const smatd_list& sg)
@@ -115,11 +115,18 @@ public:
       return;
     }
     double scale = RefListUtil::CalcScale(refs);
-    TReflection NullRef;
-    if (olx_ref::get(refs[0]).IsBatchSet()) {
+    TReflection NullRef,
+      &r0 = olx_ref::get(refs[0]);
+    const size_t ref_str_len = r0.ToString().Length();
+    if (r0.IsBatchSet()) {
       NullRef.SetBatch(0);
+      if (r0.GetW() != 0) {
+        NullRef.SetW(0);
+        if (r0.GetExtras() != 0) {
+          NullRef.SetExtras(olxstr::CharStr(' ', r0.GetExtras()->Length()));
+        }
+      }
     }
-    const size_t ref_str_len = NullRef.ToString().Length();
     const size_t bf_sz = ref_str_len + 16;
     olx_array_ptr<char> ref_bf(new char[bf_sz]);
     for (size_t i = 0; i < refs.Count(); i++) {

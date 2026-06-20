@@ -200,8 +200,9 @@ public:
     TTypeList<TSAtomPList> Substituents;
     bool HasAfix;
     RingInfo()
-      : HeaviestSubsType(NULL), MaxSubsANode(0),
-      HeaviestSubsIndex(InvalidIndex), HasAfix(false) {}
+      : HeaviestSubsType(0), MaxSubsANode(0),
+      HeaviestSubsIndex(InvalidIndex), HasAfix(false)
+    {}
     RingInfo& Clear() {
       MaxSubsANode = 0;
       HeaviestSubsIndex = InvalidIndex;
@@ -267,6 +268,9 @@ public:
     bool invert,
     double(*weight_calculator)(const TSAtom&),
     bool reset_crd = true);
+
+  static TTypeList<olx_pair_t<TSAtom*, TSAtom*> >::const_list_type
+    MatchNets(const TSAtom& a, const TSAtom& b);
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(const TDataItem& item);
 };

@@ -87,6 +87,33 @@ public:
   }
   // returns null_ptr if does not exist
   template <typename T>
+  olxstr_ptr GetStrPtr(const T& Name,
+    bool if_empty = true) const
+  {
+    size_t i = IndexOf(Name);
+    if (i == InvalidIndex) {
+      return 0;
+    }
+    const olxstr& v = GetObject(i);
+    return new olxstr(GetObject(i));
+  }
+  template <typename T, typename T1>
+  olxstr_ptr GetStrPtrA(const T& Name,
+    const T1 &Alias,
+    bool if_empty = true) const
+  {
+    size_t i = IndexOf(Name);
+    if (i == InvalidIndex) {
+      i = IndexOf(Alias);
+    }
+    if (i == InvalidIndex) {
+      return 0;
+    }
+    const olxstr& v = GetObject(i);
+    return new olxstr(GetObject(i));
+  }
+  // returns null_ptr if does not exist
+  template <typename T>
   olx_bool_ptr GetBoolPtr(const T& Name,
     bool if_empty = true) const
   {

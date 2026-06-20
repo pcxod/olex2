@@ -10996,37 +10996,13 @@ void XLibMacros::macConstrain(TStrObjList &Cmds,
         ConstTypeList<TCAtomPList>(groups));
     }
     else if (atoms.Count() == 2) {
-      TTypeList<olx_pair_t<size_t, size_t> > res;
-      TNetwork &netA = atoms[0]->GetNetwork(),
-        &netB = atoms[1]->GetNetwork();
-      if (&netA == &netB) {
+      TTypeList<olx_pair_t<TSAtom*, TSAtom*> > ma =
+        TNetwork::MatchNets(*atoms[0], *atoms[1]);
+      if (ma.IsEmpty()) {
         E.ProcessingError(__OlxSrcInfo,
-          "please select atoms from different fragments");
+          "make sure atoms are from different matching fragments");
         return;
       }
-      if (!netA.DoMatch(netB, res, false, &TSAtom::weight_unit)) {
-        E.ProcessingError(__OlxSrcInfo, "fragments do not match");
-        return;
-      }
-      TTypeList<olx_pair_t<TSAtom*,TSAtom*> > matoms(res.Count());
-      for (size_t i=0; i < res.Count(); i++) {
-        matoms.Set(i, new olx_pair_t<TSAtom*,TSAtom*>(
-          &netA.Node(res[i].GetA()), &netB.Node(res[i].GetB())));
-      }
-      TNetwork::AlignInfo rv =
-        TNetwork::GetAlignmentRMSD(matoms, false, &TSAtom::weight_unit);
-
-      TTypeList<olx_pair_t<TSAtom*,TSAtom*> > imatoms(res.Count());
-      res.Clear();
-      netA.DoMatch(netB, res, true, &TSAtom::weight_unit);
-      for (size_t i=0; i < res.Count(); i++) {
-        imatoms.Set(i, new olx_pair_t<TSAtom*,TSAtom*>(
-          &netA.Node(res[i].GetA()), &netB.Node(res[i].GetB())));
-      }
-      TNetwork::AlignInfo irv =
-        TNetwork::GetAlignmentRMSD(imatoms, true, &TSAtom::weight_unit);
-      TTypeList<olx_pair_t<TSAtom*,TSAtom*> > &ma =
-        (rv.rmsd.GetV() < irv.rmsd.GetV() ? matoms : imatoms);
       TTypeList<TCAtomPList> groups;
       groups.AddNew(ma.Count());
       groups.AddNew(ma.Count());

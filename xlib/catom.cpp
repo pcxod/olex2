@@ -351,11 +351,11 @@ PyObject* TCAtom::PyExport(bool export_attached_sites) {
         continue;
       }
       const smatd& mat = s.matrix;
-      const vec3d crd = au.Orthogonalise(mat*s.atom->ccrd());
       if (mat.IsFirst()) {
         PyTuple_SetItem(neighbours, cnt++, Py_BuildValue("i", s.atom->GetTag()));
       }
       else {
+        const vec3d crd = au.Orthogonalise(mat * s.atom->ccrd());
         PyTuple_SetItem(neighbours, cnt++,
           Py_BuildValue("OOO", Py_BuildValue("i", s.atom->GetTag()),
             Py_BuildValue("(ddd)", crd[0], crd[1], crd[2]),
