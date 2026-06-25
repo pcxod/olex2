@@ -3729,7 +3729,7 @@ void RefinementModel::LibShareADP(TStrObjList &Cmds, const TParamList &Options,
   // special case of rotating ADP
   if (atoms.Count() == 2) {
     new rotating_adp_constraint(SharedRotatingADPs,
-      atoms[0]->CAtom(), atoms[1]->CAtom(), 1, false, 0, 0, 0, true);
+      atoms[0]->CAtom(), atoms[1]->CAtom(), 1, Options.GetBoolOption('s'), 0, 0, 0, true);
 
     return;
   }

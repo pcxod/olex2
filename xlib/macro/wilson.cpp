@@ -52,15 +52,15 @@ struct TWilsonEBin {
     MinE = minE;
   }
 };
-void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
-  TXApp &XApp = TXApp::GetInstance();
+void XLibMacros::macWilson(TStrObjList& Cmds, const TParamList& Options, TMacroData& E) {
+  TXApp& XApp = TXApp::GetInstance();
   olxstr HklFN = XApp.XFile().LocateHklFile();
-  if( !TEFile::Exists(HklFN) )  {
-    E.ProcessingError(__OlxSrcInfo, "could not locate the HKL file" );
+  if (!TEFile::Exists(HklFN)) {
+    E.ProcessingError(__OlxSrcInfo, "could not locate the HKL file");
     return;
   }
   olxstr outputFileName;
-  if( !Cmds.IsEmpty() )
+  if (!Cmds.IsEmpty())
     outputFileName = Cmds[0];
   else
     outputFileName << XApp.XFile().GetFileName();
@@ -76,140 +76,142 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroD
   refs.SetCapacity(Refs.Count());
 
   olx_pdict<const cm_Element*, double> elements;
-  for( size_t i=0; i < au.AtomCount(); i++ )  {
+  for (size_t i = 0; i < au.AtomCount(); i++) {
     const TCAtom& ca = au.GetAtom(i);
-    if( ca.IsDeleted() || ca.GetType() == iQPeakZ )  continue;
+    if (ca.IsDeleted() || ca.GetType() == iQPeakZ)  continue;
     size_t ind = elements.IndexOf(&ca.GetType());
-    if( ind == InvalidIndex )
+    if (ind == InvalidIndex)
       elements.Add(&ca.GetType(), ca.GetOccu());
     else
       elements.GetValue(ind) += ca.GetOccu();
   }
-  if( elements.IsEmpty() )
-    elements.Add(&XElementLib::GetByIndex(iCarbonIndex), XApp.XFile().GetUnitCell().CalcVolume()/18);
-  else  {
-    for( size_t i=0; i < elements.Count(); i++ )
+  if (elements.IsEmpty())
+    elements.Add(&XElementLib::GetByIndex(iCarbonIndex), XApp.XFile().GetUnitCell().CalcVolume() / 18);
+  else {
+    for (size_t i = 0; i < elements.Count(); i++)
       elements.GetValue(i) *= XApp.XFile().GetUnitCell().MatrixCount();
   }
 
-  double minds=100, maxds=0;
+  double minds = 100, maxds = 0;
   const size_t refs_cnt = Refs.Count();
-  for( size_t i=0; i < refs_cnt; i++ )  {
+  for (size_t i = 0; i < refs_cnt; i++) {
     const TReflection& r = Refs[i];
     vec3d hkl = r.ToCart(hkl2c);
     TWilsonRef& ref = refs.AddNew();
-    ref.ds = hkl.QLength()*0.25;
-    if( ref.ds < minds )  minds = ref.ds;
-    if( ref.ds > maxds )  maxds = ref.ds;
+    ref.ds = hkl.QLength() * 0.25;
+    if (ref.ds < minds)  minds = ref.ds;
+    if (ref.ds > maxds)  maxds = ref.ds;
     ref.Fo2 = Refs[i].GetI(); // * Refs[i].GetDegeneracy(); merged in P-1 now, so no use
-//    if( Refs[i].IsCentric() )
-//      ref.Fo2 /= 2;
-    for( size_t j=0; j < elements.Count(); j++ )  {
+    //    if( Refs[i].IsCentric() )
+    //      ref.Fo2 /= 2;
+    for (size_t j = 0; j < elements.Count(); j++) {
       double v = elements.GetKey(j)->gaussians->calc_sq(ref.ds);
-      ref.Fe2 += v*v*elements.GetValue(j);
+      ref.Fe2 += v * v * elements.GetValue(j);
     }
   }
 
   // get parameters
   size_t binsCnt = Options.FindValue("b", "10").ToSizeT();
   bool picture = Options.Contains("p");
-  if( binsCnt <= 0 ) binsCnt = 10;
+  if (binsCnt <= 0) binsCnt = 10;
 
-  if( ! picture )  {  /// use spherical bins
-    double Vtot = olx_sphere_volume(sqrt(maxds)), Vstep = Vtot/binsCnt,
+  if (!picture) {  /// use spherical bins
+    double Vtot = olx_sphere_volume(sqrt(maxds)), Vstep = Vtot / binsCnt,
       Vstart = olx_sphere_volume(sqrt(minds)),
-      Vhstep = Vstep/2;
-    for( size_t i=0; i < binsCnt; i++ )  {
+      Vhstep = Vstep / 2;
+    for (size_t i = 0; i < binsCnt; i++) {
       double sds = olx_sphere_radius(Vstart);
       sds *= sds;
-      double eds = olx_sphere_radius(Vstart+Vstep);
+      double eds = olx_sphere_radius(Vstart + Vstep);
       eds *= eds;
       bins.AddNew(sds, eds);
-      if( (i+1) < binsCnt )  {  // add intermediate, overlapping bin for smoothing
-        sds = olx_sphere_radius(Vstart+Vhstep);
+      if ((i + 1) < binsCnt) {  // add intermediate, overlapping bin for smoothing
+        sds = olx_sphere_radius(Vstart + Vhstep);
         sds *= sds;
-        eds = olx_sphere_radius(Vstart+Vhstep+Vstep);
+        eds = olx_sphere_radius(Vstart + Vhstep + Vstep);
         eds *= eds;
         bins.AddNew(sds, eds);
       }
       Vstart += Vstep;
     }
   }
-  else  {
-    double step = (maxds-minds)/binsCnt,
-      hstep = step/2;
-    for( size_t i=0; i < binsCnt; i++ )  {
-      bins.AddNew( minds + i*step, minds+(i+1)*step );
-      if( (i+1) < binsCnt )
-        bins.AddNew(minds + (i+1)*step - hstep, minds+(i+1)*step + hstep );
+  else {
+    double step = (maxds - minds) / binsCnt,
+      hstep = step / 2;
+    for (size_t i = 0; i < binsCnt; i++) {
+      bins.AddNew(minds + i * step, minds + (i + 1) * step);
+      if ((i + 1) < binsCnt)
+        bins.AddNew(minds + (i + 1) * step - hstep, minds + (i + 1) * step + hstep);
     }
   }
   // calculate Fexpected for the bins
-  for( size_t i=0; i < bins.Count(); i++ )  {
-    for( size_t j=0; j < elements.Count(); j++ )  {
-      double v = elements.GetKey(j)->gaussians->calc_sq((bins[i].Maxds+bins[i].Minds)/2);
-      bins[i].Fe2 += v*v*elements.GetValue(j);
+  for (size_t i = 0; i < bins.Count(); i++) {
+    for (size_t j = 0; j < elements.Count(); j++) {
+      double v = elements.GetKey(j)->gaussians->calc_sq((bins[i].Maxds + bins[i].Minds) / 2);
+      bins[i].Fe2 += v * v * elements.GetValue(j);
     }
   }
   // fill the bins and assign Fexp to the refelections
-  for( size_t i=0; i < refs.Count(); i++ )  {
+  for (size_t i = 0; i < refs.Count(); i++) {
     TWilsonRef& ref = refs[i];
-    for( size_t j=0; j < bins.Count(); j++ )  {
-      if( ref.ds < bins[j].Maxds && ref.ds > bins[j].Minds )  {
-        bins[j].Count ++;
+    for (size_t j = 0; j < bins.Count(); j++) {
+      if (ref.ds < bins[j].Maxds && ref.ds > bins[j].Minds) {
+        bins[j].Count++;
         bins[j].SFo2 += ref.Fo2;
         bins[j].Sds += ref.ds;
       }
     }
   }
 
-  TTypeList< olx_pair_t<double,double> > binData;
+  TTypeList< olx_pair_t<double, double> > binData;
   // normalise summs
-  for( size_t i=0; i < bins.Count(); i++ )  {
-    if( bins[i].Count == 0 )  continue;
+  for (size_t i = 0; i < bins.Count(); i++) {
+    if (bins[i].Count == 0)  continue;
     bins[i].SFo2 /= bins[i].Count;
     bins[i].Sds /= bins[i].Count;
-    binData.AddNew( log(bins[i].SFo2/bins[i].Fe2), (bins[i].Maxds+bins[i].Minds)/2 );
+    binData.AddNew(log(bins[i].SFo2 / bins[i].Fe2), (bins[i].Maxds + bins[i].Minds) / 2);
   }
 
   TStrList output, header;
-  if( binData.Count() != 0 )  {
-    ematd points(2, binData.Count() );
+  if (binData.Count() != 0) {
+    ematd points(2, binData.Count());
     evecd line(2);
-    for( size_t i=0; i < binData.Count(); i++ )  {
+    for (size_t i = 0; i < binData.Count(); i++) {
       points[0][i] = binData[i].GetB();
       points[1][i] = binData[i].GetA();
       output.Add(olxstr(points[1][i]) << ',' << points[0][i]);
     }
     double rms = ematd::PLSQ(points, line, 1);
-    olxstr &l = header.Add("Trendline y = ") << line[1] << "*x ";
-    if( line[0] > 0 )
+    olxstr& l = header.Add("Trendline y = ") << line[1] << "*x ";
+    if (line[0] > 0) {
       l << '+';
+    }
     l << line[0];
     header.Add("RMS = ") << olxstr::FormatFloat(3, rms);
     olxstr scat;
-    for( size_t i=0; i < elements.Count(); i++ )
+    for (size_t i = 0; i < elements.Count(); i++) {
       scat << elements.GetKey(i)->symbol << elements.GetValue(i) << ' ';
+    }
     XApp.NewLogEntry() << header;
-    double K = exp(line[0]), B = -line[1]/2;
+    double K = exp(line[0]), B = -line[1] / 2;
     double E2 = 0, SE2 = 0;
     int iE2GT2 = 0;
-    for( size_t i=0; i < refs.Count(); i++ )  {
-      refs[i].Fo2 /= (K*exp(-2*B*refs[i].ds)*refs[i].Fe2);
+    for (size_t i = 0; i < refs.Count(); i++) {
+      refs[i].Fo2 /= (K * exp(-2 * B * refs[i].ds) * refs[i].Fe2);
       //refs[i].Fo2 /= (K*exp(-2*B*refs[i].ds)*Refs[i].GetDegeneracy()*refs[i].Fe2);
-      if( refs[i].Fo2 < 0 )  refs[i].Fo2 = 0;
+      if (refs[i].Fo2 < 0)  refs[i].Fo2 = 0;
       SE2 += refs[i].Fo2;
-      E2 += olx_abs(refs[i].Fo2-1);
-      if( refs[i].Fo2 > 4 )  iE2GT2 ++;
+      E2 += olx_abs(refs[i].Fo2 - 1);
+      if (refs[i].Fo2 > 4)  iE2GT2++;
     }
     E2 /= Refs.Count();
-    XApp.NewLogEntry() << "From Wilson plot: B = " << olxstr::FormatFloat(3,B)
-      << " K = " << olxstr::FormatFloat(3,1./K);
-    XApp.NewLogEntry() << "<|E*E-1|> = " << olxstr::FormatFloat(3,E2)
+    XApp.NewLogEntry() << "From Wilson plot: B = " << olxstr::FormatFloat(3, B)
+      << " K = " << olxstr::FormatFloat(3, 1. / K);
+    XApp.NewLogEntry() << "<|E*E-1|> = " << olxstr::FormatFloat(3, E2)
       << "  [0.736 <- centro  +> 0.968]";
-    XApp.NewLogEntry() << "%|E| > 2 = " << olxstr::FormatFloat(3,(double)iE2GT2*100/refs.Count())
+    XApp.NewLogEntry() << "%|E| > 2 = " << olxstr::FormatFloat(3, (double)iE2GT2 * 100 / refs.Count())
       << "  [1.800 <- centro  +> 4.600]";
-    for( size_t i=0; i < binData.Count(); i++ )  {
+    for (size_t i = 0; i < binData.Count(); i++) {
       points[1][i] = binData[i].GetB();
       points[0][i] = binData[i].GetA();
     }
@@ -217,20 +219,20 @@ void XLibMacros::macWilson(TStrObjList &Cmds, const TParamList &Options, TMacroD
 
     output.Add("#Title = Wilson plot");
     output.Add("#y_label = sin^2(theta)/lambda^2");
-    output.Add("#x_label = ln(<Fo^2>)/(Fexp^2)");
-    output.Add(olxstr("#y = ") << olxstr::FormatFloat(3,line[1]) << "*x"
-      << ((line[1] < 0) ? " " : "+") << olxstr::FormatFloat(3,line[0]) );
-    output.Add("#fit_y_intercept = ") << olxstr::FormatFloat(3,line[0]);
-    output.Add("#fit_slope = ") << olxstr::FormatFloat(3,line[1]);
-    output.Add("#B = ") << olxstr::FormatFloat(3,B);
-    output.Add("#K = ") << olxstr::FormatFloat(3,1./K);
-    output.Add("#<|E^2-1|> = ") << olxstr::FormatFloat(3,E2);
-    output.Add("#%|E| > 2 = ") << olxstr::FormatFloat(3,(double)iE2GT2*100/refs.Count());
+    output.Add("#x_label = ln(<Fo^2>/Fexp^2)");
+    output.Add(olxstr("#y = ") << olxstr::FormatFloat(3, line[1]) << "*x"
+      << ((line[1] < 0) ? " " : "+") << olxstr::FormatFloat(3, line[0]));
+    output.Add("#fit_y_intercept = ") << olxstr::FormatFloat(3, line[0]);
+    output.Add("#fit_slope = ") << olxstr::FormatFloat(3, line[1]);
+    output.Add("#B = ") << olxstr::FormatFloat(3, B);
+    output.Add("#K = ") << olxstr::FormatFloat(3, 1. / K);
+    output.Add("#<|E^2-1|> = ") << olxstr::FormatFloat(3, E2);
+    output.Add("#%|E| > 2 = ") << olxstr::FormatFloat(3, (double)iE2GT2 * 100 / refs.Count());
 
     TEFile::WriteLines(outputFileName, TCStrList(output));
     XApp.NewLogEntry() << outputFileName << " file was created";
 
-    if( E2 -(0.968+0.736)/2 < 0 )
+    if (E2 - (0.968 + 0.736) / 2 < 0)
       E.SetRetVal<bool>(false);
     else
       E.SetRetVal<bool>(true);

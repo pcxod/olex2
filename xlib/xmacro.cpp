@@ -673,7 +673,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     "matching&;"
     "e-expand SAME into the list of SADI&;"
     "s-generates 'self' same restrain so that the fragment matches itself in "
-    "reverse order&;"
+    "reverse order, for ADP - sets to refine the size/scale&;"
     "all-find fragments matching the selection and applies SAME to them&;"
     "p-extra part to use (along with 0) in the case of disorder and -all&;"
     "export-generates list of SADI for current SAME list&;"
