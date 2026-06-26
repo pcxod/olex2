@@ -1726,14 +1726,15 @@ TTypeList<olx_pair_t<TSAtom*, TSAtom*> >::const_list_type
   TNetwork::MatchNets(const TSAtom& a, const TSAtom& b)
 {
   typedef TTypeList<olx_pair_t<TSAtom*, TSAtom*> > rv_t;
+  rv_t rv_;
   TNetwork& netA = a.GetNetwork(),
     & netB = b.GetNetwork();
   if (&netA == &netB) {
-    return rv_t();
+    return rv_;
   }
   TTypeList<olx_pair_t<size_t, size_t> > res;
   if (!netA.DoMatch(netB, res, false, &TSAtom::weight_unit)) {
-    return rv_t();
+    return rv_;
   }
   TTypeList<olx_pair_t<TSAtom*, TSAtom*> > matoms(res.Count());
   for (size_t i = 0; i < res.Count(); i++) {

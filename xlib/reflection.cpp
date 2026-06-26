@@ -259,7 +259,7 @@ char* TReflection::ToCBuffer(char* bf, size_t sz, double k) const {
         sprintf(bf, f3, hkl[0], hkl[1], hkl[2], I * k, S * k, batch, *w);
       }
       else {
-        sprintf(bf, sz, f4, hkl[0], hkl[1], hkl[2], I * k, S * k, batch, *w, extras->c_str());
+        sprintf(bf, f4, hkl[0], hkl[1], hkl[2], I * k, S * k, batch, *w, extras->c_str());
       }
     }
   }
