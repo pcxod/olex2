@@ -835,6 +835,8 @@ void TSameGroupList::BeginAUSort() {
 }
 //.............................................................................
 void TSameGroupList::EndAUSort() {
+  ItemTagHolder tags_(RM.aunit.GetAtoms());
+  RM.aunit.SetNonHAtomTags_();
   for (size_t i = 0; i < Count(); i++) {
     items[i].EndAUSort();
   }
@@ -1076,7 +1078,7 @@ TPtrList<TSameGroup>::const_list_type
 }
 //.............................................................................
 void TSameGroupList::PrepareSave() {
-  TIndexList tags = TIndexList::FromList(RM.aunit.GetAtoms(), TCAtom::TagAccessor());
+  ItemTagHolder _catom_tags(RM.aunit.GetAtoms());
   typedef TPtrList<TSameGroup> ref_l_t;
   ref_l_t refs = items.ptr().Filter(
     FunctionAccessorAnalyser::Make(
@@ -1308,9 +1310,6 @@ void TSameGroupList::PrepareSave() {
         sg->Atoms.SortExplicitRefs();
       }
     }
-  }
-  for (size_t i = 0; i < RM.aunit.AtomCount(); i++) {
-    RM.aunit.GetAtom(i).SetTag(tags[i]);
   }
 }
 //..............................................................................
