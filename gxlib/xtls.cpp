@@ -24,7 +24,7 @@ TDUserObj *XTLS::CreateTLSObject(const TXAtomPList &atoms, const TLS &tls,
   TDUserObj *rv = CreateUdiffObject(crds,
     diff_dir == xtls_diff_Obs_Tls ? uobs : utls,
     diff_dir == xtls_diff_Obs_Tls ? utls : uobs,
-    scale,
+    scale, 1.0,
     "tlso", obj_type);
   utls.DeleteItems(false);
   return rv;
@@ -32,7 +32,7 @@ TDUserObj *XTLS::CreateTLSObject(const TXAtomPList &atoms, const TLS &tls,
 //.............................................................................
 TDUserObj *XTLS::CreateUdiffObject(const vec3f_alist &crds,
   const TEllpPList &from, const TEllpPList &to,
-  float scale, const olxstr &obj_name, short obj_type) const
+  float scale, double scale_from, const olxstr &obj_name, short obj_type) const
 {
   if (from.Count() != to.Count() || to.Count() != crds.Count()) {
     throw TInvalidArgumentException(__OlxSourceInfo, "array's size");
@@ -69,7 +69,7 @@ TDUserObj *XTLS::CreateUdiffObject(const vec3f_alist &crds,
     vec3f_alist lc(sph_v.Count());
     if (obj_type == xtls_obj_diff) {
       m1 = from[i]->GetMatrix();
-      m1.Scale(from[i]->GetNorms());
+      m1.Scale(from[i]->GetNorms() * scale_from);
       m2 = to[i]->GetMatrix();
       m2.Scale(to[i]->GetNorms());
       etm = m2.GetInverse();
@@ -77,7 +77,7 @@ TDUserObj *XTLS::CreateUdiffObject(const vec3f_alist &crds,
     else if (obj_type == xtls_obj_rmsd) {
       mat3f qm1 = from[i]->ExpandQuad(),
         qm2 = to[i]->ExpandQuad();
-      Mdiff = qm2 - qm1;
+      Mdiff = qm2 - qm1 * scale_from;
     }
     for (size_t j=0; j < sph_v.Count(); j++) {
       float d;

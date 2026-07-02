@@ -554,7 +554,8 @@ public:
     bool ClearSelection = true, bool FindHidden = false);
   // this function will return atoms WITHOUT atoms of the overlayed files!
   virtual TSAtomPList::const_list_type FindSAtoms(
-    const IStrList& names, bool ReturnAll = true, bool ClearSelection = true);
+    const IStrList& names, bool ReturnAll = true, bool ClearSelection = true,
+    bool force_current_file=true);
 protected:
   /* the function simply checks if there are any invisible bonds connectd to the
    atom. Normally this happens when a Q-peak is renamed

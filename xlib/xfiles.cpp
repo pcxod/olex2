@@ -896,6 +896,7 @@ void TXFile::UpdateAtomIds() {
   if (uniform) {
     return;
   }
+  GetRM().BeforeAUSort_();
   olxdict<TCAtom *, size_t, TPointerComparator> original_ids;
   if (!FLastLoader->IsNative()) {
     original_ids.SetCapacity(au.AtomCount());
@@ -916,6 +917,7 @@ void TXFile::UpdateAtomIds() {
   // 2010.11.29, ASB bug fix for ADPS on H...
   GetUnitCell().UpdateEllipsoids();
   GetLattice().RestoreADPs(false);
+  GetRM().AfterAUSort_();
 }
 //..............................................................................
 void TXFile::ValidateTabs() {

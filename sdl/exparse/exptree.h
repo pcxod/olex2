@@ -125,11 +125,19 @@ namespace exparse  {
     }
     // removes quotation from a string
     inline olxstr unquote(const olxstr& exp)  {
-      if( exp.Length() < 2 )  return exp;
+      if (exp.Length() < 2) {
+        return exp;
+      }
       const olxch ch = exp.CharAt(0);
       if( is_quote(ch) && (exp.GetLast() == ch) &&
         !is_escaped(exp, exp.Length()-1) )
       {
+        // special case of 
+        if (exp.Length() >= 6 && exp.CharAt(1) == ch && exp.CharAt(2) == ch &&
+          exp.CharAt(exp.Length()-2) == ch && exp.CharAt(exp.Length()-3) == ch)
+        {
+          return exp.SubStringFrom(3, 3);
+        }
         return exp.SubStringFrom(1, 1);
       }
       return exp;

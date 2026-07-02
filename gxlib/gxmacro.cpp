@@ -459,6 +459,8 @@ void GXLibMacros::Export(TLibrary& lib) {
   );
   lib.Register(
     new TMacro<GXLibMacros>(this, &GXLibMacros::macUdiff, "Udiff",
+      "m-match whole fragments when 2 atoms are given&;"
+      "norm_u-normalises U_vol&;"
       "s-scale [125]&;"
       "start_color-start gradient color [0xff0000]&;"
       "g-do not use gradient&;"
@@ -6396,10 +6398,31 @@ void GXLibMacros::macUdiff(TStrObjList &Cmds, const TParamList &Options,
     }
   }
   else {
-    satoms = app.FindSAtoms(Cmds, true, true);
+    satoms = app.FindSAtoms(Cmds, true, true, false);
     for (size_t i = 0; i < satoms.Count(); i++) {
       if (satoms[i]->GetEllipsoid() == 0) {
         satoms[i] = 0;
+      }
+    }
+    if (satoms.Count() == 2 && Options.GetBoolOption('m')) {
+      TTypeList<olx_pair_t<TSAtom*, TSAtom*> > ma =
+        TNetwork::MatchNets(*satoms[0], *satoms[1]);
+      if (ma.IsEmpty()) {
+        Error.ProcessingError(__OlxSrcInfo,
+          "make sure atoms are from different matching fragments");
+        return;
+      }
+      for (size_t i = 0; i < ma.Count(); i++) {
+        if (ma[i].a->GetEllipsoid() == 0 || ma[i].b->GetEllipsoid() == 0) {
+          ma.NullItem(i);
+        }
+      }
+      ma.Pack();
+      satoms.Clear();
+      satoms.SetCount(ma.Count() * 2);
+      for (size_t i= 0; i < ma.Count(); i++) {
+        satoms[i] = ma[i].a;
+        satoms[ma.Count() + i] = ma[i].b;
       }
     }
   }
@@ -6503,9 +6526,24 @@ void GXLibMacros::macUdiff(TStrObjList &Cmds, const TParamList &Options,
   olxstr obj_type_str = Options.FindValue("type", "diff");
   short obj_type = obj_type_str.Equalsi("diff") ? glx_ext::xtls_obj_diff
     : glx_ext::xtls_obj_rmsd;
+  double scale_from = 1;
+ olxstr_ptr norm_u = Options.GetStrPtr("norm_u");
+  if (norm_u.ok()) {
+    double v_from = 0, v_to = 0;
+    bool skip_h = norm_u->Equalsi("-h");
+    for (size_t i = 0; i < u_from.Count(); i++) {
+      if (skip_h && satoms[i]->GetType() == iHydrogenZ) {
+        continue;
+      }
+      v_from += u_from[i]->CalcVolume();
+      v_to += u_to[i]->CalcVolume();
+    }
+    scale_from = pow(v_to / v_from, 2./3);
+  }
   TDUserObj *obj = xtls.CreateUdiffObject(crds,
     u_from, u_to,
     Options.FindValue('s', obj_type == glx_ext::xtls_obj_diff ? "125" : "3").ToFloat(),
+    scale_from,
     Options.FindValue('n', "udiff"),
     obj_type);
   if (Options.GetBoolOption('r')) {

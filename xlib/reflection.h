@@ -32,7 +32,8 @@ public:
 private:
   vec3i hkl;
   double I, S;
-  double* w; // optional wavekength
+  double* w; // optional wavelength
+  olxcstr* extras; // anything after wavelength
   // first 8 bits - flags, next 8 - multiplicity, then batch number
   uint32_t Flags;
   void _init(int batch = NoBatchSet) {
@@ -42,56 +43,63 @@ private:
   void _reset_flags(int flags, int mult, int batch) {
     Flags = flags | (mult << MultOff) | (batch << BatchOff);
   }
+
 public:
   TReflection()
-    : I(0), S(0), w(0)
+    : I(0), S(0), w(0), extras(0)
   {
     _init();
   }
   TReflection(const TReflection& r)
-  : w(0)
+  : w(0), extras(0)
   {
     *this = r;
   }
   TReflection(const TReflection& r, int bacth_n)
-  : w(0)
+  : w(0), extras(0)
   {
     *this = r;
     SetBatch(bacth_n);
   }
   TReflection(const TReflection& r, const vec3i& _hkl, int batch_n = NoBatchSet)
-    : hkl(_hkl), I(r.I), S(r.S), w(olx_copy(r.w)), Flags(r.Flags)
+    : hkl(_hkl), I(r.I), S(r.S), w(olx_copy(r.w)), Flags(r.Flags),
+    extras(olx_copy(r.extras))
   {
     SetBatch(batch_n);
   }
   TReflection(int h, int k, int l)
-    : hkl(h, k, l), I(0), S(0), w(0)
+    : hkl(h, k, l), I(0), S(0), w(0), extras(0)
   {
     _init();
   }
   TReflection(const vec3i& _hkl)
-    : hkl(_hkl), I(0), S(0), w(0)
+    : hkl(_hkl), I(0), S(0), w(0), extras(0)
   {
     _init();
   }
-  TReflection(int h, int k, int l, double _I, double _S, int batch = NoBatchSet, double *w=0)
-    : hkl(h, k, l), I(_I), S(_S), w(olx_copy(w))
+  TReflection(int h, int k, int l, double _I, double _S, int batch = NoBatchSet,
+    const double *w=0, const olxcstr *e=0)
+    : hkl(h, k, l), I(_I), S(_S), w(olx_copy(w)), extras(olx_copy(e))
   {
     _init(batch);
   }
-  TReflection(const vec3i& _hkl, double _I, double _S, int batch = NoBatchSet, double *w=0)
-    : hkl(_hkl), I(_I), S(_S), w(olx_copy(w))
+  TReflection(const vec3i& _hkl, double _I, double _S, int batch = NoBatchSet,
+    const double* w = 0, const olxcstr* e=0)
+    : hkl(_hkl), I(_I), S(_S), w(olx_copy(w)), extras(olx_copy(e))
   {
     _init(batch);
   }
   virtual ~TReflection() {
-    olx_del_obj(w);
+    if (olx_del_obj(w)) {
+      olx_del_obj(extras);
+    }
   }
   TReflection& operator = (const TReflection& r) {
     hkl = r.hkl;
     I = r.I;
     S = r.S;
     olx_set(w, r.w);
+    olx_set(extras, r.extras);
     Flags = r.Flags;
     SetTag(r.GetTag());
     return *this;
@@ -124,6 +132,13 @@ public:
   }
   void SetW(double w) {
     olx_set(this->w, w);
+  }
+  void SetExtras(const olxstr &e) {
+    olxcstr t(e);
+    olx_set(this->extras, &t);
+  }
+  olxcstr* GetExtras() const {
+    return extras;
   }
   // scaling
   TReflection& operator *= (double s) {

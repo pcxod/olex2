@@ -32,7 +32,7 @@ struct XTLS {
 
   TDUserObj *CreateUdiffObject(const vec3f_alist &crds,
     const TEllpPList &from, const TEllpPList &to,
-    float scale, const olxstr &obj_name,
+    float scale, double scale_from, const olxstr &obj_name,
     short obj_type) const;
 
   void CreatePovRayFile(const TXAtomPList &atoms, const TLS &tls,

@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -18,96 +18,105 @@ using namespace exparse::parser_util;
 TDataItem::TDataItem(TDataItem* Prnt, const olxstr& nm, const olxstr& val)
   : Name(nm), Value(val)
 {
-  Level = (Prnt == NULL ? 0 : Prnt->GetLevel() + 1);
+  Level = (Prnt == 0 ? 0 : Prnt->GetLevel() + 1);
   Parent = Prnt;
-  Data = NULL;
+  Data = 0;
 }
 //..............................................................................
 TDataItem::~TDataItem() {
   Clear();
 }
 //..............................................................................
-void TDataItem::Clear()  {
+void TDataItem::Clear() {
   Fields.Clear();
-  for( size_t i=0; i < Items.Count(); i++ )  {
-    if( Items.GetObject(i)->DecRef() == 0 )
+  for (size_t i = 0; i < Items.Count(); i++) {
+    if (Items.GetObject(i)->DecRef() == 0) {
       delete Items.GetObject(i);
-    else  {
-      if( Items.GetObject(i)->GetParent() == this )
-        Items.GetObject(i)->SetParent(NULL);
+    }
+    else {
+      if (Items.GetObject(i)->GetParent() == this) {
+        Items.GetObject(i)->SetParent(0);
+      }
     }
   }
   Items.Clear();
 }
 //..............................................................................
-TDataItem& TDataItem::Root()  {
-  if( GetParent() == NULL )  return *this;
-  TDataItem *P = GetParent();
-  while( P->GetParent() != NULL )
+TDataItem& TDataItem::Root() {
+  if (GetParent() == 0) {
+    return *this;
+  }
+  TDataItem* P = GetParent();
+  while (P->GetParent() != 0) {
     P = P->GetParent();
+  }
   return *P;
 }
 //..............................................................................
 TEStrBuffer& TDataItem::writeFullName(TEStrBuffer& bf) const {
-  if (GetParent() == NULL) {
+  if (GetParent() == 0) {
     bf << Name;
   }
   else {
     TStack<TDataItem*> tmp;
-    TDataItem *P = GetParent();
-    while (P->GetParent() != NULL) {
+    TDataItem* P = GetParent();
+    while (P->GetParent() != 0) {
       tmp.Push(P);
       P = P->GetParent();
     }
-    while (!tmp.IsEmpty())
+    while (!tmp.IsEmpty()) {
       bf << tmp.Pop()->GetName() << '.';
+    }
     bf << Name;
   }
   return bf;
 }
 //..............................................................................
-olxstr TDataItem::GetFullName(const olxstr &sep, const TDataItem *upto) const {
-  if (GetParent() == NULL) return GetName();
+olxstr TDataItem::GetFullName(const olxstr& sep, const TDataItem* upto) const {
+  if (GetParent() == 0) {
+    return GetName();
+  }
   olxstr_buf res = GetName();
-  TDataItem *p = GetParent();
-  if (upto == NULL) {
-    while (p != NULL && p->GetParent() != NULL) {
+  TDataItem* p = GetParent();
+  if (upto == 0) {
+    while (p != 0 && p->GetParent() != 0) {
       res << sep << p->GetName();
       p = p->GetParent();
     }
   }
   else {
-    while (p != NULL && p != upto) {
+    while (p != 0 && p != upto) {
       res << sep << p->GetName();
       p = p->GetParent();
     }
   }
   return olxstr::FromExternal(
-          res.ReverseRead(olx_malloc<olxch>(res.Length()+1)), res.Length());
+    res.ReverseRead(olx_malloc<olxch>(res.Length() + 1)), res.Length());
 }
 //..............................................................................
-TDataItem *TDataItem::DotItem(const olxstr &DotName, TStrList* Log)  {
+TDataItem* TDataItem::DotItem_(const olxstr& DotName, TStrList* Log) {
   TDataItem* root = &Root();
   TStrList SL(DotName, '.');
-  for( size_t i=0; i < SL.Count(); i++ )  {
+  for (size_t i = 0; i < SL.Count(); i++) {
     root = root->FindItem(SL[i]);
-    if( root == NULL )  {
-      if( Log != NULL )
+    if (root == 0) {
+      if (Log != 0) {
         Log->Add("Unresolved reference: ") << DotName;
+      }
       break;
     }
   }
   return root;
 }
 //..............................................................................
-olxstr* TDataItem::DotField(const olxstr& DotName, olxstr& RefFieldName)  {
-  TDataItem* root = &Root(), *PrevItem;
+olxstr* TDataItem::DotField(const olxstr& DotName, olxstr& RefFieldName) {
+  TDataItem* root = &Root(), * PrevItem;
   TStrList SL(DotName, '.');
-  olxstr *Str=NULL;
-  for( size_t i=0; i < SL.Count(); i++ )  {
+  olxstr* Str = 0;
+  for (size_t i = 0; i < SL.Count(); i++) {
     PrevItem = root;
     root = root->FindItem(SL[i]);
-    if( root == NULL )  {
+    if (root == 0) {
       RefFieldName = SL[i];
       Str = PrevItem->FieldPtr(SL[i]);
       break;
@@ -183,9 +192,9 @@ void TDataItem::AddContent(TDataItem& DI, bool extend) {
   }
   else {
     for (size_t i = 0; i < DI.ItemCount(); i++) {
-      TDataItem* di = FindItem(DI.GetItemByIndex(i).GetName());
-      if (di != 0) {
-        DeleteItem(di);
+      size_t ii = ItemIndex(DI.GetItemByIndex(i).GetName());
+      if (ii != InvalidIndex) {
+        DeleteItemByIndex(ii);
       }
       AddItem(DI.GetItemByIndex(i)).SetParent(this);
     }
@@ -196,6 +205,11 @@ void TDataItem::DeleteItem(TDataItem* Item) {
   if (Item->GetParent() != this) {
     if (Item->GetParent() != 0) {
       Item->GetParent()->DeleteItem(Item);
+    }
+    else {
+      if (Item->GetRefCount() == 0) {
+        delete Item;
+      }
     }
     return;
   }
@@ -211,7 +225,51 @@ void TDataItem::DeleteItem(TDataItem* Item) {
   }
 }
 //..............................................................................
-TDataItem& TDataItem::AddItem(const olxstr &Name, TDataItem *Reference)  {
+void TDataItem::DeleteItemByIndex(size_t idx) {
+  TDataItem* di = Items.GetObject(idx);
+  Items.Delete(idx);
+  if (di->DecRef() == 0) {
+    delete di;
+  }
+  else {
+    di->SetParent(0);
+  }
+}
+//..............................................................................
+bool TDataItem::DeleteByName(const olxstr& name) {
+  TStrList toks(name, '.');
+  TDataItem* root = this;
+  size_t ii = InvalidIndex;
+  for (size_t i = 0; i < toks.Count(); i++) {
+    ii = root->ItemIndex(toks[i]);
+    if (ii == InvalidIndex) {
+      if ((i + 1) < toks.Count()) {
+        return false;
+      }
+      ii = root->FieldIndex(toks[i]);
+      if (ii == InvalidIndex) {
+        if (toks[i] == "value") {
+          root->SetValue(EmptyString());
+          return true;
+        }
+        return false;
+      }
+      root->DeleteItemByIndex(ii);
+      return true;
+    }
+    if ((i + 1) == toks.Count()) {
+      break; // leave ii to point to the right item index in the right root
+    }
+    root = &root->GetItemByIndex(ii);
+  }
+  if (ii != InvalidIndex) {
+    root->DeleteItemByIndex(ii);
+    return true;
+  }
+  return false;
+}
+//..............................................................................
+TDataItem& TDataItem::AddItem(const olxstr& Name, TDataItem* Reference) {
   TDataItem& I = AddItem(Name);
   I.AddItem(*Reference);
   return I;
@@ -231,6 +289,29 @@ TDataItem& TDataItem::AddItem(const olxstr& name, const olxstr& val) {
   //    if( ItemExists(Name) )
   //      BasicApp->Log->Exception(olxstr("TDataItem: dublicate definition: ") + Name, false);
   return AddItem(*(new TDataItem(this, name, val)));
+}
+//..............................................................................
+void TDataItem::SetFieldValue(const olxstr& name, const olxstr& value) {
+  TStrList toks(name, '.');
+  TDataItem* root = this;
+  for (size_t i = 0; i < toks.Count()-1; i++) {
+    size_t ii = root->ItemIndex(toks[i]);
+    if (ii == InvalidIndex) {
+      for (size_t j = i; j < toks.Count()-1; j++) {
+        TDataItem* di = new TDataItem(root, toks[j]);
+        root->AddItem(*di);
+        root = di;
+      }
+      break;
+    }
+    root = &root->GetItemByIndex(ii);
+  }
+  if (toks.GetLastString() == "value") {
+    root->SetValue(value);
+  }
+  else {
+    root->AddField(toks.GetLastString(), value);
+  }
 }
 //..............................................................................
 size_t TDataItem::LoadFromString(size_t start, const olxstr& Data,
@@ -308,7 +389,7 @@ size_t TDataItem::LoadFromString(size_t start, const olxstr& Data,
         i--;
       }
       if (FieldName.IndexOf('.') != InvalidIndex) {  // a reference to an item
-        TDataItem* DI = DotItem(FieldName, Log);
+        TDataItem* DI = DotItem_(FieldName, Log);
         if (DI != 0) {
           AddItem(*DI);
         }
@@ -471,7 +552,7 @@ void TDataItem::ResolveFields(TStrList* Log) {  // resolves referenced fields
   for (size_t i = 0; i < FieldCount(); i++) {
     const olxstr& Tmp = Fields.GetKey(i);
     if (Tmp.Contains('.')) {  // a reference to an item
-      TDataItem* DI = DotItem(Tmp, Log);
+      TDataItem* DI = DotItem_(Tmp, Log);
       if (DI != 0) {
         AddItem(*DI);
         if (Log != 0) {

@@ -540,6 +540,12 @@ void TCif::Initialize() {
       DegenFunction = 2;
     }
   }
+  if (Degen == InvalidIndex) {
+    Degen = ALoop->ColIndex("_atom_site_site_symmetry_order");
+    if (Degen != InvalidIndex) {
+      DegenFunction = 4;
+    }
+  }
   const size_t Part = ALoop->ColIndex("_atom_site_disorder_group");
   if ((ALabel | ACi[0] | ACi[1] | ACi[2]) == InvalidIndex) {
     TBasicApp::NewLogEntry(logError) <<
@@ -683,9 +689,21 @@ void TCif::Initialize() {
       else if (DegenFunction == 3) {
         degen = 1. / degen;
       }
+      else if (DegenFunction == 4) {
+        ;
+      }
       if (degen != 1 && degen != 0 && degen == degen) { // check for nan/inf as well
         A.SetOccu(A.GetOccu() / degen);
         A.SetOccuEsd(A.GetOccuEsd() / degen);
+      }
+      // treat negative parts...
+      if (degen == 1 && A.GetPart() < 0) {
+        double degen = static_cast<double>(site_mult == InvalidIndex ?
+          TUnitCell::GetPositionMultiplicity(MatrixList, A.ccrd()) : site_mult);
+        if (degen != 1) {
+          A.SetOccu(A.GetOccu() / degen);
+          A.SetOccuEsd(A.GetOccuEsd() / degen);
+        }
       }
     }
     ALoop->Set(i, ALabel, new AtomCifEntry(A));

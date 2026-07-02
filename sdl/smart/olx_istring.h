@@ -70,6 +70,7 @@
 
 #include "olx_wstring.h"
 #include "olx_cstring.h"
+#include "../olxptr.h"
 
 BeginEsdlNamespace()
 
@@ -87,6 +88,8 @@ typedef TTStrBuffer<char, olxcstr> olxcstr_buf;
   typedef TTSString<TCString, char > olxstr;
   typedef olxcstr_buf olxstr_buf;
 #endif
+
+  typedef olx_object_ptr<olxstr> olxstr_ptr;
 
 extern const olxstr &EmptyString();
 extern const olxstr &FalseString();

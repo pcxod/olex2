@@ -126,9 +126,9 @@ public:
   void CalcSF(const TRefList &refs, TArrayList<TEComplex<double> > &F) const;
   void CalcSFEx(const TRefList &refs, TArrayList<TEComplex<double> > &F,
     const TSAtomPList &atoms, const smatd_list &ml, int sg_order) const;
-  /* calculates Fsq and fills the reflection list. spacial handling of twinned
+  /* calculates Fsq and fills the reflection list. special handling of twinned
   data is used - the resulting Fsq are 'twinned'. It uses SFUtil functions to
-  calculate Fc. if scale is true, the refs i and S are scaled using the OSF
+  calculate Fc. If scale is true, the refs I and S are scaled using the OSF
   If extinction correction is used, it will be applied to the Fsq
   */
   RefinementModel::HklStat CalcFsq(TRefList &refs, evecd &Fsq,

@@ -2085,10 +2085,10 @@ ConstPtrList<TXAtom> TGXApp::XAtomsByMask(const olxstr &StrMask, int Mask,
 }
 //..............................................................................
 TSAtomPList::const_list_type TGXApp::FindSAtoms(const IStrList& toks,
-  bool ReturnAll, bool ClearSelection)
+  bool ReturnAll, bool ClearSelection, bool force_current_file)
 {
   TPtrList<TXAtom> al = FindXAtoms(toks, ReturnAll, ClearSelection);
-  if (Files.Count() > 1) {
+  if (force_current_file && Files.Count() > 1) {
     TLattice &latt = XFile().GetLattice();
     for (size_t i=0; i < al.Count(); i++) {
       if (((TSAtom*)al[i])->GetParent() != latt) {

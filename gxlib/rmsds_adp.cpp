@@ -18,7 +18,7 @@ TRMDSADP::TRMDSADP(TGlRenderer& r, const olxstr& collectionName,
   AnhType(anh_type),
   Scale(1)
 {
-  SetSelectable(false);
+  SetSelectable(true);
 }
 //..............................................................................
 void TRMDSADP::Create(const olxstr& cName) {
