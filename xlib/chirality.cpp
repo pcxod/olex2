@@ -84,7 +84,7 @@ protected:
             TTypeList<pair_t> bonds;
             for (size_t i = 0; i < a.AttachedSiteCount(); i++) {
               const TCAtom::Site& b = a.GetAttachedSite(i);
-              if (b.atom->GetType().z < 1) {
+              if (b.atom->GetType().z < 2) {
                 continue;
               }
               if (b == to) {
@@ -216,6 +216,10 @@ int RSA_GetAtomPriorityX(RSA_BondOrder &boa, AtomEnvList& a, AtomEnvList& b, olx
             aa.Add(new SiteInfo(0, &s.atom->GetType()));
           }
           else {
+            int bo = boa.get_order(atomA, s);
+            for (int k = 1; k < bo; k++) {
+              aa.Add(new SiteInfo(0, &s.atom->GetType()));
+            }
             continue;
           }
         }
@@ -241,6 +245,10 @@ int RSA_GetAtomPriorityX(RSA_BondOrder &boa, AtomEnvList& a, AtomEnvList& b, olx
             bb.Add(new SiteInfo(0, &s.atom->GetType()));
           }
           else {
+            int bo = boa.get_order(atomB, s);
+            for (int k = 1; k < bo; k++) {
+              bb.Add(new SiteInfo(0, &s.atom->GetType()));
+            }
             continue;
           }
         }
