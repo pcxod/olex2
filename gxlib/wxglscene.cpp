@@ -94,7 +94,7 @@ public:
   }
   olxstr GetIdString() const {
     long fs = 10;
-    cbSize->GetStringSelection().ToLong(&fs);
+    cbSize->GetValue().ToLong(&fs);
     return TwxGlScene::MetaFont::BuildOlexFontId(
       cbFileName->GetStringSelection(),
       (int)fs,

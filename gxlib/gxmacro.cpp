@@ -5311,8 +5311,10 @@ void GXLibMacros::macSetMaterial(TStrObjList &Cmds, const TParamList &Options,
   olxstr prm_name = di != InvalidIndex ? Cmds[0].SubStringFrom(di + 1)
     : EmptyString();
   if (!glm.ok() && !prm_name.Equals('*')) {
-    E.ProcessingError(__OlxSrcInfo,
-      "The style can be reset to all primtives only");
+    if (!E.IsQuiet()) {
+      E.ProcessingError(__OlxSrcInfo,
+        "The style can be reset to all primtives only");
+    }
     return;
   }
   if (col_name.Equalsi("sel")) {
@@ -5350,7 +5352,7 @@ void GXLibMacros::macSetMaterial(TStrObjList &Cmds, const TParamList &Options,
 
         }
       }
-      if (!found) {
+      if (!found && !E.IsQuiet()) {
         E.ProcessingError(__OlxSrcInfo, "Undefined style ").quote() <<
           Cmds[0];
       }
@@ -5395,7 +5397,7 @@ void GXLibMacros::macSetMaterial(TStrObjList &Cmds, const TParamList &Options,
         }
       }
     }
-    if (!found) {
+    if (!found && !E.IsQuiet()) {
       TBasicApp::NewLogEntry(logError) << "Collection '" << colls[ci]->GetName()
         << "' is not processed";
     }

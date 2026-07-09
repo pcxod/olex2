@@ -268,7 +268,7 @@ public:
         return false;
       }
     }
-    return false;
+    return true;
   }
   template <class ListA, class ListB, class Accessor>
   static int IsTheSameOrder(const ListA& A, const ListB& B, const Accessor& acc,

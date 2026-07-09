@@ -5359,6 +5359,9 @@ void TMainForm::macSetMaterial(TStrObjList &Cmds, const TParamList &Options, TMa
         s = &s->NewStyle(toks[i]);
       }
       s->SetMaterial(toks.GetLastString(), glm);
+      E.SetUnhandled(true);
+      // in the case objects do not yet exist
+      E.SetQuiet(true);
     }
   }
   else {

@@ -29,7 +29,9 @@ const unsigned short
   // these are for special handling
   peUnhandled           = 0x1000,
   // set false if called as a function with ()
-  piMacroCall           = 0x2000;
+  peMacroCall           = 0x2000,
+  // skip possibly messages, could be set through the chain of the execution
+  peQuiet               = 0x4000;
 
 class TMacroData : public IOlxObject {
   unsigned short ProcessError;
@@ -104,7 +106,8 @@ public:
     return (ProcessError & peUnhandled) == 0;
   }
 
-  DefPropBFIsSet(MacroCall, ProcessError, piMacroCall);
+  DefPropBFIsSet(MacroCall, ProcessError, peMacroCall);
+  DefPropBFIsSet(Quiet, ProcessError, peQuiet);
 
   const olxstr& GetInfo() const { return ErrorInfo; }
   DefPropC(olxstr, Location)

@@ -5466,6 +5466,23 @@ void CifMerge_EmbeddData(TCif &Cif, bool insert_res, bool insert_hkl,
   }
 }
 //.............................................................................
+bool Update_TxtCIF_data_name(TCif &cif, const olxstr &item_name, const olxstr &dn) {
+  cif_dp::ICifEntry *res_e = cif.FindEntry(item_name);
+  if (res_e == 0) {
+    return false;
+  }
+  cetStringList* res = dynamic_cast<cetStringList*>(res_e);
+  if (res == 0) {
+    return false;
+  }
+  for (size_t i = 0; i < res->Count(); i++) {
+    if (res->lines[i].StartsFrom("data_")) {
+      res->lines[i] = olxstr("data_") << dn;
+      return true;
+    }
+  }
+  return false;
+}
 void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
@@ -5862,6 +5879,8 @@ void XLibMacros::macCifMerge(TStrObjList &Cmds, const TParamList &Options,
           Cif->SetParam("_shelx_res_checksum", olxstr(cs), false);
         }
       }
+      Update_TxtCIF_data_name(*Cif, "_iucr_refine_reflections_details", new_dn);
+      Update_TxtCIF_data_name(*Cif, "_iucr_refine_fcf_details", new_dn);
     }
   }
   Cif->SaveToFile(file_name);
