@@ -138,7 +138,7 @@ void GXLibMacros::Export(TLibrary& lib) {
     "b-bond lengths&;"
     "co-chemical occupancy&;"
     "c-charge&;"
-    "clear-[true] clear current mode;"
+    "clear-[true] clear current mode&;"
     "ch-chiraliry&;"
     "f-fixed parameters&;"
     "h-show hydrogen atom labels&;"

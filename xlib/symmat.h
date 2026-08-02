@@ -12,6 +12,8 @@
 #include "threex3.h"
 #include "testsuit.h"
 
+const uint32_t FirstMatrixRawId = 0x00808080;
+
 template <class MC, class VC> class TSymmMat {
   uint32_t Id;
 public:
@@ -130,7 +132,7 @@ public:
   }
 
   uint32_t GetId() const { return Id;  }
-  void SetId(uint8_t id)  {  Id = ((uint32_t)id << 24)|(0x00808080);  }
+  void SetId(uint8_t id)  {  Id = ((uint32_t)id << 24)|(FirstMatrixRawId);  }
   void SetRawId(uint32_t id)  {  Id = id;  }
   void SetId(uint8_t id, int8_t ta, int8_t tb, int8_t tc)  {
     Id = ((uint32_t)id << 24)|
@@ -141,7 +143,7 @@ public:
   void SetId(uint8_t id, const vec3i& t)  {  Id = GenerateId(id, t);  }
 
   bool IsFirst() const {  return IsFirst(Id);  }
-  static bool IsFirst(uint32_t id) {  return id == 0x00808080;  }
+  static bool IsFirst(uint32_t id) {  return id == FirstMatrixRawId;  }
   uint8_t GetContainerId() const {  return (uint8_t)(Id >> 24);  }
 
   static uint8_t GetContainerId(uint32_t id) {  return (uint8_t)(id >> 24);  }

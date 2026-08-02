@@ -45,7 +45,7 @@ public:
   }
   ~TQueue()  {  Clear();  }
   void Clear() {
-    while (first != NULL) {
+    while (first != 0) {
       item* p = first->next;
       delete first;
       first = p;
@@ -54,7 +54,7 @@ public:
   }
   T& Push(const T& v) {
     item* ni = new item(v);
-    if (first == NULL ) {
+    if (first == 0 ) {
       first = last = ni;
     }
     else {
@@ -67,13 +67,13 @@ public:
   T& PushLast(const T& v) { return Push(v); }
   T PopFirst() { return Pop(); }
   T& Last() const {
-    if (last == NULL) {
+    if (last == 0) {
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "queue is empty");
     }
     return last->data;
   }
   T& First() const {
-    if (first == NULL) {
+    if (first == 0) {
       TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "queue is empty");
     }
     return first->data;
@@ -81,7 +81,7 @@ public:
   item *head() const { return first; }
   T& PushFirst(const T& v) {
     item* ni = new item(v);
-    if (first == NULL) {
+    if (first == 0) {
       first = last = ni;
     }
     else {
@@ -92,7 +92,7 @@ public:
     return first->data;
   }
   T Pop() {
-    if (first != NULL) {
+    if (first != 0) {
       item* i = first->next;
       T rv = first->data;
       delete first;
@@ -102,7 +102,7 @@ public:
     }
     TExceptionBase::ThrowFunctionFailed(__POlxSourceInfo, "queue is empty");
     // make the compiler happy
-    return T();
+    throw 0;
   }
   bool IsEmpty() const { return _count == 0; }
   size_t Count() const { return _count; }

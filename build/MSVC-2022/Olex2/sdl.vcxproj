@@ -646,6 +646,7 @@
     <ClInclude Include="..\..\..\sdl\arrays.h" />
     <ClInclude Include="..\..\..\sdl\association.h" />
     <ClInclude Include="..\..\..\sdl\bapp.h" />
+    <ClInclude Include="..\..\..\sdl\fixed_id.h" />
     <ClInclude Include="..\..\..\sdl\bitarray.h" />
     <ClInclude Include="..\..\..\sdl\citem.h" />
     <ClInclude Include="..\..\..\sdl\comparable_operators.h" />

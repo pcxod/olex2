@@ -2651,7 +2651,7 @@ void TMainForm::macHklEdit(TStrObjList& Cmds, const TParamList& Options,
     RefinementModel::EXTI::Shelxl exti_cr = rm.GetShelxEXTICorrector();
     if (rm.GetHKLF() == 2 && exti_cr.IsValid()) {
       TDoubleList basf = rm.GetBASFAsDoubleList();
-      SL.Add("The I values are corrected for extinction and scaled, any updates to data will be ignored");
+      SL.Add("I values are corrected for extinction and scaled, any updates to data will be ignored");
       TRefList u_refs;
       for (size_t i = 0; i < refs.Count(); i++) {
         u_refs.AddNew(*refs[i]);

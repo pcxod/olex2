@@ -226,7 +226,7 @@ void  TAsymmUnit::InitMatrices() {
   m[0][0] = 1. / Hkl2Cartesian[0].Length();
   m[1][1] = 1. / Hkl2Cartesian[1].Length();
   m[2][2] = 1. / Hkl2Cartesian[2].Length();
-
+  
   UxyzToUcif = Cartesian2Cell * m;
   UxyzToUcifT = UxyzToUcif;
   UxyzToUcif.T();

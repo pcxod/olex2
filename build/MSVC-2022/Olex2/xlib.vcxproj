@@ -1540,6 +1540,7 @@
     <ClInclude Include="..\..\..\xlib\sgtest.h" />
     <ClInclude Include="..\..\..\xlib\splane.h" />
     <ClInclude Include="..\..\..\xlib\srestraint.h" />
+    <ClInclude Include="..\..\..\xlib\symgraph.h" />
     <ClInclude Include="..\..\..\xlib\symmat.h" />
     <ClInclude Include="..\..\..\xlib\symmcon.h" />
     <ClInclude Include="..\..\..\xlib\symmlib.h" />
