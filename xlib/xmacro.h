@@ -399,6 +399,12 @@ public:
     va_end(argptr);
     return cnt;
   }
+  /* A PDB entry code as the RCSB writes it - four characters starting with a
+  digit, or the extended form, pdb_ followed by eight. Decides whether an
+  argument naming no file is an entry to fetch. Here rather than beside either
+  caller so the console and the GUI cannot drift apart
+  */
+  static bool IsPdbEntryCode(const olxstr &s);
   static void Export(class TLibrary& lib);
 
   static TActionQList &Actions() {

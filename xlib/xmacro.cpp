@@ -68,6 +68,29 @@ using namespace cif_dp;
 using namespace olex2;
 void HKLCreate(TStrObjList &Cmds, const TParamList &Options, TMacroData &E);
 
+bool XLibMacros::IsPdbEntryCode(const olxstr &s) {
+  if (s.Length() == 4) {
+    if (!olxstr::o_isdigit(s.CharAt(0))) {
+      return false;
+    }
+    for (size_t i = 1; i < 4; i++) {
+      if (!olxstr::o_isalphanumeric(s.CharAt(i))) {
+        return false;
+      }
+    }
+    return true;
+  }
+  if (s.Length() == 12 && s.StartsFromi("pdb_")) {
+    for (size_t i = 4; i < 12; i++) {
+      if (!olxstr::o_isalphanumeric(s.CharAt(i))) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return false;
+}
+//..............................................................................
 void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(Run, EmptyString(), fpAny^fpNone,
     "Runs provided macros (combined by '>>')");

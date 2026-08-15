@@ -2852,6 +2852,22 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
     if (TEFile::UnixPath(file_n.file_name).StartsFrom("http://") ||
       TEFile::UnixPath(file_n.file_name).StartsFrom("https://"))
     {
+      /* the PDB keeps its structure factors in a separate mmCIF rather than an
+      hkl beside the model, and they need converting before Olex2 can use them.
+      The python side does the whole entry, so hand it the code
+      */
+      {
+        TUrl url(TEFile::UnixPath(file_n.file_name));
+        olxstr fn = TEFile::ExtractFileName(url.GetPath());
+        if (url.GetHost().Containsi("rcsb.org") && fn.EndsWithi(".cif")) {
+          olxstr code = TEFile::ChangeFileExt(fn, EmptyString());
+          if (XLibMacros::IsPdbEntryCode(code)) {
+            Macros.ProcessMacro(
+              olxstr("spy.pdb.fetch_entry('") << code << "')", Error);
+            return;
+          }
+        }
+      }
       TStrList files;
       files << file_n.file_name;
       // loking for COD urls
@@ -2875,6 +2891,28 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
       file_n.file_name = FXApp->XFile().GetFileName();
     }
     bool exists = TEFile::Exists(file_n.file_name);
+    /* a PDB entry code, taken the way a COD url is above. Only when there is
+    nothing of that name to open, whatever its extension - reap is given file
+    names far more often than entry codes, so a local file wins
+    */
+    olxstr entry_code = Cmds.Text(' ').Trim(' ');
+    if (!exists && XLibMacros::IsPdbEntryCode(entry_code)) {
+      /* the name is only made absolute further down, so the folder to look in
+      has to be worked out here
+      */
+      olxstr dir = TEFile::ExtractFilePath(file_n.file_name);
+      if (dir.IsEmpty()) {
+        dir = XLibMacros::CurrentDir();
+      }
+      TStrList named;
+      TEFile::ListDir(dir, named,
+        olxstr(TEFile::ExtractFileName(file_n.file_name)) << ".*", sefFile);
+      if (named.IsEmpty()) {
+        Macros.ProcessMacro(olxstr("spy.pdb.fetch_entry('")
+          << entry_code << "')", Error);
+        return;
+      }
+    }
     if (TEFile::ExtractFileExt(file_n.file_name).IsEmpty() || !exists) {
       olxstr res_fn = file_n.file_name + ".res",
         ins_fn = file_n.file_name + ".ins";
