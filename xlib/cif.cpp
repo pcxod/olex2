@@ -25,7 +25,7 @@ using namespace exparse::parser_util;
 using namespace cif_dp;
 
 TCif::TCif()
-  : block_index(InvalidIndex), has_duplicate_labels(false)
+  : block_index(InvalidIndex), has_duplicate_labels(false), is_mmcif(false)
 {}
 //..............................................................................
 TCif::~TCif()
@@ -41,23 +41,100 @@ void TCif::Clear() {
   MatrixMap.Clear();
 }
 //..............................................................................
+/* The loop holding a given column, found by that column rather than by the
+loop's name. cetTable takes its name from the common prefix of its columns and
+then trims that back to the last underscore, so an _atom_site.* loop is
+registered as _atom - a rule not worth depending on. Column names are kept
+whole, so they are the reliable handle.
+*/
+static cif_dp::cetTable *FindMMLoop(cif_dp::CifBlock &cb, const olxstr &col) {
+  for (size_t i = 0; i < cb.table_map.Count(); i++) {
+    cif_dp::cetTable *t = cb.table_map.GetValue(i);
+    if (t != 0 && t->ColIndex(col) != InvalidIndex) {
+      return t;
+    }
+  }
+  return 0;
+}
+//..............................................................................
+olxstr TCif::MMEquivalentOf(const olxstr &core_name) {
+  /* Only the names Olex2 reads back out of a loaded file. The R factors carry
+  the summary and the history, so without these a structure from the PDB
+  reports n/a for every one of them.
+  Note the entries that are not a punctuation change: the macromolecular R
+  factors are named after the work and free sets, which the core dictionary
+  has no concept of. _refine.ls_R_factor_R_free has no core equivalent at
+  all and can only be asked for by its own name.
+  */
+  static const char *map[][2] = {
+    {"_refine_ls_R_factor_gt", "_refine.ls_R_factor_R_work"},
+    {"_refine_ls_R_factor_all", "_refine.ls_R_factor_obs"},
+    {"_refine_ls_wR_factor_ref", "_refine.ls_wR_factor_R_work"},
+    {"_refine_ls_wR_factor_gt", "_refine.ls_wR_factor_R_work"},
+    {"_refine_ls_goodness_of_fit_ref", "_refine.ls_goodness_of_fit_all"},
+    {"_refine_ls_number_reflns", "_refine.ls_number_reflns_obs"},
+    {"_refine_ls_number_parameters", "_refine.ls_number_parameters"},
+    {"_refine_ls_number_restraints", "_refine.ls_number_restraints"},
+    {"_reflns_number_total", "_reflns.number_obs"},
+    {"_reflns_number_gt", "_reflns.number_obs"},
+    {"_reflns_d_resolution_high", "_reflns.d_resolution_high"},
+    {"_reflns_d_resolution_low", "_reflns.d_resolution_low"},
+    {"_cell_length_a", "_cell.length_a"},
+    {"_cell_length_b", "_cell.length_b"},
+    {"_cell_length_c", "_cell.length_c"},
+    {"_cell_angle_alpha", "_cell.angle_alpha"},
+    {"_cell_angle_beta", "_cell.angle_beta"},
+    {"_cell_angle_gamma", "_cell.angle_gamma"},
+    {"_cell_volume", "_cell.volume"},
+    {"_cell_formula_units_Z", "_cell.Z_PDB"},
+    {"_symmetry_space_group_name_H-M", "_symmetry.space_group_name_H-M"},
+    {"_space_group_name_H-M_alt", "_symmetry.space_group_name_H-M"},
+    {"_symmetry_Int_Tables_number", "_symmetry.Int_Tables_number"}
+  };
+  for (size_t i = 0; i < sizeof(map)/sizeof(map[0]); i++) {
+    if (core_name.Equalsi(map[i][0])) {
+      return olxstr(map[i][1]);
+    }
+  }
+  return EmptyString();
+}
+//..............................................................................
 void TCif::LoadFromStrings(const TStrList& Strings) {
   block_index = InvalidIndex;
+  is_mmcif = false;
   data_provider.LoadFromStrings(Strings);
   for (size_t i=0; i < data_provider.Count(); i++) {
     CifBlock& cb = data_provider[i];
-    if (!cb.param_map.HasKey("_cell_length_a")) {
+    /* Which dictionary, decided per block on the cell alone: the two spellings
+    cannot both be right and no file mixes them. The atom_site test below then
+    accepts either, _atom_site_label and _atom_site.label_atom_id starting the
+    same way.
+    */
+    const bool mm = cb.param_map.HasKey("_cell.length_a");
+    if (!mm && !cb.param_map.HasKey("_cell_length_a")) {
       continue;
     }
     bool valid = false;
-    for (size_t j = 0; j < cb.table_map.Count(); j++) {
-      if (cb.table_map.GetKey(j).StartsFrom("_atom_site")) {
-        valid = true;
-        break;
+    if (mm) {
+      /* By the column, not by the loop name: the name is derived and trimmed,
+      so the atom_site loop is registered as _atom. Testing the name here meant
+      only entries carrying an _atom_site_anisotrop loop as well were
+      recognised, every other one being read as an ordinary CIF and yielding
+      nothing.
+      */
+      valid = FindMMLoop(cb, "_atom_site.Cartn_x") != 0;
+    }
+    else {
+      for (size_t j = 0; j < cb.table_map.Count(); j++) {
+        if (cb.table_map.GetKey(j).StartsFrom("_atom_site")) {
+          valid = true;
+          break;
+        }
       }
     }
     if (valid) {
       block_index = i;
+      is_mmcif = mm;
       break;
     }
   }
@@ -69,6 +146,17 @@ void TCif::_LoadCurrent() {
   if (data_provider.Count() == 0) {
     throw TInvalidArgumentException(__OlxSourceInfo,
       "Empty/Invalid CIF");
+  }
+  /* Decided from the block about to be loaded rather than from the one chosen
+  when the file was read: SetCurrentBlock can move to another block, and a file
+  may hold blocks of either dictionary.
+  */
+  if (block_index != InvalidIndex && block_index < data_provider.Count()) {
+    is_mmcif = data_provider[block_index].param_map.HasKey("_cell.length_a");
+  }
+  if (is_mmcif) {
+    _LoadCurrentMM();
+    return;
   }
   if (block_index == InvalidIndex) {
     if (data_provider.Count() == 0) {
@@ -135,6 +223,297 @@ void TCif::_LoadCurrent() {
     }
   }
   Initialize();
+}
+//..............................................................................
+TResidue *TCif::MMResidue(const olxstr &comp_id, const olxstr &seq_id,
+  const olxstr &chain_id, const olxstr &ins_code)
+{
+  if (!seq_id.IsInt()) {
+    return 0;   // water and ligands in some files carry '.' here
+  }
+  const int num = seq_id.ToInt();
+  const olxch chain = chain_id.IsEmpty() ? olxch(' ') : chain_id.CharAt(0);
+  /* Looked up by chain and number, never by number alone: the single-argument
+  TAsymmUnit::FindResidue converts its int to a string and so only ever
+  searches the '~' no-chain bucket of ResidueRegistry, which is empty for
+  anything that names its chain.
+  */
+  TResidue *r = GetAsymmUnit().FindResidue(chain, num);
+  /* An insertion code makes a distinct residue sharing a number with its
+  neighbour - 52 and 52A - and the registry is keyed on the number, so the code
+  has to enter the key. Multiplying is safe here because the alias is only ever
+  compared, never used as a sequence position.
+  */
+  if (!ins_code.IsEmpty() && ins_code != '?' && ins_code != '.') {
+    /* An insertion code makes a residue distinct from its neighbour of the
+    same number - 52 and 52A are different residues - and ResidueRegistry is
+    keyed on an int, so the code has to be folded into that key.
+
+    The encoded value is given as both the number and the alias. It cannot be
+    given as the number with the true number as alias, which is what the alias
+    is otherwise for: NewResidue falls back to looking the alias up when the
+    number is unknown, so 52A would find residue 52 and then throw over the
+    mismatched class - or, worse, silently merge two residues that a chain with
+    an insertion has deliberately kept apart.
+    */
+    const int coded = num*100 +
+      (int)(olxstr::o_toupper(ins_code.CharAt(0)) - 'A' + 1);
+    r = GetAsymmUnit().FindResidue(chain, coded);
+    if (r == 0) {
+      r = &GetAsymmUnit().NewResidue(comp_id, coded, coded, chain);
+    }
+    return r;
+  }
+  if (r == 0) {
+    r = &GetAsymmUnit().NewResidue(comp_id, num, num, chain);
+  }
+  return r;
+}
+//..............................................................................
+void TCif::_LoadCurrentMM() {
+  /* InvalidIndex means "choose one", which is what TBasicCFile::LoadFromFile
+  passes for a file named without a block, i.e. every file opened normally.
+  Returning here instead of resolving it left the asymmetric unit empty for
+  exactly the path the application uses.
+  */
+  if (block_index == InvalidIndex) {
+    for (size_t i = 0; i < data_provider.Count(); i++) {
+      if (data_provider[i].param_map.HasKey("_cell.length_a") &&
+        FindMMLoop(data_provider[i], "_atom_site.Cartn_x") != 0)
+      {
+        block_index = i;
+        break;
+      }
+    }
+    if (block_index == InvalidIndex) {
+      return;
+    }
+  }
+  CifBlock& cif_data = data_provider[block_index];
+  Clear();
+  Title = "OLEX2: imported from mmCIF";
+  //..........................................................................
+  // cell, which the block test above has already found
+  {
+    const char *names[6] = { "_cell.length_a", "_cell.length_b",
+      "_cell.length_c", "_cell.angle_alpha", "_cell.angle_beta",
+      "_cell.angle_gamma" };
+    double v[6];
+    for (int i = 0; i < 6; i++) {
+      cetString *e = dynamic_cast<cetString *>(cif_data.param_map.Find(names[i], 0));
+      if (e == 0) {
+        throw TFunctionFailedException(__OlxSourceInfo,
+          olxstr("mmCIF is missing ") << names[i]);
+      }
+      v[i] = e->GetStringValue().ToDouble();
+    }
+    GetAsymmUnit().GetAxes() = vec3d(v[0], v[1], v[2]);
+    GetAsymmUnit().GetAngles() = vec3d(v[3], v[4], v[5]);
+    GetAsymmUnit().InitMatrices();
+  }
+  //..........................................................................
+  /* Space group by name. _symmetry.space_group_name_H-M is what the PDB
+  writes; _space_group.name_H-M_alt is the newer spelling and some files carry
+  only that.
+  */
+  {
+    const char *names[2] = { "_symmetry.space_group_name_H-M",
+      "_space_group.name_H-M_alt" };
+    for (int i = 0; i < 2; i++) {
+      ICifEntry *e = cif_data.param_map.Find(names[i], 0);
+      if (e == 0) {
+        continue;
+      }
+      olxstr sg_name = e->GetStringValue().Trim('\'').Trim('"').TrimWhiteChars();
+      if (sg_name.IsEmpty() || sg_name == '?') {
+        continue;
+      }
+      TSymmLib &sl = TSymmLib::GetInstance();
+      TSpaceGroup *sg = sl.FindGroupByName(sg_name);
+      if (sg == 0) {
+        /* The PDB spaces its names out - 'P 1 21 1' where the symmetry library
+        holds 'P21' - so match on the full name as TPdb does, and then with the
+        spaces taken out, which catches 'C 1 2/c 1'.
+        */
+        olxstr packed = olxstr(sg_name).DeleteChars(' ');
+        for (size_t j = 0; j < sl.SGCount(); j++) {
+          if (sl.GetGroup(j).GetFullName() == sg_name ||
+            olxstr(sl.GetGroup(j).GetFullName()).DeleteChars(' ') == packed)
+          {
+            sg = &sl.GetGroup(j);
+            break;
+          }
+        }
+      }
+      if (sg != 0) {
+        GetAsymmUnit().ChangeSpaceGroup(*sg);
+        break;
+      }
+      TBasicApp::NewLogEntry(logError) << "mmCIF: unrecognised space group '"
+        << sg_name << '\'';
+    }
+  }
+  //..........................................................................
+  // the atoms
+  cetTable *at = FindMMLoop(cif_data, "_atom_site.Cartn_x");
+  if (at == 0) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      "mmCIF has no _atom_site loop with coordinates");
+  }
+  const size_t i_symbol = at->ColIndex("_atom_site.type_symbol"),
+    i_label = at->ColIndex("_atom_site.label_atom_id"),
+    i_alt = at->ColIndex("_atom_site.label_alt_id"),
+    i_comp = at->ColIndex("_atom_site.auth_comp_id"),
+    i_comp_l = at->ColIndex("_atom_site.label_comp_id"),
+    i_seq = at->ColIndex("_atom_site.auth_seq_id"),
+    i_seq_l = at->ColIndex("_atom_site.label_seq_id"),
+    i_chain = at->ColIndex("_atom_site.auth_asym_id"),
+    i_chain_l = at->ColIndex("_atom_site.label_asym_id"),
+    i_ins = at->ColIndex("_atom_site.pdbx_PDB_ins_code"),
+    i_x = at->ColIndex("_atom_site.Cartn_x"),
+    i_y = at->ColIndex("_atom_site.Cartn_y"),
+    i_z = at->ColIndex("_atom_site.Cartn_z"),
+    i_occu = at->ColIndex("_atom_site.occupancy"),
+    i_b = at->ColIndex("_atom_site.B_iso_or_equiv"),
+    i_id = at->ColIndex("_atom_site.id"),
+    i_model = at->ColIndex("_atom_site.pdbx_PDB_model_num");
+  if (i_x == InvalidIndex || i_y == InvalidIndex || i_z == InvalidIndex) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      "mmCIF _atom_site loop has no coordinates");
+  }
+  /* auth_* is what a crystallographer means by a residue number and is what
+  the PDB numbering in the literature refers to; label_* is the internal
+  entity numbering. Prefer auth and fall back, per column.
+  */
+  const size_t c_comp = (i_comp != InvalidIndex) ? i_comp : i_comp_l,
+    c_seq = (i_seq != InvalidIndex) ? i_seq : i_seq_l,
+    c_chain = (i_chain != InvalidIndex) ? i_chain : i_chain_l;
+  /* Only the first model. An NMR ensemble holds twenty copies of the same
+  atoms in one loop, and loading them all gives twenty superimposed structures
+  with every atom bonded to its counterparts.
+  */
+  olxstr first_model;
+  olxstr_dict<size_t, true> id_map;
+  size_t skipped_models = 0;
+  for (size_t i = 0; i < at->RowCount(); i++) {
+    const CifRow &row = (*at)[i];
+    if (i_model != InvalidIndex) {
+      const olxstr m = row[i_model]->GetStringValue();
+      if (first_model.IsEmpty()) {
+        first_model = m;
+      }
+      else if (m != first_model) {
+        skipped_models++;
+        continue;
+      }
+    }
+    TResidue *resi = 0;
+    if (c_seq != InvalidIndex) {
+      resi = MMResidue(
+        c_comp == InvalidIndex ? EmptyString() : row[c_comp]->GetStringValue(),
+        row[c_seq]->GetStringValue(),
+        c_chain == InvalidIndex ? EmptyString() : row[c_chain]->GetStringValue(),
+        i_ins == InvalidIndex ? EmptyString() : row[i_ins]->GetStringValue());
+    }
+    TCAtom &ca = GetAsymmUnit().NewAtom(resi);
+    // orthogonal angstroems here, unlike the core dictionary
+    ca.ccrd() = GetAsymmUnit().Fractionalise(vec3d(
+      row[i_x]->GetStringValue().ToDouble(),
+      row[i_y]->GetStringValue().ToDouble(),
+      row[i_z]->GetStringValue().ToDouble()));
+    if (i_occu != InvalidIndex) {
+      const olxstr o = row[i_occu]->GetStringValue();
+      if (o.IsNumber()) {
+        ca.SetOccu(o.ToDouble());
+      }
+    }
+    if (i_b != InvalidIndex) {
+      const olxstr b = row[i_b]->GetStringValue();
+      if (b.IsNumber()) {
+        ca.SetUiso(b.ToDouble() / (8 * olx_sqr(M_PI)));
+      }
+    }
+    /* An alternate location is a disorder part. '.' means the atom is in every
+    part, which is part 0 - the same convention Olex2 uses for an ordered atom.
+    */
+    if (i_alt != InvalidIndex) {
+      const olxstr alt = row[i_alt]->GetStringValue();
+      if (!alt.IsEmpty() && alt != '.' && alt != '?') {
+        ca.SetPart((int)(olxstr::o_toupper(alt.CharAt(0)) - 'A' + 1));
+      }
+    }
+    const cm_Element *type = 0;
+    if (i_symbol != InvalidIndex) {
+      type = XElementLib::FindBySymbol(
+        row[i_symbol]->GetStringValue().TrimWhiteChars());
+    }
+    olxstr name = (i_label == InvalidIndex) ? olxstr('Q')
+      : row[i_label]->GetStringValue().Trim('"').TrimWhiteChars();
+    ca.SetLabel(name, type == 0);
+    if (type != 0) {
+      ca.SetType(*type);
+    }
+    if (i_id != InvalidIndex) {
+      id_map.Add(row[i_id]->GetStringValue(), ca.GetId());
+    }
+  }
+  if (skipped_models > 0) {
+    TBasicApp::NewLogEntry(logInfo) << "mmCIF: model " << first_model <<
+      " loaded, " << skipped_models << " atom(s) of further models ignored";
+  }
+  //..........................................................................
+  /* Anisotropic displacement, keyed on the atom_site id rather than on row
+  order: the loop is not required to list every atom, and rarely does.
+  */
+  cetTable *ap = FindMMLoop(cif_data, "_atom_site_anisotrop.U[1][1]");
+  if (ap != 0) {
+    const size_t a_id = ap->ColIndex("_atom_site_anisotrop.id");
+    const char *u_names[6] = {
+      "_atom_site_anisotrop.U[1][1]", "_atom_site_anisotrop.U[2][2]",
+      "_atom_site_anisotrop.U[3][3]", "_atom_site_anisotrop.U[2][3]",
+      "_atom_site_anisotrop.U[1][3]", "_atom_site_anisotrop.U[1][2]" };
+    size_t u_idx[6];
+    bool have_all = (a_id != InvalidIndex);
+    for (int j = 0; j < 6; j++) {
+      u_idx[j] = ap->ColIndex(u_names[j]);
+      if (u_idx[j] == InvalidIndex) {
+        have_all = false;
+      }
+    }
+    if (have_all) {
+      evecd QE(6);
+      size_t npd = 0;
+      for (size_t i = 0; i < ap->RowCount(); i++) {
+        const CifRow &row = (*ap)[i];
+        const size_t ai = id_map.Find(row[a_id]->GetStringValue(), InvalidIndex);
+        if (ai == InvalidIndex) {
+          continue;      // an atom of a model that was not loaded
+        }
+        for (int j = 0; j < 6; j++) {
+          QE[j] = row[u_idx[j]]->GetStringValue().ToDouble();
+        }
+        TCAtom &ca = GetAsymmUnit().GetAtom(ai);
+        // U in angstroems squared and on the cartesian axes, as PDB ANISOU is,
+        // so no factor of 10^4 and no transformation - cf. TPdb
+        ca.UpdateEllp(QE);
+        if (ca.GetEllipsoid() != 0 && ca.GetEllipsoid()->IsNPD()) {
+          npd++;
+        }
+        ca.SetUiso((QE[0] + QE[1] + QE[2]) / 3);
+      }
+      if (npd > 0) {
+        TBasicApp::NewLogEntry(logError) << "mmCIF: " << npd <<
+          " non positive definite ellipsoid(s)";
+      }
+    }
+  }
+  {
+    cetString *z = dynamic_cast<cetString *>(
+      cif_data.param_map.Find("_cell.Z_PDB", 0));
+    if (z != 0 && z->GetStringValue().IsNumber()) {
+      GetAsymmUnit().SetZ(z->GetStringValue().ToDouble());
+    }
+  }
 }
 //..............................................................................
 void TCif::SaveToStrings(TStrList& Strings) {

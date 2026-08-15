@@ -47,6 +47,7 @@
 #include "tests/binding_test.h"
 #include "tests/hashed_test.h"
 #include "tests/protein_test.h"
+#include "tests/mmcif_test.h"
 #include "../gxlib/tests/cartoon_test.h"
 
 class Listener : public AActionHandler {
@@ -108,6 +109,7 @@ int main(int argc, char* argv[]) {
   tests.Add(&test::TensorTransform);
   tests.Add(&test::ProteinTests);
   tests.Add(&test::CartoonTests);
+  tests.Add(&test::MMCifTests);
 
   tests.run();
   if( argc > 1 )  {

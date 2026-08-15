@@ -29,6 +29,17 @@ private:
   // to be used inernally for locating atoms in the tables
   ConstPtrList<TCAtom> FindAtoms(const TStrList& names);
   bool has_duplicate_labels;
+  /* mmCIF - the macromolecular dictionary - rather than the small-molecule
+  core one. The same STAR syntax and the same parser, but different data names
+  (_cell.length_a for _cell_length_a) and orthogonal coordinates in angstroems
+  where the core dictionary has fractional ones.
+
+  A mode of TCif rather than a separate loader, for two reasons: files in this
+  dictionary are named .cif like any other, so they arrive here anyway; and the
+  data provider keeps every block it read, so writing back preserves the
+  categories Olex2 does not model, which is what a mmCIF round trip means.
+  */
+  bool is_mmcif;
 protected:
   static cif_dp::cetTable* LoopFromDef(cif_dp::CifBlock& dp,
     const TStrList& col_names);
@@ -38,6 +49,16 @@ protected:
     return LoopFromDef(dp, TStrList(col_names, ','));
   }
   void _LoadCurrent();
+  /* Builds the asymmetric unit from the mmCIF categories. Separate from
+  _LoadCurrent because the two dictionaries share no data name that matters
+  here, not because the models differ.
+  */
+  void _LoadCurrentMM();
+  /* One residue per (chain, sequence number, insertion code). Returns 0 for a
+  row that names no residue.
+  */
+  TResidue *MMResidue(const olxstr &comp_id, const olxstr &seq_id,
+    const olxstr &chain_id, const olxstr &ins_code);
   size_t get_bix(size_t block_idx) const {
     size_t bix = block_idx == InvalidIndex ? block_index : block_idx;
     if (bix == InvalidIndex || bix >= data_provider.Count()) {
@@ -56,6 +77,18 @@ public:
   bool HasDuplicateLabels() {
     return has_duplicate_labels;
   }
+  /* Whether the loaded file is in the macromolecular dictionary. Valid after
+  loading, and what the CIF written on ACTA has to follow.
+  */
+  bool IsMMCif() const { return is_mmcif; }
+  /* The macromolecular name for a core data name, or an empty string when
+  there is none. The two dictionaries do not simply differ by punctuation:
+  _refine_ls_R_factor_gt is _refine.ls_R_factor_R_work, not
+  _refine.ls_R_factor_gt. So this is an explicit table of what Olex2 asks for
+  rather than a rule; anything absent from it stays unresolved exactly as
+  before, instead of being mapped to something that merely looks right.
+  */
+  static olxstr MMEquivalentOf(const olxstr &core_name);
   /* Saves the data to a file and returns true if successful and false in the
   case of failure
   */
