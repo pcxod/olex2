@@ -96,6 +96,87 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner {
   // have to manage memory ourselves - base class is used
   AGDObjList LooseObjects;
   AGDObjList ObjectsToCreate;
+  /* One per polymer chain segment. Memory is managed here rather than by a
+  TTypeList so that gxapp.h need not pull in the cartoon geometry headers.
+  */
+  TPtrList<class TXCartoon> Cartoons;
+  bool CartoonsVisible;
+  /* When set, atoms of the residues the cartoon traces are hidden, leaving
+  everything the trace did not claim - sugars, ligands, metals, waters - drawn
+  in the normal way. Exactly which objects were hidden is recorded, so turning
+  the cartoon off restores those and nothing else.
+  */
+  bool CartoonHidesAtoms;
+  // the plain CA trace instead of helix ribbons and strand arrows
+  bool CartoonTraceOnly;
+  short CartoonColourMode;
+  // what happens to everything the trace did not claim
+  short CartoonNonProtein;
+  /* Set once the user has said anything about the cartoon, which stops the
+  large-structure default from overriding a decision they already made.
+  */
+  bool CartoonUserSet;
+  /* The substructure view: one entry per residue id, or empty for the whole
+  structure. Everything outside it is hidden, which also restricts a map,
+  because BuildSceneMask is built from the visible atoms.
+  */
+  TArrayList<bool> CartoonFocus;
+  /* The Ueq range the ramp was stretched over, so the legend can label its
+  colour bar with the numbers it actually means rather than a fixed scale.
+  */
+  double CartoonUeqMin, CartoonUeqMax;
+  bool CartoonUeqValid;
+  TPtrList<class TXAtom> CartoonHiddenAtoms;
+  TPtrList<class TXBond> CartoonHiddenBonds;
+  /* Residues whose sidechains are drawn as atoms inside their own ribbon,
+  indexed by TResidue id, empty for none.
+
+  The backbone stays with the ribbon even here: what this adds is the
+  sidechain, which is the part a ribbon says nothing about. The CA is the one
+  exception - see HidePolymerAtoms.
+  */
+  TArrayList<bool> CartoonSidechains;
+  /* Whether isolating residues also shows their sidechains. Off by default:
+  the ribbon is what most work wants to look at, and the sticks are a
+  deliberate step past it rather than the natural consequence of focusing.
+  */
+  bool CartoonFocusSidechains;
+  /* traced_residues is indexed by TResidue id, backbone_atoms and alpha_atoms
+  by TCAtom id: which residues a ribbon covers, which atoms that ribbon is a
+  picture of, and which of those are the CA a sidechain hangs off.
+  */
+  void HidePolymerAtoms(const TArrayList<bool> &traced_residues,
+    const TArrayList<bool> &backbone_atoms,
+    const TArrayList<bool> &alpha_atoms);
+  /* Applies the atom-visibility rules to the cartoons as they stand.
+  Separate from CreateCartoons because a change to what is shown as atoms - a
+  sidechain set, the non-protein rule, a focus - affects none of the topology,
+  the secondary structure or the mesh, and re-running those for it is the
+  difference between a subset change the user waits for and one they do not.
+  */
+  void HideTracedAtoms();
+  // re-applies them after a change to what is shown, cartoon permitting
+  void RefreshCartoonAtoms();
+  void RestorePolymerAtoms();
+  /* The same view for a structure with no residues to key it on: what a focus
+  hid, kept as the objects themselves rather than as a mask.
+
+  A mask needs an index, and there is none that identifies a TXAtom: several
+  symmetry copies share one TCAtom, and the environment of an atom is very often
+  a copy rather than the original. So the atom-level focus records what it hid
+  and puts exactly that back.
+  */
+  TPtrList<class TXAtom> FocusHiddenAtoms;
+  TPtrList<class TXBond> FocusHiddenBonds;
+  bool AtomFocusActive;
+  size_t SetAtomFocus(const TSAtomPList &seed, double radius, bool whole);
+  void ClearAtomFocus();
+  /* Computes and assigns the per-residue colours. `rebuild` re-emits the
+  display lists, which is what a colour change needs; during a build the lists
+  do not exist yet and Create() emits them once with the colours already set.
+  */
+  void ApplyCartoonColours(bool rebuild);
+  void RemaskGrid();
 
   void ClearXObjects();
 
@@ -327,6 +408,133 @@ public:
   }
   void Clear();
   void ClearXGrowPoints();
+  //..............................................................................
+  /* Rebuilds the polymer cartoon from the current model, one compiled display
+  list per chain segment. Returns the number of segments drawn. Called again by
+  CreateObjects whenever the model changes, since the geometry is baked in.
+  */
+  size_t CreateCartoons();
+  /* A bundle of synthetic helices of the given total residue count, for
+  measuring the display list at a scale no available structure reaches.
+  Returns the triangle count.
+  */
+  size_t CreateTestCartoon(size_t n_residues);
+  void ClearCartoons();
+  /* Tells the GUI whether what has just been drawn is a polymer, so it can
+  pick refinement settings suited to one. The decision itself is left to
+  Python, which is where the settings live and where it can be changed without
+  a rebuild; here we only report the event.
+
+  `is_polymer` is whether a backbone was actually traced, which is the
+  strongest evidence there is - stronger than a residue count, and quite
+  separate from whether a cartoon is switched on. Both answers are reported:
+  the GUI stores it with the structure, so a model that once passed for a
+  polymer goes on claiming to be one until it is told otherwise.
+  */
+  void SuggestPolymerRefinement(bool is_polymer);
+  const TPtrList<class TXCartoon>& GetCartoons() const { return Cartoons; }
+  bool AreCartoonsVisible() const { return CartoonsVisible; }
+  void SetCartoonsVisible(bool v);
+  bool DoesCartoonHideAtoms() const { return CartoonHidesAtoms; }
+  void SetCartoonHidesAtoms(bool v);
+  bool IsCartoonTraceOnly() const { return CartoonTraceOnly; }
+  /* Changes the shape rather than the colour, so this rebuilds the geometry.
+  Secondary structure is still assigned, and can still be coloured by.
+  */
+  void SetCartoonTraceOnly(bool v);
+  /* Restricts the display to the residues of the given atoms, plus every
+  residue with an atom within `radius` of one of them. Returns the number of
+  residues in the result. A map, if one is loaded, is re-masked to the same
+  region.
+  */
+  size_t SetCartoonFocus(const TSAtomPList &seed, double radius);
+  void ClearCartoonFocus();
+  bool HasCartoonFocus() const { return !CartoonFocus.IsEmpty(); }
+  /* Residues named in Olex2's own residue notation - 'A:45', 'A:45-60',
+  '45-60', 'A' for a whole chain or '*' for all of them - appended to `out` as
+  TResidue ids. False when the text is not of that form, which is the caller's
+  cue to try the atom grammar instead.
+
+  The atom grammar reaches residues too, but only one at a time and only by
+  number or by class: TAsymmUnit::FindResidues takes a number, a class name or
+  '*', and knows nothing of chains or ranges (asymmunit.cpp:320). A range in a
+  named chain is what someone reading a protein asks for, and it is the
+  notation TResidue::GetNumberStr already prints.
+  */
+  bool ResolveResidues(const olxstr &spec, TSizeList &out) const;
+  /* Draws the sidechains of these residues as atoms, the backbone staying with
+  the ribbon. Returns how many residues that covers; an empty list clears the
+  set.
+
+  Named residues rather than the focus, so a chosen stretch can be examined in
+  place, with the rest of the fold still around it. The two are independent:
+  SetCartoonFocusSidechains does the same for whatever is isolated.
+  */
+  size_t SetCartoonSidechains(const TSizeList &resi_ids);
+  void SetAllCartoonSidechains();
+  void ClearCartoonSidechains();
+  bool HasCartoonSidechains() const { return !CartoonSidechains.IsEmpty(); }
+  bool GetCartoonFocusSidechains() const { return CartoonFocusSidechains; }
+  void SetCartoonFocusSidechains(bool v);
+  /* Restricts the display to the given atoms and their surroundings, whatever
+  the structure is. Returns how many units survived - residues when the view is
+  a cartoon, atoms otherwise.
+
+  Which of the two it is depends on whether a cartoon is being drawn, not on
+  whether the file has residues. With a ribbon up, a residue is the unit the
+  display is built from and half a sidechain is not something anyone wants to
+  look at; without one there is nothing to expand to, and expanding to the
+  residue of a structure that has none would mean the whole model.
+  */
+  /* `whole` completes whatever the radius touched to the unit it belongs to -
+  the residue for an atom that has one, the connected fragment for an atom that
+  does not - so a molecule is never cut in half. It has no effect on the
+  cartoon path, which is built out of whole residues to begin with.
+  */
+  size_t SetFocus(const TSAtomPList &seed, double radius, bool whole = true);
+  void ClearFocus();
+  bool HasFocus() const { return HasCartoonFocus() || AtomFocusActive; }
+  short GetCartoonNonProtein() const { return CartoonNonProtein; }
+  void SetCartoonNonProtein(short v);
+  static short CartoonNonProteinFromName(const olxstr &name);
+  short GetCartoonColourMode() const { return CartoonColourMode; }
+  /* The Ueq range the current colouring is stretched over. False when nothing
+  was coloured by Ueq, in which case the values are meaningless.
+  */
+  bool GetCartoonUeqRange(double &mn, double &mx) const {
+    mn = CartoonUeqMin;
+    mx = CartoonUeqMax;
+    return CartoonUeqValid;
+  }
+  /* The chains the cartoon drew, in the order their colours were assigned, for
+  the legend. Each entry is a chain id and the colour it was given.
+  */
+  void GetCartoonChainKey(TArrayList<olx_pair_t<olxch, uint32_t> > &out) const;
+  /* The amino acids the traced chains actually contain, as
+  xlib::protein::ResidueIndex and colour, in that index order, with
+  InvalidIndex last when anything unrecognised was traced.
+
+  Only the ones present. A fixed key of twenty rows on a model built from six
+  kinds of residue is mostly a list of things not to look for, and at this row
+  height it would be taller than the window.
+  */
+  void GetCartoonResidueKey(TArrayList<olx_pair_t<size_t, uint32_t> > &out);
+  /* Every atom of every residue clicked on a ribbon, appended to `out`.
+
+  Hidden atoms included: the cartoon hides the ones it draws, so a residue
+  picked on the ribbon has no visible atom to offer, and dropping them would
+  leave the selection with nothing in it. Returns how many residues they came
+  from.
+  */
+  size_t GetCartoonSelectedAtoms(TSAtomPList &out);
+  /* Recolours in place: the geometry is untouched and only the display list is
+  re-emitted, so this is cheap enough to drive from a control.
+  */
+  void SetCartoonColourMode(short v);
+  /* The mode names the macro accepts, or -1 when the name is not one of them.
+  */
+  static short CartoonColourModeFromName(const olxstr &name);
+  //..............................................................................
   // changes the graphics quality
   int32_t Quality(int v);
   void Init();

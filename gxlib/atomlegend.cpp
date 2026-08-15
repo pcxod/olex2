@@ -10,7 +10,54 @@
 #include "atomlegend.h"
 //#include "glprimitive.h"
 #include "gxapp.h"
+#include "xcartoon.h"
 #include "eset.h"
+
+namespace {
+  /* A swatch drawn exactly the way the ribbon is.
+
+  The element rows take the real Sphere material out of the style rather than
+  making a flat stand-in, and the cartoon rows need the same treatment: the
+  material comes from the cartoon itself, colour material is on, and the colour
+  arrives through glColor. That is the ribbon's own path, reproduced rather
+  than re-derived - working out what the lights "should" do to a colour and
+  building a material to match is how the ribbon ended up white.
+  */
+  TGlMaterial SwatchMaterial(uint32_t cl) {
+    TGlMaterial m = gxlib::cartoon_colour::RibbonMaterial(cl);
+    m.SetColorMaterial(true);
+    return m;
+  }
+  void EmitColour(uint32_t cl) {
+    olx_gl::color((float)OLX_GetRValue(cl) / 255,
+      (float)OLX_GetGValue(cl) / 255,
+      (float)OLX_GetBValue(cl) / 255,
+      (float)OLX_GetAValue(cl) / 255);
+  }
+  /* A short length of ribbon with one gentle twist in it, in the same unit
+  box the sphere swatch occupies. The twist is what makes it read as a ribbon
+  rather than a bar at this size, and it shows both faces, which is the thing
+  a reader needs to recognise in the picture.
+  */
+  void DrawRibbonSwatch(uint32_t cl) {
+    const int n = 14;
+    const double half_length = 1.15, half_width = 0.40, twist = 0.85;
+    const double two_pi = 6.283185307179586;
+    olx_gl::colorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+    EmitColour(cl);
+    olx_gl::begin(GL_QUAD_STRIP);
+    for (int i = 0; i <= n; i++) {
+      const double t = (double)i / n;
+      const double x = -half_length + 2 * half_length*t;
+      const double a = twist*sin(two_pi*t);
+      const double ca = cos(a), sa = sin(a);
+      olx_gl::normal(0.0, -sa, ca);
+      olx_gl::vertex(x, half_width*ca, half_width*sa);
+      olx_gl::vertex(x, -half_width*ca, -half_width*sa);
+    }
+    olx_gl::end();
+  }
+}
 
 TAtomLegend::TAtomLegend(TGlRenderer& Render, const olxstr& collectionName)
   : AGlMouseHandlerImp(Render, collectionName)
@@ -19,6 +66,7 @@ TAtomLegend::TAtomLegend(TGlRenderer& Render, const olxstr& collectionName)
   SetMoveable(true);
   SetSelectable(false);
   Top = Left = 0;
+  first_ribbon_row = InvalidIndex;
   FirstSpacer = 5;
   ColWidth = 16;
   Width = ColWidth*2;
@@ -162,7 +210,12 @@ bool TAtomLegend::Orient(TGlPrimitive& P) {
     olx_gl::scale(sph_scale);
     for (size_t i = 0; i < materials.Count(); i++) {
       materials[i].Init(Parent.ForcePlain());
-      P.Draw();
+      if (i < first_ribbon_row) {
+        P.Draw();
+      }
+      else {
+        DrawRibbonSwatch(row_colours[i - first_ribbon_row]);
+      }
       olx_gl::translate(0.0, -(glf.GetMaxHeight()+LineSpacer)*scale, 0.0);
     }
     P.GetProperties().Init(Parent.ForcePlain());
@@ -189,7 +242,17 @@ void TAtomLegend::Update() {
   }
   text.Clear();
   materials.Clear();
+  row_colours.Clear();
+  // no ribbon rows unless AddCartoonKey says otherwise, so every row is a ball
+  first_ribbon_row = InvalidIndex;
+  /* Not "no elements, no legend". With the cartoon hiding everything it traced
+  there can be no visible atom at all, and returning here left the cartoon key
+  unbuilt: the legend appeared only once something made a non-protein atom
+  visible again. The element block is skipped, the cartoon key is not.
+  */
   if (elm_set.IsEmpty()) {
+    AddCartoonKey();
+    Fit();
     return;
   }
   ElementPList elms(elm_set);
@@ -247,7 +310,112 @@ void TAtomLegend::Update() {
     }
     text.Add(elms[i]->symbol);
   }
+  AddCartoonKey();
   Fit();
+}
+//.............................................................................
+void TAtomLegend::AddCartoonKey() {
+  TGXApp &app = TGXApp::GetInstance();
+  if (!app.AreCartoonsVisible() || app.GetCartoons().IsEmpty()) {
+    return;
+  }
+  // everything added from here on is a ribbon rather than a ball
+  first_ribbon_row = materials.Count();
+  using namespace xlib::protein;
+  const short mode = app.GetCartoonColourMode();
+
+  /* Appended to the same lists the element key uses, so it inherits the
+  dragging, the saved position and the reset button without any of that being
+  written twice. Rows are drawn top-down in the order they are added, and each
+  entry is one swatch and one label.
+  */
+  if (mode == ccChain) {
+    TArrayList<olx_pair_t<olxch, uint32_t> > chains;
+    app.GetCartoonChainKey(chains);
+    for (size_t i = 0; i < chains.Count(); i++) {
+      materials.Add(SwatchMaterial(chains[i].b));
+      text.Add(olxstr("Chain ") << chains[i].a);
+    }
+  }
+  else if (mode == ccSecondary) {
+    const short kinds[] = { ss_helix, ss_strand, ss_coil };
+    const char *names[] = { "Helix", "Strand", "Coil" };
+    for (size_t i = 0; i < 3; i++) {
+      materials.Add(SwatchMaterial(cartoon_colour::Secondary(kinds[i])));
+      text.Add(names[i]);
+    }
+  }
+  else if (mode == ccPolarity) {
+    const short kinds[] = { rpLipophilic, rpHydrophilic };
+    const char *names[] = { "Lipophilic", "Hydrophilic" };
+    for (size_t i = 0; i < 2; i++) {
+      materials.Add(SwatchMaterial(cartoon_colour::Polarity(kinds[i])));
+      text.Add(names[i]);
+    }
+  }
+  else if (mode == ccCharge) {
+    const short kinds[] = { rcAcidic, rcBasic, rcNeutral };
+    const char *names[] = { "Acidic", "Basic", "Neutral" };
+    for (size_t i = 0; i < 3; i++) {
+      materials.Add(SwatchMaterial(cartoon_colour::Charge(kinds[i])));
+      text.Add(names[i]);
+    }
+  }
+  else if (mode == ccResidue) {
+    TArrayList<olx_pair_t<size_t, uint32_t> > resi;
+    app.GetCartoonResidueKey(resi);
+    for (size_t i = 0; i < resi.Count(); i++) {
+      materials.Add(SwatchMaterial(resi[i].b));
+      text.Add(resi[i].a == InvalidIndex
+        ? olxstr("Other") : StandardResidueName(resi[i].a));
+    }
+  }
+  else if (mode == ccIndex || mode == ccUeq) {
+    /* A colour bar, drawn as a column of swatches down the same rows the rest
+    of the legend uses rather than as a separate gradient object. Discrete, but
+    at this many steps it reads as a bar, and it costs no new primitive, no new
+    draggable object and no second position to keep track of.
+
+    The scale runs high at the top, which is the way round every colour bar is
+    drawn, so the ramp is walked backwards.
+    */
+    const size_t steps = 9;
+    double u_min = 0, u_max = 0;
+    const bool have_u = (mode == ccUeq) &&
+      app.GetCartoonUeqRange(u_min, u_max);
+    for (size_t i = 0; i < steps; i++) {
+      const double t = double(steps - 1 - i)/(steps - 1);
+      materials.Add(SwatchMaterial(gxlib::cartoon::RainbowColour(t)));
+      /* Labelled at the two ends and the middle only. Every step labelled is
+      unreadable at this row height, and unlabelled steps still line up because
+      the text and the swatches are drawn from the same row index.
+      */
+      if (mode == ccUeq) {
+        if (!have_u) {
+          text.Add(i == 0 ? olxstr("Ueq high")
+            : (i + 1 == steps ? olxstr("Ueq low") : olxstr()));
+        }
+        else if (i == 0 || i + 1 == steps || i == steps/2) {
+          text.Add(olxstr::FormatFloat(3, u_min + (u_max - u_min)*t));
+        }
+        else {
+          text.Add(EmptyString());
+        }
+      }
+      else {
+        text.Add(i == 0 ? olxstr("C term")
+          : (i + 1 == steps ? olxstr("N term") : olxstr()));
+      }
+    }
+  }
+  /* Taken back off the materials rather than threaded through every branch
+  above: each of them built its swatch from one colour, and the diffuse term is
+  where SwatchMaterial put it. The alpha is forced opaque because GetRGB drops
+  it, and a zero alpha would draw nothing at all.
+  */
+  for (size_t i = first_ribbon_row; i < materials.Count(); i++) {
+    row_colours.Add(materials[i].DiffuseF.GetRGB() | 0xff000000);
+  }
 }
 //.............................................................................
 void TAtomLegend::SetVisible(bool v) {

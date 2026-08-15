@@ -119,6 +119,51 @@ void GXLibMacros::Export(TLibrary& lib) {
     "H atoms as well]");
   gxlib_InitMacro(ADS, EmptyString(), fpAny^(fpNone),
     "Changes atom draw style [sph,elp,std]");
+  gxlib_InitMacro(Cartoon,
+    "c-colour mode: chain, rainbow (along the chain, N terminus blue),"
+    " polarity (lipophilic or hydrophilic), charge (acidic, basic or neutral),"
+    " residue (one colour per amino acid), ueq (mean residue Ueq) or ss"
+    " (secondary structure)&;"
+    "a-keep the traced atoms visible instead of leaving only the cartoon"
+    " and the things it does not trace&;"
+    "r-representation: cartoon (helix ribbons and strand arrows) or trace"
+    " (a plain tube along the backbone, ignoring secondary structure)&;"
+    "n-everything the trace did not claim: hide (the default), show, or"
+    " nowater (ligands, sugars and metals but not the waters)&;"
+    "sc-residues to draw the sidechains of, the backbone staying with the"
+    " ribbon: atom or residue names ('A:45-60', 'CB_12 CB_13'), all, focus"
+    " (whatever 'isolate' leaves showing, which is also what the bare option"
+    " means), or off"
+    ,
+    fpAny,
+    "Draws the polymer backbone as a cartoon: 'cartoon on', 'cartoon off' or"
+    " 'cartoon' to toggle. Clicking a ribbon selects that residue, and clicking"
+    " it again deselects it; 'isolate' then shows just those residues and their"
+    " surroundings. Sugars, ligands, metals and waters are not traced"
+    " and stay drawn as atoms and bonds in whatever style is set. 'cartoon"
+    " test N' replaces it with N residues of synthetic helix, for measuring"
+    " the display list at a scale no available structure reaches");
+  gxlib_InitMacro(Isolate,
+    "r-radius in A around the chosen atoms [5]&;"
+    "c-cut: keep only what is inside the radius, instead of completing every"
+    " residue and molecule it reaches&;"
+    "nc-do not move the view; by default it centres and scales to whatever is"
+    " left showing, and back to the whole structure on leaving",
+    fpAny,
+    "Shows only the chosen atoms and what surrounds them, and hides the rest:"
+    " 'isolate sel -r=5' for the selection, 'isolate C1 C2' for named atoms, or"
+    " 'isolate' on its own for whatever is selected, residues clicked on a"
+    " cartoon included. A loaded map is masked to the same region."
+    "\nWhatever the radius reaches is completed to the unit it belongs to, so"
+    " molecules are never cut in half: an atom that has a residue brings its"
+    " residue, an atom that has none - a solvent, a ligand, or any atom of a"
+    " small-molecule structure - brings its whole connected molecule. '-c'"
+    " keeps the bare sphere instead."
+    "\nWith a cartoon on the screen the unit is always the residue, and a"
+    " residue arrives with its sidechain."
+    "\n'isolate off' leaves the view again, and so does a second bare"
+    " 'isolate', which is what makes it work as a single key. 'fmol' and 'uniq'"
+    " also leave it, since they decide what is visible themselves");
   gxlib_InitMacro(AZoom, EmptyString(), fpAny^fpNone,
     "Modifies given atoms [all] radius. The first argument is the new radius "
     "in %");
@@ -1148,6 +1193,274 @@ void GXLibMacros::macADS(TStrObjList &Cmds, const TParamList &Options,
   Cmds.Delete(0);
   TXAtomPList Atoms = app.FindXAtoms(Cmds, false, false);
   app.SetAtomDrawingStyle(ads, Atoms.IsEmpty() ? 0 : &Atoms);
+}
+//.............................................................................
+/* Put what is on the screen in the middle of it, and scale to fit.
+
+Isolating a few residues out of a protein leaves them wherever they happened to
+sit in the whole molecule -- commonly off the edge of the view, so the useful
+result of the macro is invisible until the user hunts for it. Both halves of
+this read the *visible* objects only, which after SetFocus is the focus and
+after ClearFocus is the structure again, so leaving frames the whole thing back
+without a second code path.
+
+Deliberately not `center -z`: that macro takes its centre from FindXAtoms,
+which returns hidden atoms too, so it would centre an isolated region on the
+middle of the molecule it was cut from.
+*/
+static void FrameVisible(TGXApp &app) {
+  vec3d miv(100, 100, 100), mav(-100, -100, -100), miv_, mav_;
+  bool any = false;
+  for (size_t i = 0; i < app.GetRenderer().ObjectCount(); i++) {
+    AGDrawObject &o = app.GetRenderer().GetObject(i);
+    if (!o.IsVisible()) {
+      continue;
+    }
+    if (o.GetDimensions(mav_, miv_)) {
+      vec3d::UpdateMinMax(miv_, miv, mav);
+      vec3d::UpdateMinMax(mav_, miv, mav);
+      any = true;
+    }
+  }
+  if (!any) {
+    return;
+  }
+  const double sd = olx_max(mav.DistanceTo(miv), 1.0);
+  app.GetRenderer().GetBasis().SetZoom(app.GetExtraZoom()/sd);
+  app.GetRenderer().GetBasis().SetCenter(-(miv + mav)/2);
+}
+//.............................................................................
+void GXLibMacros::macIsolate(TStrObjList &Cmds, const TParamList &Options,
+  TMacroData &Error)
+{
+  // the view follows the focus unless asked not to: a user stepping through
+  // residues one at a time wants the view to keep up, but one comparing two
+  // regions by eye does not want the camera moving under them
+  const bool frame = !Options.GetBoolOption("nc");
+  if (!Cmds.IsEmpty() &&
+    (Cmds[0].Equalsi("off") || Cmds[0].Equalsi("clear")))
+  {
+    app.ClearFocus();
+    if (frame) {
+      FrameVisible(app);
+    }
+    app.Draw();
+    return;
+  }
+  // a bare 'isolate' while isolated leaves again, so one key does both
+  if (Cmds.IsEmpty() && app.HasFocus()) {
+    app.ClearFocus();
+    if (frame) {
+      FrameVisible(app);
+    }
+    app.Draw();
+    return;
+  }
+  // a radius of zero is the seed alone, legal but rarely what is meant
+  const double radius = Options.FindValue('r', "5").ToDouble();
+  TXAtomPList seed = app.FindXAtoms(Cmds, false, false);
+  TSAtomPList satoms(seed, StaticCastAccessor<TSAtom>());
+  // residues clicked on a ribbon are not in the renderer's selection group, so
+  // 'sel' does not find them and the cartoon has to be asked directly
+  if (satoms.IsEmpty()) {
+    app.GetCartoonSelectedAtoms(satoms);
+  }
+  if (satoms.IsEmpty()) {
+    Error.ProcessingError(__OlxSrcInfo,
+      "nothing to isolate: click some residues on the ribbon, select some"
+      " atoms, or name them");
+    return;
+  }
+  const bool by_residue = app.AreCartoonsVisible() &&
+    !app.GetCartoons().IsEmpty();
+  // -c keeps the bare sphere, cutting through molecules where it falls
+  const size_t n = app.SetFocus(satoms, radius, !Options.GetBoolOption('c'));
+  if (n == 0) {
+    TBasicApp::NewLogEntry(logInfo) << "Isolate: nothing left to show";
+    app.ClearFocus();
+    app.Draw();
+    return;
+  }
+  TBasicApp::NewLogEntry(logInfo) << "Isolate: " << n <<
+    (by_residue ? " residue(s)" : " atom(s)") << " from " << satoms.Count() <<
+    " atom(s)" <<
+    (radius > 0 ? (olxstr(" within ") << radius << " A") : EmptyString()) <<
+    ". 'isolate off' to leave it";
+  if (frame) {
+    FrameVisible(app);
+  }
+  app.Draw();
+}
+//.............................................................................
+void GXLibMacros::macCartoon(TStrObjList &Cmds, const TParamList &Options,
+  TMacroData &Error)
+{
+  if (!Cmds.IsEmpty() && Cmds[0].Equalsi("test")) {
+    size_t n = 5000;
+    if (Cmds.Count() > 1) {
+      if (!Cmds[1].IsNumber()) {
+        Error.ProcessingError(__OlxSrcInfo, "a residue count is expected");
+        return;
+      }
+      n = Cmds[1].ToSizeT();
+    }
+    if (n == 0) {
+      Error.ProcessingError(__OlxSrcInfo, "a residue count is expected");
+      return;
+    }
+    app.CreateTestCartoon(n);
+    app.Draw();
+    return;
+  }
+  short mode = -1;
+  olxstr cm = Options.FindValue('c');
+  if (!cm.IsEmpty()) {
+    mode = TGXApp::CartoonColourModeFromName(cm);
+    if (mode < 0) {
+      Error.ProcessingError(__OlxSrcInfo,
+        olxstr("unknown colour mode '") << cm <<
+        "', expected chain/rainbow/polarity/charge/residue/ueq/ss");
+      return;
+    }
+  }
+  short nonprot = -1;
+  olxstr np = Options.FindValue('n');
+  if (!np.IsEmpty()) {
+    nonprot = TGXApp::CartoonNonProteinFromName(np);
+    if (nonprot < 0) {
+      Error.ProcessingError(__OlxSrcInfo,
+        olxstr("unknown value '") << np <<
+        "', expected hide, show or nowater");
+      return;
+    }
+  }
+  short trace = -1;
+  olxstr rep = Options.FindValue('r');
+  if (!rep.IsEmpty()) {
+    if (rep.Equalsi("trace") || rep.Equalsi("tube")) {
+      trace = 1;
+    }
+    else if (rep.Equalsi("cartoon") || rep.Equalsi("ribbon")) {
+      trace = 0;
+    }
+    else {
+      Error.ProcessingError(__OlxSrcInfo,
+        olxstr("unknown representation '") << rep <<
+        "', expected cartoon or trace");
+      return;
+    }
+  }
+  /* A colour or atom-visibility option on its own adjusts what is already
+  drawn rather than toggling it off, which is what a control bound to this
+  macro needs.
+  */
+  const bool only_options = Cmds.IsEmpty() &&
+    (mode >= 0 || trace >= 0 || nonprot >= 0 || Options.Contains('a') ||
+      Options.Contains("sc"));
+  bool v = only_options ? app.AreCartoonsVisible() : !app.AreCartoonsVisible();
+  if (!Cmds.IsEmpty()) {
+    if (Cmds[0].Equalsi("on")) {
+      v = true;
+    }
+    else if (Cmds[0].Equalsi("off")) {
+      v = false;
+    }
+    else if (!Cmds[0].Equalsi("toggle")) {
+      Error.ProcessingError(__OlxSrcInfo, "on/off/toggle/test expected");
+      return;
+    }
+  }
+  if (Options.Contains('a')) {
+    app.SetCartoonHidesAtoms(false);
+  }
+  else if (!only_options) {
+    app.SetCartoonHidesAtoms(true);
+  }
+  if (nonprot >= 0) {
+    app.SetCartoonNonProtein(nonprot);
+  }
+  if (trace >= 0) {
+    app.SetCartoonTraceOnly(trace != 0);
+  }
+  if (mode >= 0) {
+    // harmless before the first build: recolouring an empty list does nothing
+    app.SetCartoonColourMode(mode);
+  }
+  app.SetCartoonsVisible(v);
+  /* Applied after the cartoon exists: with no ribbon there is nothing for a
+  sidechain to be shown instead of, and 'cartoon on -sc=A:45-60' is one
+  command.
+  */
+  if (Options.Contains("sc")) {
+    const olxstr sc = Options.FindValue("sc");
+    if (sc.Equalsi("off") || sc.Equalsi("none") || sc.Equalsi("clear")) {
+      app.ClearCartoonSidechains();
+      app.SetCartoonFocusSidechains(false);
+    }
+    else if (sc.Equalsi("all")) {
+      app.SetAllCartoonSidechains();
+    }
+    else if (sc.IsEmpty() || sc.Equalsi("focus") || sc.Equalsi("isolate")) {
+      // the bare option means the isolated residues, that being the set a
+      // user working through a structure is looking at anyway
+      app.SetCartoonFocusSidechains(true);
+      if (!app.HasFocus()) {
+        TBasicApp::NewLogEntry(logInfo) << "Cartoon: sidechains will show for"
+          " whatever 'isolate' leaves on screen";
+      }
+    }
+    else {
+      // a list is as good as one name, in either separator
+      TStrList names;
+      TStrList toks(sc, ',');
+      for (size_t i = 0; i < toks.Count(); i++) {
+        names.Strtok(toks[i], ' ');
+      }
+      /* Residue notation first, atom names for whatever is not in it: 'A:45-60'
+      is what someone reading a protein asks for, while 'THR', 'CB_45' and
+      'sel' are the atom grammar the rest of Olex2 speaks.
+      */
+      TSizeList resi;
+      TStrList atom_names;
+      for (size_t i = 0; i < names.Count(); i++) {
+        if (!app.ResolveResidues(names[i], resi)) {
+          atom_names.Add(names[i]);
+        }
+      }
+      if (!atom_names.IsEmpty()) {
+        TXAtomPList sel;
+        try {
+          sel = app.FindXAtoms(atom_names, false, false);
+        }
+        catch (const TExceptionBase &e) {
+          Error.ProcessingError(__OlxSrcInfo,
+            olxstr("cannot resolve '") << sc << "': " <<
+            e.GetException()->GetError());
+          return;
+        }
+        // an atom names the residue it belongs to: half a sidechain is not
+        // something anyone means to ask for
+        for (size_t i = 0; i < sel.Count(); i++) {
+          resi.Add(sel[i]->CAtom().GetResiId());
+        }
+      }
+      if (resi.IsEmpty()) {
+        Error.ProcessingError(__OlxSrcInfo,
+          olxstr("nothing named by '") << sc <<
+          "': expected residues ('A:45-60', 'A', '*'), a residue class"
+          " ('THR'), atoms ('CB_45') or 'sel'");
+        return;
+      }
+      const size_t n = app.SetCartoonSidechains(resi);
+      TBasicApp::NewLogEntry(logInfo) << "Cartoon: sidechains shown for " << n
+        << " residue(s). 'cartoon -sc=off' to put them back in the ribbon";
+    }
+  }
+  if (v && app.GetCartoons().IsEmpty()) {
+    TBasicApp::NewLogEntry(logInfo) << "Cartoon: no polymer backbone found."
+      " A cartoon needs residues, which come from RESI records";
+  }
+  app.Draw();
 }
 //.............................................................................
 void GXLibMacros::macAZoom(TStrObjList &Cmds, const TParamList &Options,
@@ -2290,6 +2603,11 @@ void GXLibMacros::macCent(TStrObjList &Cmds, const TParamList &Options,
 void GXLibMacros::macUniq(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
+  /* 'uniq' decides what is visible from the fragments, and 'isolate' decides
+  it from a radius. Leaving both on would mean two owners of the same flag, and
+  whichever ran last would look like it had silently failed. Isolation goes.
+  */
+  app.ClearFocus();
   TXAtomPList Atoms = app.FindXAtoms(Cmds, false, true);
   if (Atoms.IsEmpty()) {
     olex2::IOlex2Processor::GetInstance()->processMacro("fmol");
@@ -2328,6 +2646,8 @@ void GXLibMacros::macGroup(TStrObjList &Cmds, const TParamList &Options,
 void GXLibMacros::macFmol(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
+  // showing everything is the opposite of isolating, so it ends it
+  app.ClearFocus();
   app.AllVisible(true);
   app.CenterView();
   app.GetRenderer().GetBasis().SetZoom(

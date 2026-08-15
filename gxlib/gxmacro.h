@@ -25,6 +25,11 @@ public:
   DefMacro(Mask)
   DefMacro(ARad)
   DefMacro(ADS)
+  DefMacro(Cartoon)
+  /* Not 'focus': TMainForm::macFocus already owns that name and does something
+  else entirely, raising the window and giving the canvas keyboard focus.
+  */
+  DefMacro(Isolate)
   DefMacro(AZoom)
   DefMacro(BRad)
   DefMacro(TelpV)

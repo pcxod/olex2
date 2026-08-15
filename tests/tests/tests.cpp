@@ -46,6 +46,8 @@
 #include "tests/ptr_test.h"
 #include "tests/binding_test.h"
 #include "tests/hashed_test.h"
+#include "tests/protein_test.h"
+#include "../gxlib/tests/cartoon_test.h"
 
 class Listener : public AActionHandler {
 public:
@@ -104,6 +106,8 @@ int main(int argc, char* argv[]) {
   tests.Add(&test::PtrTests);
   tests.Add(&test::BindingTests);
   tests.Add(&test::TensorTransform);
+  tests.Add(&test::ProteinTests);
+  tests.Add(&test::CartoonTests);
 
   tests.run();
   if( argc > 1 )  {

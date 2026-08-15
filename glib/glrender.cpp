@@ -54,8 +54,17 @@ bool AGOSettings::Exit(const IOlxObject *, const IOlxObject *, TActionQueue *) {
 GLuint TGlRenderer::TGlListManager::NewList() {
   if (Pos >= Lists.Count()*Inc) {
     GLuint s = olx_gl::genLists(Inc);
-    if (s == GL_INVALID_VALUE || s == GL_INVALID_OPERATION) {
-      throw TFunctionFailedException(__OlxSourceInfo, "glGenLists");
+    /* glGenLists reports failure by returning 0, never by returning an error
+    constant - those are what glGetError returns, and are not in the same space
+    as a list name. Testing against them let a failure through as a valid base
+    of 0, after which every list id handed out was 0 plus an offset and every
+    glNewList raised GL_INVALID_VALUE. The symptom is a scene that quietly
+    stops drawing, with nothing in the log.
+    */
+    if (s == 0) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        olxstr("glGenLists could not allocate ") << Inc <<
+        " display lists; the driver is out of them");
     }
     Lists.Add(s);
   }
