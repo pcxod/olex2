@@ -361,12 +361,20 @@ ConstPtrList<TResidue> TAsymmUnit::FindResidues(const olxstr& resi, size_t max_n
   return list;
 }
 //..............................................................................
+/* The neighbour is looked for in this residue's own chain. Passing the number
+alone reaches FindResidue(const olxstr&) - an int does not match the
+(olxch, int) overload - which searches the chain-less bucket of
+ResidueRegistry, so for anything read from a PDB or an mmCIF, where residues
+carry a real chain character, both of these returned null for every residue.
+That took SHELX's _+ and _- atom references down with them: TAtomReference
+adds the null, Pack() drops it, and the restraint silently covers nothing.
+*/
 TResidue* TAsymmUnit::NextResidue(const TResidue& r) const {
-  return FindResidue(r.GetNumber()+1);
+  return FindResidue(r.GetChainId(), r.GetNumber()+1);
 }
 //..............................................................................
 TResidue* TAsymmUnit::PrevResidue(const TResidue& r) const {
-  return FindResidue(r.GetNumber()-1);
+  return FindResidue(r.GetChainId(), r.GetNumber()-1);
 }
 //..............................................................................
 TResidue* TAsymmUnit::FindResidue(olxch chainId, int num) const {
