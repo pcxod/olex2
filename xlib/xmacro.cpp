@@ -11851,6 +11851,17 @@ void XLibMacros::funCif(const TStrObjList& Params, TMacroData &E)  {
     block_index = param.SubStringFrom(bix+1).ToSizeT();
     param = param.SubStringTo(bix);
   }
+  /* A macromolecular file answers to none of the core names, so a structure
+  from the PDB reports n/a for its R factors, its cell and its space group
+  alike. Translated only when the core name is genuinely absent, so a file
+  carrying both is read as itself.
+  */
+  if (cf.IsMMCif() && !cf.ParamExists(param, block_index)) {
+    olxstr mm = TCif::MMEquivalentOf(param);
+    if (!mm.IsEmpty() && cf.ParamExists(mm, block_index)) {
+      param = mm;
+    }
+  }
   if (cf.ParamExists(param, block_index)) {
     E.SetRetVal(cf.GetParamAsString(param, block_index));
   }
