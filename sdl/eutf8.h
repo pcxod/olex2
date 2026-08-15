@@ -137,12 +137,12 @@ protected:  // functions below are unsafe to use if wchar_t size is unknown!!
       }
       else if (input[i] < 0x800) {  // 110xxxxx 10xxxxxx
         out << (uint8_t)(UTF8_MASK2BYTES | (input[i] >> 6))
-        << (uint8_t)((UTF8_MASKBYTE | input[i]) & UTF8_MASKBITS);
+        << (uint8_t)(UTF8_MASKBYTE | (input[i] & UTF8_MASKBITS));
       }
       else { // if( input[i] < 0x10000 )  {  // 1110xxxx 10xxxxxx 10xxxxxx. always true
         out << (uint8_t)(UTF8_MASK3BYTES | (input[i] >> 12))
-          << (uint8_t)((UTF8_MASKBYTE | (input[i] >> 6)) & UTF8_MASKBITS)
-          << (uint8_t)((UTF8_MASKBYTE | input[i]) & UTF8_MASKBITS);
+          << (uint8_t)(UTF8_MASKBYTE | ((input[i] >> 6) & UTF8_MASKBITS))
+          << (uint8_t)(UTF8_MASKBYTE | (input[i] & UTF8_MASKBITS));
       }
     }
     return out;
@@ -205,32 +205,32 @@ protected:  // functions below are unsafe to use if wchar_t size is unknown!!
       }
       else if (input[i] < 0x800) {  // 110xxxxx 10xxxxxx
         out << (uint8_t)(UTF8_MASK2BYTES | (input[i] >> 6))
-          << (uint8_t)((UTF8_MASKBYTE | input[i]) & UTF8_MASKBITS);
+          << (uint8_t)(UTF8_MASKBYTE | (input[i] & UTF8_MASKBITS));
       }
       else if (input[i] < 0x10000) {  // 1110xxxx 10xxxxxx 10xxxxxx
         out << (uint8_t)(UTF8_MASK3BYTES | (input[i] >> 12))
-          << (uint8_t)((UTF8_MASKBYTE | (input[i] >> 6)) & UTF8_MASKBITS)
-          << (uint8_t)((UTF8_MASKBYTE | input[i]) & UTF8_MASKBITS);
+          << (uint8_t)(UTF8_MASKBYTE | ((input[i] >> 6) & UTF8_MASKBITS))
+          << (uint8_t)(UTF8_MASKBYTE | (input[i] & UTF8_MASKBITS));
       }
       else if (input[i] < 0x200000) {  // 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
         out << (uint8_t)(UTF8_MASK4BYTES | (input[i] >> 18))
-          << (uint8_t)((UTF8_MASKBYTE | (input[i] >> 12)) & UTF8_MASKBITS)
-          << (uint8_t)((UTF8_MASKBYTE | (input[i] >> 6)) & UTF8_MASKBITS)
-          << (uint8_t)((UTF8_MASKBYTE | input[i]) & UTF8_MASKBITS);
+          << (uint8_t)(UTF8_MASKBYTE | ((input[i] >> 12) & UTF8_MASKBITS))
+          << (uint8_t)(UTF8_MASKBYTE | ((input[i] >> 6) & UTF8_MASKBITS))
+          << (uint8_t)(UTF8_MASKBYTE | (input[i] & UTF8_MASKBITS));
       }
       else if (input[i] < 0x4000000) {  // 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
         out << (uint8_t)(UTF8_MASK5BYTES | (input[i] >> 24))
-          << (uint8_t)((UTF8_MASKBYTE | (input[i] >> 18)) & UTF8_MASKBITS)
-          << (uint8_t)((UTF8_MASKBYTE | (input[i] >> 12)) & UTF8_MASKBITS)
-          << (uint8_t)((UTF8_MASKBYTE | (input[i] >> 6)) & UTF8_MASKBITS)
-          << (uint8_t)((UTF8_MASKBYTE | input[i]) & UTF8_MASKBITS);
+          << (uint8_t)(UTF8_MASKBYTE | ((input[i] >> 18) & UTF8_MASKBITS))
+          << (uint8_t)(UTF8_MASKBYTE | ((input[i] >> 12) & UTF8_MASKBITS))
+          << (uint8_t)(UTF8_MASKBYTE | ((input[i] >> 6) & UTF8_MASKBITS))
+          << (uint8_t)(UTF8_MASKBYTE | (input[i] & UTF8_MASKBITS));
       }
       else if (input[i] < 0x8000000) {  // 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
         out << (uint8_t)(UTF8_MASK6BYTES | (input[i] >> 30))
-          << (uint8_t)((UTF8_MASKBYTE | (input[i] >> 18)) & UTF8_MASKBITS)
-          << (uint8_t)((UTF8_MASKBYTE | (input[i] >> 12)) & UTF8_MASKBITS)
-          << (uint8_t)((UTF8_MASKBYTE | (input[i] >> 6)) & UTF8_MASKBITS)
-          << (uint8_t)((UTF8_MASKBYTE | input[i]) & UTF8_MASKBITS);
+          << (uint8_t)(UTF8_MASKBYTE | ((input[i] >> 18) & UTF8_MASKBITS))
+          << (uint8_t)(UTF8_MASKBYTE | ((input[i] >> 12) & UTF8_MASKBITS))
+          << (uint8_t)(UTF8_MASKBYTE | ((input[i] >> 6) & UTF8_MASKBITS))
+          << (uint8_t)(UTF8_MASKBYTE | (input[i] & UTF8_MASKBITS));
       }
     }
     return out;

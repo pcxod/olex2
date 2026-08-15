@@ -745,13 +745,35 @@ void ConnInfo::RemBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1,
   }
 }
 //........................................................................
+void ConnInfo::CollectConnAtoms(const TAsymmUnit& au, TCAtomPList& out) {
+  out.Clear();
+  for (size_t i = 0; i < au.AtomCount(); i++) {
+    TCAtom& ca = au.GetAtom(i);
+    if (ca.IsDeleted()) {
+      continue;
+    }
+    const CXConnInfo& ci = ca.GetConnInfo();
+    if (!ci.BondsToCreate.IsEmpty() || !ci.BondsToRemove.IsEmpty()) {
+      out.Add(ca);
+    }
+  }
+}
+//........................................................................
 void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate,
   BondInfoList& toDelete, smatd_list& ml)
 {
-  const TAsymmUnit& au = *a.GetParent();
+  // a caller in a loop should collect once and use the overload instead
+  TCAtomPList conn_atoms;
+  CollectConnAtoms(*a.GetParent(), conn_atoms);
+  Compile(a, conn_atoms, toCreate, toDelete, ml);
+}
+//........................................................................
+void ConnInfo::Compile(const TCAtom& a, const TCAtomPList& conn_atoms,
+  BondInfoList& toCreate, BondInfoList& toDelete, smatd_list& ml)
+{
   const TUnitCell& uc = a.GetParent()->GetLattice().GetUnitCell();
-  for (size_t i=0; i < au.AtomCount(); i++) {
-    TCAtom& ca = au.GetAtom(i);
+  for (size_t i=0; i < conn_atoms.Count(); i++) {
+    TCAtom& ca = *conn_atoms[i];
     if (ca.IsDeleted()) {
       continue;
     }

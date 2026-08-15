@@ -42,6 +42,24 @@ public:
   */
   virtual void SaveToFile(const olxstr& fileName);
   virtual void LoadFromFile(const olxstr& fileName);
+  /* how the bytes of a structure file were read - reported when the file then
+  fails to parse, as the parser can only say what it did not find
+  */
+  enum {
+    enc_bytes,  // as stored, in the platform's narrow encoding
+    enc_utf8,
+    enc_utf16le,
+    enc_utf16be
+  };
+  static const char *EncodingName(short enc);
+  /* reads a structure file into lines. Files reach Olex2 from editors, mail
+  clients and other programs, so a byte order mark, UTF-16 or classic Mac line
+  endings all turn up; read as bytes they parse as a file with nothing in it,
+  which is not a useful thing to tell somebody. Sets enc, if given, to what the
+  content turned out to be
+  */
+  static TStrList::const_list_type ReadLines(const olxstr &fn,
+    short *enc = 0);
   // default implementation read strings and calls LoadStrings
   virtual void LoadFromStream(IInputStream &is, const olxstr& nameToken);
   // name token can specify the dataset index or name

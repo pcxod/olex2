@@ -531,6 +531,12 @@ bool TCAtom::AttachSiteI(TCAtom* atom, const smatd& matrix) {
 }
 //..............................................................................
 void TCAtom::UpdateAttachedSites() {
+  TCAtomPList conn_atoms;
+  ConnInfo::CollectConnAtoms(*GetParent(), conn_atoms);
+  UpdateAttachedSites(conn_atoms);
+}
+//..............................................................................
+void TCAtom::UpdateAttachedSites(const TCAtomPList& conn_atoms) {
   // check if any symm eqivs were removed
   bool removed = false;
   for (size_t i = 0; i < AttachedSites.Count(); i++) {
@@ -548,7 +554,7 @@ void TCAtom::UpdateAttachedSites() {
   // end of the removed eqivs test
   smatd_list ml;
   BondInfoList toCreate, toDelete;
-  ConnInfo::Compile(*this, toCreate, toDelete, ml);
+  ConnInfo::Compile(*this, conn_atoms, toCreate, toDelete, ml);
   smatd I;
   I.I().SetId(0);
   for (size_t i = 0; i < toCreate.Count(); i++) {

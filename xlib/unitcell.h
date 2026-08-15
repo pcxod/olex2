@@ -530,12 +530,25 @@ protected:
     const smatd_list& Matrices;
     TAsymmUnit* AU;
     TLattice* Latt;
+    /* for each atom, ascending, the atoms after it close enough for the pair
+    test to find anything - a duplicate, a bond or an interaction all require
+    d < r(a1)+r(a2)+delta, so the rest cannot contribute. NULL to test every
+    pair, which is quicker for a small structure - see FindSymmEq
+    */
+    const TArrayList<TSizeList> *Neighbours;
+    /* true when the cell is wide enough that no -1..1 shift other than the one
+    the matrix loop already tested can bring a pair within range, so the whole
+    loop can be skipped. Decided once for the structure - see FindSymmEq
+    */
+    const bool SkipTranslations;
   public:
-    TSearchSymmEqTask(TPtrList<TCAtom>& atoms, const smatd_list& matrices);
+    TSearchSymmEqTask(TPtrList<TCAtom>& atoms, const smatd_list& matrices,
+      const TArrayList<TSizeList> *neighbours, bool skip_translations);
     void Run(size_t ind) const;
     void InitEquiv() const;
     TSearchSymmEqTask* Replicate() const {
-      return new TSearchSymmEqTask(Atoms, Matrices);
+      return new TSearchSymmEqTask(Atoms, Matrices, Neighbours,
+        SkipTranslations);
     }
   };
   class TBuildDistanceMapTask : public TaskBase {
