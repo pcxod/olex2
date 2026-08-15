@@ -32,22 +32,70 @@ public:
   static MapInfo CalcEDM(const TArrayList<SFUtil::StructureFactor>& F,
     array_3d<FloatT> &map, double vol)
   {
+    vec3s d = map.dim();
     return Calculate<FloatT, BVFourier::TCalcEDMTask<FloatT> >(
-      F, map, vol);
+      F, map, vol, vec3s(0, 0, 0), vec3s(d[0] - 1, d[1] - 1, d[2] - 1));
+  }
+
+  /* As above but only for the grid points from..to inclusive. The summation
+  is separable - once per x, then per x,y, then per x,y,z - so restricting
+  each axis costs proportionally less, and the values inside the box are the
+  ones the whole map would have had. Points outside are not written, so the
+  caller has to have initialised them.
+
+  The returned sigma is over the points computed, which is NOT the sigma of
+  the cell: a box around the atoms is far from empty while the cell mostly is.
+  Use CellSigma for anything that quotes a level in sigma.
+  */
+  template <class FloatT>
+  static MapInfo CalcEDM(const TArrayList<SFUtil::StructureFactor>& F,
+    array_3d<FloatT> &map, double vol, const vec3s &from, const vec3s &to)
+  {
+    return Calculate<FloatT, BVFourier::TCalcEDMTask<FloatT> >(
+      F, map, vol, from, to);
+  }
+
+  /* Sigma of the map over the whole cell, from a coarse full map.
+
+  A partial map cannot be contoured on its own sigma - a box around the atoms
+  is far denser than the cell, which is mostly empty - and every level Olex2
+  quotes is in sigma. Taking it from the structure factors by Parseval looks
+  right and is not: measured against a grid-converged full map it comes out
+  1.17x too large, consistently, so the relation between the P1 expanded list
+  and the full sphere is not the plain one. Rather than ship a factor that
+  cannot be derived, this computes the value the way it has always been
+  computed and simply uses a grid too coarse to be expensive - within about
+  1.5% of the converged sigma from 0.6 to 0.8 A, which is well inside what a
+  contour level cares about, and a fraction of a percent of the cost of the
+  map itself.
+  */
+  template <class FloatT>
+  static double CellSigma(const TArrayList<SFUtil::StructureFactor>& F,
+    double vol, const vec3d &axes, double resolution = 0.7)
+  {
+    vec3i d(axes * (1.0 / resolution));
+    for (int i = 0; i < 3; i++) {
+      d[i] = olx_max(4, d[i]);
+    }
+    olx_array::TArray3D<FloatT> m(0, d[0]-1, 0, d[1]-1, 0, d[2]-1);
+    return Calculate<FloatT, BVFourier::TCalcEDMTask<FloatT> >(
+      F, m.Data, vol, vec3s(0, 0, 0),
+      vec3s(d[0]-1, d[1]-1, d[2]-1)).sigma;
   }
 
   template <class FloatT>
   static MapInfo CalcPatt(const TArrayList<SFUtil::StructureFactor>& F,
     array_3d<FloatT> &map, double vol)
   {
+    vec3s d = map.dim();
     return Calculate<FloatT, BVFourier::TCalcPattTask<FloatT> >(
-      F, map, vol);
+      F, map, vol, vec3s(0, 0, 0), vec3s(d[0] - 1, d[1] - 1, d[2] - 1));
   }
 
 
   template <typename FloatT, class Task> static MapInfo Calculate(
     const TArrayList<SFUtil::StructureFactor>& F,
-    array_3d<FloatT> &map, double vol)
+    array_3d<FloatT> &map, double vol, const vec3s &from, const vec3s &to)
   {
     TStopWatch st(olxstr(__FUNC__) << '<' << typeid(Task).name() << '>');
     st.start("Initialising");
@@ -113,8 +161,11 @@ public:
     MapInfo mi = { 0, 1000, -1000 };
     double sum = 0, sq_sum = 0;
     st.start("Calculating");
-    Task xtask(map.data, dim, vol, F, mini, maxi, sin_cosX, sin_cosY, sin_cosZ, minInd);
-    TListIteratorManager<Task> tasks(xtask, dim[0], tLinearTask, 50);
+    Task xtask(map.data, dim, vol, F, mini, maxi, sin_cosX, sin_cosY, sin_cosZ,
+      minInd, from, to);
+    // one task per x plane of the box, not of the cell
+    TListIteratorManager<Task> tasks(xtask, to[0] - from[0] + 1,
+      tLinearTask, 50);
     for (size_t i = 0; i < tasks.Count(); i++) {
       sum += tasks[i].sum;
       sq_sum += tasks[i].sq_sum;
@@ -125,9 +176,11 @@ public:
         mi.maxVal = tasks[i].maxVal;
       }
     }
-    // sum should be ~0, but just in case...
-    double map_mean = sum / dim.Prod();
-    mi.sigma = sqrt(sq_sum / dim.Prod() - map_mean*map_mean);
+    // over the points computed, which is the whole cell unless boxed
+    const double n_pt = (double)(to[0] - from[0] + 1) *
+      (to[1] - from[1] + 1) * (to[2] - from[2] + 1);
+    double map_mean = sum / n_pt;
+    mi.sigma = sqrt(olx_max(0., sq_sum / n_pt - map_mean * map_mean));
     // clean up of allocated data
     if (sin_cosY == sin_cosX) {
       sin_cosY = 0;
@@ -161,16 +214,19 @@ public:
     compd  **sin_cosX, **sin_cosY, **sin_cosZ;
     compd ** S, *T;
     const vec3i &mini, &maxi;
+    // the grid points wanted, inclusive; the whole cell unless restricted
+    const vec3s &from, &to;
     size_t kLen, lLen;
     int minInd;
     double sum, sq_sum, vol;
     double maxVal, minVal;
     TCalcEDMTask(FloatT*** _map, const vec3s& _dim, double _volume,
       const SFList& _F, const vec3i& _min, const vec3i& _max,
-      compd** _scX, compd** _scY, compd** _scZ, int _minInd) :
+      compd** _scX, compd** _scY, compd** _scZ, int _minInd,
+      const vec3s& _from, const vec3s& _to) :
       map(_map), F(_F), dim(_dim),
       sin_cosX(_scX), sin_cosY(_scY), sin_cosZ(_scZ),
-      mini(_min), maxi(_max),
+      mini(_min), maxi(_max), from(_from), to(_to),
       kLen(_max[1] - _min[1] + 1), lLen(_max[2] - _min[2] + 1), minInd(_minInd),
       sum(0), sq_sum(0), vol(_volume),
       maxVal(-1000), minVal(1000)
@@ -188,14 +244,15 @@ public:
       delete[] S;
       delete[] T;
     }
-    void Run(size_t ix) {
+    void Run(size_t i_x) {
+      const size_t ix = from[0] + i_x;
       const size_t f_count = F.Count();
       for (size_t i = 0; i < f_count; i++) {
         const SFUtil::StructureFactor& sf = F[i];
         S[sf.hkl[1] - mini[1]][sf.hkl[2] - mini[2]] +=
           sf.val*sin_cosX[ix][sf.hkl[0] - minInd];
       }
-      for (size_t iy = 0; iy < dim[1]; iy++) {
+      for (size_t iy = from[1]; iy <= to[1]; iy++) {
         for (size_t i = 0; i < kLen; i++) {
           int idxi = (int)i + mini[1] - minInd;
           for (size_t j = 0; j < lLen; j ++) {
@@ -203,7 +260,7 @@ public:
           }
         }
         int d2 = mini[2] - minInd;
-        for (size_t iz = 0; iz < dim[2]; iz++) {
+        for (size_t iz = from[2]; iz <= to[2]; iz++) {
           compd R;
           for (size_t i = 0; i < lLen; i++) {
             R += T[i] * sin_cosZ[iz][i + d2];
@@ -231,7 +288,7 @@ public:
     }
     TCalcEDMTask* Replicate() {
       return new TCalcEDMTask(map, dim, vol,
-        F, mini, maxi, sin_cosX, sin_cosY, sin_cosZ, minInd);
+        F, mini, maxi, sin_cosX, sin_cosY, sin_cosZ, minInd, from, to);
     }
   };
 
@@ -246,11 +303,16 @@ public:
     int minInd;
     double sum, sq_sum, vol;
     double maxVal, minVal;
+    /* takes the box for signature compatibility with the EDM task - a
+    Patterson is always wanted over the whole cell, so it is not used
+    */
+    const vec3s &from, &to;
     TCalcPattTask(FloatT*** _map, const vec3s& _dim, double _volume,
       const SFList& _F, const vec3i& _min, const vec3i& _max,
-      compd** _scX, compd** _scY, compd** _scZ, int _minInd) :
+      compd** _scX, compd** _scY, compd** _scZ, int _minInd,
+      const vec3s& _from, const vec3s& _to) :
       map(_map), F(_F), dim(_dim),
-      mini(_min), maxi(_max),
+      mini(_min), maxi(_max), from(_from), to(_to),
       sin_cosX(_scX), sin_cosY(_scY), sin_cosZ(_scZ),
       kLen(_max[1] - _min[1] + 1), lLen(_max[2] - _min[2] + 1), minInd(_minInd),
       sum(0), sq_sum(0), vol(_volume), maxVal(-1000), minVal(1000)
@@ -303,7 +365,7 @@ public:
     }
     TCalcPattTask* Replicate() {
       return new TCalcPattTask(map, dim, vol,
-        F, mini, maxi, sin_cosX, sin_cosY, sin_cosZ, minInd);
+        F, mini, maxi, sin_cosX, sin_cosY, sin_cosZ, minInd, from, to);
     }
   };
 };

@@ -919,6 +919,11 @@ public:
   -Waals radii
   */
   void BuildSceneMask(FractMask& mask, double Inc);
+  /* The fractional bounds of what BuildSceneMask would cover, without
+  building it - so a map can be computed for that box only. False if nothing
+  is visible
+  */
+  bool GetVisibleAtomBounds(vec3d& mn, vec3d& mx, double Inc);
   static vec3d GetConstrainedDirection(const vec3d &t);
   //..............................................................................
   // X interface

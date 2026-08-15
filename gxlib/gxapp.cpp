@@ -5515,6 +5515,40 @@ public:
   }
 };
 
+bool TGXApp::GetVisibleAtomBounds(vec3d& mn, vec3d& mx, double inc) {
+  /* The fractional box the visible atoms occupy, padded by the furthest a
+  mask built from them could reach. Same atoms BuildSceneMask uses, so the box
+  is guaranteed to contain that mask - the point being to know the extent
+  before spending anything on the map.
+  */
+  mn = vec3d(100);
+  mx = vec3d(-100);
+  double max_r = 0;
+  size_t cnt = 0;
+  AtomIterator ai(*this);
+  while (ai.HasNext()) {
+    TXAtom& xa = ai.Next();
+    if (xa.IsDeleted() || !xa.IsVisible()) {
+      continue;
+    }
+    vec3d::UpdateMinMax(xa.ccrd(), mn, mx);
+    max_r = olx_max(max_r, (double)xa.GetType().r_vdw);
+    cnt++;
+  }
+  if (cnt == 0) {
+    return false;
+  }
+  // BuildSceneMask tests against r_vdw^2 + inc, so this is that as a distance
+  const double reach = sqrt(olx_sqr(max_r) + olx_max(0.0, inc));
+  const vec3d ax = XFile().GetAsymmUnit().GetAxes();
+  for (int i = 0; i < 3; i++) {
+    const double d = reach / ax[i];
+    mn[i] -= d;
+    mx[i] += d;
+  }
+  return true;
+}
+//..............................................................................
 void TGXApp::BuildSceneMask(FractMask& mask, double inc) {
   TStopWatch st(__FUNC__);
   st.start("Initialising");

@@ -963,8 +963,55 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
 // init map
   const vec3i dim(au.GetAxes()*resolution);
   TArray3D<float> map(0, dim[0]-1, 0, dim[1]-1, 0, dim[2]-1);
+  /* With a mask the map is only ever shown where the mask allows, so summing
+  the rest of the cell is work that is thrown away - and on a protein the cell
+  is mostly empty, so almost all of it is thrown away. Work out the box the
+  mask can possibly cover and sum only that.
+
+  The mask itself is built below, after the map, because it is also what the
+  renderer clips against; here only its extent is needed, which is the visible
+  atoms plus the mask distance.
+  */
+  vec3s box_from(0, 0, 0), box_to(dim[0]-1, dim[1]-1, dim[2]-1);
+  bool boxed = false;
+  if (Options.Contains("m")) {
+    vec3d mn, mx;
+    if (app.GetVisibleAtomBounds(mn, mx, maskInc)) {
+      for (int i = 0; i < 3; i++) {
+        // a whole grid step of slack, so the mask cannot reach past the box
+        int lo = (int)floor(mn[i] * dim[i]) - 1,
+          hi = (int)ceil(mx[i] * dim[i]) + 1;
+        box_from[i] = (size_t)olx_max(0, lo);
+        box_to[i] = (size_t)olx_min(dim[i] - 1, hi);
+      }
+      boxed = (box_to - box_from + vec3s(1, 1, 1)).Prod() <
+        (size_t)dim.Prod();
+    }
+  }
   st.start("Calcuating ED map");
-  mi = BVFourier::CalcEDM(P1SF, map.Data, vol);
+  if (boxed) {
+    /* points outside the box are never summed, so they have to start at
+    something - zero reads as "no density", which is what the mask shows
+    anyway
+    */
+    map.FastInitWith(0);
+    mi = BVFourier::CalcEDM(P1SF, map.Data, vol, box_from, box_to);
+    /* the sigma just computed is over the box, and a box around the atoms is
+    far denser than the cell, so every contour quoted in sigma would be wrong.
+    Take the cell value from a coarse full map, which costs a fraction of a
+    percent of what was just saved
+    */
+    st.start("Cell sigma");
+    mi.sigma = BVFourier::CellSigma<float>(P1SF, vol, au.GetAxes());
+    const vec3s bd = box_to - box_from + vec3s(1, 1, 1);
+    TBasicApp::NewLogEntry() << "Map computed for " << bd[0] << 'x' << bd[1]
+      << 'x' << bd[2] << " of " << dim[0] << 'x' << dim[1] << 'x' << dim[2]
+      << " points (" << olxstr::FormatFloat(1,
+        100.0*bd.Prod() / dim.Prod()) << "% of the cell), the rest is masked";
+  }
+  else {
+    mi = BVFourier::CalcEDM(P1SF, map.Data, vol);
+  }
   ///////////////////////////////////////////////////////////////////////////////
   st.start("Map operations");
   app.XGrid().InitGrid(dim);
