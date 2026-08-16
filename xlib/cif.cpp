@@ -253,7 +253,10 @@ TResidue *TCif::MMResidue(const olxstr &comp_id, const olxstr &seq_id,
     }
     return r;
   }
-  if (r == 0) {
+  /* by class as well: a mutation site is two residues on one number, and
+  NewResidue finds or creates the one this atom belongs to
+  */
+  if (r == 0 || !r->GetClassName().Equalsi(comp_id)) {
     r = &GetAsymmUnit().NewResidue(comp_id, num, num, chain);
   }
   return r;
@@ -416,10 +419,8 @@ void TCif::_LoadCurrentMM() {
         ca.SetOccu(o.ToDouble());
       }
     }
-    /* a deposited occupancy is a value, not something to refine: without the
-    reference SetParam frees it - see leq.cpp - and every atom arrives with a
-    refining sof, which at protein data to parameter ratios diverges against
-    the ADP it correlates with. The core dictionary path does the same
+    /* a deposited occupancy is fixed: without the reference SetParam frees it
+    and the sof refines against the ADP it correlates with, and diverges
     */
     GetRM().Vars.FixParam(ca, catom_var_name_Sof);
     if (i_b != InvalidIndex) {
