@@ -154,6 +154,11 @@ void TPdb::LoadFromStrings(const TStrList& Strings) {
 
 
   Title = "OLEX2: imported from PDB";
+
+  /* for ANISOU: a TER consumes a serial, so serial-1 is not the atom index
+  and every atom after one took an earlier atom's ADP - 261 of them in 1IEE
+  */
+  olx_pdict<size_t, TCAtom *> by_serial;
   for (size_t i = 0; i < Strings.Count(); i++) {
     if (Strings[i].StartsFromi("CRYST1")) {
       toks.StrtokF(Strings[i], CrystF);
@@ -183,7 +188,12 @@ void TPdb::LoadFromStrings(const TStrList& Strings) {
         GetAsymmUnit().SetZ(toks[9].ToDouble());
       }
     }
-    else if (Strings[i].StartsFromi("ATOM")) {
+    /* HETATM too - same layout, and ATOM alone drops every ligand, metal,
+    sugar and water: 395 of 4HHB's atoms, its four haems included
+    */
+    else if (Strings[i].StartsFromi("ATOM") ||
+      Strings[i].StartsFromi("HETATM"))
+    {
       toks.Clear();
       toks.StrtokF(Strings[i], AtomF);
       if (toks.Count() < 12) {
@@ -192,13 +202,33 @@ void TPdb::LoadFromStrings(const TStrList& Strings) {
       TResidue *resi = 0;
       if (toks[6].IsNumber()) {
         int r_num = toks[6].ToInt();
-        resi = GetAsymmUnit().FindResidue(r_num);
-        if (resi == 0) {
-          resi = &GetAsymmUnit().NewResidue(toks[4].TrimWhiteChars(), r_num, r_num,
-            toks[5].CharAt(0));
+        olxch chain = toks[5].CharAt(0);
+        if (chain == ' ') {
+          chain = TResidue::NoChainId();
         }
+        const olxstr cls = toks[4].TrimWhiteChars();
+        /* 52 and 52A are different residues, so the code folds into the key
+        exactly as TCif::MMResidue does it or the two readers disagree - it is
+        64 of 1IGY's atoms
+        */
+        const olxstr ins = toks[7].Trim(' ');
+        if (!ins.IsEmpty() && olxstr::o_isalpha(ins.CharAt(0))) {
+          r_num = r_num*100 +
+            (int)(olxstr::o_toupper(ins.CharAt(0)) - 'A' + 1);
+        }
+        /* find or create, by class as well as number: a mutation site is two
+        residues on one number - 1EJG:A:22 is PRO and SER - and both are the
+        model
+        */
+        resi = &GetAsymmUnit().NewResidue(cls, r_num, r_num, chain);
       }
       TCAtom& CA = GetAsymmUnit().NewAtom(resi);
+      {
+        const olxstr sn = toks[1].Trim(' ');
+        if (sn.IsNumber()) {
+          by_serial.Add(sn.ToSizeT(), &CA);
+        }
+      }
       CA.ccrd() = GetAsymmUnit().Fractionalise(
         vec3d(toks[8].ToDouble(), toks[9].ToDouble(), toks[10].ToDouble()));
       if (toks.Count() > 11) {
@@ -250,7 +280,8 @@ void TPdb::LoadFromStrings(const TStrList& Strings) {
       QE[4] = toks[14].ToDouble();
       QE[5] = toks[13].ToDouble();
       QE /= 10000;
-      TCAtom* ca = GetAsymmUnit().FindCAtomById(toks[1].ToSizeT() - 1);
+      const olxstr sn = toks[1].Trim(' ');
+      TCAtom* ca = sn.IsNumber() ? by_serial.Find(sn.ToSizeT(), 0) : 0;
       if (ca != 0) {
         ca->UpdateEllp(QE);
         if (ca->GetEllipsoid()->IsNPD()) {
@@ -261,6 +292,7 @@ void TPdb::LoadFromStrings(const TStrList& Strings) {
       }
     }
   }
+
 }
 //..............................................................................
 bool TPdb::Adopt(TXFile& XF, int flags) {
