@@ -300,11 +300,9 @@ TGXApp::TGXApp(const olxstr &FileName, AGlScene *scene)
   CartoonHidesAtoms = true;
   CartoonTraceOnly = false;
   CartoonColourMode = ccChain;
-  /* Everything that is not traced is still drawn. Hiding it by default keeps
-  the ordered waters from swamping the ribbon, but it also hides the ligands,
-  metals and sugars, and a deposited entry is mostly not water: an antibody
-  loses its glycans and a haem protein its haem, with nothing on screen to say
-  so. 'cartoon -n=nowater' is the middle ground.
+  /* hiding what is not traced keeps the ordered waters off the ribbon, but it
+  also takes the ligands, metals and sugars - an antibody loses its glycans
+  with nothing on screen to say so. 'cartoon -n=nowater' is the middle ground
   */
   CartoonNonProtein = cnpShow;
   CartoonFocusSidechains = false;
@@ -654,12 +652,9 @@ void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
   for (size_t i = 0; i < Rings.Count(); i++) {
     Rings[i].Create();
   }
-  /* A structure with this many residues is a polymer, and drawing a polymer as
-  several thousand balls and sticks is not a display anyone can work with. The
-  cartoon is therefore the default above the threshold - but only until the user
-  says otherwise, after which their choice stands for the session.
-
-  Set cartoon_auto_residues to 0 to switch this off.
+  /* above this a structure is a polymer, and several thousand balls and sticks
+  is not a usable display - so the cartoon is the default, until the user says
+  otherwise and their choice stands for the session. 0 switches it off
   */
   if (!CartoonUserSet && !CartoonsVisible) {
     const size_t threshold = TBasicApp::GetOptions()
@@ -672,25 +667,25 @@ void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
         " bonds";
     }
   }
-  size_t traced_chains = 0;
+  bool is_polymer = false;
   if (CartoonsVisible) {
     sw.start("Cartoon creation");
-    traced_chains = CreateCartoons();
-    if (traced_chains == 0 && !CartoonUserSet) {
+    is_polymer = CreateCartoons() != 0;
+    if (!is_polymer && !CartoonUserSet) {
       // residues, but no polymer backbone in them: not a protein after all
       CartoonsVisible = false;
     }
   }
-  /* Whether a backbone was traced, and nothing else. Whether the user asked
-  for a cartoon decides only whether it stays switched on.
-
-  Conflating the two is what made this wrong: a small molecule loaded after a
-  protein, with the cartoon still switched on and CartoonUserSet therefore
-  true, traced no chains and was reported as a polymer anyway. THPP came back
-  with CGLS-J, a solvent mask and a set of protein restraints, and the answer
-  was written into its own settings, so it stayed a polymer across sessions.
+  if (!is_polymer) {
+    is_polymer = HasPolymerBackbone();
+  }
+  /* whether the model has a backbone is a question about the model; whether a
+  cartoon is on screen is one about the display. Answering the first with the
+  second is wrong both ways - a small molecule loaded after a protein came back
+  with CGLS-J and protein restraints, and a protein with the cartoon off would
+  be reported as not a polymer
   */
-  SuggestPolymerRefinement(traced_chains != 0);
+  SuggestPolymerRefinement(is_polymer);
 
   FLabels->Init(false);
   FLabels->Create();
@@ -777,14 +772,11 @@ void TGXApp::CenterView(bool calcZoom) {
     vec3d::UpdateMinMax(a.crd(), miN, maX);
     weight += 1;
   }
-  /* The cartoon hides every atom it traces, so the loop above cannot see the
-  protein at all. With nothing else in the model the weight comes out zero and
-  the model is never centred, which is a structure that has to be centred by
-  hand before it can be seen; where waters or ligands do remain, the centre
-  becomes theirs rather than the fold's and the model turns about a point
-  outside itself. Each chain contributes its own centre weighted by the number
-  of residues it draws, so a long chain counts for more than a short one, which
-  is what the per-atom sum above would have done.
+  /* the cartoon hides every atom it traces, so the loop above cannot see the
+  protein: the weight comes out zero and nothing is centred, or the waters and
+  ligands that remain take the centre and the model turns about a point outside
+  itself. Each chain contributes its centre weighted by its residue count, as
+  the per-atom sum would have done
   */
   {
     const TAsymmUnit &rau = XFile().GetAsymmUnit();
@@ -800,11 +792,9 @@ void TGXApp::CenterView(bool calcZoom) {
           continue;
         }
         const TResidue &r = rau.GetResidue(ids[j]);
-        /* The standard count first, and the model's own only when the name is
-        not one of the twenty. The two disagree on purpose: a residue with an
-        unbuilt sidechain should still carry the weight of the residue it is,
-        or the centre creeps towards the better-ordered parts of the model.
-        Counting is what makes a modified or non-standard residue work at all.
+        /* the standard count first, the model's own only for a name outside
+        the twenty: a residue with an unbuilt sidechain should carry the weight
+        of the residue it is, or the centre creeps towards the ordered parts
         */
         size_t n = xlib::protein::ResidueAtomCount(r.GetClassName());
         if (n == 0) {
@@ -6565,12 +6555,9 @@ namespace {
     return heavy == 1 && oxygen_only;
   }
 
-  /* Mean Ueq over the residue's non-hydrogen atoms.
-
-  TCAtom::GetUiso() is kept equal to the ellipsoid's Ueq for anisotropic atoms
-  (catom.cpp:410), so one accessor covers both. Hydrogens are left out: they
-  ride, their displacement parameters are usually tied to the parent, and
-  including them flattens the contrast the mode exists to show.
+  /* mean Ueq over the residue's non-hydrogen atoms. GetUiso() is kept equal to
+  the ellipsoid's Ueq, so one accessor covers both. Hydrogens ride and are
+  usually tied to the parent, and including them flattens the contrast
   */
   bool ResidueMeanUeq(const TAsymmUnit &au, size_t resi_id, double &out) {
     if (resi_id == InvalidIndex || resi_id >= au.ResidueCount()) {
@@ -6621,6 +6608,40 @@ namespace {
     */
     return c.release();
   }
+}
+//..............................................................................
+bool TGXApp::HasPolymerBackbone() {
+  const TAsymmUnit &au = XFile().GetAsymmUnit();
+  /* Residue 0 is everything outside a RESI, so one residue means none, and a
+  model with no residues cannot have a backbone the classifier would find.
+  This is what keeps the cost off every small molecule, since the question is
+  asked on every model change and not only on load.
+  */
+  if (au.ResidueCount() <= 1) {
+    return false;
+  }
+  TSAtomPList atoms;
+  AtomIterator ai = GetAtoms();
+  atoms.SetCapacity(ai.count);
+  while (ai.HasNext()) {
+    TXAtom &xa = ai.Next();
+    if (!xa.IsDeleted()) {
+      atoms.Add(xa);
+    }
+  }
+  if (atoms.IsEmpty()) {
+    return false;
+  }
+  TTypeList<xlib::protein::ChainSegment> segments;
+  xlib::protein::ExtractSegments(au, atoms, segments);
+  // the same two-residue minimum the cartoon uses: one residue on its own is
+  // not a chain, and nothing can be interpolated along it
+  for (size_t i = 0; i < segments.Count(); i++) {
+    if (segments[i].residues.Count() >= 2) {
+      return true;
+    }
+  }
+  return false;
 }
 //..............................................................................
 size_t TGXApp::CreateCartoons() {
@@ -7052,15 +7073,10 @@ void TGXApp::HidePolymerAtoms(const TArrayList<bool> &traced,
       hide = true;                      // outside the substructure view
     }
     else if (rid < traced.Count() && traced[rid]) {
-      /* A ribbon is a picture of this residue's backbone, so drawing the same
-      atoms as sticks puts a second copy of it inside the ribbon - which reads
-      as a rendering fault and hides whatever else is there.
-
-      What the ribbon says nothing about is the sidechain, so that is what an
-      asked-for residue gets: named through 'cartoon -sc', or by isolating it
-      when the focus option is on. The CA comes with it, even though it is
-      backbone, because it is where the sidechain joins the chain - without it
-      the sticks float beside the ribbon instead of growing out of it.
+      /* the ribbon is a picture of the backbone, so drawing those atoms as
+      sticks puts a second copy inside it. What it says nothing about is the
+      sidechain, so that is what an asked-for residue gets. The CA comes with
+      it, backbone though it is, or the sticks float beside the ribbon
       */
       const bool sidechain = (in_focus && CartoonFocusSidechains) ||
         (rid < CartoonSidechains.Count() && CartoonSidechains[rid]);
@@ -7327,14 +7343,11 @@ size_t TGXApp::SetAtomFocus(const TSAtomPList &seed, double radius,
     }
     (wanted ? in_range : rest).Add(xa);
   }
-  /* The sphere decides what is interesting, not where a molecule ends: a radius
-  cut through a ring leaves half a ring. Whatever it touched is completed to the
-  unit it belongs to - an atom in a residue to its residue, as the cartoon path
-  does, and an atom in none to its connected fragment.
-
-  Residues are taken by id, so every symmetry copy of one returns, while
-  fragments are taken by network, so only the copy touched does: a residue id is
-  a property of the model and a network of this assembly.
+  /* the sphere says what is interesting, not where a molecule ends - a radius
+  through a ring leaves half a ring. What it touched is completed to its unit:
+  an atom in a residue to the residue, one in none to its fragment. Residues by
+  id, so every symmetry copy returns; fragments by network, so only the one
+  touched does
   */
   if (whole && !in_range.IsEmpty()) {
     const TAsymmUnit &au = XFile().GetAsymmUnit();
@@ -7366,11 +7379,9 @@ size_t TGXApp::SetAtomFocus(const TSAtomPList &seed, double radius,
     rest.Pack();
   }
   FocusHiddenAtoms.AddAll(rest);
-  /* A hydrogen follows the atom it is bonded to, whether or not the sphere
-  reached it. A sphere cut through a C-H leaves a bond to nothing at the edge of
-  the view, which reads as a modelling problem rather than as the edge of the
-  selection. Completing to whole units makes this redundant in most cases, but
-  not when completion is switched off.
+  /* a hydrogen follows its parent whether or not the sphere reached it: a cut
+  C-H leaves a bond to nothing, which reads as a modelling problem. Redundant
+  when completing to whole units, but not when that is off
   */
   {
     BondIterator bi = GetBonds();
@@ -7502,14 +7513,10 @@ void TGXApp::SetCartoonHidesAtoms(bool v) {
 }
 //..............................................................................
 size_t TGXApp::CreateTestCartoon(size_t n_residues) {
-  /* Synthetic geometry, for the one question the architecture stands on:
-  whether a compiled display list of this many triangles still rotates. It
-  needs no model, so the answer does not wait on topology or on a large test
-  structure, and it can be run on another GPU by anyone.
-
-  The shape is a bundle of ideal alpha helices on a square grid rather than one
-  long chain, so that the object stays compact on screen. A long thin rod would
-  be mostly clipped by the driver and would flatter the result.
+  /* synthetic geometry for the question the architecture stands on: whether a
+  compiled list of this many triangles still rotates. No model needed, so it
+  runs on any GPU. A bundle of helices on a grid rather than one long chain -
+  a thin rod would be mostly clipped and would flatter the result
   */
   ClearCartoons();
   CartoonsVisible = true;
@@ -7578,14 +7585,10 @@ void TGXApp::SuggestPolymerRefinement(bool is_polymer) {
   if (op == 0) {
     return;
   }
-  /* CreateObjects runs on every model change, not only on load, so this fires
-  repeatedly. The Python side is written to be idempotent and to leave any
-  setting the user has touched alone; keeping that judgement there rather
-  than duplicating it here is the point of the call.
-
-  The negative case is told as well, and it matters more than it looks: the
-  answer is stored with the structure, so a model that once passed for a
-  polymer goes on claiming to be one until something says otherwise.
+  /* CreateObjects runs on every model change, so this fires repeatedly - the
+  python side is idempotent and leaves a touched setting alone, which is why
+  the judgement lives there. The negative case is told too: the answer is
+  stored with the structure and would otherwise stand for ever
   */
   op->processMacro(is_polymer ? "spy.on_polymer_loaded()"
     : "spy.on_polymer_absent()");
@@ -7593,32 +7596,18 @@ void TGXApp::SuggestPolymerRefinement(bool is_polymer) {
 //..............................................................................
 void TGXApp::ClearCartoons() {
   for (size_t i = 0; i < Cartoons.Count(); i++) {
-    /* The renderer holds its own list of every object that was created, and
-    that reference has to go before the object does. Deleting without this
-    leaves a dangling pointer in TGlRenderer::FGObjects which the next repaint
-    walks straight into - an access violation inside the paint handler, with
-    nothing in the log to connect it to the cartoon that was switched off
-    several seconds earlier. Most objects never hit this because they are only
-    ever destroyed by the renderer clearing everything at once, whereas these
-    come and go while the scene is live.
-
-    The selection group is a second such reference and RemoveObject does not
-    touch it - it removes from FGObjects only (glrender.h:359) - while
-    ~AGDrawObject is empty, so an object never takes itself out of the group it
-    is in. A selected cartoon deleted here was therefore a dangling pointer in
-    TGlRenderer::FSelection, and the next repaint after any rebuild crashed.
-    TXCartoon is not selectable now, which should keep it out of the group in
-    the first place; this stays because the cost is one comparison and the
-    failure it prevents is a hard crash with an empty log.
+    /* the renderer's reference has to go before the object, or FGObjects holds
+    a dangling pointer the next repaint walks into. The selection group is a
+    second one that RemoveObject does not touch, and ~AGDrawObject is empty, so
+    an object never leaves a group it is in - TXCartoon is not selectable now,
+    but this costs one comparison and prevents a crash with an empty log
     */
     GetRenderer().Deselect(*Cartoons[i]);
     GetRenderer().RemoveObject(*Cartoons[i]);
-    /* The collection may already be gone. Loading a new file destroys every
-    collection in the renderer while this list survives from the previous
-    structure, and HasPrimitives only tests the pointer for null - it cannot
-    know the object behind it was freed. Looking the name up again is what
-    tells the difference, and following the stale pointer is a crash inside
-    RemoveObject during the next file load.
+    /* the collection may be gone: a new file destroys every collection while
+    this list survives, and HasPrimitives only tests the pointer for null.
+    Looking the name up again is what tells the difference; following the stale
+    pointer crashes inside RemoveObject on the next load
     */
     if (!Cartoons[i]->HasPrimitives()) {
       continue;
@@ -7628,20 +7617,11 @@ void TGXApp::ClearCartoons() {
     if (gpc == 0 || gpc != &Cartoons[i]->GetPrimitives()) {
       continue;
     }
-    /* The collection and its primitive are deliberately left alone.
-
-    Destroying them is what the display-list leak seems to call for, but
-    TGPCollection::ClearPrimitives frees primitives the renderer still holds in
-    its material groups, and they are then freed a second time: a heap
-    corruption inside free(), reported at process shutdown, miles from the
-    cause. It is only safe from AGDrawObject::UpdatePrimitives, which rebuilds
-    the object immediately afterwards.
-
-    Reuse solves the same problem without freeing anything. The collection is
-    keyed by chain, so the next build finds this primitive and re-emits into the
-    same display list id - the driver replaces the contents and no id is ever
-    leaked. A collection whose chain has gone stays behind holding one list and
-    is never drawn, having no objects.
+    /* the collection and its primitive are left alone on purpose. Destroying
+    them looks like the fix for the list leak, but ClearPrimitives frees
+    primitives the renderer still holds in its material groups and they go a
+    second time. Reuse needs no freeing: keyed by chain, the next build
+    re-emits into the same list id and none is leaked
     */
     Cartoons[i]->GetPrimitives().RemoveObject(*Cartoons[i]);
   }

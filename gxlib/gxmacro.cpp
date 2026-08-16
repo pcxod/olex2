@@ -963,14 +963,10 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
 // init map
   const vec3i dim(au.GetAxes()*resolution);
   TArray3D<float> map(0, dim[0]-1, 0, dim[1]-1, 0, dim[2]-1);
-  /* With a mask the map is only ever shown where the mask allows, so summing
-  the rest of the cell is work that is thrown away - and on a protein the cell
-  is mostly empty, so almost all of it is thrown away. Work out the box the
-  mask can possibly cover and sum only that.
-
-  The mask itself is built below, after the map, because it is also what the
-  renderer clips against; here only its extent is needed, which is the visible
-  atoms plus the mask distance.
+  /* the map is only shown where the mask allows, so summing the rest of the
+  cell is thrown away - on a protein, nearly all of it. Sum the box the mask
+  can cover instead. The mask itself is built below, since it also clips the
+  display; only its extent is needed here
   */
   vec3s box_from(0, 0, 0), box_to(dim[0]-1, dim[1]-1, dim[2]-1);
   bool boxed = false;
@@ -990,16 +986,12 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
   }
   st.start("Calcuating ED map");
   if (boxed) {
-    /* points outside the box are never summed, so they have to start at
-    something - zero reads as "no density", which is what the mask shows
-    anyway
-    */
+    // points outside the box are never summed, and zero reads as no density
     map.FastInitWith(0);
     mi = BVFourier::CalcEDM(P1SF, map.Data, vol, box_from, box_to);
-    /* the sigma just computed is over the box, and a box around the atoms is
-    far denser than the cell, so every contour quoted in sigma would be wrong.
-    Take the cell value from a coarse full map, which costs a fraction of a
-    percent of what was just saved
+    /* that sigma is over the box, which is far denser than the cell, so every
+    contour quoted in sigma would be wrong. The coarse full map costs a
+    fraction of a percent of what was just saved
     */
     st.start("Cell sigma");
     mi.sigma = BVFourier::CellSigma<float>(P1SF, vol, au.GetAxes());
@@ -1242,18 +1234,11 @@ void GXLibMacros::macADS(TStrObjList &Cmds, const TParamList &Options,
   app.SetAtomDrawingStyle(ads, Atoms.IsEmpty() ? 0 : &Atoms);
 }
 //.............................................................................
-/* Put what is on the screen in the middle of it, and scale to fit.
-
-Isolating a few residues out of a protein leaves them wherever they happened to
-sit in the whole molecule -- commonly off the edge of the view, so the useful
-result of the macro is invisible until the user hunts for it. Both halves of
-this read the *visible* objects only, which after SetFocus is the focus and
-after ClearFocus is the structure again, so leaving frames the whole thing back
-without a second code path.
-
-Deliberately not `center -z`: that macro takes its centre from FindXAtoms,
-which returns hidden atoms too, so it would centre an isolated region on the
-middle of the molecule it was cut from.
+/* centre what is on the screen and scale to fit. An isolated stretch sits
+wherever it was in the whole molecule, commonly off the edge of the view. Reads
+the visible objects only, so leaving the focus frames the structure again
+without a second path. Not 'center -z': that takes its centre from FindXAtoms,
+which returns hidden atoms too
 */
 static void FrameVisible(TGXApp &app) {
   vec3d miv(100, 100, 100), mav(-100, -100, -100), miv_, mav_;
@@ -1397,9 +1382,8 @@ void GXLibMacros::macCartoon(TStrObjList &Cmds, const TParamList &Options,
       return;
     }
   }
-  /* A colour or atom-visibility option on its own adjusts what is already
-  drawn rather than toggling it off, which is what a control bound to this
-  macro needs.
+  /* a colour or visibility option on its own adjusts what is drawn rather
+  than toggling it off, which is what a bound control needs
   */
   const bool only_options = Cmds.IsEmpty() &&
     (mode >= 0 || trace >= 0 || nonprot >= 0 || Options.Contains('a') ||
@@ -1434,9 +1418,8 @@ void GXLibMacros::macCartoon(TStrObjList &Cmds, const TParamList &Options,
     app.SetCartoonColourMode(mode);
   }
   app.SetCartoonsVisible(v);
-  /* Applied after the cartoon exists: with no ribbon there is nothing for a
-  sidechain to be shown instead of, and 'cartoon on -sc=A:45-60' is one
-  command.
+  /* after the cartoon exists - with no ribbon there is nothing for a sidechain
+  to be shown instead of, and 'cartoon on -sc=A:45-60' is one command
   */
   if (Options.Contains("sc")) {
     const olxstr sc = Options.FindValue("sc");
@@ -1463,9 +1446,8 @@ void GXLibMacros::macCartoon(TStrObjList &Cmds, const TParamList &Options,
       for (size_t i = 0; i < toks.Count(); i++) {
         names.Strtok(toks[i], ' ');
       }
-      /* Residue notation first, atom names for whatever is not in it: 'A:45-60'
-      is what someone reading a protein asks for, while 'THR', 'CB_45' and
-      'sel' are the atom grammar the rest of Olex2 speaks.
+      /* residue notation first, the atom grammar for the rest: 'A:45-60'
+      against 'THR', 'CB_45' and 'sel'
       */
       TSizeList resi;
       TStrList atom_names;
@@ -2650,9 +2632,8 @@ void GXLibMacros::macCent(TStrObjList &Cmds, const TParamList &Options,
 void GXLibMacros::macUniq(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
-  /* 'uniq' decides what is visible from the fragments, and 'isolate' decides
-  it from a radius. Leaving both on would mean two owners of the same flag, and
-  whichever ran last would look like it had silently failed. Isolation goes.
+  /* 'uniq' sets visibility from the fragments and 'isolate' from a radius -
+  two owners of one flag, and whichever ran last would look ignored
   */
   app.ClearFocus();
   TXAtomPList Atoms = app.FindXAtoms(Cmds, false, true);

@@ -27,23 +27,18 @@ class TAtomLegend : public AGlMouseHandlerImp {
   double Z;
   TStrList text;
   TArrayList<TGlMaterial> materials;
-  /* Rows before this one are element keys, drawn as spheres; rows from it on
-  are cartoon keys, drawn as a short length of ribbon. A ball already means
-  "atom type" everywhere else in this legend, so a chain or a secondary
-  structure cannot borrow the same symbol without saying the wrong thing. The
-  cartoon rows are always appended last, so one boundary tells them apart.
+  /* rows below are element keys drawn as spheres, from here on cartoon keys
+  drawn as ribbon - a ball already means atom type here. Cartoon rows are
+  always appended last, so one boundary separates them
   */
   size_t first_ribbon_row;
-  /* Per row, meaningful from first_ribbon_row on. The swatch takes its colour
-  through glColor rather than from the material, because that is how the ribbon
-  itself is coloured: the material alone leaves the ambient dark and the swatch
-  comes out visibly duller than the thing it is a key to.
+  /* per row, from first_ribbon_row on. Coloured through glColor as the ribbon
+  is - the material alone leaves the ambient dark and the swatch looks duller
+  than what it is a key to
   */
   TArrayList<uint32_t> row_colours;
-  /* Appends the key for whatever the cartoon is currently coloured by, as more
-  rows of the same legend. In the same object on purpose: it then moves, saves
-  its position and resets with the element key rather than needing a second
-  draggable thing to keep track of.
+  /* appends the key for the current cartoon colouring as more rows of this
+  legend, so it moves, saves and resets with the element key
   */
   void AddCartoonKey();
 protected:

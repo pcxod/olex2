@@ -111,14 +111,11 @@ TXCartoon::TXCartoon(TGlRenderer &R, const olxstr &collectionName)
     chain_id(' '),
     matrix_id(0)
 {
-  /* Clicks still arrive: SelectObject maps the picking colour back to an object
-  without consulting either flag, and OnMouseUp resolves the hit to a residue.
-  What selectable would add is the whole chain entering the renderer's selection
-  group, which selects 140 residues at once and, since ~AGDrawObject is empty and
-  RemoveObject touches only TGlRenderer::FGObjects, leaves a freed pointer there
-  whenever a focus, colour or representation change rebuilds the object.
-  TGlGroup::Add refuses a non-selectable object, closing the click fallback,
-  'sel -a' and box select alike.
+  /* clicks still arrive - SelectObject maps the picking colour back without
+  consulting either flag. What selectable would add is the whole chain entering
+  the selection group, 140 residues at once, and a freed pointer left there on
+  every rebuild since ~AGDrawObject is empty and RemoveObject touches only
+  FGObjects. TGlGroup::Add refuses a non-selectable object
   */
   SetSelectable(false);
   SetGroupable(false);
@@ -365,11 +362,9 @@ size_t TXCartoon::HitResidueProjected(double px, double py, double &q,
 {
   const bool subset = (residue_visible.Count() == residue_ca.Count());
   const double t2 = tolerance*tolerance;
-  /* Nearest CA on the projection plane. Where a chain doubles back two
-  stretches of ribbon share a pixel and the frontmost is the one clicked, but
-  the third component Project() returns is in projection units rather than
-  angstroems and its sign convention is not established, so depth is reported
-  by ReportHitCandidates rather than used here.
+  /* nearest CA on the projection plane. Where a chain doubles back the front
+  stretch is the one clicked, but Project()'s third component is in projection
+  units and its sign convention is not established, so depth is only reported
   */
   size_t best = InvalidIndex;
   double best_q = 0;
@@ -557,13 +552,11 @@ void TXCartoon::DrawPickProxy() const {
 }
 //.............................................................................
 bool TXCartoon::Orient(TGlPrimitive &P) {
-  /* Picking re-renders the scene with one colour per object and reads the pixel
-  back to identify it, so the compiled list must not run: it emits a glColor at
-  every residue boundary, which would decode as some other object entirely. A
-  coarse tube along the CA trace is drawn instead - no colour changes, few
-  enough triangles to re-emit on a click, and fat enough that the edges of a
-  ribbon still register. It is drawn although the object is not selectable,
-  this pass being what tells a click which chain it landed on.
+  /* picking reads back one colour per object, so the compiled list must not
+  run - it emits a glColor per residue, which would decode as another object. A
+  coarse tube along the CA trace instead: no colour changes, cheap enough to
+  re-emit per click, fat enough that a ribbon edge registers. Drawn even though
+  the object is not selectable, this pass being what identifies the chain
   */
   if (Parent.IsSelecting()) {
     DrawPickProxy();

@@ -2852,9 +2852,8 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
     if (TEFile::UnixPath(file_n.file_name).StartsFrom("http://") ||
       TEFile::UnixPath(file_n.file_name).StartsFrom("https://"))
     {
-      /* the PDB keeps its structure factors in a separate mmCIF rather than an
-      hkl beside the model, and they need converting before Olex2 can use them.
-      The python side does the whole entry, so hand it the code
+      /* the structure factors are in a separate mmCIF, not an hkl beside the
+      model, and need converting - the python side does the whole entry
       */
       {
         TUrl url(TEFile::UnixPath(file_n.file_name));
@@ -2891,15 +2890,12 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
       file_n.file_name = FXApp->XFile().GetFileName();
     }
     bool exists = TEFile::Exists(file_n.file_name);
-    /* a PDB entry code, taken the way a COD url is above. Only when there is
-    nothing of that name to open, whatever its extension - reap is given file
-    names far more often than entry codes, so a local file wins
+    /* a PDB entry code, as the COD url above. Only when nothing of that name
+    exists, whatever its extension - a local file wins
     */
     olxstr entry_code = Cmds.Text(' ').Trim(' ');
     if (!exists && XLibMacros::IsPdbEntryCode(entry_code)) {
-      /* the name is only made absolute further down, so the folder to look in
-      has to be worked out here
-      */
+      // the name is only made absolute below, so resolve the folder here
       olxstr dir = TEFile::ExtractFilePath(file_n.file_name);
       if (dir.IsEmpty()) {
         dir = XLibMacros::CurrentDir();

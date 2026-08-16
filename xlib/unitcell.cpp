@@ -237,9 +237,8 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
     return;
   }
   const size_t mc = Matrices.Count();
-  /* the neighbour list replaces the loop over ind+1..count and nothing else;
-  ascending and only i > ind, so the pairs arrive in the same order as before -
-  which matters, as the body deletes atoms and later iterations test IsDeleted
+  /* ascending and only i > ind, so the pairs come in the original order -
+  the body deletes atoms and later iterations test IsDeleted
   */
   const TSizeList *nb = (Neighbours == 0) ? 0 : &(*Neighbours)[ind];
   const size_t n = (nb == 0) ? (Atoms.Count() - ind - 1) : nb->Count();
@@ -330,16 +329,10 @@ void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
         }
       }
     }
-    /* the matrix loop above has already tested Matrices[0] with the shift
-    rounding chose, kept as done_shift, so one of the 27 below repeats it.
-    Skipping any other - 0,0,0 included - loses contacts in general: Round()
-    minimises the fractional difference, not the cartesian distance, so in a
-    skewed cell the image it picks need not be the nearest, and at a difference
-    of exactly a half the tie is broken arbitrarily while both images are real.
-    ZZULI2 is such a case - Cu1 and Cu2 lie half a cell apart along a.
-
-    SkipTranslations is the one case where they provably cannot contribute and
-    the whole loop goes; the proof is with the flag in FindSymmEq
+    /* done_shift was already tested above, so skipping it drops a duplicate.
+    The others cannot go in general - Round() minimises the fractional
+    difference, not the cartesian one, so the image it picks need not be the
+    nearest (ZZULI2). SkipTranslations is the provable case, see FindSymmEq
     */
     if (SkipTranslations) {
       continue;
@@ -418,10 +411,8 @@ void TUnitCell::TSearchSymmEqTask::InitEquiv() const {
 }
 //..............................................................................
 namespace {
-  /* the distance above which the search can find nothing: its outcomes are a
-  duplicate (< 0.01 A), a bond and an interaction, and both bond tests are
-  d < r(a1)+r(a2)+delta, so twice the largest radius plus the larger delta
-  bounds them all. Not a tolerance - no pair beyond it could contribute
+  /* beyond this the search can find nothing: every outcome needs
+  d < r(a1)+r(a2)+delta, so this bounds them all. Not a tolerance
   */
   double symm_eq_cutoff(const TCAtomPList &atoms, double delta, double deltaI) {
     double r = 0;
@@ -430,19 +421,10 @@ namespace {
     }
     return 2*r + olx_max(delta, deltaI);
   }
-  /* the shortest distance any -1..1 shift other than the one already tested
-  can produce.
-
-  After the matrix loop the difference reduced by its own rounding has every
-  component in [-0.5, 0.5]. Any other shift differs from that one by a nonzero
-  integer vector, so along at least one axis the fractional component becomes
-  at least a half in magnitude. Projecting onto the reciprocal direction normal
-  to the other two axes, the cartesian length is then at least half the cell's
-  width perpendicular to that axis - and it is the perpendicular width, V/|bxc|,
-  not the axis length, which over-estimates in a skewed cell and would make
-  this unsafe.
-
-  So no such shift can reach anything closer than this, whatever the pair
+  /* the shortest any -1..1 shift but the tested one can reach. The reduced
+  difference is within [-0.5, 0.5], so another shift is at least half a cell
+  wide along some axis. Perpendicular width V/|bxc|, not the axis length,
+  which over-estimates in a skewed cell
   */
   double min_shift_distance(const TAsymmUnit &au) {
     const mat3d &c2c = au.GetCellToCartesian();
@@ -456,13 +438,11 @@ namespace {
     }
     return 0.5*olx_min(vol/bc, olx_min(vol/ac, vol/ab));
   }
-  /* fills out[i], ascending, with the atoms after i within cutoff of it under
-  any of the matrices. A cell list over the symmetry images, binned in
-  fractional coordinates with the bins at least cutoff wide perpendicular to
-  each face - the axis length bins too coarsely in a skewed cell. Closer pairs
-  are then always within one bin in each direction, so the 27 surrounding bins
-  are the whole search. An atom can be a neighbour under several matrices, so
-  the result is made unique
+  /* fills out[i], ascending, with the atoms after i within cutoff under any
+  matrix. Bins are at least cutoff wide perpendicular to each face - the axis
+  length bins too coarsely in a skewed cell - so a close pair is always within
+  one bin and the 27 around it are the whole search. Made unique, since an atom
+  can be a neighbour under several matrices
   */
   void build_symm_eq_neighbours(const TAsymmUnit &au,
     const TCAtomPList &atoms, const smatd_list &matrices, double cutoff,
@@ -518,9 +498,8 @@ namespace {
       for (int da = -1; da <= 1; da++) {
         for (int db = -1; db <= 1; db++) {
           for (int dc = -1; dc <= 1; dc++) {
-            /* signed - bin 0's neighbour is the last bin, and in size_t that
-            underflows into an unrelated bin, silently losing the pairs across
-            a cell face
+            /* signed: bin 0's neighbour is the last one, and in size_t that
+            underflows and loses the pairs across a cell face
             */
             const size_t ja = (size_t)(((int)ba + da + (int)na) % (int)na),
               jb = (size_t)(((int)bb + db + (int)nb) % (int)nb),
@@ -528,7 +507,7 @@ namespace {
             const TSizeList &bin = bins[(ja*nb + jb)*nc + jc];
             for (size_t k = 0; k < bin.Count(); k++) {
               const size_t im = bin[k], j = img_atom[im];
-              // the caller only ever looks forward, and once per atom
+              // the caller only looks forward, and once per atom
               if (j <= i || seen[j] == i) {
                 continue;
               }
@@ -582,10 +561,8 @@ void TUnitCell::FindSymmEq() const {
     }
   }
   else {
-    /* the pairs worth testing, instead of every pair; built once here as it
-    is shared read-only by all threads. Below the threshold it is not built at
-    all: testing every pair is quicker than working out which to skip, and the
-    two agree exactly - the list only ever omits pairs that cannot contribute
+    /* the pairs worth testing, built once and shared read-only by the threads.
+    Below the threshold testing every pair is quicker than choosing
     */
     const size_t cell_list_min_atoms = 1500;
     const bool use_cell_list = ACA.Count() >= cell_list_min_atoms;
@@ -597,15 +574,9 @@ void TUnitCell::FindSymmEq() const {
       build_symm_eq_neighbours(GetLattice().GetAsymmUnit(), ACA, Matrices,
         cutoff, neighbours);
     }
-    /* every test in the -1..1 loop fires below r(a1)+r(a2)+delta, so the cutoff
-    bounds them all, and min_shift_distance is the closest any shift but the one
-    already tested could ever come. If that is beyond the cutoff the loop cannot
-    find anything and is skipped whole - provable for the structure rather than
-    a tolerance, and it declines on exactly the cells that need it: a 77 A
-    protein axis clears it by 5x, ZZULI2's 6.9 A axis does not clear it at all.
-
-    The identity check is not paranoia - the loop, and this proof, both read
-    Matrices[0] as I with no translation
+    /* if the closest a shift could come is beyond the cutoff the -1..1 loop
+    cannot find anything and goes whole. The identity test matters: both the
+    loop and min_shift_distance read Matrices[0] as I with no translation
     */
     const bool skip_translations = Matrices[0].r.IsI() &&
       Matrices[0].t.IsNull() &&
@@ -618,9 +589,7 @@ void TUnitCell::FindSymmEq() const {
     }
     {
       TStopWatch sw1("Pair search");
-      /* with the list each index costs about the same; without it index i
-      tests every atom after it, which is what tQuadraticTask spreads for
-      */
+      // without the list index i tests every atom after it - hence tQuadratic
       OlxListTask::Run(searchTask, ACA.Count(),
         use_cell_list ? tLinearTask : tQuadraticTask, 100);
     }

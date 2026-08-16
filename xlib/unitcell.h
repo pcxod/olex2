@@ -530,15 +530,12 @@ protected:
     const smatd_list& Matrices;
     TAsymmUnit* AU;
     TLattice* Latt;
-    /* for each atom, ascending, the atoms after it close enough for the pair
-    test to find anything - a duplicate, a bond or an interaction all require
-    d < r(a1)+r(a2)+delta, so the rest cannot contribute. NULL to test every
-    pair, which is quicker for a small structure - see FindSymmEq
+    /* per atom, ascending, the atoms after it close enough to find anything.
+    NULL to test every pair, which is quicker for a small structure
     */
     const TArrayList<TSizeList> *Neighbours;
-    /* true when the cell is wide enough that no -1..1 shift other than the one
-    the matrix loop already tested can bring a pair within range, so the whole
-    loop can be skipped. Decided once for the structure - see FindSymmEq
+    /* the cell is wide enough that no -1..1 shift but the one already tested
+    can reach anything, so the loop goes. Decided once, see FindSymmEq
     */
     const bool SkipTranslations;
   public:

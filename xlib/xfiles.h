@@ -42,8 +42,8 @@ public:
   */
   virtual void SaveToFile(const olxstr& fileName);
   virtual void LoadFromFile(const olxstr& fileName);
-  /* how the bytes of a structure file were read - reported when the file then
-  fails to parse, as the parser can only say what it did not find
+  /* how the bytes were read - reported if the file then fails to parse, as
+  the parser can only say what it did not find
   */
   enum {
     enc_bytes,  // as stored, in the platform's narrow encoding
@@ -52,11 +52,9 @@ public:
     enc_utf16be
   };
   static const char *EncodingName(short enc);
-  /* reads a structure file into lines. Files reach Olex2 from editors, mail
-  clients and other programs, so a byte order mark, UTF-16 or classic Mac line
-  endings all turn up; read as bytes they parse as a file with nothing in it,
-  which is not a useful thing to tell somebody. Sets enc, if given, to what the
-  content turned out to be
+  /* reads a structure file into lines. A byte order mark, UTF-16 or CR only
+  line endings all turn up and parse as an empty file if taken as bytes. Sets
+  enc, if given, to what the content turned out to be
   */
   static TStrList::const_list_type ReadLines(const olxstr &fn,
     short *enc = 0);

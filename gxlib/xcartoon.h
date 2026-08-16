@@ -14,19 +14,11 @@
 #include "glmaterial.h"
 #include "cartoon_geom.h"
 
-/* One polymer chain drawn as a compiled display list.
-
-The mesh comes from cartoon_geom and the topology from xlib/protein.h; this
-only owns the geometry and hands it to OpenGL once. The primitive is
-sgloCommandList rather than sgloTriangles because TGlPrimitive::IsCompilable()
-covers only the quadric types: a sgloTriangles primitive re-emits every vertex
-and normal through olx_gl on every frame, which at protein scale is hundreds of
-thousands of calls per frame. A command list is emitted once and drawn with a
-single callList.
-
-One object per chain, not per residue: the display list is the unit of both
-drawing and rebuilding, and a per-residue list would give away the whole
-advantage in call overhead.
+/* one polymer chain as a compiled display list. sgloCommandList and not
+sgloTriangles: IsCompilable() covers only the quadric types, so a triangle
+primitive re-emits every vertex through olx_gl on every frame - hundreds of
+thousands of calls at protein scale. One object per chain rather than per
+residue, the list being the unit of both drawing and rebuilding
 */
 BeginGxlNamespace()
 
@@ -65,23 +57,11 @@ namespace cartoon_colour {
   uint32_t Residue(size_t index);
   // xlib::protein::ss_*
   uint32_t Secondary(short ss);
-  /* The material the ribbon is drawn with, for one colour.
-
-  The legend's swatch is a sphere and the ribbon is a mesh, but they have to
-  read as the same colour, and a flat unlit swatch does not. The ribbon carries
-  a specular highlight and is lit; a swatch with an ambient term only comes out
-  flatter and more saturated, which is far enough away to look like a different
-  colour rather than the same one. Built here for the same reason the colours
-  above are, so the key and the thing it is a key to cannot drift.
-
-  Colour material is left off: the ribbon turns it on because its list emits a
-  glColor per residue, whereas a swatch has nothing to emit one and would take
-  whatever colour happened to be current.
-
-  The ambient term is deliberately dark rather than the colour. Under this
-  scene's lights an ambient at full colour saturates to white, which on a white
-  background is an empty window - so this is the ribbon's material as it stands
-  and not a tidied-up version of it.
+  /* the ribbon's material for one colour, built here so the legend key and the
+  ribbon cannot drift - an unlit swatch reads as a different colour. Colour
+  material off: the ribbon's list emits a glColor per residue, a swatch has
+  nothing to emit one. The ambient stays dark; at full colour it saturates to
+  white under these lights
   */
   TGlMaterial RibbonMaterial(uint32_t colour);
 }
@@ -90,28 +70,22 @@ class TXCartoon : public AGDrawObject {
   cartoon::Mesh mesh;
   // baked into the list, so a colour change is a rebuild
   uint32_t colour;
-  /* Optional, one per residue. When it is the right length the list emits a
-  colour change at each residue boundary instead of one for the whole chain,
-  which is the per-residue table in the mesh finding its first consumer.
+  /* optional, one per residue; at the right length the list emits a colour
+  change per residue boundary instead of one for the chain
   */
   TArrayList<uint32_t> residue_colours;
   /* TResidue ids, in the same order, so recolouring and the residue subset
   work can reach the model without re-running the topology.
   */
   TArrayList<size_t> residue_ids;
-  /* TCAtom ids of the backbone atoms this ribbon stands for: four per residue,
-  N, CA, C, O in that order, InvalidIndex where a role was not filled.
-
-  A ribbon is a picture of the backbone, so a focused residue showing its
-  sidechain as sticks must not also draw the backbone as sticks - that puts a
-  second copy of it inside the ribbon. Ids because the classification is
-  topological: crambin's first residue is N3, C6, C7, O3, and a label test
-  finds no backbone in it at all.
+  /* TCAtom ids of the backbone this ribbon stands for, four per residue -
+  N, CA, C, O - InvalidIndex where a role was not filled. A residue showing its
+  sidechain must not draw the backbone as sticks too, inside its own ribbon.
+  Ids because the classification is topological, not by label
   */
   TArrayList<size_t> backbone_atom_ids;
-  /* CA of each residue, in the same order. The ribbon is a single mesh with no
-  per-residue objects in it, so this is what a click has to be resolved
-  against, and what a residue's share of the model centre acts at.
+  /* CA of each residue, in order. The ribbon is one mesh with no per-residue
+  objects, so a click and a residue's share of the centre resolve against this
   */
   TArrayList<vec3d> residue_ca;
   // the selecting pass's stand-in for the ribbon; see DrawPickProxy
@@ -119,15 +93,12 @@ class TXCartoon : public AGDrawObject {
   double pick_radius;
   // xlib::protein::ss_* per residue, in the same order
   TArrayList<short> residue_ss;
-  /* Per residue; an empty list draws all of them. This is the substructure
-  view: the per-residue triangle table means a subset costs a re-emission of
-  the display list and nothing else - no new geometry, no new topology.
+  /* per residue, empty draws all - the substructure view. The per-residue
+  triangle table makes a subset a re-emission and nothing else
   */
   TArrayList<bool> residue_visible;
-  /* Per residue, or empty when nothing in this chain is selected. The highlight
-  is baked into the same display list as the colours, so selecting a residue
-  costs a re-emission and nothing else - no second pass over the ribbon, no
-  overlay geometry, and no per-frame work once the click is over.
+  /* per residue, empty when nothing here is selected. Baked into the same
+  list as the colours, so a selection costs a re-emission and no per-frame work
   */
   TArrayList<bool> residue_selected;
   TGlPrimitive *list;
@@ -136,10 +107,9 @@ class TXCartoon : public AGDrawObject {
   // the driver rejected the list, so nothing of this chain will be drawn
   mutable bool list_failed;
   olxch chain_id;
-  /* Which symmetry matrix generated this copy of the chain, 0 for the
-  asymmetric unit's own. A generated copy is traced as its own segment and sits
-  somewhere else entirely, so a click landing on one is the difference between
-  "that residue" and "a residue that looks rotated in space".
+  /* which matrix generated this copy, 0 for the asymmetric unit's own. A
+  generated copy is its own segment and sits elsewhere, which a click has to
+  distinguish
   */
   uint32_t matrix_id;
   void EmitList(TGlPrimitive &p) const;
@@ -155,16 +125,14 @@ public:
   bool GetDimensions(vec3d &Max, vec3d &Min);
   vec3d CalcCenter() const;
 
-  /* Replaces the geometry with a cartoon through the segment's CA positions,
-  assigning secondary structure on the way. Must be called before Create();
-  afterwards use Rebuild().
+  /* replaces the geometry with a cartoon through the segment's CA, assigning
+  secondary structure on the way. Before Create(); after it use Rebuild()
   */
   void BuildFrom(const xlib::protein::ChainSegment &seg,
     const cartoon::CartoonParams &p);
 
-  /* Re-emits the display list from the current mesh, keeping the same list id.
-  This is the path for a colour or subset change; it does not touch the
-  collection or the style.
+  /* re-emits the list from the current mesh, same list id - the path for a
+  colour or subset change, touching neither collection nor style
   */
   void Rebuild();
 
@@ -195,53 +163,34 @@ public:
   const TArrayList<size_t>& GetResidueIds() const { return residue_ids; }
   const TArrayList<short>& GetResidueSS() const { return residue_ss; }
   const TArrayList<vec3d>& GetResidueCA() const { return residue_ca; }
-  /* Which residue a line through the scene passes closest to, or InvalidIndex
-  if it passes no nearer than `tolerance` to any of them.
-
-  Resolved against the CA positions rather than against the mesh. Consecutive
-  CA are 3.8 A apart and the ribbon is about 2 A wide, so the nearest CA to the
-  line is the residue under the cursor for any view that is not almost edge-on
-  along the chain - and it costs a dot product per residue instead of a
-  triangle intersection per triangle.
-
-  `from` and `dir` are in the same absolute Cartesian frame the mesh is in;
-  `dir` need not be normalised. On a hit, `dist` is how far along the line the
-  residue lies, so a caller can keep the nearest of several chains.
+  /* which residue a line passes closest to, InvalidIndex if none within
+  tolerance. Against the CA rather than the mesh: consecutive CA are 3.8 A
+  apart and the ribbon about 2 A wide, so the nearest CA is the residue under
+  the cursor unless the view is edge-on, at a dot product per residue. dir need
+  not be normalised; dist is how far along the line, for comparing chains
   */
   size_t HitResidue(const vec3d &from, const vec3d &dir, double &dist,
     double tolerance = 2.5) const;
-  /* The shape the selecting pass sees: a tube of `pick_slices` sides and
-  `pick_radius` A along the CA trace. Coarse on purpose - it only has to say
-  which chain is under the cursor, and HitResidue settles the residue - so it
-  is a fraction of the real mesh and cheap enough to emit per click rather than
-  holding a second display list. Turn the slices up if clicks near the edge of
-  a wide helix ribbon feel unreliable, or the radius up to make the whole
-  ribbon easier to hit.
+  /* what the selecting pass sees: a tube of pick_slices sides and pick_radius
+  along the CA trace. Coarse on purpose - it only says which chain, HitResidue
+  settles the residue - so it is emitted per click rather than held as a second
+  list. More slices if clicks near a wide ribbon's edge feel unreliable
   */
   void DrawPickProxy() const;
-  /* Which residue lies nearest a point on the projection plane, or
-  InvalidIndex if none is within `tolerance` of it.
-
-  The other direction from HitResidue: the renderer can project a world point
-  but has nothing to unproject a screen one, so the residues are brought to the
-  cursor rather than a ray taken into the scene. `q` returns how far away the
-  winner was, so a caller comparing chains can keep the closest.
+  /* which residue is nearest a point on the projection plane, InvalidIndex if
+  none within tolerance. The other direction from HitResidue: the renderer can
+  project a world point but not unproject a screen one. q is how far away
   */
   size_t HitResidueProjected(double px, double py, double &q,
     double tolerance = 1.0) const;
-  /* Logs the residues competing for one click and the depth Project gives
-  them, with the chosen one starred. Temporary: it is here to settle which way
-  round that depth runs, because assuming it made picking worse.
+  /* logs the residues competing for a click and the depth Project gives them.
+  Temporary, to settle which way round that depth runs
   */
   void ReportHitCandidates(double px, double py, size_t chosen) const;
-  /* Mouse-down only claims the event; the selection happens on mouse-up, and
-  only if the button came up where it went down.
-
-  Selecting on the press made every drag that started on a ribbon select
-  something as well as rotating, which is not what a drag means anywhere else
-  in Olex2 - and it put a redraw inside the press handler, which is not where
-  the rest of the renderer draws from. TGlMouse's own selection fallback works
-  the same way: on release, gated on IsClick.
+  /* mouse-down only claims the event; the selection happens on release, and
+  only if the button came up where it went down - otherwise every drag starting
+  on a ribbon selects as well as rotating. TGlMouse's own fallback does the
+  same, gated on IsClick
   */
   virtual bool OnMouseDown(const IOlxObject *sender, const TMouseData &d);
   virtual bool OnMouseUp(const IOlxObject *sender, const TMouseData &d);
@@ -249,17 +198,10 @@ public:
   void SetPickSlices(int v) { pick_slices = v; }
   double GetPickRadius() const { return pick_radius; }
   void SetPickRadius(double v) { pick_radius = v; }
-  /* Adds one residue of this chain to the selection, or takes it back out if
-  it was already in it. Returns true when the state changed, so the caller can
-  skip a rebuild that would draw the same thing.
-
-  Toggling rather than replacing, and with no modifier key: that is what
-  clicking does everywhere else in Olex2, and a selection built one residue at a
-  time is the whole point of picking on a ribbon.
-
-  Selection is per residue and lives here rather than in the renderer's
-  selection group because a group holds whole objects: to the renderer this
-  chain is one object, and a click on one turn of a helix never meant all of it.
+  /* toggles one residue in the selection, returning true when the state
+  changed so the caller can skip a rebuild. Kept here rather than in the
+  renderer's selection group: a group holds whole objects, and to the renderer
+  this chain is one - a click on a turn of a helix never meant all of it
   */
   bool ToggleResidue(size_t i);
   // true when there was something to clear
@@ -275,13 +217,9 @@ public:
   bool HasVisibleResidues() const;
   bool DidListFail() const { return list_failed; }
 
-  /* Reads and discards every pending GL error, returning how many there were.
-
-  This is the only place in Olex2 that calls glGetError at all, and GL latches
-  errors until somebody reads them. So an error raised anywhere, at any earlier
-  point, is still sitting there waiting to be blamed on whatever checks first -
-  which is exactly what happened when the cartoon started checking. Draining
-  before a check is what makes the check mean anything.
+  /* reads and discards every pending GL error, returning the count. GL latches
+  them and this is the only place in Olex2 that reads them, so an error raised
+  anywhere earlier is waiting to be blamed on whatever checks first
   */
   static size_t DrainGlErrors();
 };

@@ -41,11 +41,10 @@ void TCif::Clear() {
   MatrixMap.Clear();
 }
 //..............................................................................
-/* The loop holding a given column, found by that column rather than by the
-loop's name. cetTable takes its name from the common prefix of its columns and
-then trims that back to the last underscore, so an _atom_site.* loop is
-registered as _atom - a rule not worth depending on. Column names are kept
-whole, so they are the reliable handle.
+/* the loop holding a column, found by the column and not by the loop name:
+cetTable derives that name from the common prefix and trims it to the last
+underscore, so an _atom_site.* loop is registered as _atom. Column names are
+kept whole and are the reliable handle
 */
 static cif_dp::cetTable *FindMMLoop(cif_dp::CifBlock &cb, const olxstr &col) {
   for (size_t i = 0; i < cb.table_map.Count(); i++) {
@@ -58,13 +57,10 @@ static cif_dp::cetTable *FindMMLoop(cif_dp::CifBlock &cb, const olxstr &col) {
 }
 //..............................................................................
 olxstr TCif::MMEquivalentOf(const olxstr &core_name) {
-  /* Only the names Olex2 reads back out of a loaded file. The R factors carry
-  the summary and the history, so without these a structure from the PDB
-  reports n/a for every one of them.
-  Note the entries that are not a punctuation change: the macromolecular R
-  factors are named after the work and free sets, which the core dictionary
-  has no concept of. _refine.ls_R_factor_R_free has no core equivalent at
-  all and can only be asked for by its own name.
+  /* only the names Olex2 reads back out of a loaded file. Note the entries
+  that are not a punctuation change: the macromolecular R factors are named
+  after the work and free sets, which the core dictionary has no concept of,
+  and _refine.ls_R_factor_R_free has no core equivalent at all
   */
   static const char *map[][2] = {
     {"_refine_ls_R_factor_gt", "_refine.ls_R_factor_R_work"},
@@ -116,11 +112,9 @@ void TCif::LoadFromStrings(const TStrList& Strings) {
     }
     bool valid = false;
     if (mm) {
-      /* By the column, not by the loop name: the name is derived and trimmed,
-      so the atom_site loop is registered as _atom. Testing the name here meant
-      only entries carrying an _atom_site_anisotrop loop as well were
-      recognised, every other one being read as an ordinary CIF and yielding
-      nothing.
+      /* by the column, not the loop name, which is derived and trimmed to
+      _atom: testing the name recognised only entries that also carried an
+      _atom_site_anisotrop loop, and read every other one as an ordinary CIF
       */
       valid = FindMMLoop(cb, "_atom_site.Cartn_x") != 0;
     }
@@ -245,16 +239,11 @@ TResidue *TCif::MMResidue(const olxstr &comp_id, const olxstr &seq_id,
   compared, never used as a sequence position.
   */
   if (!ins_code.IsEmpty() && ins_code != '?' && ins_code != '.') {
-    /* An insertion code makes a residue distinct from its neighbour of the
-    same number - 52 and 52A are different residues - and ResidueRegistry is
-    keyed on an int, so the code has to be folded into that key.
-
-    The encoded value is given as both the number and the alias. It cannot be
-    given as the number with the true number as alias, which is what the alias
-    is otherwise for: NewResidue falls back to looking the alias up when the
-    number is unknown, so 52A would find residue 52 and then throw over the
-    mismatched class - or, worse, silently merge two residues that a chain with
-    an insertion has deliberately kept apart.
+    /* 52 and 52A are different residues and ResidueRegistry is keyed on an
+    int, so the insertion code folds into that key. The encoded value goes in
+    as both number and alias: with the true number as alias, NewResidue's
+    fallback would find 52 from 52A and either throw over the class or silently
+    merge two residues the insertion keeps apart
     */
     const int coded = num*100 +
       (int)(olxstr::o_toupper(ins_code.CharAt(0)) - 'A' + 1);

@@ -54,12 +54,10 @@ bool AGOSettings::Exit(const IOlxObject *, const IOlxObject *, TActionQueue *) {
 GLuint TGlRenderer::TGlListManager::NewList() {
   if (Pos >= Lists.Count()*Inc) {
     GLuint s = olx_gl::genLists(Inc);
-    /* glGenLists reports failure by returning 0, never by returning an error
-    constant - those are what glGetError returns, and are not in the same space
-    as a list name. Testing against them let a failure through as a valid base
-    of 0, after which every list id handed out was 0 plus an offset and every
-    glNewList raised GL_INVALID_VALUE. The symptom is a scene that quietly
-    stops drawing, with nothing in the log.
+    /* glGenLists reports failure with 0, not with an error constant - those
+    come from glGetError and are not in the same space as a list name. Tested
+    against those, a failure passed as a valid base of 0 and every glNewList
+    then raised GL_INVALID_VALUE, with nothing in the log
     */
     if (s == 0) {
       throw TFunctionFailedException(__OlxSourceInfo,

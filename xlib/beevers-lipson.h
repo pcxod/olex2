@@ -37,15 +37,11 @@ public:
       F, map, vol, vec3s(0, 0, 0), vec3s(d[0] - 1, d[1] - 1, d[2] - 1));
   }
 
-  /* As above but only for the grid points from..to inclusive. The summation
-  is separable - once per x, then per x,y, then per x,y,z - so restricting
-  each axis costs proportionally less, and the values inside the box are the
-  ones the whole map would have had. Points outside are not written, so the
-  caller has to have initialised them.
-
-  The returned sigma is over the points computed, which is NOT the sigma of
-  the cell: a box around the atoms is far from empty while the cell mostly is.
-  Use CellSigma for anything that quotes a level in sigma.
+  /* as above, for the grid points from..to inclusive. The summation is
+  separable, so restricting each axis costs proportionally less and the values
+  inside the box are the ones the whole map would have had. Points outside are
+  not written - the caller initialises them. The returned sigma is over the
+  points computed, not the cell; use CellSigma to quote a level in sigma
   */
   template <class FloatT>
   static MapInfo CalcEDM(const TArrayList<SFUtil::StructureFactor>& F,
@@ -55,19 +51,11 @@ public:
       F, map, vol, from, to);
   }
 
-  /* Sigma of the map over the whole cell, from a coarse full map.
-
-  A partial map cannot be contoured on its own sigma - a box around the atoms
-  is far denser than the cell, which is mostly empty - and every level Olex2
-  quotes is in sigma. Taking it from the structure factors by Parseval looks
-  right and is not: measured against a grid-converged full map it comes out
-  1.17x too large, consistently, so the relation between the P1 expanded list
-  and the full sphere is not the plain one. Rather than ship a factor that
-  cannot be derived, this computes the value the way it has always been
-  computed and simply uses a grid too coarse to be expensive - within about
-  1.5% of the converged sigma from 0.6 to 0.8 A, which is well inside what a
-  contour level cares about, and a fraction of a percent of the cost of the
-  map itself.
+  /* sigma over the whole cell, from a coarse full map: a boxed map is far
+  denser than the cell and cannot be contoured on its own sigma. Parseval from
+  the structure factors comes out 1.17x too large against a converged map, so
+  the P1 expanded list does not relate to the full sphere as plainly as it
+  looks; a coarse grid is within 1.5% and costs almost nothing
   */
   template <class FloatT>
   static double CellSigma(const TArrayList<SFUtil::StructureFactor>& F,

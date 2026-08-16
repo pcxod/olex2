@@ -14,22 +14,17 @@
 #include "typelist.h"
 #include "protein.h"
 
-/* Mesh generation for the polymer cartoon representations.
-
-Topology lives in xlib/protein.h; this only turns a chain of backbone positions
-into triangles. Deliberately free of OpenGL, so the same geometry can be handed
-to a different renderer without being rewritten, and so it can be tested without
-a graphics context.
+/* mesh generation for the cartoon representations - topology is in
+xlib/protein.h, this only turns backbone positions into triangles. Free of
+OpenGL, so another renderer can take it and it tests without a context
 */
 BeginGxlNamespace()
 
 namespace cartoon {
 
-/* Triangle mesh with per-residue provenance.
-
-`residue_triangle_offset` holds the first triangle of each residue plus a
-closing sentinel equal to the triangle count, so a subset of residues maps to a
-contiguous triangle range without searching.
+/* triangle mesh with per-residue provenance: residue_triangle_offset holds the
+first triangle of each residue plus a closing sentinel, so a subset maps to a
+contiguous range without searching
 */
 struct Mesh {
   TTypeList<vec3f> vertices, normals;
@@ -46,16 +41,10 @@ struct Mesh {
   size_t VertexCount() const { return vertices.Count(); }
 };
 
-/* Cross-section sizes per secondary structure, in Angstroms.
-
-The cross-section is an ellipse whose two semi-axes are the width, across the
-ribbon, and the thickness. A coil sets them equal and is therefore a round tube,
-which is why one builder covers both representations: the tube is the cartoon
-with every residue coil.
-
-Keeping the number of points around the cross-section fixed across the three
-types is what lets a whole chain stay one continuous surface, morphing between a
-tube and a ribbon rather than butting two separately closed pieces together.
+/* cross-section sizes per secondary structure, in A. The section is an ellipse
+of width across the ribbon and thickness; a coil sets them equal and is a round
+tube, which is why one builder covers both representations. The point count is
+fixed across the three types so a chain stays one continuous surface
 */
 struct CartoonParams {
   float coil_radius;
@@ -65,10 +54,8 @@ struct CartoonParams {
   float arrow_width, arrow_tip;
   size_t steps_per_residue;
   size_t slices;
-  /* Draw every residue as coil, whatever it was assigned. The plain CA trace,
-  kept as a representation in its own right: it is the honest one when the
-  assignment is not to be trusted, and it is what a low-resolution or partly
-  built model deserves.
+  /* every residue as coil, whatever it was assigned - the plain CA trace, and
+  the honest one when the assignment is not to be trusted
   */
   bool trace_only;
   CartoonParams()
@@ -98,26 +85,18 @@ struct TubeParams {
   }
 };
 
-/* The direction the ribbon lies flat along at one residue, from the chain step
-A = CA(i+1) - CA(i) and the carbonyl B = O(i) - CA(i).
-
-Carson and Bugg (1986) call this D = (A x B) x A, which is the part of B
-perpendicular to A. A x B on its own is the *surface normal*, and using that as
-the width instead turns the ribbon through ninety degrees: a helix then presents
-its edge and reads as a lumpy tube rather than a broad spiral band. Separated
-out and tested because that is exactly the mistake the first version made and
-nothing else in the geometry would reveal it.
-
-Returns a zero vector when the two are parallel, or either is degenerate.
+/* the direction the ribbon lies flat along, from the chain step
+A = CA(i+1) - CA(i) and the carbonyl B = O(i) - CA(i). Carson and Bugg (1986)
+give D = (A x B) x A, the part of B perpendicular to A. A x B is the surface
+normal, and using it turns the ribbon ninety degrees - a helix then shows its
+edge. Zero when the two are parallel or either is degenerate
 */
 vec3f RibbonWidthDirection(const vec3f &chain_step, const vec3f &carbonyl);
 
-/* A cartoon following a Catmull-Rom spline through the CA positions: ribbon
-through helices, arrow through strands, round tube through coil.
-
-`ss` holds one xlib::protein::ss_* value per residue; an empty or wrongly sized
-list is treated as all coil, which degrades to the plain trace rather than
-failing. Appends to the mesh, so several segments share one buffer.
+/* a cartoon on a Catmull-Rom spline through the CA positions: ribbon through
+helices, arrow through strands, tube through coil. ss holds one protein::ss_*
+per residue, and an empty or wrong sized list is taken as all coil rather than
+failing. Appends, so several segments share one buffer
 */
 void BuildCartoon(const xlib::protein::ChainSegment &seg,
   const TArrayList<short> &ss, const CartoonParams &p, Mesh &m);
@@ -128,11 +107,8 @@ one implementation of the spline, the frame and the stitching.
 void BuildTube(const xlib::protein::ChainSegment &seg, const TubeParams &p,
   Mesh &m);
 
-/* Blue to cyan to green to yellow to red, with t clamped to [0,1].
-
-The usual ramp for a scalar along a chain, and the one a reader of Coot or
-PyMOL figures already knows: N terminus blue, C terminus red; low displacement
-parameter blue, high red. Returned in the OLX_RGBA packing, 0xAABBGGRR.
+/* blue to cyan to green to yellow to red, t clamped to [0,1] - the usual ramp
+for a scalar along a chain, as Coot and PyMOL draw it. OLX_RGBA, 0xAABBGGRR
 */
 uint32_t RainbowColour(double t);
 

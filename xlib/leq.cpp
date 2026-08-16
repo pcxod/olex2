@@ -340,9 +340,8 @@ XVarReference& XVarManager::AddVarRef(XVar& var, IXVarReferencer& a,
   short var_name, short relation, double coeff)
 {
   XVarReference* prf = a.GetVarRef(var_name);
-  /* only the references after a removed one change index - renumbering the
-  whole list on every addition makes reading a file quadratic in the number of
-  coded parameters
+  /* only the references after a removed one change index - renumbering all of
+  them on every addition is quadratic in the coded parameter count
   */
   size_t from = References.Count();
   if (prf != 0 && olx_is_valid_index(prf->GetId())) {

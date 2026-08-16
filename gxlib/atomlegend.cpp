@@ -14,14 +14,10 @@
 #include "eset.h"
 
 namespace {
-  /* A swatch drawn exactly the way the ribbon is.
-
-  The element rows take the real Sphere material out of the style rather than
-  making a flat stand-in, and the cartoon rows need the same treatment: the
-  material comes from the cartoon itself, colour material is on, and the colour
-  arrives through glColor. That is the ribbon's own path, reproduced rather
-  than re-derived - working out what the lights "should" do to a colour and
-  building a material to match is how the ribbon ended up white.
+  /* a swatch drawn the way the ribbon is: the material from the cartoon
+  itself, colour material on, the colour through glColor. Reproduced rather
+  than re-derived - working out what the lights should do to a colour and
+  building a material to match is how the ribbon ended up white
   */
   TGlMaterial SwatchMaterial(uint32_t cl) {
     TGlMaterial m = gxlib::cartoon_colour::RibbonMaterial(cl);
@@ -34,10 +30,9 @@ namespace {
       (float)OLX_GetBValue(cl) / 255,
       (float)OLX_GetAValue(cl) / 255);
   }
-  /* A short length of ribbon with one gentle twist in it, in the same unit
-  box the sphere swatch occupies. The twist is what makes it read as a ribbon
-  rather than a bar at this size, and it shows both faces, which is the thing
-  a reader needs to recognise in the picture.
+  /* a short length of ribbon with one twist, in the unit box the sphere swatch
+  occupies. The twist is what makes it read as a ribbon rather than a bar at
+  this size, and it shows both faces
   */
   void DrawRibbonSwatch(uint32_t cl) {
     const int n = 14;
@@ -245,10 +240,9 @@ void TAtomLegend::Update() {
   row_colours.Clear();
   // no ribbon rows unless AddCartoonKey says otherwise, so every row is a ball
   first_ribbon_row = InvalidIndex;
-  /* Not "no elements, no legend". With the cartoon hiding everything it traced
-  there can be no visible atom at all, and returning here left the cartoon key
-  unbuilt: the legend appeared only once something made a non-protein atom
-  visible again. The element block is skipped, the cartoon key is not.
+  /* not "no elements, no legend": with the cartoon hiding everything it traced
+  there may be no visible atom at all, and returning here left the cartoon key
+  unbuilt. The element block is skipped, the cartoon key is not
   */
   if (elm_set.IsEmpty()) {
     AddCartoonKey();
@@ -324,10 +318,9 @@ void TAtomLegend::AddCartoonKey() {
   using namespace xlib::protein;
   const short mode = app.GetCartoonColourMode();
 
-  /* Appended to the same lists the element key uses, so it inherits the
-  dragging, the saved position and the reset button without any of that being
-  written twice. Rows are drawn top-down in the order they are added, and each
-  entry is one swatch and one label.
+  /* appended to the lists the element key uses, so it inherits the dragging,
+  the saved position and the reset. Rows are drawn top-down in the order added,
+  one swatch and one label each
   */
   if (mode == ccChain) {
     TArrayList<olx_pair_t<olxch, uint32_t> > chains;
@@ -371,13 +364,10 @@ void TAtomLegend::AddCartoonKey() {
     }
   }
   else if (mode == ccIndex || mode == ccUeq) {
-    /* A colour bar, drawn as a column of swatches down the same rows the rest
-    of the legend uses rather than as a separate gradient object. Discrete, but
-    at this many steps it reads as a bar, and it costs no new primitive, no new
-    draggable object and no second position to keep track of.
-
-    The scale runs high at the top, which is the way round every colour bar is
-    drawn, so the ramp is walked backwards.
+    /* a colour bar as a column of swatches down the legend's own rows rather
+    than a separate gradient object: discrete, but at this many steps it reads
+    as a bar and costs no new primitive or draggable. The scale runs high at
+    the top, as colour bars are drawn, so the ramp is walked backwards
     */
     const size_t steps = 9;
     double u_min = 0, u_max = 0;
@@ -386,9 +376,9 @@ void TAtomLegend::AddCartoonKey() {
     for (size_t i = 0; i < steps; i++) {
       const double t = double(steps - 1 - i)/(steps - 1);
       materials.Add(SwatchMaterial(gxlib::cartoon::RainbowColour(t)));
-      /* Labelled at the two ends and the middle only. Every step labelled is
-      unreadable at this row height, and unlabelled steps still line up because
-      the text and the swatches are drawn from the same row index.
+      /* labelled at the ends and the middle only - every step is unreadable at
+      this row height, and the rest still line up, text and swatches coming
+      from the same row index
       */
       if (mode == ccUeq) {
         if (!have_u) {
@@ -408,10 +398,9 @@ void TAtomLegend::AddCartoonKey() {
       }
     }
   }
-  /* Taken back off the materials rather than threaded through every branch
-  above: each of them built its swatch from one colour, and the diffuse term is
-  where SwatchMaterial put it. The alpha is forced opaque because GetRGB drops
-  it, and a zero alpha would draw nothing at all.
+  /* taken back off the materials rather than threaded through every branch
+  above, the diffuse term being where SwatchMaterial put it. Alpha forced
+  opaque: GetRGB drops it, and zero would draw nothing
   */
   for (size_t i = first_ribbon_row; i < materials.Count(); i++) {
     row_colours.Add(materials[i].DiffuseF.GetRGB() | 0xff000000);

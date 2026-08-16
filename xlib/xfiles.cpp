@@ -138,8 +138,8 @@ namespace {
         << (char)(0x80 | ((cp >> 6) & 0x3F)) << (char)(0x80 | (cp & 0x3F));
     }
   }
-  /* UTF-16 without a mark still has a signature in a text file: half of its
-  bytes are zero, and which half says which way round it is
+  /* unmarked UTF-16 still shows in a text file: half the bytes are zero, and
+  which half says which way round
   */
   short guess_utf16(const unsigned char *b, size_t len) {
     const size_t n = olx_min(len, (size_t)4096) & ~(size_t)1;
@@ -250,9 +250,7 @@ TStrList::const_list_type TBasicCFile::ReadLines(const olxstr &fn,
   else {
     text = olxcstr((const char *)b, len);
   }
-  /* a file written on a classic Mac, or by a program imitating one, has no
-  line feeds at all and would otherwise arrive as a single line
-  */
+  // classic Mac endings: no line feeds at all, so this would be one line
   const olxch sep = (text.IndexOf('\n') == InvalidIndex &&
     text.IndexOf('\r') != InvalidIndex) ? '\r' : '\n';
   rv.Strtok(text, sep, false);

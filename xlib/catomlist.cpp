@@ -377,11 +377,9 @@ void ImplicitCAtomRef::InitRef(const RefinementModel& rm,
   }
   else {
     olxstr rn = Name.SubStringFrom(idx + 1);
-    /* FindResidue takes either a bare number, which means the residue of that
-    number with no chain, or chain:number. IsNumber() is false for the second,
-    so without testing for it a chain qualified reference never reaches
-    FindResidue and is looked up as a residue class name instead - which is
-    how every restraint on a structure with chains was being dropped
+    /* FindResidue takes a bare number or chain:number, and IsNumber() is false
+    for the second - so a chain qualified reference was looked up as a residue
+    class name instead, and dropped
     */
     const size_t ci = rn.IndexOf(':');
     const bool by_number = (ci == InvalidIndex)

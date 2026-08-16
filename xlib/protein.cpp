@@ -53,13 +53,9 @@ namespace {
   */
   const int max_bridge_residues = 3;
 
-  /* Finds the CA of a residue the full classifier rejected, using its traced
-  neighbours as the evidence the residue itself does not supply.
-
-  One unplaced residue splits a chain in two, and a 5% failure rate over a
-  574-residue structure therefore produces about thirty spurious breaks rather
-  than 5% worse coverage. That is why this exists: it costs nothing when the
-  classifier succeeds and repairs the trace when it does not.
+  /* finds the CA of a residue the classifier rejected, from its traced
+  neighbours. One unplaced residue splits a chain, so a 5% failure rate over
+  574 residues costs thirty spurious breaks rather than 5% coverage
   */
   size_t RecoverCA(const TTypeList<ProteinAtom> &atoms,
     const vec3d *prev_ca, const vec3d *next_ca)
@@ -453,18 +449,11 @@ void AssignSecondaryStructure(const ChainSegment &seg, TArrayList<short> &out) {
   SmoothRuns(out, ss_helix, 4);
   SmoothRuns(out, ss_strand, 3);
 
-  /* A strand is only a strand if it is in a sheet.
-
-  The descriptors above cannot tell an extended stretch of loop from a real
-  beta strand, because locally they are the same shape - which is why the
-  distance criteria on their own report 5% strand in haemoglobin, a protein
-  with no sheet at all, and run ubiquitin's strands several residues past their
-  ends into the flanking coil. What distinguishes the real ones is a partner:
-  a strand in a sheet lies alongside another strand from elsewhere in the
-  chain, about 5 A away, and a loop does not.
-
-  This is the one place the assignment is not local, and it is what makes the
-  difference between a sheet and a plausible-looking mistake.
+  /* a strand is only a strand if it is in a sheet. The descriptors above see
+  the same local shape in an extended loop, and on their own report 5% strand
+  in haemoglobin, which has no sheet, and run ubiquitin's strands past their
+  ends. What separates the real ones is a partner about 5 A away, from
+  elsewhere in the chain - the one place the assignment is not local
   */
   const double max_pairing = 5.6, max_pairing_sq = max_pairing*max_pairing;
   const size_t min_separation = 4;
@@ -488,11 +477,9 @@ void AssignSecondaryStructure(const ChainSegment &seg, TArrayList<short> &out) {
       }
     }
   }
-  /* Trim unpaired residues from the ends of each run rather than dropping the
-  run. A strand that runs several residues too far into the loop is the common
-  error and only its tail is wrong; a run with no partner at all trims to
-  nothing and is then removed by the length rule below. An unpaired residue in
-  the interior is kept, because a beta bulge is a real feature.
+  /* trim unpaired residues off the ends rather than dropping the run: the
+  common error is a strand running too far into the loop, and a run with no
+  partner trims to nothing anyway. An interior one is kept - a beta bulge
   */
   size_t i = 0;
   while (i < n) {
@@ -517,13 +504,9 @@ void AssignSecondaryStructure(const ChainSegment &seg, TArrayList<short> &out) {
 void ExtractSegments(const TAsymmUnit &au, const TSAtomPList &atoms,
   TTypeList<ChainSegment> &out, double break_distance)
 {
-  /* Group atoms by residue, keyed also by symmetry matrix so a generated copy
-  is traced as its own chain.
-
-  Grouping is done here rather than by walking TResidue::Next(): that is
-  chain-unaware. TAsymmUnit::NextResidue passes an int which converts to olxstr
-  and reaches an overload that only searches the no-chain bucket of the residue
-  registry, so it returns null for every residue of a chained structure.
+  /* group atoms by residue, keyed also by symmetry matrix so a generated copy
+  is its own chain. Not by walking TResidue::Next(): NextResidue passes an int
+  that converts to olxstr and searches the no-chain bucket only
   */
   olxdict<uint64_t, TSAtomPList, TPrimitiveComparator> by_residue;
   TArrayList<uint64_t> order;
@@ -615,11 +598,9 @@ void ExtractSegments(const TAsymmUnit &au, const TSAtomPList &atoms,
       br.o = pa[roles.o].crd;
       br.has_o = true;
     }
-    /* The roles index pa, whose first ra.Count() entries are this residue's
-    own atoms in order; the ones after them are the foreign neighbours the
-    classifier needed to see. A backbone atom is never one of those, so an
-    index inside that range is exactly the atom, and one outside it means the
-    role was filled by a neighbour and belongs to no atom here.
+    /* the roles index pa, whose first ra.Count() entries are this residue's
+    own atoms in order and the rest the foreign neighbours. A backbone atom is
+    never one of those, so an index past the range belongs to no atom here
     */
     struct id_of {
       static size_t get(const TSAtomPList &ra, size_t role) {
@@ -633,13 +614,10 @@ void ExtractSegments(const TAsymmUnit &au, const TSAtomPList &atoms,
     br.o_id = id_of::get(ra, roles.o);
   }
 
-  /* Second pass: try to place the residues the classifier rejected, using the
-  CA of their traced neighbours. Only residues that sit in a numbered gap of a
-  chain are candidates, which is what keeps waters and ligands out: they have no
-  neighbours in any chain's numbering.
-
-  Recovered residues do not help each other. Two consecutive failures still
-  leave a hole, which the bridging below then spans.
+  /* second pass: place the residues the classifier rejected from the CA of
+  their traced neighbours. Only those in a numbered gap of a chain qualify,
+  which keeps waters and ligands out. Recovered residues do not help each
+  other, so two consecutive failures leave a hole for the bridging below
   */
   for (size_t i = 0; i < unplaced.Count(); i++) {
     const uint64_t ckey = unplaced.GetKey(i);

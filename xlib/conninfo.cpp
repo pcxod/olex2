@@ -762,7 +762,7 @@ void ConnInfo::CollectConnAtoms(const TAsymmUnit& au, TCAtomPList& out) {
 void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate,
   BondInfoList& toDelete, smatd_list& ml)
 {
-  // a caller in a loop should collect once and use the overload instead
+  // a caller in a loop should collect once and use the overload
   TCAtomPList conn_atoms;
   CollectConnAtoms(*a.GetParent(), conn_atoms);
   Compile(a, conn_atoms, toCreate, toDelete, ml);

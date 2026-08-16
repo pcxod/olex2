@@ -44,12 +44,10 @@ namespace {
     float w, h;
   };
 
-  /* Emits the rings and triangles for a run of samples.
-
-  The winding puts the outward face counter-clockwise, which OpenGL reads as
-  the front. Getting it backwards is invisible while the material is opaque,
-  because culling is only enabled for transparent ones, but it lights the
-  surface from the GL_BACK material.
+  /* emits the rings and triangles for a run of samples. The winding puts the
+  outward face counter-clockwise; backwards is invisible while the material is
+  opaque, culling being on only for transparent ones, but it lights from
+  GL_BACK
   */
   void StitchSamples(const TTypeList<Sample> &samples, size_t slices, Mesh &m) {
     if (samples.Count() < 2 || slices < 3) {
@@ -67,9 +65,9 @@ namespace {
       const vec3f up = s.tangent.XProdVec(s.side);
       for (size_t k = 0; k < slices; k++) {
         m.vertices.AddCopy(s.c + s.side*(s.w*cs[k]) + up*(s.h*sn[k]));
-        /* The normal of an ellipse is not the direction of the point: for
-        semi-axes w and h it is (h cos, w sin), the axes swapped. Using the
-        point direction instead lights a flat ribbon as though it were round.
+        /* the normal of an ellipse is not the point direction: for semi-axes
+        w and h it is (h cos, w sin), swapped. The point direction lights a
+        flat ribbon as though it were round
         */
         m.normals.AddCopy(Normalised(s.side*(s.h*cs[k]) + up*(s.w*sn[k]),
           s.side));
@@ -105,9 +103,9 @@ namespace {
 //.............................................................................
 uint32_t RainbowColour(double t) {
   t = olx_max(0.0, olx_min(1.0, t));
-  /* Four linear legs through blue, cyan, green, yellow, red. Piecewise linear
-  in RGB rather than a hue sweep: a hue sweep of the same span passes through
-  magenta on the way back round, and the ends stop being distinguishable.
+  /* four linear legs through blue, cyan, green, yellow, red. Linear in RGB
+  rather than a hue sweep, which passes through magenta and stops the ends
+  being distinguishable
   */
   double r, g, b;
   const double s = t*4;
@@ -115,9 +113,8 @@ uint32_t RainbowColour(double t) {
   else if (s < 2) { r = 0; g = 1; b = 2 - s; }
   else if (s < 3) { r = s - 2; g = 1; b = 0; }
   else { r = 1; g = 4 - s; b = 0; }
-  /* The OLX_RGBA packing, written out rather than included: gldefs.h lives in
-  glib, and this file is deliberately buildable without the graphics layer so
-  that it can be compiled into the test binary.
+  /* the OLX_RGBA packing written out rather than included - gldefs.h is in
+  glib, and this builds without the graphics layer for the test binary
   */
   return (uint32_t)(255*r + 0.5)
     | ((uint32_t)(255*g + 0.5) << 8)
@@ -153,14 +150,10 @@ void BuildCartoon(const xlib::protein::ChainSegment &seg,
     ss[i] = (ss_in.Count() == rc && !p.trace_only) ? ss_in[i] : ss_coil;
   }
 
-  /* Per-residue ribbon direction, following Carson and Bugg: the peptide plane
-  is spanned by the chain direction and the carbonyl, so their cross product is
-  the direction the ribbon lies flat along. Successive normals are flipped to
-  agree with the previous one, which is what prevents the 180 degree twists that
-  otherwise appear along a strand.
-
-  A residue with no carbonyl oxygen - which the backbone classifier shows is
-  common enough to plan for - falls back to a frame carried along the curve.
+  /* per-residue ribbon direction after Carson and Bugg: the peptide plane is
+  spanned by the chain direction and the carbonyl. Successive normals are
+  flipped to agree with the previous one, which prevents the 180 degree twists
+  along a strand. No carbonyl oxygen falls back to a frame carried along
   */
   TArrayList<vec3f> side(rc);
   vec3f carried;
@@ -195,10 +188,9 @@ void BuildCartoon(const xlib::protein::ChainSegment &seg,
     have_carried = true;
   }
 
-  /* Arrowheads. The head occupies the last residue of a strand run, and the
-  shoulder in front of it is a step rather than a ramp: two samples at the same
-  point, one at strand width and one at arrow width, which is the flat face of
-  the arrow.
+  /* arrowheads: the head takes the last residue of a strand run and the
+  shoulder is a step, two samples at one point at strand and arrow width -
+  which is the flat face
   */
   TArrayList<bool> head(rc), shoulder(rc);
   for (size_t i = 0; i < rc; i++) {
@@ -271,10 +263,9 @@ void BuildCartoon(const xlib::protein::ChainSegment &seg,
 
   StitchSamples(samples, slices, m);
 
-  /* Per-residue triangle offsets, so a residue subset maps to a contiguous
-  triangle range without searching. n samples make n-1 stretches, so the last
-  residue closes the chain and owns none of them; giving it the sample count
-  instead would put its offset past the closing sentinel.
+  /* per-residue triangle offsets, so a subset maps to a contiguous range. n
+  samples make n-1 stretches, so the last residue owns none - the sample count
+  would put its offset past the sentinel
   */
   for (size_t i = 0; i < rc; i++) {
     m.residue_triangle_offset.Add(

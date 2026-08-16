@@ -111,9 +111,8 @@ public:
   */
   static void Compile(const TCAtom& a, BondInfoList& toCreate,
     BondInfoList& toDelete, smatd_list& ml);
-  /* as above, but given the atoms having bonds to create or remove - the
-  others are never read and contribute nothing. Saves scanning the whole unit
-  for each atom. conn_atoms must be complete or requested bonds go missing
+  /* as above, given the atoms having bonds to create or remove; the others are
+  never read. conn_atoms must be complete or requested bonds go missing
   */
   static void Compile(const TCAtom& a, const TCAtomPList& conn_atoms,
     BondInfoList& toCreate, BondInfoList& toDelete, smatd_list& ml);

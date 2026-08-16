@@ -174,9 +174,8 @@ public:
   }
   // aplies conninfo to the list of attached sites
   void UpdateAttachedSites();
-  /* as above, for the atoms having conn info - see ConnInfo::CollectConnAtoms.
-  When updating a whole unit the list is the same for every atom, so it is
-  collected once. TCAtomPList is typedef'd after this class
+  /* as above, for the atoms having conn info. Over a whole unit the list is
+  the same for every atom, so it is collected once by the caller
   */
   void UpdateAttachedSites(const TPtrList<TCAtom>& conn_atoms);
 
