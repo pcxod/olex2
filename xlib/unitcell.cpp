@@ -564,7 +564,11 @@ void TUnitCell::FindSymmEq() const {
     /* the pairs worth testing, built once and shared read-only by the threads.
     Below the threshold testing every pair is quicker than choosing
     */
-    const size_t cell_list_min_atoms = 1500;
+    /* measured, not guessed: at 1490 atoms the list is 2.5x the all-pairs
+    search, at 744 the two are level, and below that neither shows. 1500 was
+    high enough to leave a small protein on the quadratic path
+    */
+    const size_t cell_list_min_atoms = 500;
     const bool use_cell_list = ACA.Count() >= cell_list_min_atoms;
     const double cutoff = symm_eq_cutoff(ACA, GetLattice().GetDelta(),
       GetLattice().GetDeltaI());
