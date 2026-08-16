@@ -204,6 +204,8 @@ void TPdb::LoadFromStrings(const TStrList& Strings) {
       if (toks.Count() > 11) {
         CA.SetOccu(toks[11].ToDouble());
       }
+      // a deposited occupancy is a value, not something to refine - see cif.cpp
+      GetRM().Vars.FixParam(CA, catom_var_name_Sof);
       if (toks.Count() > 12) {
         CA.SetUiso(toks[12].ToDouble() / (8 * olx_sqr(M_PI)));
       }

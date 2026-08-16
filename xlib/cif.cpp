@@ -416,6 +416,12 @@ void TCif::_LoadCurrentMM() {
         ca.SetOccu(o.ToDouble());
       }
     }
+    /* a deposited occupancy is a value, not something to refine: without the
+    reference SetParam frees it - see leq.cpp - and every atom arrives with a
+    refining sof, which at protein data to parameter ratios diverges against
+    the ADP it correlates with. The core dictionary path does the same
+    */
+    GetRM().Vars.FixParam(ca, catom_var_name_Sof);
     if (i_b != InvalidIndex) {
       const olxstr b = row[i_b]->GetStringValue();
       if (b.IsNumber()) {
