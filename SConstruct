@@ -87,6 +87,8 @@ elif env['TOOL'] == 'vc11':
   env = Environment(ENV = os.environ, variables = variables, TARGET_ARCH=env_arch, MSVC_VERSION='11.0')
 elif env['TOOL'] == 'vc14.2':
   env = Environment(ENV = os.environ, variables = variables, TARGET_ARCH=env_arch, MSVC_VERSION='14.2')
+elif env['TOOL'] == 'vc14.3':
+  env = Environment(ENV = os.environ, variables = variables, TARGET_ARCH=env_arch, MSVC_VERSION='14.3')
 elif env['TOOL'] == 'intel':
     Tool('intelc')(env)
 env.Append(CCFLAGS = ['-D_UNICODE', '-DUNICODE'])
