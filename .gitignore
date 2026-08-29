@@ -1,0 +1,47 @@
+# Build intermediates
+*.obj
+*.tlog
+*.sbr
+*.pdb
+*.cache
+# NB: *.pdb here means the MSVC debug database, but it is also the Protein Data
+# Bank extension - force-add any .pdb test structure with "git add -f"
+*.db
+*.db-shm
+*.db-wal
+*.bin
+*.opendb
+*.ipch
+*.log
+*.vsidx
+*.lib
+*.bsc
+*.recipe
+*.FileListAbsolute.txt
+
+# Visual Studio per-user state. Anything under .vs is local to one machine and
+# runs to hundreds of MB, so it never travels
+.vs/
+
+# Build output trees. These are several GB each and are rebuilt from source,
+# so they must stay out of the repository
+build/MSVC-2022/Olex2/x64/
+build/MSVC-2022/Olex2/Win32/
+
+# The VS2026 solution is deliberately local to this machine - when a source
+# file is added there it must also be added to the MSVC-2022 projects, which
+# are the ones the other machines build
+build/MSVC-2026/
+
+# Scratch driver for running Olex2 headlessly, built in place
+olex2c/
+
+# Standalone Qt reimplementation. Its own repository, cloned separately from
+# github.com/AK-Kleemiss/QT_implementation
+QT_implementation/
+
+# Test harness binaries, built from the .cpp files beside them
+tests/cartoon_bench/*.exe
+tests/cartoon_bench/*.exp
+tests/protein_report/*.exe
+tests/protein_report/*.exp

@@ -583,6 +583,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\gxlib\atomlegend.cpp" />
+    <ClCompile Include="..\..\..\gxlib\cartoon_geom.cpp" />
     <ClCompile Include="..\..\..\gxlib\dbasis.cpp" />
     <ClCompile Include="..\..\..\gxlib\dring.cpp" />
     <ClCompile Include="..\..\..\gxlib\dsphere.cpp" />
@@ -602,6 +603,7 @@
     <ClCompile Include="..\..\..\gxlib\xangle.cpp" />
     <ClCompile Include="..\..\..\gxlib\xatom.cpp" />
     <ClCompile Include="..\..\..\gxlib\xblob.cpp" />
+    <ClCompile Include="..\..\..\gxlib\xcartoon.cpp" />
     <ClCompile Include="..\..\..\gxlib\xbond.cpp" />
     <ClCompile Include="..\..\..\gxlib\xeval.cpp" />
     <ClCompile Include="..\..\..\gxlib\xgrid.cpp">
@@ -646,6 +648,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\gxlib\atomlegend.h" />
+    <ClInclude Include="..\..\..\gxlib\cartoon_geom.h" />
     <ClInclude Include="..\..\..\gxlib\dbasis.h" />
     <ClInclude Include="..\..\..\gxlib\dring.h" />
     <ClInclude Include="..\..\..\gxlib\dsphere.h" />
@@ -684,6 +687,7 @@
     <ClInclude Include="..\..\..\gxlib\xangle.h" />
     <ClInclude Include="..\..\..\gxlib\xatom.h" />
     <ClInclude Include="..\..\..\gxlib\xblob.h" />
+    <ClInclude Include="..\..\..\gxlib\xcartoon.h" />
     <ClInclude Include="..\..\..\gxlib\xbond.h" />
     <ClInclude Include="..\..\..\gxlib\xeval.h" />
     <ClInclude Include="..\..\..\gxlib\xgrid.h" />

@@ -669,6 +669,7 @@
     <ClCompile Include="..\..\..\xlib\network.cpp" />
     <ClCompile Include="..\..\..\xlib\p4p.cpp" />
     <ClCompile Include="..\..\..\xlib\pdb.cpp" />
+    <ClCompile Include="..\..\..\xlib\protein.cpp" />
     <ClCompile Include="..\..\..\xlib\reflection.cpp" />
     <ClCompile Include="..\..\..\xlib\refmodel.cpp" />
     <ClCompile Include="..\..\..\xlib\refutil.cpp" />
@@ -836,6 +837,7 @@
     <ClInclude Include="..\..\..\xlib\mol.h" />
     <ClInclude Include="..\..\..\xlib\network.h" />
     <ClInclude Include="..\..\..\xlib\p4p.h" />
+    <ClInclude Include="..\..\..\xlib\protein.h" />
     <ClInclude Include="..\..\..\xlib\reflection.h" />
     <ClInclude Include="..\..\..\xlib\samegroup.h" />
     <ClInclude Include="..\..\..\xlib\satom.h" />
