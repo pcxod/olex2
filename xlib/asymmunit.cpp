@@ -291,11 +291,13 @@ TResidue& TAsymmUnit::NewResidue(const olxstr& RClass, int number, int alias,
     chainId = TResidue::NoChainId();
   }
   if (number == 0) {
-    if (!RClass.IsEmpty()) {
+    if (RClass.IsEmpty()) {
+      return MainResidue;
+    }
+    if (chainId == TResidue::NoChainId()) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         "Cannot rename main residue");
     }
-    return MainResidue;
   }
   if (number == TResidue::NoResidue && alias == TResidue::NoResidue) {
     for (size_t i = 0; i < Residues.Count(); i++) {

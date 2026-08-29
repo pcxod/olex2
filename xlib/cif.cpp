@@ -346,6 +346,35 @@ void TCif::_LoadCurrentMM() {
     }
   }
   //..........................................................................
+  /* the experiment. mmCIF spells these with a dot and the ordinary CIF branch
+  looks only for the underscore forms, so without this a synchrotron dataset
+  keeps the Mo Ka default and refines with the wrong dispersion corrections
+  */
+  {
+    const char *wl[2] = { "_diffrn_radiation_wavelength.wavelength",
+      "_diffrn_source.pdbx_wavelength" };
+    for (int i = 0; i < 2; i++) {
+      ICifEntry *e = cif_data.param_map.Find(wl[i], 0);
+      if (e == 0) {
+        continue;
+      }
+      olxstr v = e->GetStringValue().TrimWhiteChars();
+      if (v.IsNumber()) {
+        GetRM().expl.SetRadiation(v.ToDouble());
+        break;
+      }
+    }
+    ICifEntry *t = cif_data.param_map.Find("_diffrn.ambient_temp", 0);
+    if (t != 0) {
+      olxstr v = t->GetStringValue().TrimWhiteChars();
+      if (v.IsNumber()) {
+        TEValueD t_v(v);
+        t_v.V() -= 273.15;
+        GetRM().expl.SetTempValue(t_v);
+      }
+    }
+  }
+  //..........................................................................
   // the atoms
   cetTable *at = FindMMLoop(cif_data, "_atom_site.Cartn_x");
   if (at == 0) {
