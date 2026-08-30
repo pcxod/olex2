@@ -489,10 +489,16 @@ public:
 
 namespace chirality {
   /* analysis R/S chirality of the atoms and if the atom is chiral - 
-  returns a string of substituents. Forn no chiral atoms returns an empty
+  returns a string of substituents. For no chiral atoms returns an empty
   string.
+  Full - full graph expansion
+  Digraph - shell-by-shell compansion, better debugging output for teaching
   */
-  olxstr rsa_analyse(TCAtom &a, bool debug=false);
+  olx_pair_t<olxstr, olxstr> rsa_analyse_full(TCAtom &a, bool debug=false, bool dry_run = false);
+  /* could potentially be useful to take use - defined graph but will need some
+  tweaking
+  */
+  olx_pair_t<olxstr, olxstr> rsa_analyse_digraph(TCAtom& a, bool debug = false, bool dry_run=false);
 }; // namespace chirality
 }; // end namespace olx_analysis
 EndXlibNamespace()

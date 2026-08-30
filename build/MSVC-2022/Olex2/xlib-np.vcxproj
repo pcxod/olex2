@@ -683,6 +683,7 @@
     <ClCompile Include="..\..\..\xlib\sgtest.cpp" />
     <ClCompile Include="..\..\..\xlib\splane.cpp" />
     <ClCompile Include="..\..\..\xlib\srestraint.cpp" />
+    <ClCompile Include="..\..\..\xlib\symgraph.cpp" />
     <ClCompile Include="..\..\..\xlib\symmcon.cpp" />
     <ClCompile Include="..\..\..\xlib\symmlib.cpp" />
     <ClCompile Include="..\..\..\xlib\symmparser.cpp" />
@@ -844,6 +845,7 @@
     <ClInclude Include="..\..\..\xlib\sfutil.h" />
     <ClInclude Include="..\..\..\xlib\sgtest.h" />
     <ClInclude Include="..\..\..\xlib\splane.h" />
+    <ClInclude Include="..\..\..\xlib\symgraph.h" />
     <ClInclude Include="..\..\..\xlib\symmat.h" />
     <ClInclude Include="..\..\..\xlib\symmlib.h" />
     <ClInclude Include="..\..\..\xlib\symmparser.h" />

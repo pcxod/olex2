@@ -704,7 +704,7 @@ void cetString::ToStrings(TStrList& list) const {
     list.Add(' ') : (list.GetLastString() << ' ');
   if (quoted) {
     if (qsz == 3) {
-      size_t qidx = InvalidIndex;
+      size_t qidx = 0;
       bool use_dq = false, use_ml = false;
       // check if ' will be valid in this case
       while ((qidx = value.FirstIndexOf('\'', qidx)) != InvalidIndex) {
@@ -717,6 +717,7 @@ void cetString::ToStrings(TStrList& list) const {
       }
       // check if " will be valid in this case
       if (use_dq) {
+        qidx = 0;
         while ((qidx = value.FirstIndexOf('"', qidx)) != InvalidIndex) {
           if (++qidx < value.Length() &&
             olxstr::o_isoneof(value.CharAt(qidx), " \t"))

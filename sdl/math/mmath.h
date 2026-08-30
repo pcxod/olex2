@@ -40,6 +40,7 @@ namespace math  {
       for (size_t i = start; i < end; i++) {
         f(m(i, col));
       }
+      return *this;
     }
     size_t Count() const { return sz; }
     bool IsEmpty() const { return sz == 0; }
@@ -223,7 +224,7 @@ namespace math  {
     typename T1::number_type dot_prod(const T1& a, const T2& b)
     {
       typename T1::number_type v = 0;
-      const size_t sz = a.Caunt();
+      const size_t sz = a.Count();
       for (size_t i = 0; i < sz; i++) {
         v += a(i)*b(i);
       }

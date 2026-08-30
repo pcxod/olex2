@@ -3498,7 +3498,7 @@ void TGXApp::SetLabelsMode(uint32_t lmode)  {
       if (a.IsDeleted() || a.GetType() < 2 || a.AttachedSiteCount() < 4) {
         continue;
       }
-      olx_analysis::chirality::rsa_analyse(a, false);
+      olx_analysis::chirality::rsa_analyse_full(a, false);
     }
   }
   FLabels->SetMode(lmode);

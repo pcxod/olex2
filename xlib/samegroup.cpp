@@ -362,8 +362,10 @@ olx_object_ptr<DistanceGenerator> TSameGroup::get_generator() const {
     }
     di_atoms.Add(al.release());
   }
+  olx_object_ptr<DistanceGenerator> d = new DistanceGenerator();
+  d->atom_map_N = new DistanceGenerator::atom_map_N_t();
   if (di_atoms.IsEmpty()) {
-    return new DistanceGenerator();
+    return d;
   }
   const olx_capacity_t cap = olx_reserve(ar.Count() * DependentCount());
   DistanceGenerator::atom_set_t
@@ -381,8 +383,6 @@ olx_object_ptr<DistanceGenerator> TSameGroup::get_generator() const {
     }
   }
   //inc_set.AddAll(atom_set);
-  olx_object_ptr<DistanceGenerator> d = new DistanceGenerator();
-  d->atom_map_N = new DistanceGenerator::atom_map_N_t();
   d->atom_map_N->TakeOver(atom_map);
   //d->Generate(Parent.RM.aunit, atom_set, true, true, inc_set);
   // this way matches ShelXl
@@ -502,6 +502,9 @@ void TSameGroup::GetRestrainedDistances(
   }
   typedef TTypeList<DistanceGenerator::pair_list_t> list_t;
   olx_object_ptr<DistanceGenerator> d = get_generator();
+  if (d->atom_map_N->IsEmpty()) {
+    return;
+  }
   TArrayList<list_t*> l12_map(Dependent.Count()),
     l13_map(Dependent.Count());
   for (size_t i = 0; i < Dependent.Count(); i++) {

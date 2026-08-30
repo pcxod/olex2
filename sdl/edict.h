@@ -147,7 +147,7 @@ public:
   }
 
   bool Add(const EntryType& e) {
-    return SortedL::AddUnique(e.key).b;
+    return SortedL::AddUnique(e).b;
   }
 
   template <typename T>
@@ -212,7 +212,7 @@ public:
         Add(d.GetKey(i), d.GetValue(i));
       }
       else if (replace) {
-        GetValue(idx) = d.GetValue(idx);
+        GetValue(idx) = d.GetValue(i);
       }
     }
   }

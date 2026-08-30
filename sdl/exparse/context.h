@@ -71,7 +71,7 @@ namespace exparse {
       }
       context* cx = this->parent;
       while (cx != NULL) {
-        IEvaluable* rv = cx->find_var(name);
+        IEvaluable* rv = cx->vars.Find(name, 0);
         if (rv != NULL) {
           return rv;
         }

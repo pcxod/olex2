@@ -101,6 +101,17 @@ public:
   smatd& InitMatrixId(smatd& m) const {
     return InitMatrixId(Matrices, m);
   }
+  smatd GetMatrixById(uint32_t id) const {
+    uint8_t c_id = smatd::GetContainerId(id);
+#ifdef _DEBUG
+    if (c_id >= Matrices.Count()) {
+      throw TInvalidArgumentException(__OlxSourceInfo, olxstr("m.ID: ") << c_id);
+    }
+#endif
+    smatd rv(Matrices[c_id].r, Matrices[c_id].t + smatd::GetT(id));
+    rv.SetRawId(id);
+    return rv;
+  }
   static smatd& InitMatrixId(const smatd_list& Matrices, smatd& m);
   /* if there is a list of transforms calculated in the asymmetric unit and a
   symmetry operator needs to be applied to it, this is the function. Note that
@@ -108,31 +119,100 @@ public:
   Id's. The return value is a new list of matrices with new Id's
   */
   smatd_list MulMatrices(const smatd_list& in, const smatd& transform) const;
-  /* returns just the id of the product, saving on the rotation part
-  multiplication
-  */
+  /////////////////////////////////////////////////////////////////////////////
+  // matrix mul id
   uint32_t MulMatrixId(const smatd& m, const smatd& tr) const {
+#ifdef _DEBUG
+    if (m.GetContainerId() >= Matrices.Count() ||
+      tr.GetContainerId() >= Matrices.Count())
+    {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        olxstr("m.ID: ") << m.GetContainerId() <<
+          ", tr.ID: " << tr.GetContainerId());
+    }
+#endif
     const uint8_t index = MulDest[tr.GetContainerId()][m.GetContainerId()];
     return smatd::GenerateId(index, (tr.MulT(m) - Matrices[index].t).Round<int>());
   }
-  /* full product */
+
+  // operates on matrix Ids in UC frame reference
+  uint32_t MulMatrixId(uint32_t m, uint32_t r) const {
+    uint8_t mc_id = smatd::GetContainerId(m);
+    uint8_t rc_id = smatd::GetContainerId(r);
+#ifdef _DEBUG
+    if (mc_id >= Matrices.Count() || rc_id >= Matrices.Count()) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        olxstr("m.ID: ") << mc_id << ", tr.ID: " << rc_id);
+    }
+#endif
+    const uint8_t index = MulDest[rc_id][mc_id];
+    return smatd::GenerateId(index,
+      (Matrices[rc_id].r * (Matrices[mc_id].t + smatd::GetT(m))
+        + Matrices[rc_id].t + smatd::GetT(r)
+        - Matrices[index].t).Round<int>());
+  }
+
+  // full mul product
   smatd MulMatrix(const smatd& m, const smatd& tr) const {
+#ifdef _DEBUG
+    if (m.GetContainerId() >= Matrices.Count() ||
+      tr.GetContainerId() >= Matrices.Count())
+    {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        olxstr("m.ID: ") << m.GetContainerId() <<
+        ", tr.ID: " << tr.GetContainerId());
+    }
+#endif
     const uint8_t index = MulDest[tr.GetContainerId()][m.GetContainerId()];
     smatd rv(Matrices[index].r, tr.MulT(m));
     rv.SetId(index, (rv.t - Matrices[index].t).Round<int>());
     return rv;
   }
-  smatd InvMatrix(const smatd& m) const {
-    smatd rv = m.GetInverse();
-    uint8_t c_id = m.GetContainerId();
-    if (c_id >= Matrices.Count()) {
-      throw TInvalidArgumentException(__OlxSourceInfo,
-        olxstr("matrix ID: ").quote() << c_id);
+  smatd MulMatrix(uint32_t m, uint32_t tr) const {
+    return GetMatrixById(MulMatrixId(m, tr));
+  }
+  /////////////////////////////////////////////////////////////////////////////
+  // matrix inversion Id
+  uint32_t InvMatrixId(uint32_t m) const {
+    uint8_t mc_id = smatd::GetContainerId(m);
+#ifdef _DEBUG
+    if (mc_id >= Matrices.Count()) {
+      throw TInvalidArgumentException(__OlxSourceInfo, olxstr("m.ID: ") << mc_id);
     }
+#endif
+    const uint8_t index = InvDest[mc_id];
+    return smatd::GenerateId(index,
+      (-(Matrices[index].r * (Matrices[mc_id].t + smatd::GetT(m)))
+        - Matrices[index].t).Round<int>());
+  }
+
+  uint32_t InvMatrixId(const smatd& m) const {
+#ifdef _DEBUG
+    if (m.GetContainerId() >= Matrices.Count()) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        olxstr("m.ID: ") << m.GetContainerId());
+    }
+#endif
     const uint8_t index = InvDest[m.GetContainerId()];
+    return smatd::GenerateId(index,
+      (-(Matrices[index].r * m.t) - Matrices[index].t).Round<int>());
+  }
+
+  // full matrix inverse
+  smatd InvMatrix(const smatd& m) const {
+#ifdef _DEBUG
+    if (m.GetContainerId() >= Matrices.Count()) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        olxstr("m.ID: ") << m.GetContainerId());
+    }
+#endif
+    const uint8_t index = InvDest[m.GetContainerId()];
+    smatd rv(Matrices[index].r, m.t * -1);
+    rv.t = rv.r * rv.t;
     rv.SetId(index, (rv.t - Matrices[index].t).Round<int>());
     return rv;
   }
+  /////////////////////////////////////////////////////////////////////////////
   size_t EllpCount() const { return Ellipsoids.Count()*Matrices.Count(); }
   const TEllipsoid* GetEllp(size_t i) const {
     return Ellipsoids[i / Matrices.Count()][i%Matrices.Count()];
@@ -525,19 +605,6 @@ public:
   bool HasInRange(const vec3d &v, double r,
     const IAtomAnalyser &analyser) const;
 protected:
-  class TSearchSymmEqTask : public TaskBase {
-    TPtrList<TCAtom>& Atoms;
-    const smatd_list& Matrices;
-    TAsymmUnit* AU;
-    TLattice* Latt;
-  public:
-    TSearchSymmEqTask(TPtrList<TCAtom>& atoms, const smatd_list& matrices);
-    void Run(size_t ind) const;
-    void InitEquiv() const;
-    TSearchSymmEqTask* Replicate() const {
-      return new TSearchSymmEqTask(Atoms, Matrices);
-    }
-  };
   class TBuildDistanceMapTask : public TaskBase {
     array_3d<float> &map;
     TTypeList<AnAssociation3<vec3f, TCAtom*, float> >& atoms;

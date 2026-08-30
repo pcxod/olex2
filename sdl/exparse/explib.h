@@ -77,7 +77,7 @@ namespace exparse  {
       info.globals.add("==", &StringValue::equals);
       info.globals.add("!=", &StringValue::nequals);
       info.globals.add("equals", &StringValue::equals);
-      info.globals.add("equalsi", &StringValue::equals);
+      info.globals.add("equalsi", &StringValue::equalsi);
     }
   };
 

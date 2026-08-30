@@ -758,7 +758,7 @@ void XLibMacros::Export(TLibrary& lib)  {
     );
   xlib_InitMacro(RSA,
     "c-copy to clipboard&;"
-    "d-print debug info",
+    "d-print debug info [digraph], full",
     fpAny|psFileLoaded,
     "Identifies chiral centres and prints R/S their stereo configuration");
   xlib_InitMacro(CONF,
@@ -12082,22 +12082,39 @@ void XLibMacros::macRSA(TStrObjList &Cmds, const TParamList &Options,
 {
   TXApp &app = TXApp::GetInstance();
   const TAsymmUnit &au = app.XFile().GetAsymmUnit();
-  bool debug = Options.GetBoolOption('d');
+  olxstr_ptr debug_str = Options.GetStrPtr('d');
+  bool debug = debug_str.ok(),
+    debug_full = debug ? debug_str->Equalsi("full") : false;
+  
   TStrList result;
   for (size_t i=0; i < au.AtomCount(); i++) {
     TCAtom &a = au.GetAtom(i);
     if (a.IsDeleted() || a.GetType() < 2 || a.AttachedSiteCount() < 4) {
       continue;
     }
-    olxstr w;
+    olx_pair_t<olxstr, olxstr> w;
     try {
-      w = olx_analysis::chirality::rsa_analyse(a, debug);
+      w = olx_analysis::chirality::rsa_analyse_full(a, debug);
+      if (!w.a.IsEmpty()) {
+        // do dry_run
+        olx_pair_t<olxstr, olxstr> w1 = olx_analysis::chirality::rsa_analyse_digraph(a, debug, true);
+        if (w.a != w1.a) {
+          TBasicApp::NewLogEntry(logWarning) << a.GetResiLabel() <<
+            ": RSA algorithms do not agree: Full: " << w.a << " vs DG: " << w1.a;
+          if (debug) {
+            TBasicApp::NewLogEntry() << (debug_full ? w.b : w1.b);
+          }
+        }
+        else if (debug) {
+          TBasicApp::NewLogEntry() << (debug_full ? w.b : w1.b);
+        }
+      }
     }
     catch (const TDivException& exc) {
       TBasicApp::NewLogEntry(logInfo) << "Check connectivity for " << a.GetResiLabel();
       continue;
     }
-    if (w.IsEmpty()) {
+    if (w.a.IsEmpty()) {
       continue;
     }
     olxstr lbl = a.GetResiLabel();
@@ -12108,7 +12125,7 @@ void XLibMacros::macRSA(TStrObjList &Cmds, const TParamList &Options,
     else if (a.IsChiralS()) {
       lbl << " S";
     }
-    result.Add(lbl) << " (" << w << ')';
+    result.Add(lbl) << " (" << w.a << ')';
   }
   if (result.IsEmpty()) {
     return;
