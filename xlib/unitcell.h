@@ -605,6 +605,19 @@ public:
   bool HasInRange(const vec3d &v, double r,
     const IAtomAnalyser &analyser) const;
 protected:
+  class TSearchSymmEqTask : public TaskBase {
+    TPtrList<TCAtom>& Atoms;
+    const smatd_list& Matrices;
+    TAsymmUnit* AU;
+    TLattice* Latt;
+  public:
+    TSearchSymmEqTask(TPtrList<TCAtom>& atoms, const smatd_list& matrices);
+    void Run(size_t ind) const;
+    void InitEquiv() const;
+    TSearchSymmEqTask* Replicate() const {
+      return new TSearchSymmEqTask(Atoms, Matrices);
+    }
+  };
   class TBuildDistanceMapTask : public TaskBase {
     array_3d<float> &map;
     TTypeList<AnAssociation3<vec3f, TCAtom*, float> >& atoms;
