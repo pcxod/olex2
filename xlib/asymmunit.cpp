@@ -290,12 +290,19 @@ TResidue& TAsymmUnit::NewResidue(const olxstr& RClass, int number, int alias,
   if (chainId == ' ' || chainId == '\0') {
     chainId = TResidue::NoChainId();
   }
+  /* only the unnamed residue is the main one. The PDB numbers from zero, as
+  1US0 and 2PVB both do, and a named residue there is an ordinary one - it is
+  keyed under its own chain and so cannot reach MainResidue, which lives in
+  the no-chain bucket
+  */
   if (number == 0) {
-    if (!RClass.IsEmpty()) {
+    if (RClass.IsEmpty()) {
+      return MainResidue;
+    }
+    if (chainId == TResidue::NoChainId()) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         "Cannot rename main residue");
     }
-    return MainResidue;
   }
   if (number == TResidue::NoResidue && alias == TResidue::NoResidue) {
     for (size_t i = 0; i < Residues.Count(); i++) {
