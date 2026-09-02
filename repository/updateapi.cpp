@@ -407,7 +407,7 @@ TStrList::const_list_type UpdateAPI::EvaluateProperties() const {
 #  if defined(__LP64__) || defined(__x86_64__)
   platform = "lin64";
 #  else
-  platform = "win32";
+  platform = "lin32";
 #  endif
 #endif
 
