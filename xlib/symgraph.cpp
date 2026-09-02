@@ -17,20 +17,21 @@ TSymmNodeRegistry::TSymmNodeRegistry(const TAsymmUnit& au)
   I.SetRawId(FirstMatrixRawId);
   TPtrList<TSymmNode> sym_nodes(olx_reserve(au.AtomCount()));
   for (size_t i = 0; i < au.AtomCount(); i++) {
-    const TCAtom& ca = au.GetAtom(i);
+    TCAtom& ca = au.GetAtom(i);
+    ca.SetTag(-1);
     if (ca.GetType().z < 1 || !ca.IsAvailable()) {
       continue;
     }
     TSymmNode* pn = sym_nodes.Add(
       new TSymmNode(au_nodes.AddNew(ca), I));
     registry.Add(pn->build_id(), pn)->init(unit_cell);
-    ca.SetTag(i);
+    ca.SetTag(sym_nodes.Count()-1);
   }
   for (size_t i = 0; i < au_nodes.Count(); i++) {
     const TCAtom& ca = au_nodes[i].atom;
     for (size_t j = 0; j < ca.AttachedSiteCount(); j++) {
       TCAtom::Site& s = ca.GetAttachedSite(j);
-      if (s.atom->GetType().z < 1 || !s.atom->IsAvailable()) {
+      if (s.atom->GetTag() < 0) {
         continue;
       }
       TSymmNode cn(au_nodes[s.atom->GetTag()], s.matrix);
