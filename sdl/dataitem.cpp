@@ -254,7 +254,7 @@ bool TDataItem::DeleteByName(const olxstr& name) {
         }
         return false;
       }
-      root->DeleteItemByIndex(ii);
+      root->DeleteFieldByIndex(ii);
       return true;
     }
     if ((i + 1) == toks.Count()) {
