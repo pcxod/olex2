@@ -41,8 +41,14 @@ namespace {
   */
   struct Sample {
     vec3f c, tangent, side;
-    float w, h;
+    float w, h, e;
   };
+
+  // signed |v|^p, the superellipse parametrisation
+  float SPow(float v, float p) {
+    const float a = powf(olx_abs(v), p);
+    return (v < 0) ? -a : a;
+  }
 
   /* emits the rings and triangles for a run of samples. The winding puts the
   outward face counter-clockwise; backwards is invisible while the material is
@@ -63,14 +69,16 @@ namespace {
     for (size_t i = 0; i < samples.Count(); i++) {
       const Sample &s = samples[i];
       const vec3f up = s.tangent.XProdVec(s.side);
+      const float e = olx_max(2.0f, s.e), ip = 2/e;
       for (size_t k = 0; k < slices; k++) {
-        m.vertices.AddCopy(s.c + s.side*(s.w*cs[k]) + up*(s.h*sn[k]));
-        /* the normal of an ellipse is not the point direction: for semi-axes
-        w and h it is (h cos, w sin), swapped. The point direction lights a
+        const float u = SPow(cs[k], ip), v = SPow(sn[k], ip);
+        m.vertices.AddCopy(s.c + s.side*(s.w*u) + up*(s.h*v));
+        /* gradient of |x/w|^e + |y/h|^e, which for e=2 is the (h cos, w sin)
+        of an ellipse - swapped, not the point direction, which would light a
         flat ribbon as though it were round
         */
-        m.normals.AddCopy(Normalised(s.side*(s.h*cs[k]) + up*(s.w*sn[k]),
-          s.side));
+        m.normals.AddCopy(Normalised(
+          s.side*(SPow(u, e - 1)*s.h) + up*(SPow(v, e - 1)*s.w), s.side));
       }
     }
     for (size_t r = 0; r + 1 < samples.Count(); r++) {
@@ -84,18 +92,21 @@ namespace {
   }
 
   // cross-section size of a residue, before the arrowhead is applied
-  void SizeOf(short ss, const CartoonParams &p, float &w, float &h) {
+  void SizeOf(short ss, const CartoonParams &p, float &w, float &h, float &e) {
     using namespace xlib::protein;
     if (ss == ss_helix) {
       w = p.helix_width;
       h = p.helix_thickness;
+      e = p.edge;
     }
     else if (ss == ss_strand) {
       w = p.strand_width;
       h = p.strand_thickness;
+      e = p.edge;
     }
     else {
       w = h = p.coil_radius;
+      e = 2;
     }
   }
 }
@@ -204,6 +215,15 @@ void BuildCartoon(const xlib::protein::ChainSegment &seg,
       }
     }
   }
+  /* a strand running to the end of the segment has its head on the last
+  residue, which owns no stretch - the arrow would simply not be drawn. Move it
+  onto the stretch before, which is where it is drawn anyway
+  */
+  if (rc >= 2 && head[rc-1]) {
+    head[rc-1] = shoulder[rc-1] = false;
+    head[rc-2] = true;
+    shoulder[rc-2] = (rc >= 3 && ss[rc-3] == ss_strand);
+  }
 
   TTypeList<Sample> samples;
   TArrayList<size_t> residue_first_sample(rc);
@@ -218,16 +238,21 @@ void BuildCartoon(const xlib::protein::ChainSegment &seg,
     const vec3f p0 = (i == 0) ? (p1*2.0f - p2) : vec3f(seg.residues[i-1].ca);
     const vec3f p3 = (i + 2 < rc) ? vec3f(seg.residues[i+2].ca)
       : (p2*2.0f - p1);
-    // the final pair contributes the closing sample as well
-    const size_t n = (i + 2 == rc) ? steps + 1 : steps;
+    /* the final pair contributes the closing sample as well, and so does an
+    arrowhead - without it the taper stops a step short, at the coil radius,
+    and the point is never drawn: the arrow merges into the coil it precedes
+    */
+    const size_t n = (i + 2 == rc || head[i]) ? steps + 1 : steps;
 
-    float w0, h0, w1, h1;
-    SizeOf(ss[i], p, w0, h0);
-    SizeOf(ss[i+1], p, w1, h1);
+    float w0, h0, e0, w1, h1, e1;
+    SizeOf(ss[i], p, w0, h0, e0);
+    SizeOf(ss[i+1], p, w1, h1, e1);
     if (head[i]) {
       w0 = p.arrow_width;
       w1 = p.arrow_tip;
       h1 = h0;
+      // the head is flat to its point, whatever follows it
+      e1 = e0;
     }
     else if (head[i+1]) {
       // the next residue is the head, so this stretch ends at the shoulder
@@ -250,6 +275,7 @@ void BuildCartoon(const xlib::protein::ChainSegment &seg,
         AnyPerpendicular(smp.tangent));
       smp.w = w0 + (w1 - w0)*t;
       smp.h = h0 + (h1 - h0)*t;
+      smp.e = e0 + (e1 - e0)*t;
       if (s == 0 && shoulder[i]) {
         // the flat face: the same point at the width the strand had
         Sample flat = smp;

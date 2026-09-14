@@ -277,9 +277,146 @@ void CartoonRibbonPlaneTest(OlxTests &t) {
   }
 }
 //.............................................................................
+/* the extent of one cross-section along a given axis. The segments below run
+along x with their carbonyls along z, so the ribbon lies flat with its width
+along z and its thickness along y - taking whichever extent is larger instead
+reads the arrowhead tip, which is thicker than it is wide, off the wrong axis
+*/
+float RingExtent(const gxlib::cartoon::Mesh &m, size_t slices, size_t ring,
+  int axis)
+{
+  vec3f mn = m.vertices[ring*slices], mx = mn;
+  for (size_t k = 1; k < slices; k++) {
+    vec3f::UpdateMinMax(m.vertices[ring*slices + k], mn, mx);
+  }
+  return mx[axis] - mn[axis];
+}
+//.............................................................................
+/* a strand must end in an arrowhead: wider than the strand at the shoulder and
+tapering to the tip. It used to stop a step short, at the coil radius, so the
+arrow merged into the coil after it and no head was visible
+*/
+void CartoonArrowheadTest(OlxTests &t) {
+  t.description = __FUNC__;
+  using namespace gxlib::cartoon;
+  using namespace xlib::protein;
+  // an extended strand of 8, then coil - the carbonyls alternate as they do
+  ChainSegment seg;
+  seg.chain_id = 'A';
+  const size_t rc = 11, ns = 8;
+  for (size_t i = 0; i < rc; i++) {
+    BackboneResidue r;
+    r.number = (int)(i + 1);
+    r.ca = vec3d(3.3*i, (i % 2) ? 0.4 : -0.4, 0);
+    r.o = r.ca + vec3d(0, 0, (i % 2) ? 1.2 : -1.2);
+    r.has_o = true;
+    seg.residues.AddCopy(r);
+  }
+  TArrayList<short> ss(rc);
+  for (size_t i = 0; i < rc; i++) {
+    ss[i] = (i < ns) ? ss_strand : ss_coil;
+  }
+  CartoonParams p;
+  Mesh m;
+  BuildCartoon(seg, ss, p, m);
+  const size_t rings = m.vertices.Count()/p.slices;
+  float widest = 0, narrowest = 1e6f;
+  for (size_t r = 0; r < rings; r++) {
+    const float a = RingExtent(m, p.slices, r, 2);
+    widest = olx_max(widest, a);
+    narrowest = olx_min(narrowest, a);
+  }
+  if (widest < 2*p.arrow_width - 0.01f) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      olxstr("no arrowhead shoulder: widest ring is ") << widest);
+  }
+  if (narrowest > 2*p.arrow_tip + 0.01f) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      olxstr("the arrowhead never reaches its tip: narrowest ring is ")
+      << narrowest);
+  }
+  // and a strand running to the end of the segment gets one too
+  for (size_t i = 0; i < rc; i++) {
+    ss[i] = ss_strand;
+  }
+  Mesh m2;
+  BuildCartoon(seg, ss, p, m2);
+  const size_t rings2 = m2.vertices.Count()/p.slices;
+  float widest2 = 0;
+  for (size_t r = 0; r < rings2; r++) {
+    widest2 = olx_max(widest2, RingExtent(m2, p.slices, r, 2));
+  }
+  if (widest2 < 2*p.arrow_width - 0.01f) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      olxstr("a strand ending the segment has no arrowhead: widest ring is ")
+      << widest2);
+  }
+}
+//.............................................................................
+/* the flat sections must keep their thickness out to the edge. An ellipse comes
+to a knife edge and reads as much thinner than its nominal thickness
+*/
+void CartoonSectionTest(OlxTests &t) {
+  t.description = __FUNC__;
+  using namespace gxlib::cartoon;
+  using namespace xlib::protein;
+  ChainSegment seg = cartoon_test_data::StraightSegment(6);
+  for (size_t i = 0; i < seg.residues.Count(); i++) {
+    seg.residues[i].o = vec3d(seg.residues[i].ca) + vec3d(0, 0, 1.2);
+    seg.residues[i].has_o = true;
+  }
+  TArrayList<short> ss(seg.residues.Count());
+  for (size_t i = 0; i < ss.Count(); i++) {
+    ss[i] = ss_helix;
+  }
+  /* of the points on one section, the one nearest the edge across the ribbon,
+  and how much of the thickness it still carries
+  */
+  struct Edge {
+    static float Of(const CartoonParams &p, const ChainSegment &seg,
+      const TArrayList<short> &ss)
+    {
+      Mesh m;
+      BuildCartoon(seg, ss, p, m);
+      if (m.vertices.Count() < 2*p.slices) {
+        throw TFunctionFailedException(__OlxSourceInfo, "no ribbon");
+      }
+      const size_t ring = p.slices;  // the second section, past the start
+      float w_max = 0;
+      for (size_t k = 0; k < p.slices; k++) {
+        w_max = olx_max(w_max, olx_abs(m.vertices[ring + k][2]));
+      }
+      float th = 0;
+      for (size_t k = 0; k < p.slices; k++) {
+        const vec3f &v = m.vertices[ring + k];
+        if (olx_abs(v[2]) > 0.8f*w_max) {
+          th = olx_max(th, olx_abs(v[1]));
+        }
+      }
+      return th;
+    }
+  };
+  CartoonParams p;
+  const float flat = Edge::Of(p, seg, ss);
+  if (flat < 0.5f*p.helix_thickness) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      olxstr("the ribbon edge is knife thin: ") << flat <<
+      " of " << p.helix_thickness);
+  }
+  // and that this is the section shape doing it, not the thickness alone
+  CartoonParams e2 = p;
+  e2.edge = 2;
+  if (Edge::Of(e2, seg, ss) >= flat) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      "the superellipse section is no fuller at the edge than an ellipse");
+  }
+}
+//.............................................................................
 void CartoonTests(OlxTests &t) {
   t.Add(test::CartoonTubeTest);
   t.Add(test::CartoonRibbonPlaneTest);
   t.Add(test::CartoonColourTest);
+  t.Add(test::CartoonArrowheadTest);
+  t.Add(test::CartoonSectionTest);
 }
 };  //namespace test

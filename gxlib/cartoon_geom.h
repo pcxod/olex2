@@ -41,7 +41,8 @@ struct Mesh {
   size_t VertexCount() const { return vertices.Count(); }
 };
 
-/* cross-section sizes per secondary structure, in A. The section is an ellipse
+/* cross-section sizes per secondary structure, in A, as semi-axes - the ribbon
+is twice as wide as width. The section is a superellipse |x/w|^e + |y/h|^e = 1
 of width across the ribbon and thickness; a coil sets them equal and is a round
 tube, which is why one builder covers both representations. The point count is
 fixed across the three types so a chain stays one continuous surface
@@ -52,6 +53,12 @@ struct CartoonParams {
   float strand_width, strand_thickness;
   // widest point of the arrowhead, and the point it tapers to
   float arrow_width, arrow_tip;
+  /* superellipse exponent of the flat sections. 2 is an ellipse, which comes
+  to an edge thin enough that the ribbon reads as much thinner than its
+  thickness; 4 keeps most of the thickness out to the edge, as every other
+  viewer draws it. The coil is always 2, being round
+  */
+  float edge;
   size_t steps_per_residue;
   size_t slices;
   /* every residue as coil, whatever it was assigned - the plain CA trace, and
@@ -60,9 +67,10 @@ struct CartoonParams {
   bool trace_only;
   CartoonParams()
     : coil_radius(0.30f),
-      helix_width(1.20f), helix_thickness(0.28f),
-      strand_width(1.00f), strand_thickness(0.28f),
-      arrow_width(1.70f), arrow_tip(0.10f),
+      helix_width(1.30f), helix_thickness(0.40f),
+      strand_width(1.20f), strand_thickness(0.40f),
+      arrow_width(2.00f), arrow_tip(0.10f),
+      edge(4.0f),
       steps_per_residue(8), slices(12),
       trace_only(false)
   {}
