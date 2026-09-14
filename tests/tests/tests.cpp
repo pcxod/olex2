@@ -21,6 +21,7 @@
 //..............................
 #include "tests/alg_test.h"
 #include "tests/container_test.h"
+#include "tests/dataitem_test.h"
 #include "tests/sort_test.h"
 #include "tests/encoding_test.h"
 #include "tests/roman_test.h"
@@ -76,6 +77,7 @@ int main(int argc, char* argv[]) {
   tests.Add(&test::exparse::ExparseTests);
   tests.Add(&test::StringTests);
   tests.Add(&test::ContainerTests);
+  tests.Add(&test::DataItemTests);
   tests.Add(&test::HashingTests).
     Add(&test::EncodingTests);
   tests.Add(new test::CriticalSectionTest(true), &test::CriticalSectionTest::DoTest).

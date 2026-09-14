@@ -254,7 +254,9 @@ bool TDataItem::DeleteByName(const olxstr& name) {
         }
         return false;
       }
-      root->DeleteItemByIndex(ii);
+      // a field index, so it indexes Fields - deleting the item of that index
+      // throws on a leaf item and removes an unrelated child otherwise
+      root->DeleteFieldByIndex(ii, true);
       return true;
     }
     if ((i + 1) == toks.Count()) {
