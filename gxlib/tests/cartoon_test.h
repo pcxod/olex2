@@ -412,11 +412,82 @@ void CartoonSectionTest(OlxTests &t) {
   }
 }
 //.............................................................................
+/* every strand of a sheet ends in its own arrowhead, not just the one that
+ends the chain. A hairpin has two: one into the turn and one at the end
+*/
+void CartoonSheetArrowTest(OlxTests &t) {
+  t.description = __FUNC__;
+  using namespace gxlib::cartoon;
+  using namespace xlib::protein;
+  /* the two-stranded antiparallel sheet of SecondaryStructureTest: zigzag
+  strands 4.8 A apart, which is what makes them a sheet and not two pieces of
+  extended chain, joined by a three residue turn
+  */
+  ChainSegment seg;
+  seg.chain_id = 'A';
+  const size_t strand_len = 10;
+  for (size_t i = 0; i < strand_len; i++) {
+    BackboneResidue r;
+    r.number = (int)(i + 1);
+    r.ca = vec3d(3.3*i, 0, (i % 2) ? 0.9 : -0.9);
+    seg.residues.AddCopy(r);
+  }
+  for (size_t i = 0; i < 3; i++) {
+    BackboneResidue r;
+    r.number = (int)(strand_len + i + 1);
+    r.ca = vec3d(3.3*(strand_len - 1) + 2.0, 1.2*(i + 1), 0);
+    seg.residues.AddCopy(r);
+  }
+  for (size_t i = 0; i < strand_len; i++) {
+    BackboneResidue r;
+    r.number = (int)(strand_len + 4 + i);
+    r.ca = vec3d(3.3*(strand_len - 1 - i), 4.8,
+      ((strand_len - 1 - i) % 2) ? 0.9 : -0.9);
+    seg.residues.AddCopy(r);
+  }
+  TArrayList<short> ss;
+  AssignSecondaryStructure(seg, ss);
+  size_t n_strand_runs = 0;
+  for (size_t i = 0; i < ss.Count(); i++) {
+    if (ss[i] == ss_strand && (i == 0 || ss[i-1] != ss_strand)) {
+      n_strand_runs++;
+    }
+  }
+  if (n_strand_runs != 2) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      olxstr("the hairpin was not assigned two strands but ") << n_strand_runs);
+  }
+  CartoonParams p;
+  Mesh m;
+  BuildCartoon(seg, ss, p, m);
+  /* one shoulder per strand: a ring wider than the strand whose predecessor
+  was not. The arrowhead is the only thing that widens the ribbon
+  */
+  const size_t rings = m.vertices.Count()/p.slices;
+  const float flare = 2*(p.strand_width + p.arrow_width)/2;
+  size_t n_heads = 0;
+  bool was_wide = false;
+  for (size_t r = 0; r < rings; r++) {
+    const bool wide = RingExtent(m, p.slices, r, 1) > flare ||
+      RingExtent(m, p.slices, r, 2) > flare;
+    if (wide && !was_wide) {
+      n_heads++;
+    }
+    was_wide = wide;
+  }
+  if (n_heads != n_strand_runs) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      olxstr("a sheet of ") << n_strand_runs << " strands drew " << n_heads
+      << " arrowheads");
+  }
+}
+//.............................................................................
 void CartoonTests(OlxTests &t) {
   t.Add(test::CartoonTubeTest);
   t.Add(test::CartoonRibbonPlaneTest);
   t.Add(test::CartoonColourTest);
   t.Add(test::CartoonArrowheadTest);
   t.Add(test::CartoonSectionTest);
+  t.Add(test::CartoonSheetArrowTest);
 }
 };  //namespace test
