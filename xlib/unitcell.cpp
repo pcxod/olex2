@@ -21,6 +21,7 @@
 #include "etable.h"
 #include "infotab.h"
 #include "estopwatch.h"
+#include "bonds_eq_search.h"
 
 #undef GetObject
 
@@ -222,171 +223,6 @@ void TUnitCell::UpdateEllipsoids() {
   }
 }
 //..............................................................................
-TUnitCell::TSearchSymmEqTask::TSearchSymmEqTask(TPtrList<TCAtom>& atoms,
-  const smatd_list& matrices)
-  : Atoms(atoms), Matrices(matrices)
-{
-  AU = atoms[0]->GetParent();
-  Latt = &AU->GetLattice();
-}
-//..............................................................................
-void TUnitCell::TSearchSymmEqTask::Run(size_t ind) const {
-  if (Atoms[ind]->IsDeleted()) {
-    return;
-  }
-  const size_t ac = Atoms.Count();
-  const size_t mc = Matrices.Count();
-  for (size_t i=ind+1; i < ac; i++) {
-    if (Atoms[i]->IsDeleted()) {
-      continue;
-    }
-    if (Atoms[i]->GetExyzGroup() != 0 &&
-      Atoms[i]->GetExyzGroup() == Atoms[ind]->GetExyzGroup())
-    {
-      continue;
-    }
-    for (size_t j=0; j < mc; j++) {
-      vec3d v = Atoms[ind]->ccrd() - Matrices[j] * Atoms[i]->ccrd();
-      const vec3i shift = v.Round<int>();
-      // collect asymmetric unit bonds
-      if (j == 0 && shift.IsNull()) {  // I
-        AU->CellToCartesian(v);
-        const double qd = v.QLength();
-        if (qd < 1e-4) {
-          if (Atoms[i]->GetPart() != Atoms[ind]->GetPart()) {
-            continue;
-          }
-          if (Atoms[ind]->GetType() == iQPeakZ) {
-            Atoms[ind]->SetDeleted(true);
-            break;
-          }
-          volatile olx_scope_cs cs_(GetCriticalSection());
-          Atoms[i]->SetDeleted(true);
-        }
-        else {
-          if (TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], qd,
-            Latt->GetDelta()))  // covalent bond
-          {
-            volatile olx_scope_cs cs_(GetCriticalSection());
-            Atoms[ind]->AttachSite(Atoms[i], Matrices[j]);
-            Atoms[i]->AttachSite(Atoms[ind], Matrices[j]);
-          }
-          else if (TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], qd,
-            Latt->GetDeltaI()))  // interaction
-          {
-            volatile olx_scope_cs cs_(GetCriticalSection());
-            Atoms[ind]->AttachSiteI(Atoms[i], Matrices[j]);
-            Atoms[i]->AttachSiteI(Atoms[ind], Matrices[j]);
-          }
-        }
-        continue;
-      }
-      AU->CellToCartesian(v -= shift);
-      const double qd = v.QLength();
-      if (qd < 1e-4) {
-        if (Atoms[ind]->GetType() == iQPeakZ) {
-          Atoms[ind]->SetDeleted(true);
-          break;
-        }
-        if (Atoms[i]->GetPart() != Atoms[ind]->GetPart() ||
-          Atoms[i]->GetPart() < 0)
-        {
-          continue;
-        }
-        if (Atoms[i]->GetParentAfixGroup() == NULL) {
-          volatile olx_scope_cs cs_(GetCriticalSection());
-          Atoms[i]->SetDeleted(true);
-        }
-      }
-      else {
-        smatd matr = Matrices[j];
-        matr.t += shift;
-        matr.SetId((uint8_t)j, shift);
-        if (TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], matr, qd,
-          Latt->GetDelta()))
-        {
-          volatile olx_scope_cs cs_(GetCriticalSection());
-          Atoms[ind]->AttachSite(Atoms[i], matr);
-          Atoms[i]->AttachSite(Atoms[ind], Latt->GetUnitCell().InvMatrix(matr));
-        }
-        else if (TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], matr, qd,
-          Latt->GetDeltaI()))
-        {
-          volatile olx_scope_cs cs_(GetCriticalSection());
-          Atoms[ind]->AttachSiteI(Atoms[i], matr);
-          Atoms[i]->AttachSiteI(Atoms[ind], Latt->GetUnitCell().InvMatrix(matr));
-        }
-      }
-    }
-    for (int ii = -1; ii <= 1; ii++) {
-      for (int ij = -1; ij <= 1; ij++) {
-        for (int ik = -1; ik <= 1; ik++) {
-          const vec3i shift(ii, ij, ik);
-          const double qd = AU->Orthogonalise(
-            Atoms[ind]->ccrd() - shift - Atoms[i]->ccrd()).QLength();
-          smatd matr = Matrices[0];
-          matr.t += shift;
-          matr.SetId(0, shift);
-          if (TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], matr, qd,
-            Latt->GetDelta()))
-          {
-            volatile olx_scope_cs cs_(GetCriticalSection());
-            Atoms[ind]->AttachSite(Atoms[i], matr);
-            if (i != ind) {
-              Atoms[i]->AttachSite(Atoms[ind], Latt->GetUnitCell().InvMatrix(matr));
-            }
-          }
-          else if (TNetwork::BondExistsQ(*Atoms[ind], *Atoms[i], matr, qd,
-            Latt->GetDeltaI()))
-          {
-            volatile olx_scope_cs cs_(GetCriticalSection());
-            Atoms[ind]->AttachSiteI(Atoms[i], matr);
-            if (i != ind) {
-              Atoms[i]->AttachSiteI(Atoms[ind], Latt->GetUnitCell().InvMatrix(matr));
-            }
-          }
-        }
-      }
-    }
-  }
-}
-//..............................................................................
-void TUnitCell::TSearchSymmEqTask::InitEquiv() const {
-  const size_t ac = Atoms.Count();
-  const size_t mc = Matrices.Count();
-  for (size_t i = 0; i < ac; i++) {
-    if (Atoms[i]->IsDeleted()) {
-      continue;
-    }
-    for (size_t j = 1; j < mc; j++) {
-      vec3d v = Atoms[i]->ccrd() - Matrices[j] * Atoms[i]->ccrd();
-      const vec3i shift = v.Round<int>();
-      AU->CellToCartesian(v -= shift);
-      const double qd = v.QLength();
-      if (qd < 1e-4) {
-        smatd eqm(Matrices[j]);
-        eqm.t += shift;
-        eqm.SetId((uint8_t)j, shift);
-        Atoms[i]->AddEquiv(eqm);
-      }
-      else {
-        smatd matr = Matrices[j];
-        matr.t += shift;
-        matr.SetId((uint8_t)j, shift);
-        if (TNetwork::BondExistsQ(*Atoms[i], *Atoms[i], matr, qd,
-          Latt->GetDelta()))
-        {
-          Atoms[i]->AttachSite(Atoms[i], matr);
-        }
-        else if (TNetwork::BondExistsQ(*Atoms[i], *Atoms[i], matr, qd,
-          Latt->GetDeltaI()))
-        {
-          Atoms[i]->AttachSiteI(Atoms[i], matr);
-        }
-      }
-    }
-  }
-}
 //..............................................................................
 void TUnitCell::FindSymmEq() const {
   volatile TStopWatch sw(__FUNC__);
@@ -422,9 +258,10 @@ void TUnitCell::FindSymmEq() const {
     }
   }
   else {
-    TSearchSymmEqTask searchTask(ACA, Matrices);
-    searchTask.InitEquiv();
-    OlxListTask::Run(searchTask, ACA.Count(), tQuadraticTask, 100);
+    BondsSymmEqTaskFctory::ISearchSymmEqTaskPtr searchTask =
+      BondsSymmEqTaskFctory::build(ACA, Matrices);
+    searchTask->InitEquiv();
+    OlxListTask::Run(*searchTask, ACA.Count(), tQuadraticTask, 100);
     for (size_t i = 0; i < ACA.Count(); i++) {
       ACA[i]->UpdateAttachedSites();
     }
