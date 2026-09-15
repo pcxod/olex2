@@ -726,11 +726,10 @@ TSAtomPList::const_list_type TXApp::FindSAtoms(const IStrList& toks_,
     }
     olxstr new_c = toks.Text(' ');
     if (!new_c.IsEmpty()) {
-      TSAtomPList res1;
       TCAtomGroup ag;
       TAtomReference ar(new_c, SelectionOwner);
       size_t atomAGroup;
-      ar.Expand(XFile().GetRM(), ag, "*", atomAGroup);
+      ar.Expand(XFile().GetRM(), ag, EmptyString(), atomAGroup);
       if (!ag.IsEmpty()) {
         res.SetCapacity(res.Count() + ag.Count());
         TAsymmUnit& au = XFile().GetAsymmUnit();
@@ -739,26 +738,32 @@ TSAtomPList::const_list_type TXApp::FindSAtoms(const IStrList& toks_,
         for (size_t i = 0; i < ag.Count(); i++) {
           ag[i].GetAtom()->SetTag(i);
         }
+        TArrayList<TSAtom*> satoms(ag.Count(), olx_list_init::zero());
         for (size_t i = 0; i < objects.atoms.Count(); i++) {
           TSAtom& sa = objects.atoms[i];
           if (sa.CAtom().GetTag() == -1 || !sa.CAtom().IsAvailable()) {
             continue;
           }
           // get an atom from the asymm unit
-          if (ag[sa.CAtom().GetTag()].GetMatrix() == 0) {
+          if (ag[sa.CAtom().GetTag()].GetMatrix() == 0)
+          {
             if (sa.IsAUAtom()) {
-              res1.Add(sa);
+              satoms[sa.CAtom().GetTag()] = &sa;
             }
           }
           else {
             if (sa.IsGenerator(*ag[sa.CAtom().GetTag()].GetMatrix())) {
-              res1.Add(sa);
+              satoms[sa.CAtom().GetTag()] = &sa;
             }
           }
         }
-        // restore the original order, obviously of #s is in - it is messed up...
-        QuickSorter::Sort(res1, ACollectionItem::TagComparator(TSAtom::CAtomAccessor()));
-        res.AddAll(res1);
+        res.SetCapacity(ag.Count());
+        for (size_t i = 0; i < ag.Count(); i++) {
+          TSAtom* a = satoms[ag[i].GetAtom()->GetTag()];
+          if (a != 0) {
+            res << a;
+          }
+        }
       }
     }
   }
