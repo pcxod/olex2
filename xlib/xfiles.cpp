@@ -18,6 +18,7 @@
 #include "cif.h"
 #include "hkl.h"
 #include "cif.h"
+#include "refutil.h"
 #include "utf8file.h"
 #include "atomsort.h"
 #include "infotab.h"
@@ -655,6 +656,9 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
         TBasicApp::NewLogEntry(logWarning)
           << "Failed to extract HKL data from CIF";
       }
+      if (GetRM().GetReflections().IsEmpty()) {
+        GetRM().SetHKLSource(LocateHklFile());
+      }
     }
     else {
       olxstr src = LocateHklFile();
@@ -663,6 +667,29 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
       }
       GetRM().SetHKLSource(src);
     }
+  }
+  // a CIF without an embedded RES has no OSF - fit one to its own data
+  if (FLastLoader->Is<TCif>() && GetRM().Vars.VarCount() > 0 &&
+    GetRM().Vars.GetVar(0).GetValue() == 1.0 &&
+    &TXApp::GetInstance().XFile() == this)
+  {
+    try {
+      TRefList refs;
+      evecd Fsq;
+      TXApp::GetInstance().CalcFsq(refs, Fsq, false, SFUtil::EXTIDest::Fc);
+      if (refs.Count() > 0) {
+        // twice - the SHELX weights depend on the current scale
+        for (int i = 0; i < 2; i++) {
+          double k = RefUtil::CalcFsqScaleShelx(GetRM(), Fsq, refs);
+          if (k > 0) {
+            GetRM().Vars.GetVar(0).SetValue(1. / sqrt(k));
+          }
+        }
+        TBasicApp::NewLogEntry(logInfo) << "OSF fitted to the CIF data: " <<
+          olxstr::FormatFloat(4, GetRM().Vars.GetVar(0).GetValue());
+      }
+    }
+    catch (const TExceptionBase&) {}
   }
   // try resolve the residues
   if (false && FLastLoader->Is<TCif>()) {
