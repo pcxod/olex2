@@ -998,6 +998,20 @@ void RefinementModel::SetReflections(const TRefList &refs) const {
 //.............................................................................
 const TRefList& RefinementModel::GetReflections() const {
   TStopWatch sw(__FUNC__);
+  // an HKLF 5 model over a file without batch numbers falls back to HKLF 4,
+  // also when the cached list was loaded before the model said HKLF 5
+  auto checked = [this]() -> const TRefList& {
+    if (HKLF >= 5 && !_Reflections.IsEmpty() && !_Reflections[0].IsBatchSet()) {
+      TBasicApp::NewLogEntry(logWarning) << "HKL file is not compatible with"
+        " the HKLF instruction - clearing BASF and resetting to HKLF 4";
+      HKLF = 4;
+      if (!MERG_set) {  // SetHKLF forced MERG 0 for the batch format
+        MERG = def_MERG;
+      }
+      const_cast<XVarManager &>(Vars).ClearBASF();
+    }
+    return _Reflections;
+  };
   try {
     if (HKLSource.IsEmpty()) {
       return _Reflections;
@@ -1007,7 +1021,7 @@ const TRefList& RefinementModel::GetReflections() const {
         hkl_src_id == HklFileID &&
         HklFileMat == HKLF_mat)
     {
-      return _Reflections;
+      return checked();
     }
     HklFileID = hkl_src_id;
     THklFile hf(HKLF_mat);
@@ -1052,7 +1066,7 @@ const TRefList& RefinementModel::GetReflections() const {
       HKLF = hf.GetHKLF();
     }
     SetReflections(hf.RefList());
-    return _Reflections;
+    return checked();
   }
   catch(TExceptionBase& exc) {
     _Reflections.Clear();
@@ -1186,14 +1200,6 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       FilterHkl(refs, _HklStat);
       TRefPList measured_refs,
         merge_stats_refs;
-      if (HKLF >= 5) {
-        if (!refs.IsEmpty() && !refs[0].IsBatchSet()) {
-          TBasicApp::NewLogEntry(logWarning) << "HKL file is not compatible with"
-            " the HKLF instruction - clearing BASF and resetting to HKLF 4";
-          HKLF = 4;
-          Vars.ClearBASF();
-        }
-      }
       if (HKLF >= 5) {
         measured_refs = refs.ptr().Filter(olx_alg::olx_gt(0,
           FunctionAccessor::MakeConst(&TReflection::GetBatch)));
@@ -2493,6 +2499,10 @@ PyObject* RefinementModel::PyExport(bool export_conn) {
     PythonExt::SetDictItem(main, rcList[i]->GetName(), rcList[i]->PyExport());
   }
 
+  if (HKLF > 4) {  // validates the code against the file, may reset it to 4
+    try { GetReflections(); }
+    catch (...) {}
+  }
   PythonExt::SetDictItem(hklf, "value", Py_BuildValue("i", HKLF));
   PythonExt::SetDictItem(hklf, "s", Py_BuildValue("d", HKLF_s));
   PythonExt::SetDictItem(hklf, "m", Py_BuildValue("d", HKLF_m));

@@ -78,8 +78,7 @@ protected:
   olxstr HKLSource, ModelSource;
   olxstr RefinementMethod,  // L.S. or CGLS
          SolutionMethod;
-  int MERG;
-  mutable int HKLF; // can be modified by GetReflections!
+  mutable int MERG, HKLF; // can be modified by GetReflections!
   mat3d HKLF_mat;
   double HKLF_s, HKLF_wt;
   int HKLF_m;
