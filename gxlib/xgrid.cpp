@@ -331,7 +331,7 @@ TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp)
   new TContextClear(Parent);
   Mask = 0;
   Instance = this;
-  Loading_ = Boxed = Extended = false;
+  Loading_ = Boxed = Extended = BoxMode = false;
   RenderMode = planeRenderModeFill;
   XApp = xapp;
   Depth = 0;
@@ -677,6 +677,7 @@ void TXGrid::InitGrid(size_t maxX, size_t maxY, size_t maxZ, bool use_colors) {
   MaxY = maxY;
   MaxZ = maxZ;
   MaxVal = MinVal = 0;
+  BoxMode = false;
   olx_del_obj(ED);
   olx_del_obj(ColorData);
   ED = new TArray3D<float>(0, MaxX, 0, MaxY, 0, MaxZ);
@@ -780,7 +781,32 @@ void TXGrid::SetScale(float v) {
     normals.Clear();
     vertices.Clear();
     colors.Clear();
-    if (XApp->Get3DFrame().IsVisible() || Boxed) {
+    if (BoxMode) {
+      CIsoSurface IS(ED->Data, ColorData != 0 ? &ColorData->Data : 0);
+      IS.GenerateSurface(Scale);
+      vertices.Add(0).TakeOver(IS.VertexList());
+      normals.Add(0).TakeOver(IS.NormalList());
+      triangles.Add(0).TakeOver(IS.TriangleList());
+      if (ColorData != 0) {
+        colors.Add(0).TakeOver(IS.GetVertexData());
+      }
+      else if (Scale < 0) {
+        IS.GenerateSurface(-Scale);
+        vertices.Add(0).TakeOver(IS.VertexList());
+        normals.Add(0).TakeOver(IS.NormalList());
+        triangles.Add(0).TakeOver(IS.TriangleList());
+      }
+      for (size_t li = 0; li < vertices.Count(); li++) {
+        for (size_t i = 0; i < vertices[li].Count(); i++) {
+          vertices[li][i] = vertices[li][i] * BoxAxes + BoxOrigin;
+        }
+        for (size_t i = 0; i < normals[li].Count(); i++) {
+          normals[li][i] = (normals[li][i] * BoxAxes).Normalise();
+        }
+      }
+      Boxed = true;
+    }
+    else if (XApp->Get3DFrame().IsVisible() || Boxed) {
       double SZ = olx_round(
         (double)MaxX / XApp->XFile().GetAsymmUnit().GetAxes()[0]);
       const vec3i isz = (XApp->Get3DFrame().GetSize()*SZ).Round<int>();
@@ -1168,10 +1194,10 @@ void TXGrid::RescaleSurface(bool collect_only) {
           else {
             for (int j = 0; j < 3; j++) {
               olx_gl::normal(norms[trians[i][j]]);
-              olx_gl::vertex(verts[trians[i][j]]);
               if (ColorData != 0) {
                 olx_gl::color(colors[li][trians[i][j]]);
               }
+              olx_gl::vertex(verts[trians[i][j]]);
             }
           }
         }
@@ -1180,10 +1206,10 @@ void TXGrid::RescaleSurface(bool collect_only) {
         for (size_t i = 0; i < trians.Count(); i++) {
           for (int j = 0; j < 3; j++) {
             olx_gl::normal(norms[trians[i][j]]);
-            olx_gl::vertex(verts[trians[i][j]]);
             if (ColorData != 0) {
               olx_gl::color(colors[li][trians[i][j]]);
             }
+            olx_gl::vertex(verts[trians[i][j]]);
           }
         }
       }
@@ -1233,10 +1259,10 @@ void TXGrid::RescaleSurface(bool collect_only) {
               else {
                 for (int j = 0; j < 3; j++) {
                   olx_gl::normal(norms[trians[i][j]]);
-                  olx_gl::vertex(pts[j]);
                   if (ColorData != 0) {
                     olx_gl::color(colors[li][trians[i][j]]);
                   }
+                  olx_gl::vertex(pts[j]);
                 }
               }
             }
@@ -1292,10 +1318,10 @@ void TXGrid::RescaleSurface(bool collect_only) {
                 else {
                   for (int j = 0; j < 3; j++) {
                     olx_gl::normal(norms[trians[i].pointID[j]]);
-                    olx_gl::vertex(pts[j]);
                     if (ColorData != 0) {
                       olx_gl::color(colors[li][trians[i][j]]);
                     }
+                    olx_gl::vertex(pts[j]);
                   }
                 }
               }
@@ -1337,10 +1363,10 @@ void TXGrid::RescaleSurface(bool collect_only) {
           else {
             for (int j = 0; j < 3; j++) {
               olx_gl::normal(norms[trians[i][j]]);
-              olx_gl::vertex(pts[j]);  // cell drawing
               if (ColorData != 0) {
                 olx_gl::color(colors[li][trians[i][j]]);
               }
+              olx_gl::vertex(pts[j]);  // cell drawing
             }
           }
         }
@@ -1929,41 +1955,70 @@ PyObject* pyImport(PyObject* self, PyObject* args) {
   int dim1, dim2, dim3, focus1, focus2, focus3;
   int type;
   Py_ssize_t len;
-  olxcstr format = PythonExt::UpdateBinaryFormat("(iii)(iii)s#i");
+  /* optional: colours as uint32 RGBA per point, and a Cartesian box (origin,
+  three step vectors in Angstrom) - then the grid is the whole array and is
+  not wrapped into the cell
+  */
+  char* colors = 0;
+  Py_ssize_t clen = 0;
+  float box[12];
+  PyObject* pbox = 0;
+  olxcstr format = PythonExt::UpdateBinaryFormat("(iii)(iii)s#i|s#O");
   if (!PyArg_ParseTuple(args, format.c_str(),
     &dim1, &dim2, &dim3,
-    &focus1, &focus2, &focus3, &data, &len, &type))
+    &focus1, &focus2, &focus3, &data, &len, &type, &colors, &clen, &pbox))
   {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo,
       format.c_str());
   }
   const size_t sz = dim1 * dim2*dim3;
   if ((type == 0 && sz * sizeof(double) != (size_t)len) ||
-    (type == 1 && sz * sizeof(int) != (size_t)len))
+    (type == 1 && sz * sizeof(int) != (size_t)len) ||
+    (clen != 0 && sz * sizeof(uint32_t) != (size_t)clen))
   {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "array size");
   }
+  const bool boxed = (pbox != 0 && pbox != Py_None);
+  if (boxed && !PyArg_ParseTuple(pbox, "ffffffffffff", &box[0], &box[1],
+    &box[2], &box[3], &box[4], &box[5], &box[6], &box[7], &box[8], &box[9],
+    &box[10], &box[11]))
+  {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "box");
+  }
   TEMemoryInputStream ms(data, len);
   TXGrid& g = *TXGrid::GetInstance();
-  g.InitGrid(focus1, focus2, focus3);
+  // the cell grid keeps its last plane for AdjustMap, the box grid is complete
+  const int e = boxed ? 1 : 0;
+  g.InitGrid(focus1 - e, focus2 - e, focus3 - e, clen != 0);
   for (int d1 = 0; d1 < focus1; d1++) {
     for (int d2 = 0; d2 < focus2; d2++)
       for (int d3 = 0; d3 < focus3; d3++) {
         float v;
+        const size_t idx = (d1*dim2 + d2)*dim3 + d3;
         if (type == 0) {
           double _v;
-          ms.SetPosition(((d1*dim2 + d2)*dim3 + d3) * sizeof(double));
+          ms.SetPosition(idx * sizeof(double));
           ms >> _v;
           v = (float)_v;
         }
         else if (type == 1) {
           int _v;
-          ms.SetPosition(((d1*dim2 + d2)*dim3 + d3) * sizeof(int));
+          ms.SetPosition(idx * sizeof(int));
           ms >> _v;
           v = (float)_v;
         }
-        g.SetValue(d1, d2, d3, v);
+        if (clen != 0) {
+          g.SetValue(d1, d2, d3, v, ((const uint32_t*)colors)[idx]);
+        }
+        else {
+          g.SetValue(d1, d2, d3, v);
+        }
       }
+  }
+  if (boxed) {
+    g.SetBox(vec3f(box[0], box[1], box[2]),
+      mat3f(box[3], box[4], box[5], box[6], box[7], box[8], box[9], box[10],
+        box[11]));
   }
   return PythonExt::PyNone();
 }
@@ -2077,7 +2132,7 @@ PyObject* pyIsVisible(PyObject* self, PyObject* args) {
 static PyMethodDef XGRID_Methods[] = {
   {"Init", pyInit, METH_VARARGS, "initialises grid memory"},
   {"GetSize", pyGetSize, METH_VARARGS, "returns size of the grid"},
-  {"Import", pyImport, METH_VARARGS, "imports grid from an array"},
+  {"Import", pyImport, METH_VARARGS, "imports grid from an array: (dims), (focus), data, is_int[, rgba uint32 bytes[, (origin, 3 step vectors) in Angstrom - a box, not wrapped]]"},
   {"SetValue", pySetValue, METH_VARARGS, "sets grid value"},
   {"GetValue", pyGetValue, METH_VARARGS, "gets grid value"},
   {"SetMinMax", pySetMinMax, METH_VARARGS,

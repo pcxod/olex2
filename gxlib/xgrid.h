@@ -89,6 +89,10 @@ class TXGrid : public AGDrawObject {
   short RenderMode;
   bool Extended, Boxed, Loading_;
   vec3f ExtMin, ExtMax;
+  // a Cartesian box grid (molecular cubes): no cell wrapping, no mask
+  bool BoxMode;
+  vec3f BoxOrigin;
+  mat3f BoxAxes;
   TGlPrimitive* glpP, *glpN, *glpC;
   // these will keep the masked objects
   TArrayList<vec3f_alist> vertices, normals;
@@ -164,6 +168,15 @@ public:
 
   // copies the 0yz x0z and xy0 layers to Maxyz xMaxyz and xyMaxZ
   void AdjustMap();
+  /* the grid becomes a Cartesian box: origin and the three step vectors (rows,
+  Angstrom); InitGrid resets it. The grid covers all MaxX+1 points
+  */
+  void SetBox(const vec3f& origin, const mat3f& axes) {
+    BoxOrigin = origin;
+    BoxAxes = axes;
+    BoxMode = true;
+  }
+  bool IsBox() const { return BoxMode; }
   virtual void Create(const olxstr& cName = EmptyString());
 
   virtual bool Orient(TGlPrimitive& P);
