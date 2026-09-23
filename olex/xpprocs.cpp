@@ -70,6 +70,8 @@
 #include "html/htmlmanager.h"
 
 #include <iostream>
+#include <map>
+#include <array>
 
 #include "pyext.h"
 
@@ -5000,7 +5002,70 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
     }
     else if (Cmds[0].Equalsi("poly") && Cmds.Count() > 3) {
       TStrList svertices, striangles;
-      if (Cmds.Count() == 4 && TEFile::Exists(Cmds[3])) {
+      TArrayList<vec3f> vertices;
+      TArrayList<vec3s> triags;
+      TArrayList<uint32_t> colors; // one per triangle, from the obj's mtl
+      bool keep_winding = false; // obj: the file orients the faces
+      if (Cmds.Count() == 4 && Cmds[3].EndsWithi(".obj") &&
+        TEFile::Exists(Cmds[3]))
+      {
+        /* Wavefront obj as NoSpherA2 writes it: 'v x y z', 'usemtl name',
+        'f i j k' (1-based), the colour is the material's Kd in the .mtl next
+        to it. -s scales the coordinates (0.529177 for a bohr file)
+        */
+        olxstr_dict<uint32_t> mats;
+        olxstr mtl_fn = TEFile::ChangeFileExt(Cmds[3], "mtl");
+        if (TEFile::Exists(mtl_fn)) {
+          TStrList ml = TEFile::ReadLines(mtl_fn);
+          olxstr name;
+          for (size_t i = 0; i < ml.Count(); i++) {
+            TStrList toks(ml[i], ' ');
+            if (toks.Count() == 2 && toks[0] == "newmtl") {
+              name = toks[1];
+            }
+            else if (toks.Count() == 4 && toks[0] == "Kd") {
+              mats.Add(name, OLX_RGB(toks[1].ToFloat() * 255,
+                toks[2].ToFloat() * 255, toks[3].ToFloat() * 255));
+            }
+          }
+        }
+        float scale = Options.FindValue("s", "1").ToFloat();
+        keep_winding = true;
+        uint32_t color = 0x808080;
+        TStrList ol = TEFile::ReadLines(Cmds[3]);
+        for (size_t i = 0; i < ol.Count(); i++) {
+          TStrList toks(ol[i], ' ');
+          if (toks.Count() == 4 && toks[0] == "v") {
+            vertices.Add(vec3f(toks[1].ToFloat(), toks[2].ToFloat(),
+              toks[3].ToFloat()) * scale);
+          }
+          else if (toks.Count() == 4 && toks[0] == "f") {
+            triags.Add(vec3s(toks[1].ToSizeT() - 1, toks[2].ToSizeT() - 1,
+              toks[3].ToSizeT() - 1));
+            colors.Add(color);
+          }
+          else if (toks.Count() == 2 && toks[0] == "usemtl") {
+            color = mats.Find(toks[1], color);
+          }
+        }
+        if (vertices.Count() < 3 || triags.IsEmpty()) {
+          Error.ProcessingError(__OlxSrcInfo, "no triangles in the obj file");
+        }
+        // -f=file: one packed RGB per face line, overrides the mtl (Olex2
+        // colours a per-face property through its own scale this way)
+        olxstr colour_fn = Options.FindValue('f');
+        if (!colour_fn.IsEmpty() && TEFile::Exists(colour_fn)) {
+          TStrList cl = TEFile::ReadLines(colour_fn);
+          if (cl.Count() != triags.Count()) {
+            Error.ProcessingError(__OlxSrcInfo, "the colour file must have "
+              "one line per face");
+          }
+          for (size_t i = 0; i < cl.Count(); i++) {
+            colors[i] = cl[i].ToUInt();
+          }
+        }
+      }
+      else if (Cmds.Count() == 4 && TEFile::Exists(Cmds[3])) {
         TStrList toks(TEFile::ReadLines(Cmds[3]).Text(';'), ';');
         if (toks.Count() != 2) {
           Error.ProcessingError(__OlxSrcInfo, "a list of vertices seperated "
@@ -5020,14 +5085,15 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
         svertices.Strtok(toks[0], ',');
         striangles.Strtok(toks[1], ',');
       }
-      if (svertices.Count() < 3 || striangles.IsEmpty()) {
+      if (vertices.IsEmpty() &&
+        (svertices.Count() < 3 || striangles.IsEmpty()))
+      {
         Error.ProcessingError(__OlxSrcInfo, "at least three vertices and 1 "
           "triangle are expected");
       }
-      if (Error.IsSuccessful()) {
-        TArrayList<vec3f> vertices(svertices.Count());
-        TArrayList<vec3s> triags(striangles.Count());
-        vec3f center;
+      if (Error.IsSuccessful() && vertices.IsEmpty()) {
+        vertices.SetCount(svertices.Count());
+        triags.SetCount(striangles.Count());
         for (size_t i = 0; i < svertices.Count(); i++) {
           TStrList toks(svertices[i], ' ');
           if (toks.Count() != 3) {
@@ -5038,9 +5104,7 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
           for (int j = 0; j < 3; j++) {
             vertices[i][j] = toks[j].ToFloat();
           }
-          center += vertices[i];
         }
-        center /= vertices.Count();
         for (size_t i = 0; i < striangles.Count(); i++) {
           TStrList toks(striangles[i], ' ');
           if (toks.Count() != 3) {
@@ -5056,30 +5120,91 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
             }
           }
         }
-        TArrayList<vec3f> &normals = *(new TArrayList<vec3f>(triags.Count()));
+      }
+      if (Error.IsSuccessful()) {
+        vec3f center;
+        for (size_t i = 0; i < vertices.Count(); i++) {
+          center += vertices[i];
+        }
+        center /= vertices.Count();
+        /* one normal per vertex, the average of its faces: marching cubes
+        writes every triangle with its own three vertices and no vn, so the
+        vertices are merged by coordinate first; a normal per face gave the
+        terraced look of the coloured surfaces
+        */
+        TArrayList<vec3f> &normals = *(new TArrayList<vec3f>(triags.Count() * 3));
         TArrayList<vec3f> &data = *(new TArrayList<vec3f>(triags.Count() * 3));
+        TArrayList<size_t> vid(vertices.Count()), order(triags.Count() * 3);
+        TArrayList<vec3f> vn;
+        {
+          std::map<std::array<float, 3>, size_t> unique;
+          for (size_t i = 0; i < vertices.Count(); i++) {
+            std::array<float, 3> k = { vertices[i][0], vertices[i][1], vertices[i][2] };
+            std::pair<std::map<std::array<float, 3>, size_t>::iterator, bool> r =
+              unique.insert(std::make_pair(k, vn.Count()));
+            if (r.second) {
+              vn.Add(vec3f());
+            }
+            vid[i] = r.first->second;
+          }
+        }
         for (size_t i = 0; i < triags.Count(); i++) {
+          size_t idx[3] = { triags[i][0], triags[i][1], triags[i][2] };
           vec3f tc;
           for (int j = 0; j < 3; j++) {
-            data[3 * i + j] = vertices[triags[i][j]];
-            tc += vertices[triags[i][j]];
+            tc += vertices[idx[j]];
           }
           tc /= 3;
-          vec3f n = (vertices[triags[i][0]] - vertices[triags[i][1]]).XProdVec(
-            (vertices[triags[i][2]] - vertices[triags[i][1]])).Normalise();
-          if ((tc - center).DotProd(n) < 0) {
+          vec3f n = (vertices[idx[0]] - vertices[idx[1]]).XProdVec(
+            (vertices[idx[2]] - vertices[idx[1]]));
+          if (n.QLength() > 0) { // marching cubes leaves degenerate faces
+            n.Normalise();
+          }
+          if (keep_winding) {
+            n *= -1;
+          }
+          else if ((tc - center).DotProd(n) < 0) {
             n *= -1;
           }
           else {
-            olx_swap(data[3 * i], data[3 * i + 2]);
+            olx_swap(idx[0], idx[2]);
           }
-          normals[i] = n;
+          for (int j = 0; j < 3; j++) {
+            data[3 * i + j] = vertices[idx[j]];
+            order[3 * i + j] = vid[idx[j]];
+            vn[vid[idx[j]]] += n;
+          }
         }
-        TDUserObj* uo = new TDUserObj(FXApp->GetRenderer(), sgloTriangles,
-          Cmds[1]);
+        for (size_t i = 0; i < vn.Count(); i++) {
+          if (vn[i].QLength() > 0) {
+            vn[i].Normalise();
+          }
+        }
+        for (size_t i = 0; i < order.Count(); i++) {
+          normals[i] = vn[order[i]];
+        }
+        TDUserObj* uo = FXApp->FindUserObject(Cmds[1]);
+        if (uo == 0) {
+          uo = new TDUserObj(FXApp->GetRenderer(), sgloTriangles, Cmds[1]);
+          FXApp->AddObjectToCreate(uo);
+        }
+        else { // same name - replace the geometry
+          FXApp->GetRenderer().RemoveCollection(uo->GetPrimitives());
+        }
         uo->SetVertices(&data);
         uo->SetNormals(&normals);
-        FXApp->AddObjectToCreate(uo);
+        if (colors.Count() == triags.Count()) {
+          TArrayList<uint32_t> &vc = *(new TArrayList<uint32_t>(data.Count()));
+          for (size_t i = 0; i < colors.Count(); i++) {
+            vc[3 * i] = vc[3 * i + 1] = vc[3 * i + 2] = colors[i];
+          }
+          uo->SetColors(&vc);
+          TGlMaterial glm;
+          glm.SetFlags(sglmColorMat | sglmSpecularF | sglmShininessF);
+          glm.SpecularF = 0x808080;
+          glm.ShininessF = 32;
+          uo->SetMaterial(glm);
+        }
         uo->SetZoomable(true);
         uo->SetMoveable(true);
         uo->Create();

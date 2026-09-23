@@ -753,6 +753,8 @@ void TMainForm::XApp(Olex2App *XA)  {
   this_InitMacroD(AddObject,
     "g-grow for spheres using current model&;"
     "c-given coordinates are Cartesioan [false]&;"
+    "s-scale factor for the coordinates of a poly obj file [1]&;"
+    "f-file with one packed RGB per face of a poly obj file, overrides the mtl&;"
     ,
     fpAny^(fpNone|fpOne),
     "Adds a new user defined object to the graphical scene");
