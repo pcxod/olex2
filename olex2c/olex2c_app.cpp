@@ -350,6 +350,34 @@ int main(int argc, char* argv[]) {
       olex.processMacro("server start");
     }
   }
+  else if (TBasicApp::GetInstance().GetArguments().Count() > 2 &&
+    // No leading dash: InitArguments consumes `-xxx` as an option, so a
+    // `-script` spelling never reaches this list and the branch silently never
+    // fires. `sisyphos` above is dash-less for the same reason.
+    TBasicApp::GetInstance().GetArguments()[1].Equalsi("script"))
+  {
+    // Headless batch entry: run the macros in a file, one per line, then exit.
+    //
+    // Needed because the Windows loop below reads CONSOLE KEY EVENTS through
+    // ReadConsoleInput rather than stdin, so piping a command list or
+    // redirecting one from a file does nothing whatever -- olex2c simply sits
+    // at the prompt until it is killed. There was no way to drive it
+    // non-interactively on Windows; `server` is not present in this build and
+    // the other argv branches are all specific to one plugin.
+    //
+    // Blank lines and `#` comments are skipped so a script can be commented.
+    // TEFile::ReadLines is the idiom used throughout this codebase (32 sites);
+    // TStrList has no LoadFromFile in this version.
+    TStrList lines = TEFile::ReadLines(
+      TBasicApp::GetInstance().GetArguments()[2]);
+    for (size_t i = 0; i < lines.Count(); i++) {
+      olxstr cmd = lines[i].Trim(' ');
+      if (cmd.IsEmpty() || cmd.StartsFrom('#')) {
+        continue;
+      }
+      olex.processMacro(cmd);
+    }
+  }
   else {
 #ifdef __WIN32__
     MSG msg;

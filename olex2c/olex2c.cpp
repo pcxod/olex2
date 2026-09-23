@@ -190,7 +190,9 @@ TOlex2c::TOlex2c(const olxstr& basedir)
 
   this_InitMacroD(Silent, "", fpOne, "Changes silent mode");
   this_InitMacroD(Exec, "s&;o&;d&;q", fpAny^fpNone, "exec");
-  this_InitMacroD(Echo, "", fpAny, "echo");
+  // same options as the GUI so the shared python does not print
+  // "Wrong option m for macro Echo" for every echo -m=warning
+  this_InitMacroD(Echo, "m-ignored&;c-ignored", fpAny, "echo");
   this_InitMacroDA(Reap, @reap, "", fpAny, "reap");
   this_InitMacroD(Name, "", fpAny ^ (fpNone) | psFileLoaded, "name");
   this_InitMacroD(Info, "", fpAny, "info");
@@ -252,16 +254,7 @@ TOlex2c::TOlex2c(const olxstr& basedir)
   CustomCodeBase::Initialise(Library);
 #endif
 
-  olxstr macroFile = XApp.GetBaseDir() + "macrox.xld";
-  if (TEFile::Exists(macroFile)) {
-    TDataFile df;
-    df.LoadFromXLFile(macroFile);
-    df.Include(0);
-    TDataItem* di = df.Root().FindItem("xl_macro");
-    if (di != 0) {
-      Macros.Load(*di);
-    }
-  }
+  LoadMacroFiles();
   processMacro("onstartup");
   TBasicApp::GetInstance().OnTimer.Add(this, ID_TIMER);
   _ProcessManager = new ProcessManager(_ProcessHandler);
@@ -863,13 +856,25 @@ void TOlex2c::macReload(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
   if (Cmds[0].Equalsi("macro")) {
-    olxstr macroFile(XApp.GetBaseDir() + "macrox.xld");
-    if (TEFile::Exists(macroFile)) {
-      TDataFile df;
-      df.LoadFromXLFile(macroFile);
-      df.Include(NULL);
-      TDataItem* di = df.Root().FindItem("xl_macro");
-      if (di != NULL)  Macros.Load(*di);
+    LoadMacroFiles();
+  }
+}
+//.............................................................................
+// the GUI's macro.xld first (NeutronHDist and friends, which the shared
+// python calls), then macrox.xld on top so a console-only macro can override
+void TOlex2c::LoadMacroFiles() {
+  const char* names[] = { "macro.xld", "macrox.xld" };
+  for (size_t i = 0; i < 2; i++) {
+    olxstr macroFile = XApp.GetBaseDir() + names[i];
+    if (!TEFile::Exists(macroFile)) {
+      continue;
+    }
+    TDataFile df;
+    df.LoadFromXLFile(macroFile);
+    df.Include(0);
+    TDataItem* di = df.Root().FindItem("xl_macro");
+    if (di != 0) {
+      Macros.Load(*di);
     }
   }
 }
