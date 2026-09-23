@@ -255,7 +255,8 @@ void GXLibMacros::Export(TLibrary& lib) {
     "n-just sets current view normal to the line without creating the object"
     " or the collection name to put the bond to&;"
     "f-consider input in fractional coordinates vs Cartesian&;"
-    "e-adds esd to the value",
+    "e-adds esd to the value&;"
+    "r-radius of the line",
     fpAny,
     "Creates a line or best line for provided atoms");
   gxlib_InitMacro(Angle,
@@ -2458,11 +2459,11 @@ void GXLibMacros::macLine(TStrObjList &Cmds, const TParamList &Options,
     app.GetRenderer().GetBasis().OrientNormal(to - from);
   }
   else {
-    if (Options.GetBoolOption('e') && Atoms.Count() == 2) {
-      app.AddLine(name, *Atoms[0], *Atoms[1]);
-    }
-    else {
-      app.AddLine(name, from, to);
+    TXLine* l = (Options.GetBoolOption('e') && Atoms.Count() == 2)
+      ? app.AddLine(name, *Atoms[0], *Atoms[1])
+      : app.AddLine(name, from, to);
+    if (l != 0 && Options.Contains('r')) {
+      l->SetRadius(Options.FindValue('r').ToDouble());
     }
   }
   app.Draw();
