@@ -4663,7 +4663,8 @@ void XLibMacros::funHKLSrc(const TStrObjList& Params, TMacroData &E) {
       if (tfid != fid && !fn.EndsWith(".hkl.fcf")) {
         fid = tfid;
         TEFile f(fn, "rb");
-        if (!THklFile::IsHKLFileLine(f.ReadLine())) {
+        olxstr l = f.ReadLine();
+        if (!THklFile::IsHKLFileLine(l) && !THklFile::IsFreeHKLLine(l)) {
           f.Close();
           olxstr nfn = TEFile::ChangeFileExt(fn, "hkl.fcf");
           TEFile::Rename(fn, nfn);

@@ -118,15 +118,36 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
   }
   try {
     Clear();
-    if (format.Equals("free")) {
+    bool free = format.Equals("free");
+    size_t start = 0;
+    /* data that is not in the 3I4,2F8 layout: F9.2 or space-separated columns
+    (43 COD files), or a "SHELXL file:" header of a few lines before the fixed
+    columns. Skip to the first line that reads as one or the other; a CIF or
+    fcf never has one within the first lines
+    */
+    if (format.IsEmpty() && !IsHKLFileLine(SL[0])) {
+      for (; start < SL.Count() && start < 8; start++) {
+        if (IsHKLFileLine(SL[start])) {
+          break;
+        }
+        if (IsFreeHKLLine(SL[start])) {
+          free = true;
+          break;
+        }
+      }
+      if (start >= SL.Count() || start >= 8) {
+        start = 0;
+      }
+    }
+    if (free) {
       bool HasBatch = false;
       {
-        TStrList toks(SL[0], ' ');
+        TStrList toks(SL[start], ' ');
         if (toks.Count() == 6 && toks[5].IsInt()) {
           HasBatch = true;
         }
       }
-      for (size_t i = 0; i < SL.Count(); i++) {
+      for (size_t i = start; i < SL.Count(); i++) {
         TStrList toks(SL[i], ' ');
         if (toks.Count() < 5 || (HasBatch && toks.Count() < 6)) {
           break;
@@ -139,7 +160,8 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
             toks[4].ToDouble());
         }
         catch (const TExceptionBase &) {
-          break;
+          // an overflowed column ("011545064  104806"): skip the line
+          continue;
         }
         if (HasBatch) {
           ref->SetBatch(toks[5].ToInt());
@@ -178,7 +200,7 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
       fidx5 = fidx4 + fl[4]
       ;
     {  // validate if 'real' HKL, not fcf
-      if (crystals_data_off == InvalidIndex && !IsHKLFileLine(SL[0], fl)) {
+      if (crystals_data_off == InvalidIndex && !IsHKLFileLine(SL[start], fl)) {
         TCif cif;
         try {
           cif.LoadFromStrings(SL);
@@ -223,14 +245,14 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
       HasExtras = false;
     size_t line_length = crystals_data_off == InvalidIndex ?
       0 : SL[crystals_data_off].Length(),
-      i = crystals_data_off == InvalidIndex ? 0 : crystals_data_off;
+      i = crystals_data_off == InvalidIndex ? start : crystals_data_off;
     const bool apply_basis = !Basis.IsI();
     size_t removed_cnt = 0;
     const size_t line_cnt = SL.Count();
     Refs.SetCapacity(line_cnt);
     for (; i < line_cnt; i++) {
       const olxstr& line = SL[i];
-      if (i == 0) {
+      if (i == start) {
         line_length = line.Length();
         if (line_length >= fmt_len + 4) {
           HasBatch = true;
@@ -605,6 +627,19 @@ bool THklFile::IsHKLFileLine(const olxstr& l, const olxstr &format) {
     return true;
   }
   return false;
+}
+//..............................................................................
+bool THklFile::IsFreeHKLLine(const olxstr& l) {
+  TStrList toks(l, ' ');
+  if (toks.Count() != 5 && toks.Count() != 6) {
+    return false;
+  }
+  for (size_t i = 0; i < 5; i++) {
+    if (i < 3 ? !toks[i].IsInt() : !toks[i].IsNumber()) {
+      return false;
+    }
+  }
+  return true;
 }
 //..............................................................................
 bool THklFile::IsHKLFileLine(const olxstr& l, const TSizeList &format) {

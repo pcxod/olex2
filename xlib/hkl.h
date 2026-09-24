@@ -105,6 +105,8 @@ public:
   */
   static bool IsHKLFileLine(const olxstr& l, const olxstr &format = EmptyString());
   static bool IsHKLFileLine(const olxstr& l, const TSizeList &format);
+  // 5 or 6 space-separated numbers: h k l I sigma [batch]
+  static bool IsFreeHKLLine(const olxstr& l);
   // saves to file a list of reflections
   static void SaveToFile(const olxstr& FN, const TRefPList& Reflections);
   // saves to file a list of reflections
