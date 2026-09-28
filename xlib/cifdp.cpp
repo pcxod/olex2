@@ -778,12 +778,15 @@ olxstr cetStringList::GetStringValue() const {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-CifBlock::CifBlock(const CifBlock& v) {
+CifBlock::CifBlock(const CifBlock& v)
+  : ICifEntry(v), parent(v.parent) 
+{
   for (size_t i = 0; i < v.params.Count(); i++) {
-    param_map.Add(v.params[i], v.params.GetObject(i));
-    params.Add(v.params[i], v.params.GetObject(i));
-    if (v.params.GetObject(i)->Is<cetTable>()) {
-      table_map.Add(v.params[i], (cetTable*)v.params.GetObject(i));
+    ICifEntry *e = v.params.GetObject(i)->Replicate();
+    param_map.Add(v.params[i], e);
+    params.Add(v.params[i], e);
+    if (e->Is<cetTable>()) {
+      table_map.Add(v.params[i], (cetTable*)e);
     }
   }
 }

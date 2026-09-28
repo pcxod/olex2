@@ -146,10 +146,10 @@ struct olx_list_reverse {
     typedef typename data_list_t::list_item_type return_type;
     data_list_t &data;
     ReverseList_(data_list_t &data_) : data(data_) {}
-    return_type& operator [](size_t& i) const {
+    return_type& operator [](size_t i) const {
       return data[data.Count()-i-1];
     }
-    return_type& operator ()(size_t& i) const {
+    return_type& operator ()(size_t i) const {
       return data[data.Count()-i-1];
     }
     size_t Count() const { return data.Count(); }
