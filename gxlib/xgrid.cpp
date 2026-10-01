@@ -77,6 +77,7 @@ TXGrid::TLegend::TLegend(TGlRenderer& Render, const olxstr& collectionName)
   SetMoveable(true);
   SetSelectable(false);
   Top = Left = 0;
+  Moved = TopRight = false;
   Width = 64;
   Height = 128;
   Z = 0;
@@ -93,7 +94,7 @@ void TXGrid::TLegend::SetData(unsigned char *rgb,
   }
   else {
     TextureId = Parent.GetTextureManager().Add2DTexture(
-      GetCollectionName(), 0, Width, Height, 0,
+      GetCollectionName(), 0, width, height, 0,
       format, rgb);
     TGlTexture* tex = Parent.GetTextureManager().FindTexture(TextureId);
     tex->SetEnvMode(tpeDecal);
@@ -186,9 +187,13 @@ void TXGrid::TLegend::Fit() {
 bool TXGrid::TLegend::OnMouseUp(const IOlxObject *Sender,
   const TMouseData& Data)
 {
+  if (TopRight && !Moved) {
+    TopRightCorner(Left, Top);
+  }
   Left = olx_round(Left + GetCenter()[0]);
   Top = olx_round(Top - GetCenter()[1]);
   Center.Null();
+  Moved = true;
   GetPrimitives().GetStyle().SetParam("Top", Top, true);
   GetPrimitives().GetStyle().SetParam("Left", Left, true);
   return AGlMouseHandlerImp::OnMouseUp(Sender, Data);
@@ -200,15 +205,20 @@ bool TXGrid::TLegend::Orient(TGlPrimitive& P) {
   }
   olx_gl::normal(0, 0, 1);
   Z = Parent.CalcRasterZ(0.1);
+  // anchored from the live size: pict resizes and zooms the renderer
+  int left = Left, top = Top;
+  if (TopRight && !Moved) {
+    TopRightCorner(left, top);
+  }
   const double es = Parent.GetExtraZoom()*Parent.GetViewZoom();
   if (P.GetType() == sgloText) {
     TGlFont &glf = Parent.GetScene().GetFont(~0, true);
     const uint16_t th = glf.TextHeight(EmptyString());
     const double hw = Parent.GetWidth() / 2;
     const double hh = Parent.GetHeight() / 2;
-    const double GlLeft = ((Left + Width + GetCenter()[0])*es - hw) + 0.1;
+    const double GlLeft = ((left + Width + GetCenter()[0])*es - hw) + 0.1;
     const double scale = Parent.GetViewZoom() == 1.0 ? 1.0 : 1. / Parent.GetExtraZoom();
-    const double GlTop = (hh - (Top - GetCenter()[1])*es - Height*scale) + 0.1;
+    const double GlTop = (hh - (top - GetCenter()[1])*es - Height*scale) + 0.1;
     const double LineSpacer = 0.05*th;
     vec3d T(GlLeft, GlTop, Z);
     for (size_t i = 0; i < text.Count(); i++) {
@@ -231,16 +241,20 @@ bool TXGrid::TLegend::Orient(TGlPrimitive& P) {
     const double z = Z - 0.01;
     double w = Width,
       h = Height / Parent.GetExtraZoom();
-    P.Vertices[0] = vec3d((Left + w + xx - hw)*Scale, -(Top + h + xy - hh)*Scale, z);
-    P.Vertices[1] = vec3d(P.Vertices[0][0], -(Top + xy - hh)*Scale, z);
-    P.Vertices[2] = vec3d((Left + xx - hw)*Scale, P.Vertices[1][1], z);
+    P.Vertices[0] = vec3d((left + w + xx - hw)*Scale, -(top + h + xy - hh)*Scale, z);
+    P.Vertices[1] = vec3d(P.Vertices[0][0], -(top + xy - hh)*Scale, z);
+    P.Vertices[2] = vec3d((left + xx - hw)*Scale, P.Vertices[1][1], z);
     P.Vertices[3] = vec3d(P.Vertices[2][0], P.Vertices[0][1], z);
     return false;
   }
   else {
     TGlFont &glf = Parent.GetScene().GetFont(~0, true);
     double Scale = Parent.GetScale();
-    double tw = glf.TextWidth(text[0]) * Scale *
+    double tw = 0;
+    for (size_t i = 0; i < text.Count(); i++) {  // the widest label, a "-" makes the lower ones longer
+      tw = olx_max(tw, (double)glf.TextWidth(text[i]));
+    }
+    tw *= Scale *
      (Parent.GetViewZoom() == 1.0 ? 1.0 : 1. / Parent.GetExtraZoom());
     Scale *= es;
     const double hw = Parent.GetWidth() / (2 * es);
@@ -249,9 +263,9 @@ bool TXGrid::TLegend::Orient(TGlPrimitive& P) {
     const double z = Z - 0.01;
     double w = Width,
       h = Height / Parent.GetExtraZoom();
-    P.Vertices[0] = vec3d((Left + xx - hw + w)*Scale, -(Top + h + xy - hh)*Scale, z);
+    P.Vertices[0] = vec3d((left + xx - hw + w)*Scale, -(top + h + xy - hh)*Scale, z);
     P.Vertices[1] = vec3d(P.Vertices[0][0] + tw, P.Vertices[0][1], z);
-    P.Vertices[2] = vec3d(P.Vertices[1][0], -(Top + xy - hh)*Scale, z);
+    P.Vertices[2] = vec3d(P.Vertices[1][0], -(top + xy - hh)*Scale, z);
     P.Vertices[3] = vec3d(P.Vertices[0][0], P.Vertices[2][1], z);
     return false;
   }
@@ -285,9 +299,26 @@ void TXGrid::TLegend::LibReset(const TStrObjList& Params, TMacroData& E) {
     Left = l;
     Top = t;
   }
+  Moved = true;
   GetPrimitives().GetStyle().SetParam("Top", Top, true);
   GetPrimitives().GetStyle().SetParam("Left", Left, true);
   Update();
+}
+//..............................................................................
+void TXGrid::TLegend::TopRightCorner(int& left, int& top) const {
+  const int margin = 10;
+  const double es = Parent.GetExtraZoom()*Parent.GetViewZoom();
+  TGlFont& glf = Parent.GetScene().GetFont(~0, true);
+  double tw = 0;
+  for (size_t i = 0; i < text.Count(); i++) {
+    tw = olx_max(tw, (double)glf.TextWidth(text[i]));
+  }
+  if (glf.IsVectorFont()) {
+    tw *= 1. / Parent.GetScale();
+  }
+  // Left/Top are in units of es pixels, the text in pixels
+  left = olx_round((Parent.GetWidth() - tw) / es - Width - margin);
+  top = margin;
 }
 //..............................................................................
 void TXGrid::TLegend::ExportLibrary(TLibrary& lib) {
@@ -633,6 +664,7 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
       }
     }
     Legend->SetData((unsigned char*)LegendData, 32, 32, GL_RGB);
+    Legend->TopRight = false;
     legend_step = (maxVal - minVal) / ContourLevelCount;
     Legend->text.Clear();
     for (int i = 0; i < (int)ContourLevelCount; i++) {
@@ -1412,6 +1444,25 @@ void TXGrid::AdjustMap() {
   ED->Data[MaxX][MaxY][MaxZ] = ED->Data[0][0][0];
 }
 //.............................................................................
+void TXGrid::SetColourLegend(const unsigned char* rgb,
+  const TStrList& labels)
+{
+  Legend->text = labels;
+  if (labels.IsEmpty()) {
+    Legend->SetVisible(false);
+    return;
+  }
+  for (int i = 0; i < 32; i++) {
+    for (int j = 0; j < 32 * 3; j += 3) {
+      memcpy(&LegendData[i * 32 * 3 + j], &rgb[i * 3], 3);
+    }
+  }
+  Legend->SetData((unsigned char*)LegendData, 32, 32, GL_RGB);
+  Legend->Fit();
+  Legend->TopRight = true;
+  Legend->SetVisible(true);
+}
+//.............................................................................
 void TXGrid::InitIso() {
   if (Is3D() && ED != 0) {
     SetScale(Scale);
@@ -2127,6 +2178,31 @@ PyObject* pyIsVisible(PyObject* self, PyObject* args) {
   return Py_BuildValue("b", TXGrid::GetInstance()->IsVisible());
 }
 //.............................................................................
+PyObject* pySetLegend(PyObject* self, PyObject* args) {
+  char* rgb;
+  Py_ssize_t len;
+  PyObject* plabels;
+  olxcstr format = PythonExt::UpdateBinaryFormat("s#O");
+  if (!PyArg_ParseTuple(args, format.c_str(), &rgb, &len, &plabels) ||
+    !PySequence_Check(plabels))
+  {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo,
+      format.c_str());
+  }
+  TStrList labels;
+  for (Py_ssize_t i = 0; i < PySequence_Size(plabels); i++) {
+    PyObject* l = PySequence_GetItem(plabels, i);
+    labels.Add(PythonExt::ParseStr(l));
+    Py_DECREF(l);
+  }
+  if (!labels.IsEmpty() && len != 32 * 3) {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo,
+      "32 RGB rows expected");
+  }
+  TXGrid::GetInstance()->SetColourLegend((const unsigned char*)rgb, labels);
+  return PythonExt::PyNone();
+}
+//.............................................................................
 //.............................................................................
 
 static PyMethodDef XGRID_Methods[] = {
@@ -2141,6 +2217,9 @@ static PyMethodDef XGRID_Methods[] = {
   "sets minimum and maximum vaues of the grid to be avoided"},
   {"IsVisible", pyIsVisible, METH_VARARGS, "returns grid visibility status"},
   {"SetVisible", pySetVisible, METH_VARARGS, "sets grid visibility"},
+  {"SetLegend", pySetLegend, METH_VARARGS,
+   "shows a colour scale: 32 RGB rows as bytes (top first) and the labels"
+   " (top first); no labels hides it"},
   {"InitSurface", pyInitSurface, METH_VARARGS,
    "initialisess surface drawing. If optional distance from VdW surface is"
    " provided - the surface gets masked by the structure as well"},

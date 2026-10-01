@@ -42,6 +42,7 @@ class TXGrid : public AGDrawObject {
   class TLegend : public AGlMouseHandlerImp {
     int Width, Height;
     int Top, Left;
+    bool Moved;  // dragged or reset this session: keep the place
     GLuint TextureId;
     double Z;
     TGlMaterial GlM;
@@ -53,6 +54,7 @@ class TXGrid : public AGDrawObject {
     const vec3d& GetCenter() const { return Center; }
     void Init(unsigned char* RGB, GLenum format);
     void LibReset(const TStrObjList& Params, TMacroData& E);
+    void TopRightCorner(int& left, int& top) const;
   public:
     TLegend(TGlRenderer& Render, const olxstr& collectionName);
     void SetData(unsigned char* RGB, GLsizei width, GLsizei height,
@@ -67,6 +69,8 @@ class TXGrid : public AGDrawObject {
     void ExportLibrary(TLibrary& lib);
 
     TStrList text;
+    // the colour scale sits in the top right corner until the user moves it
+    bool TopRight;
   };
 
   TArray3D<float>* ED;
@@ -222,6 +226,11 @@ public:
       Clear();
     }
   }
+
+  /* the colour scale of a coloured surface: 32 RGB rows, the first at the
+  top, and the labels from the top down; no labels hides it. Shift+drag moves it
+  */
+  void SetColourLegend(const unsigned char* rgb, const TStrList& labels);
 
   bool OnMouseDown(const IOlxObject *Sender, const TMouseData& Data);
   bool OnMouseUp(const IOlxObject *Sender, const TMouseData& Data);
