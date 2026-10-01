@@ -485,13 +485,17 @@ void CIsoSurface::AddSurfacePoint(unsigned int nX, unsigned int nY,
   int p_data1 = PointData != 0 ? PointData->data[v1x][v1y][v1z] : -1;
   float val2 = Points[v2x][v2y][v2z];
   int p_data2 = PointData != 0 ? PointData->data[v2x][v2y][v2z] : -1;
-  if (olx_abs(m_tIsoLevel - val1) < 0.01f) {
+  /* the snapping only guards the division: an absolute 0.01 put every vertex
+  on a grid point for maps whose levels are of that order (an MO at 0.05 a.u.)
+  */
+  const float eps = 1e-6f;
+  if (olx_abs(m_tIsoLevel - val1) < eps) {
     IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v1x, (float)v1y, (float)v1z, p_data1);
   }
-  else if (olx_abs(m_tIsoLevel - val2) < 0.01f) {
+  else if (olx_abs(m_tIsoLevel - val2) < eps) {
     IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v2x, (float)v2y, (float)v2z, p_data2);
   }
-  else if (olx_abs(val1 - val2) < 0.01f) {
+  else if (olx_abs(val1 - val2) < eps) {
     IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v1x, (float)v1y, (float)v1z, p_data1);
   }
   else {
