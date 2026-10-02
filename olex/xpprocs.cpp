@@ -5859,7 +5859,7 @@ void TMainForm::macImportFrag(TStrObjList &Cmds, const TParamList &Options,
           a = &(*resis[i])[j];
         }
         else {
-          TCAtom *a = &au.NewAtom();
+          a = &au.NewAtom();
           a->SetType(fau.GetAtom(j).GetType());
         }
         a->SetLabel(fau.GetAtom(j).GetLabel(), false);

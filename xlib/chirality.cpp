@@ -691,10 +691,10 @@ olx_pair_t<olxstr, olxstr> rsa_analyse(TCAtom& a, bool debug, bool dry_run) {
       }
       vec3d np = (crds[1] - cnt).XProdVec(n);
       if ((crds[3] - cnt).DotProd(np) < 0) { //clockwise
-        a.SetChiralR(true);
+        a.SetChiralR();
       }
       else {
-        a.SetChiralS(true);
+        a.SetChiralS();
       }
     }
   }

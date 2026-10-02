@@ -198,7 +198,7 @@ TGlOption TGlGroup::GetBlendColor() const {
     ta[1] = pa[1] * m1 + ta[1] * m2;
     ta[2] = pa[2] * m1 + ta[2] * m2;
     ta[3] = (m1 + m2) / 2;
-    if (ta[3] > 1.0f) {
+    if (ta[3] > 1.0f) {  // the above is always 0.5 - not sure why clamping
       ta[3] = 1.0f;
     }
   }

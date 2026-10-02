@@ -258,8 +258,8 @@ void TUnitCell::FindSymmEq() const {
     }
   }
   else {
-    BondsSymmEqTaskFctory::ISearchSymmEqTaskPtr searchTask =
-      BondsSymmEqTaskFctory::build(ACA, Matrices);
+    BondsSymmEqTaskFactory::ISearchSymmEqTaskPtr searchTask =
+      BondsSymmEqTaskFactory::build(ACA, Matrices);
     searchTask->InitEquiv();
     OlxListTask::Run(*searchTask, ACA.Count(), tQuadraticTask, 100);
     for (size_t i = 0; i < ACA.Count(); i++) {

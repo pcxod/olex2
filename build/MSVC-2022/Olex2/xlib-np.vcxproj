@@ -684,6 +684,7 @@
     <ClCompile Include="..\..\..\xlib\sgtest.cpp" />
     <ClCompile Include="..\..\..\xlib\splane.cpp" />
     <ClCompile Include="..\..\..\xlib\srestraint.cpp" />
+    <ClCompile Include="..\..\..\xlib\structure_generator.cpp" />
     <ClCompile Include="..\..\..\xlib\symgraph.cpp" />
     <ClCompile Include="..\..\..\xlib\symmcon.cpp" />
     <ClCompile Include="..\..\..\xlib\symmlib.cpp" />

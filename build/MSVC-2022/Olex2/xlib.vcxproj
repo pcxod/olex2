@@ -704,6 +704,7 @@
     <ClCompile Include="..\..\..\xlib\sgtest.cpp" />
     <ClCompile Include="..\..\..\xlib\splane.cpp" />
     <ClCompile Include="..\..\..\xlib\srestraint.cpp" />
+    <ClCompile Include="..\..\..\xlib\structure_generator.cpp" />
     <ClCompile Include="..\..\..\xlib\symgraph.cpp" />
     <ClCompile Include="..\..\..\xlib\symmcon.cpp" />
     <ClCompile Include="..\..\..\xlib\symmlib.cpp" />
@@ -1473,7 +1474,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\repository\refinement_listener.h" />
-    <ClInclude Include="..\..\..\sdl\tests\file_test.h" />
     <ClInclude Include="..\..\..\xlib\afixgroup.h" />
     <ClInclude Include="..\..\..\xlib\analysis.h" />
     <ClInclude Include="..\..\..\xlib\asymmunit.h" />
@@ -1543,6 +1543,7 @@
     <ClInclude Include="..\..\..\xlib\sgtest.h" />
     <ClInclude Include="..\..\..\xlib\splane.h" />
     <ClInclude Include="..\..\..\xlib\srestraint.h" />
+    <ClInclude Include="..\..\..\xlib\structure_generator.h" />
     <ClInclude Include="..\..\..\xlib\symgraph.h" />
     <ClInclude Include="..\..\..\xlib\symmat.h" />
     <ClInclude Include="..\..\..\xlib\symmcon.h" />
@@ -1550,6 +1551,7 @@
     <ClInclude Include="..\..\..\xlib\symmparser.h" />
     <ClInclude Include="..\..\..\xlib\symmspace.h" />
     <ClInclude Include="..\..\..\xlib\symmtest.h" />
+    <ClInclude Include="..\..\..\xlib\tests\bond_eq_test.h" />
     <ClInclude Include="..\..\..\xlib\tests\cell_reduction_test.h" />
     <ClInclude Include="..\..\..\xlib\tests\formula_test.h" />
     <ClInclude Include="..\..\..\xlib\tests\hall_test.h" />
