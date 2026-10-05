@@ -70,6 +70,7 @@ protected:
   TSAtom& GenerateAtom(TCAtom& a, smatd& symop, TNetwork* net = 0);
   static void _CreateFrags(TCAtom& start, TCAtomPList& dest);
 public:
+  // takes ownership of the ObjectProvider, deleted at the end
   TLattice(ASObjectProvider& ObjectProvider);
   virtual ~TLattice();
 

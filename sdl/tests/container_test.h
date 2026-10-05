@@ -63,36 +63,55 @@ void ListTests(OlxTests& t)  {
       throw TFunctionFailedException(__OlxSourceInfo, "Consistency failed");
 }
 //.........................................................................
-void DirectionalListTest(OlxTests& t)  {
+void DirectionalListTest(OlxTests& t) {
   TUDTypeList<int> test;
   t.description = __FUNC__;
-  for( int i=0; i < 10; i++ )
+  for (int i = 0; i < 10; i++) {
     test.Add(i);
-  for( int i=0; i < 10; i++ )  {
-    if( test[i] != i )
+  }
+  for (int i = 0; i < 10; i++) {
+    if (test[i] != i) {
       throw TFunctionFailedException(__OlxSourceInfo, "Indexing is broken");
+    }
   }
   TUDTypeList<int>::Iterator itr = test.GetIterator();
   int cnt = 0;
-  while( itr.HasNext() )  {
-    if( itr.Next() != cnt++ )
+  while (itr.HasNext()) {
+    if (itr.Next() != cnt++)
       throw TFunctionFailedException(__OlxSourceInfo, "Iteration failed");
   }
-  if( cnt != 10 )
+  if (cnt != 10)
     throw TFunctionFailedException(__OlxSourceInfo, "Unexpected result");
 
-  if( (test[5] = 7) != 7 )
+  if ((test[5] = 7) != 7)
     throw TFunctionFailedException(__OlxSourceInfo, "Assignment is broken");
 
   TUDTypeList<int*, NewCleanup> test1;
-  for( int i=0; i < 10; i++ )
+  for (int i = 0; i < 10; i++) {
     test1.Add(new int(i));
-  for( int i=0; i < 10; i++ )  {
-    if( *test1[i] != i )
-      throw TFunctionFailedException(__OlxSourceInfo, "Indexing is broken");
   }
-  if( (*test1[5] = 7) != 7 )
+  for (int i = 0; i < test1.Count(); i++) {
+    if (*test1[i] != i) {
+      throw TFunctionFailedException(__OlxSourceInfo, "Indexing is broken");
+    }
+  }
+  if ((*test1[5] = 7) != 7) {
     throw TFunctionFailedException(__OlxSourceInfo, "Assignment is broken");
+  }
+  if (test[5] != 7) {
+    throw TFunctionFailedException(__OlxSourceInfo, "Assignment is broken");
+  }
+  test.Clear();
+  for (size_t i = 0; i < 6; i++) {
+    test.Add(i*10);
+  }
+  if (test[3] != 30) {
+    throw TFunctionFailedException(__OlxSourceInfo, "Assignment is broken");
+  }
+  test.Add(70);
+  if (test[5] != 50) {
+    throw TFunctionFailedException(__OlxSourceInfo, "Assignment is broken");
+  }
 }
 //.........................................................................
 void LinkedlListTest(OlxTests& t)  {

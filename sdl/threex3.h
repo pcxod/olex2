@@ -175,6 +175,12 @@ public:
       olx_floor_t<AT, FT>(data[1]),
       olx_floor_t<AT, FT>(data[2]));
   }
+  template <class AT> TVector3<AT> Ceil() const {
+    return TVector3<AT>(
+      olx_ceil_t<AT, FT>(data[0]),
+      olx_ceil_t<AT, FT>(data[1]),
+      olx_ceil_t<AT, FT>(data[2]));
+  }
   template <class AT> FT DotProd(const TVector3<AT>& v) const {
     return (FT)(data[0] * v[0] + data[1] * v[1] + data[2] * v[2]);
   }
@@ -647,7 +653,7 @@ public:
     return *this;
   }
 
-  static TMatrix33 Idenity() { return TMatrix33(1, 1, 1); }
+  static TMatrix33 Identity() { return TMatrix33(1, 1, 1); }
   // normalises each vector
   TMatrix33<FT>& Normalise() {
     data[0].Normalise();

@@ -111,7 +111,7 @@ public:
   bool IsI() const  {
     return (r.IsI() && t.QLength() < 1e-6);
   }
-  static TSymmMat Identity()  { return  TSymmMat(TMatrix33<MC>::Idenity()); }
+  static TSymmMat Identity()  { return  TSymmMat(TMatrix33<MC>::Identity()); }
 
   TSymmMat& Null()  {
     r.Null();

@@ -116,7 +116,8 @@ public:
     }
     double scale = RefListUtil::CalcScale(refs);
     TReflection NullRef,
-      &r0 = olx_ref::get(refs[0]);
+      r0 = olx_ref::get(refs[0]);
+    r0.Scale(scale);
     const size_t ref_str_len = r0.ToString().Length();
     if (r0.IsBatchSet()) {
       NullRef.SetBatch(0);
