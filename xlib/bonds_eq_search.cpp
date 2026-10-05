@@ -607,9 +607,7 @@ olx_object_ptr<IBondsSymmEqTask>
   if (type == BondsSymmEqTaskDefault && !atoms.IsEmpty()) {
     const TAsymmUnit& au = *atoms[0]->GetParent();
     const TLattice& latt = au.GetLattice();
-    if (symm_eq_cutoff(atoms, latt.GetDelta(), latt.GetDeltaI()) >
-      min_shift_distance(au))
-    {
+    if (atoms.Count()*matrices.Count() < 500) {
       type = BondsSymmEqTaskDirect;
     }
     else {
