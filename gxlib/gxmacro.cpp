@@ -475,8 +475,9 @@ void GXLibMacros::Export(TLibrary& lib) {
   gxlib_InitMacro(Legend,
     "r-reset the position, r-for right, b-for bottom; could take absolute"
     " position like 10,12 and with relative - margin, like -r=10 or -r=r,10",
-    fpNone | fpOne,
-    "Shows/hides atom legend");
+    fpNone | fpOne | fpTwo,
+    "Shows/hides atom legend. An optional second argument sets a caption shown"
+    " below the keys; an empty one removes it");
   gxlib_InitMacro(AdjustStyle,
     "a-apply to atoms [true]&;"
     "b-apply to bonds[true]&;",
@@ -6345,6 +6346,10 @@ void GXLibMacros::macLegend(TStrObjList &Cmds, const TParamList &Options,
   bool v = !app.AtomLegend().IsVisible();
   if (!Cmds.IsEmpty()) {
     v = Cmds[0].ToBool();
+  }
+  if (Cmds.Count() == 2) {
+    app.AtomLegend().SetCaption(Cmds[1]);
+    app.AtomLegend().Update();
   }
   app.AtomLegend().SetVisible(v);
 }

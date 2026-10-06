@@ -246,6 +246,7 @@ void TAtomLegend::Update() {
   */
   if (elm_set.IsEmpty()) {
     AddCartoonKey();
+    text.Strtok(caption, '\n');
     Fit();
     return;
   }
@@ -305,6 +306,8 @@ void TAtomLegend::Update() {
     text.Add(elms[i]->symbol);
   }
   AddCartoonKey();
+  // rows past the last material get no swatch, so the caption is text only
+  text.Strtok(caption, '\n');
   Fit();
 }
 //.............................................................................

@@ -2878,6 +2878,8 @@ TXGlLabel& TGXApp::CreateLabel(const vec3d& center, const olxstr& T,
 //..............................................................................
 TXGlLabel *TGXApp::AddLabel(const olxstr& Name, const vec3d& center, const olxstr& T)  {
   TXGlLabel* gl = new TXGlLabel(*GlRenderer, Name);
+  // the atom label font, not the default one, so these read like atom labels
+  gl->SetFontIndex(GetRenderer().GetScene().FindFontIndexForType<TXGlLabels>());
   gl->SetLabel(T);
   gl->SetOffset(center);
   gl->Create();

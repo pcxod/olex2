@@ -37,6 +37,8 @@ class TAtomLegend : public AGlMouseHandlerImp {
   than what it is a key to
   */
   TArrayList<uint32_t> row_colours;
+  // free text appended below the keys, one row per line, no swatch
+  olxstr caption;
   /* appends the key for the current cartoon colouring as more rows of this
   legend, so it moves, saves and resets with the element key
   */
@@ -65,6 +67,7 @@ public:
   virtual void UpdateLabel() { Fit(); }
   virtual void SetVisible(bool v);
   void SetPosition(int left, int top);
+  void SetCaption(const olxstr& c) { caption = c; }
   void ResetPosition(bool right=false, bool bottom=false, int margin=0);
 };
 EndGxlNamespace()
