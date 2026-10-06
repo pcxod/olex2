@@ -15,7 +15,9 @@ uses Qt directly.
 |---|---|
 | `CMakeLists.txt` | One `qt_add_executable(olex2)` over the same source globs as the root build, minus unirun and the Windows-only `fsindex`/`zip`/`unzip`. Stage S1 has no `_PYTHON`, `_OPENSSL` or cctbx. |
 | `CMakePresets.json` | `android-arm64` (tablet) and `android-x86_64` (emulator). Each uses the Qt 6.11.1 Android toolchain, NDK 27.2.12479018, API 28, and at most 6 build jobs. |
-| `cmake/deps.cmake` | FetchContent for wxWidgets 3.3 (`wxBUILD_TOOLKIT=qt`, static), gl4es (GL 1.x on GLES2), and the GLU `libutil` subset. |
+| `build_deps.py` | Builds the GUI base libraries per ABI into `D:/Android/prefix/<abi>`: wxWidgets 3.3.3 (wxQt, static, GL on), gl4es 1.1.6 (`libGL.a`) and ptitSeb GLU (`libGLU.a`), with `patches/<name>/*.patch` applied. |
+| `cmake/deps.cmake` | Imports those prebuilt libraries (`OLX_ANDROID_PREFIX`) as `gl4es_gl`, `olx_glu` and `wxWidgets::*`. |
+| `tests/glprobe` | Small wx GL test APK: fixed-function drawing through gl4es in a `wxGLCanvas`, and a log of every touch and gesture event. |
 | `src/android_main.cpp` | `main()`. It extracts `assets/olex2` once per content stamp, sets the `OLEX2_*` environment, then calls `wxEntry`. `olex/xglapp.cpp` uses `IMPLEMENT_APP_NO_MAIN` on Android. |
 | `AndroidManifest.xml` | `org.olex2.android`, landscape, `extractNativeLibs`, INTERNET, GLES 2. |
 | `assemble_assets.py` | Copies an allowlist of files from an installed rundir (read only) plus `rundir-overlay/`. It refuses keys, AC7 files, binaries and Python. |
@@ -46,31 +48,45 @@ Already on FLOWOFFICE:
 - JDK 17 under `D:/Android/jdk17`.
 - The AVD `olex2_tablet` (Pixel Tablet, android-36 google_apis x86_64).
 
-Fetched by `cmake/deps.cmake` at configure time. Each one needs its SHA256:
+Unpacked under `D:/Android/src` (`--src`) and built by `build_deps.py`:
 
-| Package | Official source | Approx. size | Licence |
+| Package | Official source | SHA256 | Licence |
 |---|---|---|---|
-| wxWidgets 3.3.1 [U version] | https://github.com/wxWidgets/wxWidgets/releases/download/v3.3.1/wxWidgets-3.3.1.tar.bz2 | 45-60 MB unpacked, ~25 MB archive [U] | wxWindows |
-| gl4es (tag `OLX_GL4ES_REF`, default `v1.1.6` [U tag]) | https://github.com/ptitSeb/gl4es | 5-10 MB [U] | MIT |
-| Mesa GLU 9.0.3 | https://archive.mesa3d.org/glu/glu-9.0.3.tar.xz | ~1 MB [U] | SGI Free B |
-
-Each hash is passed once. Compute it from a file you downloaded and checked
-yourself (`Get-FileHash <file> -Algorithm SHA256`):
+| wxWidgets 3.3.3 | https://github.com/wxWidgets/wxWidgets/releases/download/v3.3.3/wxWidgets-3.3.3.tar.bz2 | `81b09d6dd9f1ed9301f8c55a968a488d0491f264dc2bab19a7e407ac67009482` | wxWindows |
+| gl4es 1.1.6 | https://github.com/ptitSeb/gl4es/archive/v1.1.6.tar.gz | `dca1d897e492a0cb163a3390f273fbd4cc7ab2367d236d93dc2b321ce108ed5c` | MIT |
+| ptitSeb GLU 2fed2bda | https://github.com/ptitSeb/GLU/archive/2fed2bda.tar.gz | `8a016d32fc1fed742f10ba8e4bc32151598f6273a0dbabec15ba47c44151c879` | SGI Free B |
 
 ```bash
-cmake --preset android-arm64 -DOLX_WX_SHA256=<sha> -DOLX_GL4ES_SHA256=<sha> -DOLX_GLU_SHA256=<sha>
+cd D:\git\olex2-android; python android/build_deps.py --abi x86_64 --abi arm64-v8a
 ```
 
-You can also point at a tree you already unpacked:
-`-DFETCHCONTENT_SOURCE_DIR_WXWIDGETS=D:/src/wxWidgets-3.3.1`. The same works
-for `GL4ES` and `GLU`. Patches in `patches/<name>/*.patch` are applied only to
-downloaded trees. There are none yet. Expected work for `patches/wxwidgets`,
-all [U] until the cube experiment below:
+Each tree is copied once to `D:/Android/build/<name>-src` and patched there
+(stamp `.olx-patched`; delete it to re-patch). Everything is static, so the
+libraries end up inside the app's `.so` and androiddeployqt has nothing extra
+to package. wx is configured with `wxUSE_LIBICONV=OFF`: bionic's iconv makes
+`wxConvLocal` loop forever on E2BIG inside `wxEntry`.
 
-- The wxQt GL canvas binds gl4es to `QOpenGLWidget::defaultFramebufferObject()` after `makeCurrent`.
-- Pinch gives a cumulative zoom factor.
-- Twist produces `wxEVT_GESTURE_ROTATE`.
-- Long press fires when the hold triggers, not when the finger lifts.
+What the patches do:
+
+- `wxwidgets/0001`: the GL canvas initialises gl4es after the first
+  `makeCurrent`, binds it to `QOpenGLWidget::defaultFramebufferObject()` on
+  every `SetCurrent` (the FBO changes on resize) and resyncs gl4es's state
+  caches; `SwapBuffers` flushes gl4es and schedules a repaint when called
+  outside `paintGL`. Gesture positions are client coordinates; pinch zoom and
+  rotation are cumulative and sent on every change and at the end; the
+  one-finger pan recognizer is off on Android (pan needs two fingers); a
+  double tap gives one `wxEVT_LEFT_DCLICK`, not two.
+- `wxwidgets/0002`: bionic has no `getservbyname_r`.
+- `gl4es/0001`: lets the host set the main framebuffer (`gl4es_setMainFBO`).
+- `gl4es/0002`: `glext.h` typedef clash with the NDK headers.
+- `gl4es/0003`: `gl4es_resyncState()`. `QOpenGLWidget` resets the program,
+  array buffer, blend and viewport before `paintGL` behind gl4es's back; without
+  the resync every paint after the first fails with `GL_INVALID_OPERATION`.
+
+Touch as wx delivers it after the patches (AVD, `tests/glprobe/touch.ps1`):
+long press arrives once, after a 1 s hold, flagged END only; rotation comes as
+`wxEVT_GESTURE_ROTATE` in cumulative radians, negative = counter-clockwise;
+during two-finger gestures finger 0 also produces left down/up.
 
 ## Build
 
@@ -79,7 +95,7 @@ Run these in PowerShell from the repository root. The build directories are
 so do not commit them.
 
 ```bash
-cd D:\git\olex2-android\android; cmake --preset android-x86_64 -DOLX_WX_SHA256=<sha> -DOLX_GL4ES_SHA256=<sha> -DOLX_GLU_SHA256=<sha>
+cd D:\git\olex2-android\android; cmake --preset android-x86_64
 ```
 
 ```bash
@@ -142,10 +158,6 @@ The log tag is `olex2`.
 - Olex2 without `_PYTHON` has never been built [U]. The panel GUI is generated
   partly by Python. S1 aims for the 3-D view and the macro console; Python
   (CPython for Android) comes in S2.
-- GLU `libutil/error.c` may reference the tessellator and NURBS error tables
-  [U]. If it does, add `libtess` or stub those two symbols.
-- gl4es CMake option names (`NOX11`, `NOEGL`, `STATICLIB`) and the target name
-  `GL` are [U] for the chosen tag.
-- wxQt sends no rotate or two-finger pan events, and it sends long press only at
-  the end [U]. Until the wx patch exists, the touch mapping depends on what wxQt
-  delivers.
+- A wxQt top-level frame on Android stays at 400x250 DIP unless `Maximize()`d.
+- After a resize Qt recreates the canvas FBO and leaves texture 0 bound on the
+  active unit; `gl4es_resyncState` does not restore texture bindings.

@@ -1,0 +1,48 @@
+diff --git a/include/gl4esinit.h b/include/gl4esinit.h
+index 0084b9f..3e4ec71 100644
+--- a/include/gl4esinit.h
++++ b/include/gl4esinit.h
+@@ -27,6 +27,9 @@ void gl4es_setMainFBO(unsigned int fbo);
+ // NOX11+NOEGL: flush pending lists/bitmaps before the toolkit presents the frame
+ void gl4es_pre_swap(void);
+ void gl4es_post_swap(void);
++// NOX11+NOEGL: re-issue the program, array buffer, blend and viewport gl4es has
++// cached, which QOpenGLWidget resets before paintGL; call after makeCurrent
++void gl4es_resyncState(void);
+ // wrapped GetProcAddress
+ void* APIENTRY_GL4ES gl4es_GetProcAddress(const char *name);
+ 
+diff --git a/src/gl/framebuffers.c b/src/gl/framebuffers.c
+index c1815c7..fa79de7 100644
+--- a/src/gl/framebuffers.c
++++ b/src/gl/framebuffers.c
+@@ -1507,6 +1507,29 @@ void gl4es_setMainFBO(GLuint fbo) {
+   if(glstate) glstate->fbo.mainfbo_fbo = fbo;
+ }
+ 
++// QOpenGLWidget enters paintGL() having set glUseProgram(0), GL_ARRAY_BUFFER 0,
++// GL_BLEND on and its own viewport (QOpenGLWidgetPrivate::render), behind the
++// caches gl4es uses to skip redundant calls: a display list drawn in the next
++// paint then fails with GL_INVALID_OPERATION. Re-issue what gl4es believes is
++// set; call after every makeCurrent.
++void gl4es_resyncState() {
++  if(!glstate) return;
++  LOAD_GLES2(glUseProgram);
++  LOAD_GLES(glBindBuffer);
++  LOAD_GLES(glEnable);
++  LOAD_GLES(glDisable);
++  LOAD_GLES(glViewport);
++  if(gles_glUseProgram) gles_glUseProgram(glstate->gleshard->program);
++  gles_glBindBuffer(GL_ARRAY_BUFFER, glstate->bind_buffer.array);
++  // with shader blending gl4es never enables GLES blending itself
++  if(glstate->enable.blend && !(glstate->fpe_state && globals4es.shaderblend))
++    gles_glEnable(GL_BLEND);
++  else
++    gles_glDisable(GL_BLEND);
++  const viewport_t *v = &glstate->raster.viewport;
++  gles_glViewport(v->x, v->y, v->width, v->height);
++}
++
+ GLuint gl4es_getCurrentFBO() {
+   return (glstate->fbo.current_fb->id)?glstate->fbo.current_fb->id:glstate->fbo.mainfbo_fbo;
+ }

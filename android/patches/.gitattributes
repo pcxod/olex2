@@ -1,0 +1,2 @@
+# applied with git apply to trees whose line endings must match byte for byte
+*.patch -text
