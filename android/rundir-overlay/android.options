@@ -1,0 +1,10 @@
+# Olex2 options for the Android build (format of <config dir>/.options, see
+# options.txt). android_main.cpp copies this to <config dir>/.options on the
+# first start only, so changes made on the device are kept.
+# GL_SELECT is not available through gl4es/GLES
+gl_selection=false
+gl_multisample=false
+gl_stereo=false
+# a fingertip moves further than a mouse during a tap
+mouse_click_threshold=12
+gl_touch=true
