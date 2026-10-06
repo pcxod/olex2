@@ -233,9 +233,6 @@ void TGlCanvas::OnMouseUp(wxMouseEvent& me)  {
     ShowContextMenu(FMX, FMY, G);
     return;
   }
-  else if (FParent->OnMouseUp(me.m_x, me.m_y, Fl, up)) {
-    FXApp->ResetMouseState(me.m_x, me.m_y);
-  }
   FXApp->Draw();
   FXApp->ResetMouseState(me.m_x, me.m_y, Fl, MouseButton);
   MouseButton = 0;

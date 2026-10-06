@@ -3820,9 +3820,13 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons) {
     return true;
   }
   if (G == 0) {
-    // with touch on, a double tap on the background centres the model
-    processMacro(FGlCanvas != 0 && FGlCanvas->IsTouchEnabled()
-      ? "center" : "sel -u");
+    /* with touch on, a double tap on the background clears the selection as
+    a double click does, and centres the model when nothing is selected
+    */
+    const bool centre = FGlCanvas != 0 && FGlCanvas->IsTouchEnabled() &&
+      FXApp->GetSelection().Count() == 0;
+    processMacro(centre ? "center" : "sel -u");
+    TimePerFrame = FXApp->Draw();
     return true;
   }
   if (G->Is<TGlBitmap>()) {
