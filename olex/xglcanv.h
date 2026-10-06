@@ -35,6 +35,14 @@ private:
   class TMainForm *FParent;
   wxGLContext* Context;
   short EncodeEvent(const wxMouseState &evt, bool update_button=true);
+  // wx positions are in window units, Olex2's GL coordinates in pixels
+  void ToPixels(wxMouseEvent &e) const {
+    e.m_x = olx_round(e.m_x*GetContentScaleFactor());
+    e.m_y = olx_round(e.m_y*GetContentScaleFactor());
+  }
+  void ToPixels(wxGestureEvent &e) const {
+    e.SetPosition(e.GetPosition()*GetContentScaleFactor());
+  }
 public:
   TGlCanvas(TMainForm *parent, int* gl_attr, const wxWindowID id = -1,
     const wxPoint& pos = wxDefaultPosition,

@@ -1575,7 +1575,9 @@ void TMainForm::StartupInit() {
   HtmlManager.main->SetHomePage(FHtmlIndexFile);
   FileDropTarget* dndt = new FileDropTarget(*this);
   this->SetDropTarget(dndt);
+#ifndef __ANDROID__  // no TLS client, and the APK is updated by the store
   processMacro("schedule 'update -f=false' -g");
+#endif
   TStateRegistry::GetInstance().RepeatAll();
   try {
     TEFile f(olxstr(FXApp->GetInstanceDir()) << getpid() << ".ready", "wb");
@@ -2716,13 +2718,14 @@ void TMainForm::OnResize() {
     HtmlManager.main->Thaw();
   }
 
+  /* the canvas is placed in window units, GL draws in pixels: sf of them per
+  unit on a HiDPI screen (2 or more on Android)
+  */
   sf = FGlCanvas->GetContentScaleFactor();
-  w = static_cast<int>(w*sf);
-  h = static_cast<int>(h*sf);
   if (CmdLineVisible) {
-    FCmdLine->WI.SetWidth(w);
+    FCmdLine->WI.SetWidth(olx_round(w*sf));
     FCmdLine->WI.SetLeft(l);
-    FCmdLine->WI.SetTop(h - FCmdLine->WI.GetHeight());
+    FCmdLine->WI.SetTop(olx_round(h*sf) - FCmdLine->WI.GetHeight());
   }
   if (w <= 0) {
     w = 5;
@@ -2730,8 +2733,11 @@ void TMainForm::OnResize() {
   if (h <= 0) {
     h = 5;
   }
-  FGlCanvas->SetSize(l, 0, w, h - (CmdLineVisible ? FCmdLine->WI.GetHeight() : 0));
+  FGlCanvas->SetSize(l, 0, w,
+    h - (CmdLineVisible ? olx_round(FCmdLine->WI.GetHeight()/sf) : 0));
   FGlCanvas->GetClientSize(&w, &h);
+  w = olx_round(w*sf);
+  h = olx_round(h*sf);
   FXApp->GetRenderer().Resize(0, 0, w, h, 1);
   FGlConsole->Resize(0, dheight, w, h - dheight);
   if (FInfoBox->IsCreated()) {
@@ -3683,6 +3689,9 @@ void TMainForm::OnIdle() {
       Close(true);
       return;
     }
+    // OnSize skipped the size events that came before StartupInit (wxQt
+    // sends all of them before the first idle event)
+    OnResize();
   }
 #endif
     TBasicApp::GetInstance().OnIdle.Execute((AEventsDispatcher*)this, NULL);

@@ -50,15 +50,19 @@ TGlCanvas::TGlCanvas(TMainForm *parent, int* gl_attr, wxWindowID id,
 
   // only delivered after EnableTouchEvents in XApp()
   Bind(wxEVT_GESTURE_ZOOM, [this](wxZoomGestureEvent &e) {
+    ToPixels(e);
     if (TouchNav.OnZoom(e)) FXApp->Draw();
   });
   Bind(wxEVT_GESTURE_PAN, [this](wxPanGestureEvent &e) {
+    ToPixels(e);
     if (TouchNav.OnPan(e)) FXApp->Draw();
   });
   Bind(wxEVT_GESTURE_ROTATE, [this](wxRotateGestureEvent &e) {
+    ToPixels(e);
     if (TouchNav.OnRotate(e)) FXApp->Draw();
   });
   Bind(wxEVT_LONG_PRESS, [this](wxLongPressEvent &e) {
+    ToPixels(e);
     TouchNav.OnLongPress(e);
   });
   TouchNav.OnContextMenu = [this](int x, int y) {
@@ -156,6 +160,7 @@ short TGlCanvas::EncodeEvent(const wxMouseState &evt, bool update_button)  {
 }
 //..............................................................................
 void TGlCanvas::OnMouseDown(wxMouseEvent& me) {
+  ToPixels(me);
   if (TouchNav.SwallowMouse(me.GetEventType())) {
     MouseButton = 0;
     me.Skip();
@@ -184,6 +189,8 @@ void TGlCanvas::OnMouseDown(wxMouseEvent& me) {
 void TGlCanvas::ShowContextMenu(int x, int y, AGDrawObject *G) {
   int left = 0, top = 0;
   GetPosition(&left, &top);
+  x = olx_round(x/GetContentScaleFactor());
+  y = olx_round(y/GetContentScaleFactor());
   bool Handled = false;
   if (G != 0) {
     TGlGroup *GlG = FXApp->FindObjectGroup(*G);
@@ -208,6 +215,7 @@ void TGlCanvas::ShowContextMenu(int x, int y, AGDrawObject *G) {
 }
 //..............................................................................
 void TGlCanvas::OnMouseUp(wxMouseEvent& me)  {
+  ToPixels(me);
   me.Skip();
   if (TouchNav.SwallowMouse(me.GetEventType())) {
     MouseButton = 0;
@@ -239,6 +247,7 @@ void TGlCanvas::OnMouseUp(wxMouseEvent& me)  {
 }
 //..............................................................................
 void TGlCanvas::OnMouseMove(wxMouseEvent& me) {
+  ToPixels(me);
   if (TouchNav.SwallowMouse(me.GetEventType())) {
     MouseButton = 0;
     return;
@@ -262,6 +271,7 @@ void TGlCanvas::OnMouseMove(wxMouseEvent& me) {
 }
 //..............................................................................
 void TGlCanvas::OnMouseDblClick(wxMouseEvent& me)  {
+  ToPixels(me);
   if (TouchNav.SwallowMouse(me.GetEventType())) {
     MouseButton = 0;
     return;
@@ -272,6 +282,7 @@ void TGlCanvas::OnMouseDblClick(wxMouseEvent& me)  {
 }
 //..............................................................................
 void TGlCanvas::OnMouseWheel(wxMouseEvent& me) {
+  ToPixels(me);
   if (me.GetWheelRotation() != 0) {
     FParent->OnMouseWheel(me.GetX(), me.GetY(),
     (double)me.GetWheelRotation()/me.GetWheelDelta());

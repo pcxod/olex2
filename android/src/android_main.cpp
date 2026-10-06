@@ -107,6 +107,22 @@ int main(int argc, char **argv) {
     "()Landroid/content/res/AssetManager;");
   QJniEnvironment env;
   AAssetManager *am = AAssetManager_fromJava(env.jniEnv(), jam.object());
+  /* Qt's Java loader hands QT_PLUGIN_PATH, HOME, TMPDIR, fonts and style over
+  with Os.setenv. Under a native bridge (arm64 APK on an x86_64 emulator or
+  Chromebook) that sets the host libc's environment, not this one, and Qt
+  finds no platform plugin: copy whatever is missing here
+  */
+  QJniObject jenv = QJniObject::callStaticObjectMethod("android/system/Os",
+    "environ", "()[Ljava/lang/String;");
+  jobjectArray ea = static_cast<jobjectArray>(jenv.object());
+  for (jsize i = 0, n = ea ? env->GetArrayLength(ea) : 0; i < n; i++) {
+    const std::string kv = QJniObject::fromLocalRef(
+      env->GetObjectArrayElement(ea, i)).toString().toStdString();
+    const size_t eq = kv.find('=');
+    if (eq != std::string::npos && eq > 0) {
+      setenv(kv.substr(0, eq).c_str(), kv.c_str() + eq + 1, 0);
+    }
+  }
 
   const fs::path base = fs::path(files_dir) / "olex2";
   if (am == nullptr || !extract_assets(am, base)) {
@@ -126,5 +142,18 @@ int main(int argc, char **argv) {
   setenv("OLEX2_CONFIGDIR", (fs::path(files_dir) / "config").c_str(), 1);
   setenv("OLEX2_GL_STEREO", "false", 1);
   setenv("OLEX2_GL_MULTISAMPLE", "false", 1);
+  // argv[0] is the .so path, /data/app/~~<base64>==/..., and TBasicApp
+  // reads any argument holding '=' as an option: Olex2 gets its base dir
+  // from OLEX2_DIR anyway. No file picker before S4: with no
+  // applicationArguments open the bundled sucrose (mainform.cpp loads
+  // argv[1] when the file exists)
+  std::string exe = (base / "olex2").string(),
+    sample = (base / "sample_data/sucrose/sucrose.res").string();
+  argv[0] = exe.data();
+  char *args[] = { argv[0], sample.data(), nullptr };
+  if (argc < 2) {
+    argc = 2;
+    argv = args;
+  }
   return wxEntry(argc, argv);
 }

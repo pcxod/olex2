@@ -65,7 +65,9 @@ def assemble(rundir, overlay, out):
         h.update(str(rel).encode() + b"\0" + hashlib.sha256(data).digest())
         total += len(data)
     lines = [h.hexdigest()[:16]] + [str(r) for r in sorted(files)]
-    (out / "files.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    # LF on Windows too: android_main.cpp splits on '\n' only
+    (out / "files.txt").write_text("\n".join(lines) + "\n", encoding="utf-8",
+                                   newline="\n")
     print("assets: %d files, %.1f MB -> %s" % (len(files), total / 1e6, out))
     return files
 
@@ -86,6 +88,7 @@ def self_test():
         got = sorted(str(r) for r in files)
         assert got == ["android.options", "etc/gui/a.htm", "macro.xld"], got
         assert (out / "etc/gui/a.htm").read_text() == "overlay"
+        assert b"\r" not in (out / "files.txt").read_bytes()
         lst = (out / "files.txt").read_text().split()
         assert len(lst[0]) == 16 and lst[1:] == got, lst
     print("self-test passed")
@@ -96,6 +99,9 @@ def main():
     ap.add_argument("--rundir", type=pathlib.Path)
     ap.add_argument("--overlay", type=pathlib.Path)
     ap.add_argument("--out", type=pathlib.Path)
+    ap.add_argument("--stale", type=pathlib.Path,
+                    help="file to delete when the assets change (the APK: "
+                         "androiddeployqt's depfile does not list them)")
     ap.add_argument("--self-test", action="store_true")
     a = ap.parse_args()
     if a.self_test:
@@ -104,7 +110,11 @@ def main():
         ap.error("--rundir and --out are required")
     if not a.rundir.is_dir():
         sys.exit("no rundir at %s" % a.rundir)
+    lst = a.out / "files.txt"
+    old = lst.read_text().splitlines()[0] if lst.exists() else None
     assemble(a.rundir, a.overlay, a.out)
+    if a.stale and old != lst.read_text().splitlines()[0]:
+        a.stale.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":
