@@ -15,7 +15,10 @@ import argparse, os, shutil, subprocess, sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-ABIS = ["x86_64", "arm64-v8a"]
+ABIS = ["x86_64", "arm64-v8a", "x86", "armeabi-v7a"]
+# Qt names its kits differently from the NDK ABIs
+QT_KIT = {"x86_64": "x86_64", "arm64-v8a": "arm64_v8a", "x86": "x86",
+          "armeabi-v7a": "armv7"}
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--abi", action="append", choices=ABIS)
@@ -63,7 +66,8 @@ def cmake(srcdir, bdir, toolchain, abi, *defs):
         f"-DCMAKE_TOOLCHAIN_FILE={toolchain}", f"-DANDROID_ABI={abi}",
         "-DANDROID_PLATFORM=android-28", "-DANDROID_STL=c++_shared",
         f"-DANDROID_SDK_ROOT={a.sdk}", f"-DANDROID_NDK_ROOT={a.ndk}",
-        f"-DANDROID_NDK={a.ndk}", *defs)
+        f"-DANDROID_NDK={a.ndk}",
+        f"-DCMAKE_PROJECT_INCLUDE={(HERE / 'cmake' / 'abi_flags.cmake').as_posix()}", *defs)
     run(a.cmake, "--build", bdir, "-j", a.jobs)
 
 
@@ -91,7 +95,7 @@ for abi in abis:
               f"-DCMAKE_INSTALL_PREFIX={gl}")
         run(a.cmake, "--install", build / f"glu-{abi}")
     if "wx" in only:
-        qtabi = abi.replace("-", "_")
+        qtabi = QT_KIT[abi]
         b = build / f"wx-{abi}"
         cmake(patched("wxwidgets"), b,
               f"{a.qt}/android_{qtabi}/lib/cmake/Qt6/qt.toolchain.cmake", abi,
@@ -99,6 +103,8 @@ for abi in abis:
               f"-DCMAKE_INSTALL_PREFIX={prefix / abi / 'wx'}",
               "-DwxBUILD_TOOLKIT=qt", "-DwxBUILD_SHARED=OFF",
               "-DwxBUILD_SAMPLES=OFF", "-DwxBUILD_TESTS=OFF", "-DwxBUILD_DEMOS=OFF",
+              # release: no wxASSERT checks (cmake/deps.cmake follows suit)
+              "-DwxBUILD_DEBUG_LEVEL=0",
               "-DwxUSE_OPENGL=ON",
               # find_package(OpenGL) has nothing to find in the NDK: point it
               # at gl4es, or wx silently turns wxUSE_OPENGL off

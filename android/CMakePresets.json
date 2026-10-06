@@ -36,12 +36,30 @@
       "inherits": "android-base",
       "toolchainFile": "C:/Qt/6.11.1/android_x86_64/lib/cmake/Qt6/qt.toolchain.cmake",
       "cacheVariables": { "ANDROID_ABI": "x86_64" }
+    },
+    {
+      "name": "android-armv7",
+      "displayName": "Android armeabi-v7a (32-bit ARM)",
+      "inherits": "android-base",
+      "toolchainFile": "C:/Qt/6.11.1/android_armv7/lib/cmake/Qt6/qt.toolchain.cmake",
+      "cacheVariables": { "ANDROID_ABI": "armeabi-v7a" }
+    },
+    {
+      "name": "android-x86",
+      "displayName": "Android x86 (32-bit)",
+      "inherits": "android-base",
+      "toolchainFile": "C:/Qt/6.11.1/android_x86/lib/cmake/Qt6/qt.toolchain.cmake",
+      "cacheVariables": { "ANDROID_ABI": "x86" }
     }
   ],
   "buildPresets": [
     { "name": "android-arm64", "configurePreset": "android-arm64", "jobs": 6,
       "targets": ["apk"] },
     { "name": "android-x86_64", "configurePreset": "android-x86_64", "jobs": 6,
+      "targets": ["apk"] },
+    { "name": "android-armv7", "configurePreset": "android-armv7", "jobs": 6,
+      "targets": ["apk"] },
+    { "name": "android-x86", "configurePreset": "android-x86", "jobs": 6,
       "targets": ["apk"] }
   ]
 }

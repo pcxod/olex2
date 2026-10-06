@@ -11,6 +11,13 @@ if (NOT ANDROID)
   message(FATAL_ERROR "android/ is the Android build; desktop builds use the root CMakeLists.txt")
 endif ()
 
+# OFF gives the plain NDK Release build (-O3 -DNDEBUG), the baseline the
+# tuned numbers in README.md are measured against
+option(OLX_TUNE "per-ABI code generation and ThinLTO" ON)
+if (OLX_TUNE)
+  include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/abi_flags.cmake")
+endif ()
+
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets)
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/deps.cmake")  # wx (qt), gl4es, GLU
 
@@ -44,6 +51,11 @@ target_link_libraries(olex2 PRIVATE
   android log)
 # keep gl4es's gl* symbols inside libolex2: Qt's own GLES calls must not bind to them
 target_link_options(olex2 PRIVATE "LINKER:--exclude-libs,ALL")
+if (OLX_TUNE)
+  # CMake's clang IPO is -flto=thin; the prebuilt static deps stay native code
+  set_target_properties(olex2 PROPERTIES INTERPROCEDURAL_OPTIMIZATION ON)
+  target_link_options(olex2 PRIVATE "LINKER:--thinlto-jobs=6")
+endif ()
 
 # androiddeployqt reads the manifest and assets/ from this directory; it is
 # generated so rundir files never land in the source tree
@@ -64,6 +76,7 @@ add_custom_target(olex2_assets
     --rundir "${OLEX2_RUNDIR}"
     --overlay "${CMAKE_CURRENT_SOURCE_DIR}/rundir-overlay"
     --out "${pkg}/assets/olex2"
+    --stale "${CMAKE_CURRENT_BINARY_DIR}/android-build/olex2.apk"
   COMMENT "Assembling assets/olex2 from ${OLEX2_RUNDIR}"
   VERBATIM)
 add_dependencies(olex2 olex2_assets)

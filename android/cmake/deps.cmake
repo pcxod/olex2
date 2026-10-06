@@ -42,3 +42,11 @@ find_package(Threads REQUIRED)
 # the Qt toolchain re-roots package searches into the NDK sysroot
 find_package(wxWidgets 3.3.3 REQUIRED CONFIG
   PATHS "${_olx_p}/wx" NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
+# wx keeps wxBUILD_DEBUG_LEVEL to itself. A prefix built with 0 (build_deps.py,
+# no asserts) has no assert handler, and code that includes wx headers must
+# use the same level or it fails to link
+file(STRINGS "${_olx_p}/wx/lib/libwx_baseu-3.3-Android.a" _olx_wx_assert
+  LIMIT_COUNT 1 REGEX "wxTheAssertHandler")
+if (NOT _olx_wx_assert)
+  add_compile_definitions(wxDEBUG_LEVEL=0)
+endif ()
