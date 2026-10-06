@@ -82,7 +82,9 @@
 
 #include "xmacro.h"
 #include "utf8file.h"
+#ifdef _PYTHON
 #include "py_core.h"
+#endif
 #include "updateth.h"
 #include "msgbox.h"
 #include "updateapi.h"
@@ -268,6 +270,7 @@ TMainForm::TMainForm(TGlXApp *Parent)
 #endif
   StartupInitialised = RunOnceProcessed = false;
   wxInitAllImageHandlers();
+#ifdef _PYTHON
   /* a singleton - will be deleted in destructor, we cannot use GC as the Py_DecRef
    would be called after finalising python
   */
@@ -283,6 +286,7 @@ TMainForm::TMainForm(TGlXApp *Parent)
   PythonExt::GetInstance()->Register(
     py_reg::ModuleName(), &py_reg::PyInit);
 #endif
+#endif // _PYTHON
   //TOlxVars::Init().OnVarChange->Add(this, ID_VarChange);
   FGlCanvas = 0;
   FXApp = 0;
@@ -389,7 +393,9 @@ bool TMainForm::Destroy() {
 #endif
   // the order is VERY important!
   TOlxVars::Finalise();
+#ifdef _PYTHON
   PythonExt::Finilise();
+#endif
   return wxFrame::Destroy();
 }
 //..............................................................................
@@ -941,7 +947,9 @@ void TMainForm::XApp(Olex2App *XA)  {
   Library.AttachLibrary(LibStr::ExportLibrary());
   Library.AttachLibrary(LibMath::ExportLibrary());
   //Library.AttachLibrary(olxstr::ExportLibrary("str"));
+#ifdef _PYTHON
   Library.AttachLibrary(PythonExt::GetInstance()->ExportLibrary());
+#endif
   Library.AttachLibrary(TETime::ExportLibrary());
   Library.AttachLibrary(lcells::IndexManager::ExportLibrary());
 ////////////////////////////////////////////////////////////////////////////////
@@ -1485,11 +1493,14 @@ void TMainForm::StartupInit() {
   bool is_arg = false;
   if (FXApp->GetArguments().Count() >= 2) {
     // do the iterpreters job if needed
+#ifdef _PYTHON
     if (FXApp->GetArguments().GetLastString().EndsWith(".py")) {
       TStrList in = TEFile::ReadLines(FXApp->GetArguments().GetLastString());
       PythonExt::GetInstance()->RunPython(in.Text('\n'));
     }
-    else {
+    else
+#endif
+    {
       load_file = FXApp->GetArguments().Text(' ', 1);
       if (!TEFile::Exists(load_file)) {
         load_file.SetLength(0);
@@ -1625,6 +1636,7 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
     return false;
   }
 
+#ifdef _PYTHON
   if (MsgId == ID_TIMER && wxThread::IsMain() &&
     StartupInitialised && Py_IsInitialized())
   {
@@ -1643,6 +1655,7 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
     }
 #endif
     }
+#endif // _PYTHON
 
   bool res = true, Silent = (FMode & mSilent) != 0, Draw = false;
   static bool actionEntered = false, downloadEntered = false;
@@ -4178,6 +4191,7 @@ void TMainForm::OnCloseWindow(wxCloseEvent &evt) {
 //..............................................................................
 
 //..............................................................................
+#ifdef _PYTHON
 PyObject* pyIsControl(PyObject* self, PyObject* args)  {
   olxstr cname, pname;  // control and popup (if any) name
   if( !PythonExt::ParseTuple(args, "w|w", &cname, &pname) )
@@ -4315,6 +4329,7 @@ olxcstr &TMainForm::ModuleName() {
 PyObject *TMainForm::PyInit() {
   return PythonExt::init_module(ModuleName(), CORE_Methods);
 }
+#endif // _PYTHON
 //..............................................................................
 //..............................................................................
 //..............................................................................
