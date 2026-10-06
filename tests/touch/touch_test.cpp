@@ -83,6 +83,14 @@ int main(int argc, char *argv[]) {
   nav.OnZoom(zoom(1.0, true));
   nav.OnZoom(zoom(1e6, false, true));
   CHECK(near_(R.GetZoom(), 100));
+  // disabled zooming is honoured and the gesture still ends
+  m.SetZoomingEnabled(false);
+  R.SetZoom(1.5);
+  CHECK(!nav.OnZoom(zoom(1.0, true)));
+  CHECK(!nav.OnZoom(zoom(2.0, false, true)));
+  CHECK(near_(R.GetZoom(), 1.5));
+  CHECK(!nav.IsActive());
+  m.SetZoomingEnabled(true);
 
   // two-finger pan == the mouse translate for the same screen motion
   R.SetZoom(2);
