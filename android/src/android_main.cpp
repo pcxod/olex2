@@ -19,7 +19,7 @@ extracted once per stamp into <filesDir>/olex2.
 #include "wx/app.h"
 #include <QtCore/QJniEnvironment>
 #include <QtCore/QJniObject>
-#include <QtCore/qnativeinterface.h>
+#include <QtCore/qcoreapplication_platform.h>  // QAndroidApplication
 #include <android/asset_manager.h>
 #include <android/asset_manager_jni.h>
 #include <android/log.h>

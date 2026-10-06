@@ -6,9 +6,10 @@
       "name": "android-base",
       "hidden": true,
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/../build/${presetName}",
+      "binaryDir": "D:/Android/build/olex2-${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
+        "QT_ANDROID_DEPLOYMENT_TYPE": "Debug",
         "CMAKE_MAKE_PROGRAM": "C:/Qt/Tools/Ninja/ninja.exe",
         "ANDROID_SDK_ROOT": "D:/Android/sdk",
         "ANDROID_NDK_ROOT": "D:/Android/sdk/ndk/27.2.12479018",
