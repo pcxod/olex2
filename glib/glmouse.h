@@ -197,6 +197,13 @@ public:
   AMouseEvtHandler &SetHandler(AMouseEvtHandler &eh);
   // is set by handlers
   void SetAction(short A)  {  Action = A;  }
+  /* view changes shared by the mouse handlers and touch gestures; each
+  honours the matching Is*Enabled flag, returns false when disabled.
+  dx, dy - screen pixels, y up; ddeg - degrees added to RZ; z - new zoom
+  */
+  bool MoveView(double dx, double dy);
+  bool RotateViewZ(double ddeg);
+  bool ZoomView(double z);
   /* find objects group. If selected or the parent group is selected - the
   selection group is returned
   */
