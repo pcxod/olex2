@@ -118,7 +118,7 @@ void GXLibMacros::Export(TLibrary& lib) {
     "radii, isot - radii proportional to Ueq, isoth - as isot, but applied to "
     "H atoms as well]");
   gxlib_InitMacro(ADS, EmptyString(), fpAny^(fpNone),
-    "Changes atom draw style [sph,elp,std]");
+    "Changes atom draw style [sph,elp,ort,std,def - the global default]");
   gxlib_InitMacro(Cartoon,
     "c-colour mode: chain, rainbow (along the chain, N terminus blue),"
     " polarity (lipophilic or hydrophilic), charge (acidic, basic or neutral),"
@@ -256,7 +256,8 @@ void GXLibMacros::Export(TLibrary& lib) {
     " or the collection name to put the bond to&;"
     "f-consider input in fractional coordinates vs Cartesian&;"
     "e-adds esd to the value&;"
-    "r-radius of the line",
+    "r-radius of the line&;"
+    "l-label text shown instead of the length, an empty value hides the label",
     fpAny,
     "Creates a line or best line for provided atoms");
   gxlib_InitMacro(Angle,
@@ -1226,9 +1227,12 @@ void GXLibMacros::macADS(TStrObjList &Cmds, const TParamList &Options,
   else if (Cmds[0].Equalsi("std")) {
     ads = adsStandalone;
   }
+  else if (Cmds[0].Equalsi("def")) {  // the global default, what new atoms get
+    ads = TXAtom::GetSettings(app.GetRenderer()).GetDS();
+  }
   if (ads == -1) {
     Error.ProcessingError(__OlxSrcInfo,
-      "unknown atom type (elp/sph/ort/std) supported only");
+      "unknown atom type (elp/sph/ort/std/def) supported only");
     return;
   }
   Cmds.Delete(0);
@@ -2465,6 +2469,15 @@ void GXLibMacros::macLine(TStrObjList &Cmds, const TParamList &Options,
       : app.AddLine(name, from, to);
     if (l != 0 && Options.Contains('r')) {
       l->SetRadius(Options.FindValue('r').ToDouble());
+    }
+    if (l != 0 && Options.Contains('l')) {
+      olxstr lbl = Options.FindValue('l');
+      if (lbl.IsEmpty()) {
+        l->GetGlLabel().SetVisible(false);
+      }
+      else {
+        l->GetGlLabel().SetLabel(lbl);
+      }
     }
   }
   app.Draw();
