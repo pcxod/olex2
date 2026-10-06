@@ -433,4 +433,9 @@ bool TGlXApp::ActivateWindow(HWND wnd) {
 }
 #endif
 
+#ifdef __ANDROID__
+// android/src/android_main.cpp prepares the environment, then calls wxEntry
+IMPLEMENT_APP_NO_MAIN(TGlXApp)
+#else
 IMPLEMENT_APP(TGlXApp)
+#endif
