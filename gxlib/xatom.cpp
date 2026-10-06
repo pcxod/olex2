@@ -656,9 +656,10 @@ void TXAtom::ApplyStyle(TGraphicsStyle& Style) {
   }
 }
 //..............................................................................
-void TXAtom::DrawStyle(short V)  {
-  olxstr &DS = GetPrimitives().GetStyle().GetParam("DS", EmptyString());
-  DS = V;
+void TXAtom::DrawStyle(short V, bool save)  {
+  if (save) {
+    GetPrimitives().GetStyle().GetParam("DS", EmptyString()) = V;
+  }
   FDrawStyle = V;
 }
 //..............................................................................

@@ -117,8 +117,10 @@ void GXLibMacros::Export(TLibrary& lib) {
     "Changes how the atoms are drawn [sfil - sphere packing, pers - static "
     "radii, isot - radii proportional to Ueq, isoth - as isot, but applied to "
     "H atoms as well]");
-  gxlib_InitMacro(ADS, EmptyString(), fpAny^(fpNone),
-    "Changes atom draw style [sph,elp,ort,std,def - the global default]");
+  gxlib_InitMacro(ADS,
+    "t-temporary: not saved in the atom style, undone by 'ads def' or a reload",
+    fpAny^(fpNone),
+    "Changes atom draw style [sph,elp,ort,std,def - back to the saved style]");
   gxlib_InitMacro(Cartoon,
     "c-colour mode: chain, rainbow (along the chain, N terminus blue),"
     " polarity (lipophilic or hydrophilic), charge (acidic, basic or neutral),"
@@ -1227,8 +1229,8 @@ void GXLibMacros::macADS(TStrObjList &Cmds, const TParamList &Options,
   else if (Cmds[0].Equalsi("std")) {
     ads = adsStandalone;
   }
-  else if (Cmds[0].Equalsi("def")) {  // the global default, what new atoms get
-    ads = TXAtom::GetSettings(app.GetRenderer()).GetDS();
+  else if (Cmds[0].Equalsi("def")) {  // back to the style each atom has stored
+    ads = 0;
   }
   if (ads == -1) {
     Error.ProcessingError(__OlxSrcInfo,
@@ -1237,6 +1239,27 @@ void GXLibMacros::macADS(TStrObjList &Cmds, const TParamList &Options,
   }
   Cmds.Delete(0);
   TXAtomPList Atoms = app.FindXAtoms(Cmds, false, false);
+  /* -t and def leave the stored styles alone: the style is shared by every
+  atom of the collection and saved with the structure, so a temporary change
+  written there outlives its purpose and reaches atoms it was never meant for
+  */
+  if (ads == 0 || Options.GetBoolOption('t')) {
+    if (Atoms.IsEmpty()) {
+      TGXApp::AtomIterator ai = app.GetAtoms();
+      while (ai.HasNext()) {
+        Atoms.Add(ai.Next());
+      }
+    }
+    for (size_t i = 0; i < Atoms.Count(); i++) {
+      if (ads == 0) {
+        Atoms[i]->RestoreDrawStyle();
+      }
+      else {
+        Atoms[i]->DrawStyle(ads, false);
+      }
+    }
+    return;
+  }
   app.SetAtomDrawingStyle(ads, Atoms.IsEmpty() ? 0 : &Atoms);
 }
 //.............................................................................

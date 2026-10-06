@@ -185,7 +185,10 @@ public:
   }
   void ListDrawingStyles(TStrList &List);
   short DrawStyle() const {  return FDrawStyle;  }
-  void DrawStyle(short V);
+  // save=false leaves the collection style, shared and saved, untouched
+  void DrawStyle(short V, bool save = true);
+  // back to the style the collection stores, undoing DrawStyle(V, false)
+  void RestoreDrawStyle() { ValidateDS(GetPrimitives().GetStyle()); }
 
   void UpdatePrimitiveParams(TGlPrimitive* GlP);
   static int Quality(TGlRenderer &r, int Val);
