@@ -12,10 +12,13 @@
 #include "gxapp.h"
 #include "wx/wx.h"
 #include "wx/glcanvas.h"
+#include "touchnav.h"
 
 class TGlCanvas: public wxGLCanvas  {
 private:
   class TGXApp *FXApp;
+  TTouchNav TouchNav;
+  bool TouchEnabled;
   void OnMouseDown(wxMouseEvent& event);
   void OnMouseUp(wxMouseEvent& event);
   void OnMouseMove(wxMouseEvent& event);
@@ -44,6 +47,10 @@ public:
   void OnMouse(wxMouseEvent& event);
   void XApp(TGXApp *XA);
   TGXApp *GetXApp() { return FXApp; }
+  // option gl_touch, read in XApp()
+  bool IsTouchEnabled() const { return TouchEnabled; }
+  // the right-click menu for G (0 - the general one) at canvas x, y
+  void ShowContextMenu(int x, int y, AGDrawObject *G);
 
   void Render();
   /* If default is true - NULL is returned,

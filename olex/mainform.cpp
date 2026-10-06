@@ -3820,7 +3820,9 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons) {
     return true;
   }
   if (G == 0) {
-    processMacro("sel -u");
+    // with touch on, a double tap on the background centres the model
+    processMacro(FGlCanvas != 0 && FGlCanvas->IsTouchEnabled()
+      ? "center" : "sel -u");
     return true;
   }
   if (G->Is<TGlBitmap>()) {
