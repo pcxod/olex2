@@ -210,19 +210,26 @@ int main(int argc, char **argv) {
   installed executable; files under filesDir cannot be exec'd (W^X, API 29+).
   NoSpherA2.py finds <basedir>/NoSpherA2 and its basis_sets and occ/share
   next to it, so a symlink stands in. The native dir changes with every
-  install, hence relinked on every start.
+  install, hence relinked on every start. pTB (optional) the same way.
   */
   {
     const std::string nld = ctx
       .callObjectMethod("getApplicationInfo",
         "()Landroid/content/pm/ApplicationInfo;")
       .getObjectField<jstring>("nativeLibraryDir").toString().toStdString();
-    const std::string link = base + "/NoSpherA2";
-    unlink(link.c_str());
-    if (symlink((nld + "/libNoSpherA2.so").c_str(), link.c_str()) != 0) {
-      olx_log("cannot link NoSpherA2");
+    for (const char *n : { "NoSpherA2", "ptb" }) {
+      const std::string link = base + "/" + n, so = nld + "/lib" + n + ".so";
+      unlink(link.c_str());
+      if (access(so.c_str(), F_OK) == 0 && symlink(so.c_str(), link.c_str()) != 0) {
+        olx_log(std::string("cannot link ") + n);
+      }
     }
   }
+  /* ptb is a static glibc binary: glibc registers rseq before any of its
+  constructors run, and the app seccomp filter answers that with SIGSYS (the
+  other new syscalls sigsys.c turns into ENOSYS). Inherited by the child
+  */
+  setenv("GLIBC_TUNABLES", "glibc.pthread.rseq=0", 0);
   // argv[0] is the .so path, /data/app/~~<base64>==/..., and TBasicApp
   // reads any argument holding '=' as an option: Olex2 gets its base dir
   // from OLEX2_DIR anyway. No file picker before S4: with no

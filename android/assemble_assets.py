@@ -113,6 +113,9 @@ def collect(rundir, overlays, payload=None):
         for f in sorted((payload / "python/lib").glob("lib*.so")):
             libs[f.name] = f
         libs["libNoSpherA2.so"] = payload / "bin/libNoSpherA2.so"
+        # pTB, a static glibc executable (ptb-android/build.sh); optional
+        if (payload / "bin/libptb.so").is_file():
+            libs["libptb.so"] = payload / "bin/libptb.so"
         py = pylib(payload)
         for src, dst in [(py, py)] + list(PAYLOAD.items()):
             for f in tree(payload / src):
@@ -262,7 +265,7 @@ def self_test():
             (rd / p).parent.mkdir(parents=True, exist_ok=True)
             (rd / p).write_text(p)
         for p in ["python/lib/libpython3.14.so", "bin/libNoSpherA2.so",
-                  "python/lib/python3.14/os.py",
+                  "bin/libptb.so", "python/lib/python3.14/os.py",
                   "python/lib/python3.14/lib-dynload/_ssl.cpython-314.so",
                   "cctbx/cctbx_build/lib/libcctbx.so",
                   "cctbx/cctbx_build/lib/libc++_shared.so",
@@ -285,7 +288,7 @@ def self_test():
             "python/lib/python3.14/os.py",
             "python/lib/python3.14/site-packages/w/__init__.py", "util/s/x.py"], names
         assert sorted(libs) == ["libNoSpherA2.so", "libcctbx.so",
-                                "libpython3.14.so"], libs
+                                "libptb.so", "libpython3.14.so"], libs
         assert sorted(p.name for p in jl.iterdir()) == sorted(libs)
         assert (out / "etc/gui/a.htm").read_text() == "overlay"
         assert b"\r" not in (out / "files.txt").read_bytes()
