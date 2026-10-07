@@ -1336,6 +1336,11 @@ void TMainForm::XApp(Olex2App *XA)  {
     .Add(this, ID_UPDATE_GUI);
 }
 //..............................................................................
+#ifdef __ANDROID__
+// set once onstartup has run initpy: StartupInitialised is set on entry and
+// StartupInit yields, so an idle event inside it would run runonce without olx
+static bool android_startup_done = false;
+#endif
 void TMainForm::StartupInit() {
   if (StartupInitialised) {
     return;
@@ -1562,6 +1567,9 @@ void TMainForm::StartupInit() {
   }
   processMacro("onstartup", __OlxSrcInfo);
   processMacro("user_onstartup", __OlxSrcInfo);
+#ifdef __ANDROID__
+  android_startup_done = true;
+#endif
   if (do_load_file) {
     olxstr reap = "reap -check_loaded";
     if (is_arg) { // if parsed as an argument - do not check for crash
@@ -3716,7 +3724,13 @@ void TMainForm::OnIdle() {
 #endif
     TBasicApp::GetInstance().OnIdle.Execute((AEventsDispatcher*)this, NULL);
   // runonce business...
+#ifdef __ANDROID__
+  // idle events come before the window is shown (or while a system dialog
+  // covers it) and during StartupInit: wait for onstartup, which brings up olx
+  if (!RunOnceProcessed && android_startup_done) {
+#else
   if (!RunOnceProcessed) {
+#endif
     RunOnceProcessed = true;
     TStrList rof;
     TEFile::ListDir(FXApp->GetBaseDir(), rof, "runonce*.*", sefFile);
