@@ -70,13 +70,6 @@ PATCHES = [
      "        v = max(1, int(os.cpu_count() *3/4))",
      "        v = max(1, int((int(open('/sys/devices/system/cpu/possible').read().strip()"
      ".split('-')[-1]) + 1) *3/4))"),
-    # FLINT's geometry typing looks for NoSpherA2.exe on every platform; the
-    # binary is files/olex2/NoSpherA2 here (as on Linux/macOS), so typing fell
-    # back to density only. Same line as the trunk fix: drop once trunk has it
-    ("util/pyUtil/CctbxLib/cctbx_olex_adapter.py",
-     'exe = os.path.join(OV.BaseDir(), "NoSpherA2.exe")',
-     'exe = os.path.join(OV.BaseDir(), "NoSpherA2"\n'
-     '                       + (".exe" if sys.platform.startswith("win") else ""))'),
     # no scipy on Android: refinement.py needs it only for one LU (lazy import,
     # fails there alone), cubes_maps.py only for inv/det, which numpy has. These
     # replace the whole-file copies in the stage overlay that went stale on rebase
