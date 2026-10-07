@@ -11,6 +11,9 @@
 #include "frameext.h"
 #include "olxstate.h"
 #include "olxvar.h"
+#ifdef __ANDROID__
+#include <QtWidgets/QCheckBox>
+#endif
 
 using namespace ctrl_ext;
 
@@ -24,6 +27,12 @@ TCheckBox::TCheckBox(wxWindow *Parent, wxWindowID id, const wxString& label,
   ActionQueue(NULL)
 {
   wxCheckBox::Create(Parent, id, label, pos, size, style);
+#ifdef __ANDROID__
+  // the style's indicator stays at its desktop pixel size: too small to hit
+  if (QWidget *w = GetHandle()) {
+    w->setStyleSheet("QCheckBox::indicator { width: 34px; height: 34px; }");
+  }
+#endif
   Bind(wxEVT_CHECKBOX, &TCheckBox::ClickEvent, this);
   Bind(wxEVT_ENTER_WINDOW, &TCheckBox::MouseEnterEvent, this);
   SetToDelete(false);

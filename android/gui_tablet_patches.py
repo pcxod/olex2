@@ -29,7 +29,7 @@ PATCHES = [
      "def MakeHoverButton(name, cmds,",
      "def _android_stale(btn_type, btn_name):\r\n"
      "  redo = getattr(olx, 'android_redraw', None)\r\n"
-     "  key = btn_type if btn_type in ('tab', 'cbtn') else btn_name  # drawn as a set\r\n"
+     "  key = btn_type if btn_type in ('tab', 'cbtn', 'toolbar') else btn_name  # drawn as a set\r\n"
      "  if redo is None or key in redo:\r\n"
      "    return False\r\n"
      "  redo.add(key)\r\n"
@@ -49,7 +49,18 @@ PATCHES = [
      "    version = OV.GetSVNVersion()\r\n"
      "    stamp = os.path.join(OV.BaseDir(), '.asset-stamp')\r\n"
      "    if os.path.exists(stamp):  # Android: rewritten by every new APK\r\n"
-     "      version = int(os.path.getmtime(stamp))\r\n"),
+     "      version = int(os.path.getmtime(stamp))\r\n"
+     "      # last_version is restored after initpy asks and saved only at a\r\n"
+     "      # clean exit (Android kills the process): keep our own record\r\n"
+     "      seen = stamp + '-seen'\r\n"
+     "      try:\r\n"
+     "        last = int(open(seen).read())\r\n"
+     "      except Exception:\r\n"
+     "        last = 0\r\n"
+     "      olx.has_recently_updated = version > last\r\n"
+     "      if olx.has_recently_updated:\r\n"
+     "        open(seen, 'w').write(str(version))\r\n"
+     "      return olx.has_recently_updated\r\n"),
     ('util/pyUtil/gui/skin/__init__.py',
      "table_width = int(olx.html.ClientWidth('self')) - 2 * int(olx.html.GetBorders())",
      "table_width = int(olx.html.ClientWidth('self')) - 2 * int(olx.html.GetBorders()) - 16"),
