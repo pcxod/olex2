@@ -1,0 +1,32 @@
+diff --git a/src/gl/gl4es.c b/src/gl/gl4es.c
+--- a/src/gl/gl4es.c
++++ b/src/gl/gl4es.c
+@@ -250,7 +250,7 @@ void APIENTRY_GL4ES gl4es_glBegin(GLenum mode) {
+     // small optim... continue a render command if possible
+     glstate->list.active = NewDrawStage(glstate->list.active, mode);
+     glstate->list.pending = 0;
+-    glstate->list.active->use_vbo_array = 2;
++    if (!glstate->list.compiling) glstate->list.active->use_vbo_array = 2; // compiled lists: merge + VBO at first draw
+     noerrorShimNoPurge();	// TODO, check Enum validity
+ }
+ AliasExport(void,glBegin,,(GLenum mode));
+diff --git a/src/gl/list.c b/src/gl/list.c
+--- a/src/gl/list.c
++++ b/src/gl/list.c
+@@ -623,6 +623,16 @@ renderlist_t* append_calllist(renderlist_t *list, renderlist_t *a)
+             new->prev = list;
+             // ok, now on new list
+             list = new;
++            // owned, not refcounted: copy or drop so both lists can be freed (VBOs are rebuilt at first draw)
++            if (list->mode_inits) {
++                list->mode_inits = (modeinit_t*)malloc(list->mode_init_cap*sizeof(modeinit_t));
++                memcpy(list->mode_inits, a->mode_inits, list->mode_init_len*sizeof(modeinit_t));
++            }
++            list->ind_lines = NULL;
++            list->final_colors = NULL;
++            list->vbo_array = list->vbo_indices = 0;
++            if (list->use_vbo_array==2) list->use_vbo_array = 0;
++            if (list->use_vbo_indices==2) list->use_vbo_indices = 0;
+             // copy the many list arrays
+             if (list->calls.len > 0) {
+                 ++(*list->shared_calls);
