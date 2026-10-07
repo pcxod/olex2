@@ -230,6 +230,34 @@ int main(int argc, char **argv) {
   other new syscalls sigsys.c turns into ENOSYS). Inherited by the child
   */
   setenv("GLIBC_TUNABLES", "glibc.pthread.rseq=0", 0);
+  /* SALTED models stay out of the APK: assets are extracted, so the 844 MB
+  combo model would be stored twice. Each volume's
+  Android/data/<package>/files/salted (created here, fillable over USB, no
+  permission needed) is registered once as a model folder; the last phil
+  assignment wins and the GUI's add/remove edits the list from then on
+  */
+  {
+    const std::string up = data_dir + "/user.phil";
+    std::stringstream ss;
+    ss << std::ifstream(up).rdbuf();
+    if (ss.str().find("salted_models_list") == std::string::npos) {
+      QJniObject dirs = ctx.callObjectMethod("getExternalFilesDirs",
+        "(Ljava/lang/String;)[Ljava/io/File;",
+        QJniObject::fromString("salted").object());
+      jobjectArray da = static_cast<jobjectArray>(dirs.object());
+      std::string list;
+      for (jsize i = 0, n = da ? env->GetArrayLength(da) : 0; i < n; i++) {
+        QJniObject d = QJniObject::fromLocalRef(env->GetObjectArrayElement(da, i));
+        if (d.isValid()) {  // null for a volume that is not mounted
+          list += ';' + d.callObjectMethod("getAbsolutePath",
+            "()Ljava/lang/String;").toString().toStdString();
+        }
+      }
+      std::ofstream(up, std::ios::app)
+        << "\nuser.NoSpherA2.salted_models_list = \"" << list << "\"\n";
+      olx_log("SALTED model folders" + list);
+    }
+  }
   // argv[0] is the .so path, /data/app/~~<base64>==/..., and TBasicApp
   // reads any argument holding '=' as an option: Olex2 gets its base dir
   // from OLEX2_DIR anyway. No file picker before S4: with no
