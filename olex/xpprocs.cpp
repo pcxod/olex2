@@ -5193,14 +5193,25 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
         }
         uo->SetVertices(&data);
         uo->SetNormals(&normals);
-        if (colors.Count() == triags.Count()) {
+        /* -t=alpha, 0..1: a see-through surface. The colour drives the
+        material (sglmColorMat), so the alpha has to go into the colours -
+        the obj's mtl and the colour file come through OLX_RGB, which leaves
+        it at 0, and the surface would vanish as soon as blending is on
+        */
+        float alpha = olx_min(1.0f,
+          olx_max(0.0f, Options.FindValue("t", "1").ToFloat()));
+        bool has_colors = (colors.Count() == triags.Count());
+        TGlMaterial glm;
+        if (has_colors) {
+          uint32_t a = ((uint32_t)(alpha * 255 + 0.5f)) << 24;
           TArrayList<uint32_t> &vc = *(new TArrayList<uint32_t>(data.Count()));
           for (size_t i = 0; i < colors.Count(); i++) {
-            vc[3 * i] = vc[3 * i + 1] = vc[3 * i + 2] = colors[i];
+            vc[3 * i] = vc[3 * i + 1] = vc[3 * i + 2] =
+              (colors[i] & 0x00FFFFFF) | a;
           }
           uo->SetColors(&vc);
-          TGlMaterial glm;
-          glm.SetFlags(sglmColorMat | sglmSpecularF | sglmShininessF);
+          glm.SetFlags(sglmColorMat | sglmSpecularF | sglmShininessF |
+            (alpha < 1 ? sglmTransparent : 0));
           glm.SpecularF = 0x808080;
           glm.ShininessF = 32;
           uo->SetMaterial(glm);
@@ -5208,6 +5219,17 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
         uo->SetZoomable(true);
         uo->SetMoveable(true);
         uo->Create();
+        if (has_colors) {
+          /* Create takes the material from the style if it has one, so a
+          surface shown again with a different -t would come back with the
+          material of the first one
+          */
+          TGlPrimitive* glp = uo->GetPrimitives().FindPrimitiveByName("Object");
+          if (glp != 0) {
+            glp->SetProperties(glm);
+            uo->GetPrimitives().GetStyle().SetMaterial("Object", glm);
+          }
+        }
       }
     }
     else {

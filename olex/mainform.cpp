@@ -755,6 +755,7 @@ void TMainForm::XApp(Olex2App *XA)  {
     "c-given coordinates are Cartesioan [false]&;"
     "s-scale factor for the coordinates of a poly obj file [1]&;"
     "f-file with one packed RGB per face of a poly obj file, overrides the mtl&;"
+    "t-opacity of a coloured poly obj, 0..1 [1]&;"
     ,
     fpAny^(fpNone|fpOne),
     "Adds a new user defined object to the graphical scene");
