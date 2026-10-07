@@ -55,6 +55,21 @@ PATCHES = [
     ("util/pyUtil/initpy_funcs.py",
      'if "bad magic number" not in str(err):',
      'if "bad magic number" not in str(err) and err.name != "AC7":'),
+    # Exynos 7870 tablet: threaded normal-equation builds pay off from ~10x
+    # less work than desktop (ZP2 5404x340: build 0.83 -> 0.24 s, Flack
+    # 2.55 -> 0.77 s; never slower on small cells), so lower both thresholds
+    ("cctbx/cctbx_sources/smtbx/refinement/least_squares.py",
+     "blas_2_parallel_work_threshold = 2e5",
+     "blas_2_parallel_work_threshold = 2e4  # Android: /10, see assemble_assets.py"),
+    ("cctbx/cctbx_sources/smtbx/refinement/least_squares.py",
+     "blas_3_parallel_work_threshold = 2e6", "blas_3_parallel_work_threshold = 2e5"),
+    # Android parks idle cores offline, so cpu_count() says 4 of the tablet's 8 and the
+    # default refinement gets 3 threads; ZP2 Flack 1.21 -> 0.83 s, LS build 0.47 -> 0.25 s
+    # at 6 (= 3/4 of the possible cores), no gain at 8
+    ("util/pyUtil/olexFunctions.py",
+     "        v = max(1, int(os.cpu_count() *3/4))",
+     "        v = max(1, int((int(open('/sys/devices/system/cpu/possible').read().strip()"
+     ".split('-')[-1]) + 1) *3/4))"),
 ]
 # tablet-sized GUI: layout patches to etc/gui and util/pyUtil
 PATCHES += runpy.run_path(str(pathlib.Path(__file__).with_name("gui_tablet_patches.py")))["PATCHES"]
