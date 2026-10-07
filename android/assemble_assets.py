@@ -70,6 +70,24 @@ PATCHES = [
      "        v = max(1, int(os.cpu_count() *3/4))",
      "        v = max(1, int((int(open('/sys/devices/system/cpu/possible').read().strip()"
      ".split('-')[-1]) + 1) *3/4))"),
+    # FLINT's geometry typing looks for NoSpherA2.exe on every platform; the
+    # binary is files/olex2/NoSpherA2 here (as on Linux/macOS), so typing fell
+    # back to density only. Same line as the trunk fix: drop once trunk has it
+    ("util/pyUtil/CctbxLib/cctbx_olex_adapter.py",
+     'exe = os.path.join(OV.BaseDir(), "NoSpherA2.exe")',
+     'exe = os.path.join(OV.BaseDir(), "NoSpherA2"\n'
+     '                       + (".exe" if sys.platform.startswith("win") else ""))'),
+    # no scipy on Android: refinement.py needs it only for one LU (lazy import,
+    # fails there alone), cubes_maps.py only for inv/det, which numpy has. These
+    # replace the whole-file copies in the stage overlay that went stale on rebase
+    ("util/pyUtil/CctbxLib/refinement.py",
+     "import scipy.linalg", "# import scipy.linalg  # Android: lazy, see assemble_assets.py"),
+    ("util/pyUtil/CctbxLib/refinement.py",
+     "l,u = scipy.linalg.lu(lineareq, permute_l=True)",
+     "import scipy.linalg; l,u = scipy.linalg.lu(lineareq, permute_l=True)"),
+    ("util/pyUtil/NoSpherA2/cubes_maps.py",
+     "from scipy import linalg",
+     "from numpy import linalg  # Android has no scipy; only inv/det are used here"),
 ]
 # tablet-sized GUI: layout patches to etc/gui and util/pyUtil
 PATCHES += runpy.run_path(str(pathlib.Path(__file__).with_name("gui_tablet_patches.py")))["PATCHES"]
@@ -157,10 +175,11 @@ def apply_patches(out):
         p = out / rel
         if not p.is_file():  # S1: no payload
             continue
-        s = p.read_bytes().decode("utf-8")
+        # surrogateescape: trunk refinement.py carries a cp1252 dash; keep it byte-exact
+        s = p.read_bytes().decode("utf-8", "surrogateescape")
         if s.count(old) != 1:
             sys.exit("patch does not apply to %s: %r" % (rel, old))
-        p.write_bytes(s.replace(old, new).encode("utf-8"))
+        p.write_bytes(s.replace(old, new).encode("utf-8", "surrogateescape"))
 
 
 def elf_dynsyms(path):
