@@ -64,7 +64,18 @@ target_include_directories(olex2 PRIVATE
   "${src}/olex/html" "${src}/olex/ctrls" "${src}/olex/nui" "${src}/repository"
   "${src}/sdl" "${src}/sdl/math" "${src}/xlib" "${src}/xlib/absorpc")
 target_compile_definitions(olex2 PRIVATE __WXWIDGETS__ _UNICODE)
-target_link_libraries(olex2 PRIVATE
+# armv7: Android <= 8.1's libm exports libgcc's unwinder and precedes Qt5Core
+# in our DT_NEEDED, so an imported _Unwind_Resume or __aeabi_unwind_cpp_pr*
+# bound there and every C++ exception aborted (SM-T585). The NDK's libunwind
+# goes first, before any .so can satisfy those symbols
+set(_olx_unwind "")
+if (ANDROID_ABI STREQUAL "armeabi-v7a")
+  file(GLOB _olx_unwind
+    "${ANDROID_NDK}/sources/cxx-stl/llvm-libc++/libs/armeabi-v7a/libunwind.a"
+    "${ANDROID_NDK}/toolchains/llvm/prebuilt/*/lib/clang/*/lib/linux/arm/libunwind.a")
+  list(GET _olx_unwind 0 _olx_unwind)
+endif ()
+target_link_libraries(olex2 PRIVATE ${_olx_unwind}
   wx::base wx::core wx::gl wx::net wx::html wx::stc
   olx_glu gl4es_gl
   ${_olx_qt_libs} android log)
