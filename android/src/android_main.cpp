@@ -151,11 +151,10 @@ int main(int argc, char **argv) {
   }
 
   const std::string base = files_dir + "/olex2",
-    data_dir = files_dir + "/data", config_dir = files_dir + "/config";
+    config_dir = files_dir + "/config";
   if (am == nullptr || !extract_assets(am, base)) {
     olx_log("no usable GUI files; Olex2 will start without them");
   }
-  mkdir(data_dir.c_str(), 0700);
   mkdir(config_dir.c_str(), 0700);
   /* Optional <config_dir>/env.txt, one KEY=VALUE per line, '#' comments:
   device tuning without a rebuild, e.g. LIBGL_NOHIGHP=1 (gl4es, Mali-400
@@ -184,9 +183,14 @@ int main(int argc, char **argv) {
     std::ifstream in(base + "/android.options", std::ios::binary);
     std::ofstream(options, std::ios::binary) << in.rdbuf();
   }
+  /* env.txt may move the data dir, e.g. to the SD card's app dir
+  /storage/<uuid>/Android/data/<package>/files/data (no permission needed)
+  */
+  setenv("OLEX2_DATADIR", (files_dir + "/data").c_str(), 0);
+  const std::string data_dir = getenv("OLEX2_DATADIR");
+  make_parents(data_dir + '/');
   // read by xglapp.cpp (base/config dir, GL attributes) and patchapi.cpp
   setenv("OLEX2_DIR", base.c_str(), 1);
-  setenv("OLEX2_DATADIR", data_dir.c_str(), 1);
   setenv("OLEX2_DATADIR_STATIC", "TRUE", 1);
   setenv("OLEX2_CONFIGDIR", config_dir.c_str(), 1);
   setenv("OLEX2_GL_STEREO", "false", 1);
