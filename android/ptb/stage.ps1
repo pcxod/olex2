@@ -1,7 +1,8 @@
 # copy the static ptb builds into both payloads as bin/libptb.so
+param([string[]]$Abis = @('armeabi-v7a', 'arm64-v8a', 'x86_64', 'x86'))
 $ErrorActionPreference = 'Stop'
 $out = (wsl -e bash -c 'echo ~/ptb-android/out').Trim()
-foreach ($abi in 'armeabi-v7a', 'arm64-v8a', 'x86_64') {
+foreach ($abi in $Abis) {
   foreach ($st in 'D:/Android/stage-legacy', 'D:/Android/stage') {
     if (Test-Path "$st/$abi/bin") {
       $w = (wsl -e wslpath -w "$out/$abi/ptb").Trim()

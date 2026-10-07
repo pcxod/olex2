@@ -1,5 +1,5 @@
 #!/bin/bash
-# static glibc ptb for Android: armeabi-v7a, arm64-v8a (Arm GNU toolchain 14.2), x86_64 (system gfortran)
+# static glibc ptb for Android: armeabi-v7a, arm64-v8a (Arm GNU toolchain 14.2), x86_64 (system gfortran), x86 (bootlin i686 + system gfortran -m32)
 # usage: build.sh <abi>...   output: ~/ptb-android/out/<abi>/ptb
 set -eo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
@@ -11,6 +11,7 @@ cd $W
 for t in arm-none-linux-gnueabihf aarch64-none-linux-gnu; do
   [ -d tc/arm-gnu-toolchain-14.2.rel1-x86_64-$t ] || tar -C tc -xf $SRC/arm-gnu-toolchain-14.2.rel1-x86_64-$t.tar.xz
 done
+[ -d tc/x86-i686--glibc--stable-2026.08-1 ] || tar -C tc -xf $SRC/x86-i686--glibc--stable-2026.08-1.tar.xz
 [ -d OpenBLAS-0.3.28 ] || tar -xzf $SRC/OpenBLAS-0.3.28.tar.gz
 # the release tag as a plain tree (never build from the working copy, see the pTB release-build note)
 if [ ! -d ptb-src ]; then
@@ -26,10 +27,20 @@ for abi in "$@"; do
                  OB="TARGET=ARMV8 DYNAMIC_ARCH=1" ;;
     x86_64)      P=x86_64-linux-gnu-
                  OB="TARGET=NEHALEM DYNAMIC_ARCH=1" ;;
+    x86)         P=$W/tc/x86-i686--glibc--stable-2026.08-1/bin/i686-linux-
+                 OB="TARGET=PRESCOTT DYNAMIC_ARCH=1 BINARY=32" ;;
     *) echo "unknown abi $abi"; exit 1 ;;
   esac
-  CC=${P}gcc; FC=${P}gfortran; ENTRY=" -Wl,-e,ptb_start"  # sigsys.c
-  [ $abi = x86_64 ] && { CC=gcc; FC=gfortran; ENTRY=""; }
+  CC=${P}gcc; FC=${P}gfortran; LD=$FC; RT=""
+  [ $abi = x86_64 ] && { CC=gcc; FC=gfortran; LD=$FC; }
+  # bootlin's i686 toolchain has no Fortran: the system gfortran compiles
+  # -m32, bootlin's gcc links against its glibc with Ubuntu's 32-bit
+  # libgfortran (lib32gfortran-13-dev, lib32gcc-13-dev unpacked in lib32/)
+  if [ $abi = x86 ]; then
+    printf '#!/bin/sh\nexec gfortran -m32 "$@"\n' > ${P}gfortran; chmod +x ${P}gfortran
+    L32=$W/lib32/x/usr/lib/gcc/x86_64-linux-gnu/13/32
+    LD=$CC; RT=" $L32/libgfortran.a $L32/libquadmath.a"
+  fi
   pre=$W/openblas-$abi
   if [ ! -f $pre/lib/libopenblas.a ]; then
     rm -rf ob-$abi; cp -r OpenBLAS-0.3.28 ob-$abi
@@ -47,12 +58,14 @@ for abi in "$@"; do
   # ptb's own sscal (uncalled) shadows BLAS sscal in a static link, and
   # LAPACK's ssyev then jumps into it
   sed -i '1s/subroutine sscal(/subroutine ptb_sscal_unused(/' $b/sscal.f90
-  $CC -O2 -c $here/sigsys.c -o $b/sigsys.o
+  # runs before TLS exists: no stack canary (x86 gcc adds one by default)
+  $CC -O2 -fno-stack-protector -c $here/sigsys.c -o $b/sigsys.o
   mkdir -p out/$abi
   # no -j: the Makefile's module dependencies are incomplete
   make -C $b -s COMPILER=gfortran FC=$FC CC=$CC PROG=$W/out/$abi/ptb \
     FFLAGS="-O2 -ffree-line-length-none -fopenmp -fno-backtrace" CCFLAGS="-O2 -std=gnu17 -DLINUX" \
-    LINKER="$FC -static -O2 -fopenmp$KEEP$ENTRY" LIBS="sigsys.o $pre/lib/libopenblas.a -lpthread -lm" > $b.log 2>&1
+    LINKER="$LD -static -O2 -fopenmp$KEEP -Wl,-e,ptb_start" \
+    LIBS="sigsys.o $pre/lib/libopenblas.a$RT -lpthread -lm" > $b.log 2>&1
   ${P}strip $W/out/$abi/ptb 2>/dev/null || strip $W/out/$abi/ptb
   file $W/out/$abi/ptb; ls -la $W/out/$abi/ptb
   echo "=== $abi built"
