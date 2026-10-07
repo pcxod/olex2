@@ -15,21 +15,36 @@ them in assets/olex2 (android/assemble_assets.py) together with files.txt:
 line 1 is a content stamp, every other line a path relative to assets/olex2.
 The NDK asset API cannot list sub-directories, hence the list. The files are
 extracted once per stamp into <filesDir>/olex2.
+
+Builds against Qt 6 (API 28+) and Qt 5.15 (the API 21 line). No
+std::filesystem: NDK r21's libc++ has none, plain POSIX calls do instead.
 */
 #include "wx/app.h"
+#include <QtCore/qglobal.h>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QtCore/QJniEnvironment>
 #include <QtCore/QJniObject>
 #include <QtCore/qcoreapplication_platform.h>  // QAndroidApplication
+static QJniObject android_context() {
+  return QNativeInterface::QAndroidApplication::context();
+}
+#else
+#include <QtAndroidExtras/QAndroidJniEnvironment>
+#include <QtAndroidExtras/QAndroidJniObject>
+#include <QtAndroidExtras/QtAndroid>
+using QJniObject = QAndroidJniObject;
+using QJniEnvironment = QAndroidJniEnvironment;
+static QJniObject android_context() { return QtAndroid::androidContext(); }
+#endif
 #include <android/asset_manager.h>
 #include <android/asset_manager_jni.h>
 #include <android/log.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <cstdlib>
-#include <filesystem>
 #include <fstream>
 #include <sstream>
 #include <string>
-
-namespace fs = std::filesystem;
 
 static void olx_log(const std::string &s) {
   __android_log_print(ANDROID_LOG_INFO, "olex2", "%s", s.c_str());
@@ -52,8 +67,17 @@ static bool read_asset(AAssetManager *am, const std::string &name,
   return n == 0;
 }
 
+// mkdir -p of the directory part of path (up to the last '/')
+static void make_parents(const std::string &path) {
+  for (size_t i = path.find('/', 1); i != std::string::npos;
+    i = path.find('/', i + 1))
+  {
+    mkdir(path.substr(0, i).c_str(), 0700);
+  }
+}
+
 // returns false only when the assets are unusable
-static bool extract_assets(AAssetManager *am, const fs::path &dst) {
+static bool extract_assets(AAssetManager *am, const std::string &dst) {
   std::string list;
   if (!read_asset(am, "olex2/files.txt", list)) {
     olx_log("assets/olex2/files.txt missing - APK built without assets");
@@ -62,7 +86,7 @@ static bool extract_assets(AAssetManager *am, const fs::path &dst) {
   std::istringstream in(list);
   std::string stamp, line;
   std::getline(in, stamp);
-  const fs::path stamp_file = dst / ".asset-stamp";
+  const std::string stamp_file = dst + "/.asset-stamp";
   {
     std::ifstream sf(stamp_file);
     std::string old;
@@ -70,8 +94,7 @@ static bool extract_assets(AAssetManager *am, const fs::path &dst) {
       return true;
     }
   }
-  olx_log("extracting assets to " + dst.string());
-  std::error_code ec;
+  olx_log("extracting assets to " + dst);
   size_t cnt = 0;
   std::string data;
   while (std::getline(in, line)) {
@@ -84,12 +107,12 @@ static bool extract_assets(AAssetManager *am, const fs::path &dst) {
     }
     // assemble_assets.py appends '-' to *.gz (and *-) names: aapt would
     // decompress them
-    const fs::path p = dst / fs::u8path(line.back() == '-'
+    const std::string p = dst + '/' + (line.back() == '-'
       ? line.substr(0, line.size() - 1) : line);
-    fs::create_directories(p.parent_path(), ec);
+    make_parents(p);
     std::ofstream f(p, std::ios::binary | std::ios::trunc);
     if (!f.write(data.data(), data.size())) {
-      olx_log("cannot write " + p.string());
+      olx_log("cannot write " + p);
       return false;
     }
     cnt++;
@@ -101,7 +124,7 @@ static bool extract_assets(AAssetManager *am, const fs::path &dst) {
 }
 
 int main(int argc, char **argv) {
-  QJniObject ctx = QNativeInterface::QAndroidApplication::context();
+  QJniObject ctx = android_context();
   const std::string files_dir = ctx
     .callObjectMethod("getFilesDir", "()Ljava/io/File;")
     .callObjectMethod("getAbsolutePath", "()Ljava/lang/String;")
@@ -109,7 +132,7 @@ int main(int argc, char **argv) {
   QJniObject jam = ctx.callObjectMethod("getAssets",
     "()Landroid/content/res/AssetManager;");
   QJniEnvironment env;
-  AAssetManager *am = AAssetManager_fromJava(env.jniEnv(), jam.object());
+  AAssetManager *am = AAssetManager_fromJava(env.operator->(), jam.object());
   /* Qt's Java loader hands QT_PLUGIN_PATH, HOME, TMPDIR, fonts and style over
   with Os.setenv. Under a native bridge (arm64 APK on an x86_64 emulator or
   Chromebook) that sets the host libc's environment, not this one, and Qt
@@ -127,22 +150,24 @@ int main(int argc, char **argv) {
     }
   }
 
-  const fs::path base = fs::path(files_dir) / "olex2";
+  const std::string base = files_dir + "/olex2",
+    data_dir = files_dir + "/data", config_dir = files_dir + "/config";
   if (am == nullptr || !extract_assets(am, base)) {
     olx_log("no usable GUI files; Olex2 will start without them");
   }
-  std::error_code ec;
-  fs::create_directories(fs::path(files_dir) / "data", ec);
-  fs::create_directories(fs::path(files_dir) / "config", ec);
+  mkdir(data_dir.c_str(), 0700);
+  mkdir(config_dir.c_str(), 0700);
   // first start: Android defaults (rundir-overlay); later edits are the user's
-  fs::copy_file(base / "android.options",
-    fs::path(files_dir) / "config" / ".options",
-    fs::copy_options::skip_existing, ec);
+  const std::string options = config_dir + "/.options";
+  if (access(options.c_str(), F_OK) != 0) {
+    std::ifstream in(base + "/android.options", std::ios::binary);
+    std::ofstream(options, std::ios::binary) << in.rdbuf();
+  }
   // read by xglapp.cpp (base/config dir, GL attributes) and patchapi.cpp
   setenv("OLEX2_DIR", base.c_str(), 1);
-  setenv("OLEX2_DATADIR", (fs::path(files_dir) / "data").c_str(), 1);
+  setenv("OLEX2_DATADIR", data_dir.c_str(), 1);
   setenv("OLEX2_DATADIR_STATIC", "TRUE", 1);
-  setenv("OLEX2_CONFIGDIR", (fs::path(files_dir) / "config").c_str(), 1);
+  setenv("OLEX2_CONFIGDIR", config_dir.c_str(), 1);
   setenv("OLEX2_GL_STEREO", "false", 1);
   setenv("OLEX2_GL_MULTISAMPLE", "false", 1);
   /* Embedded CPython: the stdlib, lib-dynload and site-packages are assets
@@ -150,7 +175,7 @@ int main(int argc, char **argv) {
   native library dir, where the linker finds them by soname. cctbx is found
   by initpy.py under base/cctbx.
   */
-  setenv("PYTHONHOME", (base / "python").c_str(), 1);
+  setenv("PYTHONHOME", (base + "/python").c_str(), 1);
   // C's measurements: one BLAS thread is fastest on every ABI, the OpenMP
   // loops of smtbx take all cores. Affinity off: libomp's topology probe
   // aborts under ndk_translation and binding buys nothing on big.LITTLE
@@ -167,11 +192,10 @@ int main(int argc, char **argv) {
       .callObjectMethod("getApplicationInfo",
         "()Landroid/content/pm/ApplicationInfo;")
       .getObjectField<jstring>("nativeLibraryDir").toString().toStdString();
-    const fs::path link = base / "NoSpherA2";
-    fs::remove(link, ec);
-    fs::create_symlink(fs::path(nld) / "libNoSpherA2.so", link, ec);
-    if (ec) {
-      olx_log("cannot link NoSpherA2: " + ec.message());
+    const std::string link = base + "/NoSpherA2";
+    unlink(link.c_str());
+    if (symlink((nld + "/libNoSpherA2.so").c_str(), link.c_str()) != 0) {
+      olx_log("cannot link NoSpherA2");
     }
   }
   // argv[0] is the .so path, /data/app/~~<base64>==/..., and TBasicApp
@@ -179,8 +203,8 @@ int main(int argc, char **argv) {
   // from OLEX2_DIR anyway. No file picker before S4: with no
   // applicationArguments open the bundled sucrose (mainform.cpp loads
   // argv[1] when the file exists)
-  std::string exe = (base / "olex2").string(),
-    sample = (base / "sample_data/sucrose/sucrose.res").string();
+  std::string exe = base + "/olex2",
+    sample = base + "/sample_data/sucrose/sucrose.res";
   argv[0] = exe.data();
   char *args[] = { argv[0], sample.data(), nullptr };
   if (argc < 2) {

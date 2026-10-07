@@ -1,0 +1,91 @@
+// Legacy line (Qt 5.15, API 21+). Qt 5.15.2's template wants Gradle 5.6.4,
+// AGP 3.6, jcenter and JDK 8-11: this is the same project on the modern
+// line's toolchain (Gradle 9.3.1 from Qt 6.11.1, AGP 9.0.0, JDK 17).
+// android/build_legacy.ps1 runs it; AGP 8+ wants `namespace`.
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:9.0.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:2.3.0"
+    }
+}
+
+repositories {
+    google()
+    mavenCentral()
+}
+
+apply plugin: 'com.android.application'
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
+}
+
+android {
+    namespace = 'org.olex2.android.legacy'
+    compileSdkVersion androidCompileSdkVersion.toInteger()
+
+    // QtLoader.java still binds the Ministro service (IMinistro*.aidl);
+    // AGP 8+ turns AIDL off by default
+    buildFeatures {
+        aidl = true
+    }
+
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            java.srcDirs = [qt5AndroidDir + '/src', 'src', 'java']
+            aidl.srcDirs = [qt5AndroidDir + '/src', 'src', 'aidl']
+            res.srcDirs = [qt5AndroidDir + '/res', 'res']
+            resources.srcDirs = ['resources']
+            assets.srcDirs = ['assets']
+            jniLibs.srcDirs = ['libs']
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    lintOptions {
+        abortOnError = false
+    }
+
+    aaptOptions {
+        noCompress 'rcc'
+        // olex2: aapt's default pattern also drops "_*" directories
+        // (__pycache__, _pyrepl ...), which breaks Python
+        ignoreAssetsPattern '!.svn:!.git:!.DS_Store:!CVS:!thumbs.db:!picasa.ini:!*.scc:!*~'
+    }
+
+    packagingOptions {
+        jniLibs {
+            // Qt 5 loads its libraries from nativeLibraryDir: extracted
+            useLegacyPackaging = true
+            // every .so arrives stripped; gradle's llvm-strip misaligns the
+            // segments of patchelf'ed libs
+            keepDebugSymbols += ['**/*.so']
+        }
+    }
+
+    buildTypes {
+        // test APKs: release build, signed with the SDK debug key
+        release {
+            signingConfig = signingConfigs.debug
+            // run-as for the logs on the tablet (TABLET-CHECKLIST.md); only
+            // the small Java loader runs slower, the native code is the same
+            debuggable = true
+        }
+    }
+
+    defaultConfig {
+        applicationId 'org.olex2.android.legacy'
+        resConfig "en"
+        minSdkVersion qtMinSdkVersion.toInteger()
+        targetSdkVersion qtTargetSdkVersion.toInteger()
+    }
+}

@@ -36,8 +36,12 @@ set(OPENGL_INCLUDE_DIR "${_olx_p}/gl4es/include" CACHE PATH "" FORCE)
 set(OPENGL_gl_LIBRARY "${_olx_p}/gl4es/lib/libGL.a" CACHE FILEPATH "" FORCE)
 set(OPENGL_glu_LIBRARY "${_olx_p}/gl4es/lib/libGLU.a" CACHE FILEPATH "" FORCE)
 # the Qt modules static wxQt links (Test for wxUIActionSimulator)
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets
-  PrintSupport Test)
+if (OLX_QT EQUAL 5)
+  find_package(Qt5 REQUIRED COMPONENTS Core Gui Widgets OpenGL PrintSupport Test)
+else ()
+  find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets
+    PrintSupport Test)
+endif ()
 find_package(Threads REQUIRED)
 # the Qt toolchain re-roots package searches into the NDK sysroot
 find_package(wxWidgets 3.3.3 REQUIRED CONFIG

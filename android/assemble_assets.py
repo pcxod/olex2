@@ -15,7 +15,7 @@ Python and cctbx extension modules stay assets, CPython dlopens them by path.
       [--payload D:/Android/stage/<abi> --jnilibs <build>/package/libs/<abi>]
   python assemble_assets.py --self-test
 """
-import argparse, fnmatch, hashlib, pathlib, shutil, subprocess, sys, tempfile, zipfile
+import argparse, fnmatch, hashlib, pathlib, shutil, struct, subprocess, sys, tempfile, zipfile
 
 # relative to the rundir; a directory is copied recursively
 ALLOW = [
@@ -32,7 +32,6 @@ REFUSE = ["*.key", "*.key_*", "*ac7*", "*aced*", "*.exe", "*.dll", "*.pyd",
           ".*", "__pycache__"]  # .* also drops .gitignore (aapt does) and .token
 # payload directory -> asset directory
 PAYLOAD = {
-    "python/lib/python3.14": "python/lib/python3.14",
     "cctbx/cctbx_build": "cctbx/cctbx_build",
     "cctbx/cctbx_sources": "cctbx/cctbx_sources",
     # NoSpherA2.py: OCC_DATA_PATH = <dir of the NoSpherA2 exe>/occ/share
@@ -80,10 +79,19 @@ def tree(d):
             and not {"__pycache__", ".git", ".svn"} & set(f.parts)]
 
 
-def wheel_overlay(whl, tmp):
+def pylib(payload):
+    """python/lib/python3.X of the payload: 3.14 on the API 28 line, 3.13 on
+    the API 21 (Qt 5) line"""
+    d = sorted((payload / "python/lib").glob("python3.*"))
+    if len(d) != 1:
+        sys.exit("expected one python/lib/python3.* in %s, found %s" % (payload, d))
+    return d[0].relative_to(payload).as_posix()
+
+
+def wheel_overlay(whl, tmp, payload):
     """a pure-Python wheel as an overlay of the payload's site-packages"""
     root = tmp / whl.stem
-    zipfile.ZipFile(whl).extractall(root / "python/lib/python3.14/site-packages")
+    zipfile.ZipFile(whl).extractall(root / pylib(payload) / "site-packages")
     return root
 
 
@@ -105,7 +113,8 @@ def collect(rundir, overlays, payload=None):
         for f in sorted((payload / "python/lib").glob("lib*.so")):
             libs[f.name] = f
         libs["libNoSpherA2.so"] = payload / "bin/libNoSpherA2.so"
-        for src, dst in PAYLOAD.items():
+        py = pylib(payload)
+        for src, dst in [(py, py)] + list(PAYLOAD.items()):
             for f in tree(payload / src):
                 if is_lib(f.name):
                     libs[f.name] = f
@@ -134,6 +143,65 @@ def apply_patches(out):
         p.write_bytes(s.replace(old, new).encode("utf-8"))
 
 
+def elf_dynsyms(path):
+    """(DT_NEEDED names, {defined dynamic symbol: (Elf_Sym offset, binding)})
+    of a little-endian ELF32/ELF64 shared library, from its section headers"""
+    b = path.read_bytes()
+    if b[:4] != b"\x7fELF":
+        return [], {}
+    e64 = b[4] == 2
+    shoff, = struct.unpack_from("<Q" if e64 else "<I", b, 0x28 if e64 else 0x20)
+    shentsize, shnum = struct.unpack_from("<HH", b, 0x3A if e64 else 0x2E)
+    sh = [struct.unpack_from("<IIQQQQIIQQ" if e64 else "<IIIIIIIIII", b, shoff + i * shentsize)
+          for i in range(shnum)]
+    def strtab(i, o):
+        return b[sh[i][4] + o:b.index(b"\0", sh[i][4] + o)].decode()
+    needed, syms = [], {}
+    for _, typ, _, _, off, size, link, _, _, ent in sh:
+        if typ == 6:  # SHT_DYNAMIC
+            for o in range(off, off + size, ent):
+                tag, val = struct.unpack_from("<qQ" if e64 else "<iI", b, o)
+                if tag == 1:  # DT_NEEDED
+                    needed.append(strtab(link, val))
+        elif typ == 11:  # SHT_DYNSYM
+            for o in range(off, off + size, ent):
+                if e64:
+                    name, info, _, shndx = struct.unpack_from("<IBBH", b, o)
+                else:
+                    name, _, _, info, _, shndx = struct.unpack_from("<IIIBBH", b, o)
+                if shndx:
+                    syms[strtab(link, name)] = (o, info >> 4)
+    return needed, syms
+
+
+def share_typeinfo(sos):
+    """Below API 23 bionic looks a symbol up in the library itself before its
+    DT_NEEDED, so a cctbx extension and its library each keep their own weak
+    copy of a typeinfo (asu_parameter: smtbx_refinement_constraints_ext.so
+    and libsmtbx_refinement_constraints.so), and dynamic_cast across them
+    fails: Boost.Python cannot pass a tertiary_xh_site as asu_parameter* and
+    every refinement with riding hydrogens stops. Make such a weak typeinfo
+    undefined where a direct DT_NEEDED defines it, so the library's copy
+    is the only one (what API 23+ does by itself). Returns the count."""
+    info = {p.name: (p, *elf_dynsyms(p)) for p in sos}
+    n = 0
+    for p, needed, syms in info.values():
+        theirs = set()
+        for d in needed:
+            if d in info:
+                theirs.update(info[d][2])
+        mine = [o for s, (o, bind) in syms.items()
+                if bind == 2 and s.startswith("_ZTI") and s in theirs]  # STB_WEAK
+        if mine:
+            b = bytearray(p.read_bytes())
+            e64 = b[4] == 2
+            for o in mine:
+                struct.pack_into("<H", b, o + (6 if e64 else 14), 0)  # st_shndx = SHN_UNDEF
+            p.write_bytes(bytes(b))
+            n += len(mine)
+    return n
+
+
 def compile_pyc(out, python):
     """unchecked-hash pycs: no source stat on import, no first-start compile"""
     dirs = [str(out / d) for d in ("python", "util", "cctbx") if (out / d).is_dir()]
@@ -145,7 +213,8 @@ def compile_pyc(out, python):
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
-def assemble(rundir, overlays, out, payload=None, jnilibs=None, python=None):
+def assemble(rundir, overlays, out, payload=None, jnilibs=None, python=None,
+             typeinfo=False):
     files, libs = collect(rundir, overlays, payload)
     if out.exists():
         shutil.rmtree(out)
@@ -154,6 +223,16 @@ def assemble(rundir, overlays, out, payload=None, jnilibs=None, python=None):
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(src, dst)
     apply_patches(out)
+    if jnilibs is not None:
+        if jnilibs.exists():
+            shutil.rmtree(jnilibs)
+        jnilibs.mkdir(parents=True)
+        for n, f in libs.items():
+            shutil.copyfile(f, jnilibs / n)
+        print("jniLibs: %d libraries -> %s" % (len(libs), jnilibs))
+        if typeinfo:
+            n = share_typeinfo(sorted(jnilibs.glob("*.so")) + sorted(out.rglob("*.so")))
+            print("typeinfo: %d weak copies now bind to their DT_NEEDED" % n)
     if python:
         compile_pyc(out, python)
     # list what is in out, so the pycs are covered too
@@ -169,13 +248,6 @@ def assemble(rundir, overlays, out, payload=None, jnilibs=None, python=None):
     (out / "files.txt").write_text("\n".join([h.hexdigest()[:16]] + names) + "\n",
                                    encoding="utf-8", newline="\n")
     print("assets: %d files, %.1f MB -> %s" % (len(names), total / 1e6, out))
-    if jnilibs is not None:
-        if jnilibs.exists():
-            shutil.rmtree(jnilibs)
-        jnilibs.mkdir(parents=True)
-        for n, f in libs.items():
-            shutil.copyfile(f, jnilibs / n)
-        print("jniLibs: %d libraries -> %s" % (len(libs), jnilibs))
     return names, libs
 
 
@@ -203,7 +275,7 @@ def self_test():
         (ov / "android.options").write_text("gl_touch=true")
         with zipfile.ZipFile(t / "w-1.0-py3-none-any.whl", "w") as z:
             z.writestr("w/__init__.py", "")
-        wh = wheel_overlay(t / "w-1.0-py3-none-any.whl", t)
+        wh = wheel_overlay(t / "w-1.0-py3-none-any.whl", t, pl)
         names, libs = assemble(rd, [wh, ov], out, pl, jl)
         assert names == [
             "android.options", "cctbx/cctbx_build/lib/scitbx_ext.so",
@@ -234,10 +306,12 @@ def main():
                     help="where the payload's lib*.so go (package/libs/<abi>)")
     ap.add_argument("--wheel", type=pathlib.Path, action="append", default=[],
                     help="repeatable; pure-Python wheel added to site-packages")
-    ap.add_argument("--pyc", help="Python 3.14 to precompile the .py with")
+    ap.add_argument("--pyc", help="host Python of the payload's version, precompiles the .py")
     ap.add_argument("--stale", type=pathlib.Path,
                     help="file to delete when the assets change (the APK: "
                          "androiddeployqt's depfile does not list them)")
+    ap.add_argument("--share-typeinfo", action="store_true",
+                    help="minSdk < 23: one typeinfo per type across the payload's libraries")
     ap.add_argument("--self-test", action="store_true")
     a = ap.parse_args()
     if a.self_test:
@@ -249,8 +323,9 @@ def main():
     lst = a.out / "files.txt"
     old = lst.read_text().splitlines()[0] if lst.exists() else None
     with tempfile.TemporaryDirectory() as t:
-        wheels = [wheel_overlay(w, pathlib.Path(t)) for w in a.wheel]
-        assemble(a.rundir, wheels + a.overlay, a.out, a.payload, a.jnilibs, a.pyc)
+        wheels = [wheel_overlay(w, pathlib.Path(t), a.payload) for w in a.wheel]
+        assemble(a.rundir, wheels + a.overlay, a.out, a.payload, a.jnilibs, a.pyc,
+                 a.share_typeinfo)
     if a.stale and old != lst.read_text().splitlines()[0]:
         a.stale.unlink(missing_ok=True)
 

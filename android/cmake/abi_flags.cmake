@@ -5,7 +5,12 @@
 # every dependency build_deps.py configures. The NDK's clang already enables
 # most of this for Android targets; the flags make the baseline explicit.
 if (ANDROID_ABI STREQUAL "x86_64")
-  set(_olx_abi_flags -march=x86-64-v2)  # SSE4.2 + POPCNT are guaranteed
+  # SSE4.2 + POPCNT are guaranteed; clang < 12 (NDK r21) has no x86-64-v2
+  if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 12)
+    set(_olx_abi_flags -msse4.2 -mpopcnt)
+  else ()
+    set(_olx_abi_flags -march=x86-64-v2)
+  endif ()
 elseif (ANDROID_ABI STREQUAL "x86")
   set(_olx_abi_flags -mssse3)           # the x86 ABI guarantee
 elseif (ANDROID_ABI STREQUAL "armeabi-v7a")
