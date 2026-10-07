@@ -1,0 +1,135 @@
+<tr VALIGN='center' ALIGN='center' NAME='SNUM_REPORT_TITLE' valign='center'>
+
+<!-- #include tool-help-first-column gui\blocks\tool-help-first-column.htm;help_ext=Report-Settings-1;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+  <td width='35%' align='left'>
+    <font size="$GetVar('HtmlFontSizeMedium')" color="#555555">
+    <input
+      type='text'
+      valign='center'
+      height="math.eval(GetVar('HtmlInputHeight')*1.3)"
+      width="100%"
+      bgcolor="spy.GetParam('gui.html.input_bg_colour')"
+      name='SET_SNUM_REPORT_TITLE'
+      value="spy.report.get_report_title()"
+      onchange="spy.SetParam('snum.report.title',html.GetValue('~name~'))"
+    >
+    </font>
+  </td>
+
+  <td width='10%' align='right'>
+    <b>%Image% </b>
+  </td>
+  <td width='23%' align='left'>
+    <font size="$GetVar('HtmlFontSizeControls')">
+    <input
+      type="combo"
+      width="100%"
+      height="GetVar('HtmlComboHeight')"
+      bgcolor="spy.GetParam('gui.html.input_bg_colour')"
+      name="SET_REPORT_IMAGE"
+      readonly
+      items='strcat("No Image;SCREENSHOT;Live Picture;",file.ListDirForGui(FilePath(),"*.png;*.jpg;*.bmp;*.ps;*.eps"))'
+      onchange="spy.SetParam('snum.report.image',html.GetValue('~name~'))"
+      width="50%"
+      value="file.GetName(spy.GetParam('snum.report.image'))"
+    >
+    </font>
+  </td>
+          
+    $+
+      html.Snippet(GetVar(default_link),
+      "value=HTML Report",
+      "width=90%",
+      "height=math.eval(GetVar(HtmlInputHeight)*1.3)",
+      "name=CONFLICT_%(no_of_file)s",
+      "bgcolor=GetVar(gui.action_colour)",
+      "fgcolor=#ffffff",
+      "onclick=report",
+      "td1=<td align='right'>",
+      )
+    $-
+
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<tr VALIGN='center' ALIGN='center' NAME='SNUM_REPORT_TITLE' valign='center'>
+<!-- #include tool-help-first-column gui\blocks\tool-help-first-column.htm;help_ext=Report-Settings-2;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+  <td width='30%' align='left'>
+    <b>&nbsp;%Style% </b>
+  </td>
+  <td width='70%' align='left'>
+    <font size="$GetVar('HtmlFontSizeControls')">
+    <input
+      type='combo'
+      width="100%"
+      height="GetVar('HtmlComboHeight')"
+      bgcolor="spy.GetParam('gui.html.input_bg_colour')"
+      name='SET_USER_REPORT_STYLE'
+      value="spy.GetParam('user.report_style')"
+      items='spy.getStylesList()'
+      valign='center'
+      onchange="spy.SetReportStyle(html.GetValue('~name~'))"
+      onchangealways='True'
+    >
+    </font>
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<tr VALIGN='center' ALIGN='center' valign='center'>
+<!-- #include tool-first-column gui\blocks\tool-first-column.htm;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+  <td width='15%' align='left'>
+    <b>&nbsp;%Start% </b>
+  </td>
+  <td width='35%'>
+    <font size="$GetVar('HtmlFontSizeControls')">
+    <input
+      type='combo'
+      width="100%"
+      height="GetVar('HtmlComboHeight')"
+      bgcolor="GetVar('HtmlInputBgColour')"
+      name='SET_USER_REPORT_TEMPLATE'
+      value="spy.GetParam('user.report_template')"
+      items='spy.getTemplatesList()'
+      valign='center'
+      onchange="spy.SetReportTemplate(html.GetValue('~name~'),template)"
+      onchangealways='True'
+    >
+    </font>
+  </td>
+
+  <td width='15%' align='right'>
+    <b>%End% </b>
+  </td>
+  <td width='35%'>
+    <font size="$GetVar('HtmlFontSizeControls')">
+    <input
+      type='combo'
+      width="100%"
+      height="GetVar('HtmlComboHeight')"
+      bgcolor="GetVar('HtmlInputBgColour')"
+      name='SET_USER_REPORT_FOOTER'
+      value="spy.GetParam('user.report.footer')"
+      items='spy.getTemplatesList()'
+      valign='center'
+      onchange="spy.SetReportTemplate(html.GetValue('~name~'),footer)"
+      onchangealways='True'
+    >
+    </font>
+  </td>
+
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+<tr VALIGN='center' ALIGN='center' NAME='SNUM_REPORT_TITLE' valign='center'>
+<!-- #include tool-help-first-column gui\blocks\tool-help-first-column.htm;help_ext=Report-Settings-3;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+
+
+<td width="30%" align='left'><b>&nbsp;Table label style</b></td>
+<td width="70%">$+
+   html.Snippet("gui/snippets/input-combo", "name=report_label_style",
+    "items=As in CIF<-0;In brackets<-1;Subscript<-2;Superscript<-4;In brackets subscript<-3;In brackets superscript<-5",
+    "value=spy.GetParam('user.report_label_style')",
+    "onchange=spy.SetParam('user.report_label_style', html.GetValue('~name~'))")
+$-</td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->

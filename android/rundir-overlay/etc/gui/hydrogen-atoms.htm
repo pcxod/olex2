@@ -1,0 +1,180 @@
+<!-- #include tool-top gui\blocks\tool-top.htm;image=#image;onclick=#onclick;1; -->
+
+<!-- FIRST ROW -->
+<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='HFIX_QUICKMODES';help_ext=HFIX-Quickmodes;1 -->
+  <td>
+    <table><tr>
+      <td width='10%' align='right'>
+        <font size="+2" color="$GetVar(gui.grey)"><b>sp<sup>2</sup>:</b></font>
+      </td>
+      <td width='20%'>
+        $spy.MakeHoverButton('toolbar-sp2_1H','mode hfix 43')&nbsp;
+        $spy.MakeHoverButton('toolbar-sp2_2H','mode hfix 93')
+      </td>
+      <td width='10%' align='right'>
+        <font size="+2" color="$GetVar(gui.grey)"><b>sp<sup>3</sup>:</b></font>
+      </td>
+      <td width='30%'>
+        $spy.MakeHoverButton('toolbar-sp3_1H','mode hfix 13')&nbsp;
+        $spy.MakeHoverButton('toolbar-sp3_2H','mode hfix 23')&nbsp;
+        $spy.MakeHoverButton('toolbar-sp3_3H','mode hfix 137')
+      </td>
+      <td width='11%' align='right'>
+        <font size="+2" color="$GetVar(gui.grey)"><b>OH:</b></font>
+      </td>
+      <td width='19%' align='right'>
+        $spy.MakeHoverButton('toolbar-OH','mode hfix 147')&nbsp;
+        $spy.MakeHoverButton('toolbar-O_H','mode hfix 83')
+      </td>
+    </tr></table>
+  </td>
+
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+
+<!-- SECOND ROW -->
+<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='MAIN_TOOLBAR_HYDROGEN_2';help_ext=toolbar-hydrogen_2;1 -->
+  <td width="100%">
+    <table width="100%" cellspacing="6">
+    <tr>
+      <td width='10%'>A</td>
+      <td VALIGN='center' width='25%'>
+        <font size=$GetVar(HtmlFontSizeControls)>
+        <input
+          type="text"
+          bgcolor="GetVar(HtmlInputBgColour)"
+          name = "HFIX"
+          width="100%"
+          height="GetVar(HtmlInputHeight)"
+          value = "137"
+        >
+        </font>
+      </td>
+      <td width='10%'>D</td>
+      <td VALIGN='center' width='25%'>
+        <font size=$GetVar(HtmlFontSizeControls)>
+        <input
+          type="text"
+          bgcolor="$GetVar(HtmlInputBgColour)"
+          name = "HFIX_D"
+          width="100%"
+          height="GetVar(HtmlInputHeight)"
+        >
+        </font>
+      </td>
+      <td VALIGN='center' width='30%'>
+$spy.MakeHoverButton('small-HFIX',"if strcmp(spy.GetParam(olex2.short_mode),'hfix') then 'mode off' else 'mode hfix html.getvalue(HFIX) -d=html.getvalue(HFIX_D,-1)'")
+      </td>
+    </tr>
+    <tr>
+      <td colspan='2' align='left'>
+        <b>%HIMP%</b>
+      </td>
+      <td colspan='3'>
+        <font size="$GetVar('HtmlFontSizeControls')">
+        <input
+          type="combo"
+          bgcolor="spy.GetParam('gui.html.input_bg_colour')"
+          height="GetVar('HtmlComboHeight')"
+          name = "HIMP_DISTANCE"
+          width="100%"
+          value=""
+          items="'B-H (1.19)<-1.19;sp3-C-H (1.083)<-1.083;sp2-C-H (1.077)<-1.077;sp3-N-H (1.033)<-1.033;sp2-N-H (1.009)<-1.009;O-H (0.983)<-0.983;'"
+          onchange = "labels -l -h>>mode himp html.GetValue(HIMP_DISTANCE)"
+        >
+        </font>
+      </td>
+    </tr></table>
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- THIRD ROW-->
+<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='MAIN_TOOLBAR_HYDROGEN_3';help_ext=toolbar-hydrogen_3;1 -->
+  <td>
+    <table width='100%' cellspacing='6'><tr>
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=%Add Hydrogen%",
+    "name=H_ADD",
+    "onclick=hadd",
+    "td1=<td width='33%'>"
+    )
+  $-
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=H %Labels%",
+    "name=H_LABELS",
+    "onclick=labels -h -l",
+    "td1=<td width='33%'>"
+    )
+  $-
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=No H %Labels%",
+    "name=H_NO_LABELS",
+    "onclick=labels -l",
+    "td1=<td width='33%'>"
+    )
+  $-
+    </tr><tr>
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=%Show% AFIX",
+    "name=H_SHOW_AFIX",
+    "onclick=labels -h -a",
+    "td1=<td width='33%'>"
+    )
+  $-
+      <td width='33%'>
+        <font size="$GetVar('HtmlFontSizeControls')"><b>
+        <input
+          type="button"
+          name="H_FREE_ALL"
+          value="FREE ALL H"
+          width="100%"
+          height="GetVar(HtmlInputHeight)"
+          onclick="afix 0 $H>>free uiso $H"
+          bgcolor="GetVar(linkButton.bgcolor)"
+          fgcolor="GetVar(linkButton.fgcolor)"
+          fit="false"
+          flat="GetVar(linkButton.flat)"
+          hint="Remove AFIX instructions from all hydrogen atoms, free Uiso values"
+          custom="GetVar(custom_button)"
+        >
+        </b></font>
+      </td>
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=%Hide% Q",
+    "name=H_HIDE_Q",
+    "onclick=ShowQ a False >> showQ b False",
+    "td1=<td width='33%'>"
+    )
+  $-
+    </tr></table>
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+
+<!-- FOURTH ROW-->
+<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='MAIN_TOOLBAR_HYDROGEN_4';help_ext=HTAB-Slider;1 -->
+
+<!-- #include hydrogen-bbonds gui\snippets\snippet-hydrogen-bonds.htm;1; -->
+
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+
+<!-- FIFTH ROW-->
+<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='Hydrogen_Bond_Slider';help_ext=Hydrogen-Bond-Slider;1 -->
+
+<!-- #include close-contacts gui\snippets\snippet-close-contacts.htm;1; -->
+
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+
+
+
+<!-- #include tool-footer gui\blocks\tool-footer.htm;colspan=2;1; -->
+
+<!-- %hydrogen-target% %hfix-target%-->
+<!-- %sp2_1H-target% %sp2_2H-target% %sp3_1H-target% %sp3_2H-target% %sp3_3H-target% %OH-target% %O_H-target%-->

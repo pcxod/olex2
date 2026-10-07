@@ -33,6 +33,7 @@
 #include "wx/tooltip.h"
 #include "wx/clipbrd.h"
 #include "wx/dynlib.h"
+#include "wx/evtloop.h"
 
 #include "gpcollection.h"
 #include "glgroup.h"
@@ -2019,6 +2020,17 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
         FGlConsole->OnPost.SetEnabled(true);
         TimePerFrame = FXApp->Draw();
       }
+#ifdef __ANDROID__
+      /* Qt composites only from its event loop, so a long python job (solve,
+         refine - these run silent) left the screen frozen on the last frame,
+         dialog included; paint/size events only - no taps reach the GUI
+         mid-job. At most ~5 times a second */
+      static uint64_t last_yield = 0;
+      if (TETime::msNow() - last_yield > 200 && wxEventLoopBase::GetActive()) {
+        wxEventLoopBase::GetActive()->YieldFor(wxEVT_CATEGORY_UI);
+        last_yield = TETime::msNow();
+      }
+#endif
       FGlConsole->SetSkipPosting(true);
       res = false;  // propargate to other streams, logs in particular
     }
@@ -3591,6 +3603,14 @@ bool TMainForm::OnMouseDown(int x, int y, short Flags, short Buttons) {
   MousePositionX = x;
   MousePositionY = y;
   MouseMoveTimeElapsed = 5000;
+#ifdef __ANDROID__  // popups have no title bar to close them: a touch on the view does
+  for (size_t i = 0; i < HtmlManager.Popups.Count(); i++) {
+    TDialog* d = HtmlManager.Popups.GetValue(i)->Dialog;
+    if (d->IsShown()) {
+      d->Hide();
+    }
+  }
+#endif
   return false;
 }
 //..............................................................................

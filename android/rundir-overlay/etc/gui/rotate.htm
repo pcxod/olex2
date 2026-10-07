@@ -1,0 +1,161 @@
+<!-- #include tool-top gui\blocks\tool-top.htm;image=#image;onclick=#onclick;1; -->
+
+<!-- Android tablet: one axis per row ([-] spin [+]), was all three axes and
+the label in one row with 45 px spins. -->
+
+<!-- FIRST ROW -->
+<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='ROTATE';help_ext=Rotate;1 -->
+  <td name=LABEL_ROTATE width='25%'>
+    <b>%Rotate%&thinsp;</b>
+  </td>
+  <td width='25%' align='right'>
+    $spy.MakeHoverButton('tiny-:x','rota 1 math.eval(html.GetValue(rx)*-1)')
+  </td>
+  <td name=SPIN_ROTATION_X width='25%'>
+    <font size='$GetVar(HtmlFontSizeControls)'>
+    <input
+      type="spin"
+      name = "rx"
+      width="100%"
+      height="$GetVar(HtmlSpinHeight)"
+      value="10"
+    >
+    </font>
+  </td>
+  <td width='25%' align='left'>
+    $spy.MakeHoverButton('tiny-x:','rota 1 html.getvalue(rx)')
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- #include tool-row gui\blocks\tool-row.htm;name='ROTATE_Y';1 -->
+  <td width='25%'></td>
+  <td width='25%' align='right'>
+    $spy.MakeHoverButton('tiny-:y','rota 2 math.eval(html.GetValue(ry)*-1)')
+  </td>
+  <td name=SPIN_ROTATION_Y width='25%'>
+    <font size='$GetVar(HtmlFontSizeControls)'>
+    <input
+      type="spin"
+      name = "ry"
+      width="100%"
+      height="$GetVar(HtmlSpinHeight)"
+      bgcolor="$GetVar(HtmlInputBgColour)"
+      value="10"
+    >
+    </font>
+  </td>
+  <td width='25%' align='left'>
+    $spy.MakeHoverButton('button_tiny-y:','rota 2 html.getvalue(ry)')
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- #include tool-row gui\blocks\tool-row.htm;name='ROTATE_Z';1 -->
+  <td width='25%'></td>
+  <td width='25%' align='right'>
+    $spy.MakeHoverButton('tiny-:z','rota 3 math.eval(html.GetValue(rz)*-1)')
+  </td>
+  <td name=SPIN_ROTATION_Z width='25%'>
+    <font size='$GetVar(HtmlFontSizeControls)'>
+    <input
+      type="spin"
+      name = "rz"
+      width="100%"
+      height="$GetVar(HtmlSpinHeight)"
+      bgcolor="$GetVar(HtmlInputBgColour)"
+      value="10"
+    >
+    </font>
+  </td>
+  <td width='25%' align='left'>
+    $spy.MakeHoverButton('tiny-z:','rota 3 html.getvalue(rz)')
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- SECOND ROW -->
+<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='AUTO_ROTATION';help_ext=Animate;1 -->
+  <td name=LABEL_AUTO_ROTATION width='25%'>
+    <b>%Animate%&thinsp;</b>
+  </td>
+  <td name=CHECK_X width='25%'>
+   $+
+     html.Snippet("gui/snippets/input-checkbox-plain",
+     "name=x",
+     "value=x",
+     "data=0",
+     "oncheck=html.setdata(x, '1')>>rota html.getdata(x) html.getdata(y) html.getdata(z) 100000 math.eval(html.getvalue(speed)*0.1)",
+     "onuncheck=html.setdata(x, '0') >>rota html.getdata(x) html.getdata(y) html.getdata(z) 100000 math.eval(html.getvalue(speed)*0.1)",
+     )
+    $-
+  </td>
+
+  <td name=CHECK_Y width='25%'>
+   $+
+     html.Snippet("gui/snippets/input-checkbox-plain",
+     "name=y",
+     "value=y",
+     "data=0",
+     "oncheck=html.setdata(y, '1')>>rota html.getdata(x) html.getdata(y) html.getdata(z) 100000 math.eval(html.getvalue(speed)*0.1)",
+     "onuncheck=html.setdata(y, '0') >>rota html.getdata(x) html.getdata(y) html.getdata(z) 100000 math.eval(html.getvalue(speed)*0.1)",
+     )
+    $-
+  </td>
+  <td name=CHECK_Z width='25%'>
+   $+
+     html.Snippet("gui/snippets/input-checkbox-plain",
+     "name=z",
+     "value=z",
+     "data=0",
+     "oncheck=html.setdata(z, '1')>>rota html.getdata(x) html.getdata(y) html.getdata(z) 100000 math.eval(html.getvalue(speed)*0.1)",
+     "onuncheck=html.setdata(z, '0') >>rota html.getdata(x) html.getdata(y) html.getdata(z) 100000 math.eval(html.getvalue(speed)*0.1)",
+     )
+    $-
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- #include tool-row gui\blocks\tool-row.htm;name='AUTO_ROTATION_SPEED';1 -->
+  <td name=LABEL_AUTO_ROTATION_SPEED width='25%'>
+    <b>Speed </b>
+  </td>
+
+  <td name=SLIDER_SPEED width='75%'>
+    <font size='$GetVar(HtmlFontSizeControls)'>
+    <input
+      type="slider"
+      name="speed"
+      width="100%"
+      height="$GetVar(HtmlInputHeight)"
+      bgcolor="$GetVar(HtmlTableBgColour)"
+      fgcolor="$GetVar(HtmlFontColour)"
+      value="1"
+      min="1"
+      max="10"
+      onchange = "rota html.getdata(x) html.getdata(y) html.getdata(z) 100000 math.eval(html.getvalue(speed)*0.1)"
+    >
+    </font>
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- #include tool-row gui\blocks\tool-row.htm;name='VIEW_ALONG';1 -->
+  <td width='25%'>
+    <b>View along</b>
+  </td>
+  <td name=XYZ width='25%'>
+    $spy.MakeHoverButton('tiny-a','matr 1')
+  </td>
+  <td width='25%'>
+    $spy.MakeHoverButton('tiny-b','matr 2')
+  </td>
+  <td width='25%'>
+    $spy.MakeHoverButton('tiny-c','matr 3')
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='Zoom_Slider';help_ext=Zoom;1 -->
+
+<!-- #include zoom-slider gui\snippets\snippet-zoom-slider.htm;1; -->
+
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+
+
+<!-- #include tool-footer gui\blocks\tool-footer.htm;colspan=2;1; -->

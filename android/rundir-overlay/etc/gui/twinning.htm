@@ -1,0 +1,218 @@
+<!-- #include tool-top gui\blocks\tool-top.htm;image=#image;onclick=#onclick;1; -->
+
+<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='TWINNING';help_ext=Twinning;1 -->
+
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=Find 2-fold",
+    "name=TWINNING_Olex2",
+    "onclick=spy.find_2_fold_olex2()",
+    "td1=<td width='33%'>"
+    )
+  $-
+
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=Find all Twinning",
+    "name=TWINNING_General",
+    "onclick=spy.twin.run_from_gui()",
+    "td1=<td width='33%'>"
+    )
+  $-
+
+
+
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=Cumulative Plot",
+    "name=TWINNING_CUMULATIVE",
+    "onclick=cumulative_intensity",
+    "td1=<td width='33%'>"
+    )
+  $-
+
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='TWINNING_GENERAL';help_ext=General;1 -->
+
+  <td width='30%' align='left'>
+     Extended
+  </td>
+
+  <td width='20%' align='left'>
+  $+
+    html.Snippet("gui/snippets/input-checkbox",
+    "name=TWIN_DO_LONG",
+    "items=2;12;24",
+    "checked=spy.GetParam(snum.twinning.olex2.do_long)",
+    "onclick=spy.SetParam(snum.twinning.olex2.do_long, html.GetState(~name~))",
+    )
+  $-
+  </td>
+
+
+  <td width='30%' align='right'>
+    Min. Laws
+  </td>
+
+  <td width='20%' align='left'>
+  $+
+    html.Snippet("gui/snippets/input-combo",
+    "name=TWINNING_NUMBER_LAWS",
+    "items=1;2;4",
+    "value=spy.GetParam(snum.twinning.olex2.number_laws)",
+    "onchange=spy.SetParam(snum.twinning.olex2.number_laws, html.GetValue(~name~))",
+    "readonly=false",
+    )
+  $-
+  </td>
+
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+<!-- #include tool-row gui\blocks\tool-row.htm;name='TWINNING_GENERAL_2';1; -->
+  <td width='70%' align='left'>
+    Threshold for all searches
+  </td>
+
+  <td width='30%' align='left'>
+  $+
+    html.Snippet("gui/snippets/input-text",
+    "name=TWINNING_OVERLAP_THRESHOLD",
+    "value=spy.GetParam(snum.twinning.olex2.overlap_threshold)",
+    "onchange=spy.SetParam(snum.twinning.olex2.overlap_threshold, html.GetValue(~name~))",
+    "readonly=false",
+    )
+  $-
+  </td>
+
+
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='TWINNING_SPHERICAL';help_ext=Spherical-Angle-Axis;1 -->
+
+  <td width='30%' align='left'>
+    Bad Refl'ns
+  </td>
+  <td width='20%' align='left'>
+  $+
+    html.Snippet("gui/snippets/input-combo",
+    "name=SIZE_SPHERE",
+    "items=2;5;10;20",
+    "value=spy.GetParam(snum.twinning.olex2.size_sphere)",
+    "onchange=spy.SetParam(snum.twinning.olex2.size_sphere, html.GetValue(~name~))",
+    "readonly=false",
+    )
+  $-
+  </td>
+
+
+  <td width='50%' align='right'>
+    <input
+      type="button"
+      name="TWIN_SPHERICAL_SEARCH"
+      value="Spherical"
+      width="100%"
+      height="GetVar(HtmlComboHeight)"
+      onclick="spy.twin.run_from_gui(2)"
+      bgcolor="GetVar(gui.action_colour)"
+      fgcolor="#ffffff"
+      fit="false"
+      flat="GetVar(linkButton.flat)"
+      hint=""
+      disabled="false"
+      custom="GetVar(custom_button)"
+    >
+  </td>
+
+
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+<!-- #include tool-row gui\blocks\tool-row.htm;name='TWINNING_SPHERICAL_2';1; -->
+  <td width='30%' align='left'>
+    Max Index
+  </td>
+  <td width='20%' align='left'>
+  $+
+    html.Snippet("gui/snippets/input-combo",
+    "name=TWIN_MAX_INDEX",
+    "items=1;2;5;12",
+    "lable=Max Index",
+    "value=spy.GetParam(snum.twinning.olex2.max_index)",
+    "onchange=spy.SetParam(snum.twinning.olex2.max_index, html.GetValue(~name~))",
+    "readonly=false",
+    )
+  $-
+  </td>
+  <td width='30%' align='right'>
+     Rot. Fract'n
+  </td>
+  <td width='20%' align='left'>
+  $+
+    html.Snippet("gui/snippets/input-combo",
+    "name=TWIN_ROTATION_FRACTION",
+    "items=2;12;24",
+    "value=spy.GetParam(snum.twinning.olex2.rotation_fraction)",
+    "onchange=spy.SetParam(snum.twinning.olex2.rotation_fraction, html.GetValue(~name~))",
+    "readonly=false",
+    )
+  $-
+  </td>
+
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+<!-- #include tool-row gui\blocks\tool-row.htm;name='TWINNING_SPHERICAL_3';1; -->
+  <td width='50%'></td>
+  <td width='50%' align='right'>
+    <input
+      type="button"
+      name="TWIN_ANGLE-AXIS_SEARCH"
+      value="Angle-Axis"
+      width="100%"
+      height="GetVar(HtmlComboHeight)"
+      onclick="spy.twin.run_from_gui(1)"
+      bgcolor="GetVar(gui.action_colour)"
+      fgcolor="#ffffff"
+      fit="false"
+      flat="GetVar(linkButton.flat)"
+      hint=""
+      disabled="false"
+      custom="GetVar(custom_button)"
+    >
+  </td>
+
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+
+
+<tr ALIGN='left' width='100%'>
+<!-- #include tool-help-first-column gui\blocks\tool-help-first-column.htm;help_ext=Set-Reflection-File;1 -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+    <td ALIGN='left' width='12%'>
+      <b>hkl file </b>
+    </td>
+
+    <td ALIGN='left' width='45%'>
+<!-- #include reflection-file gui\snippets\snippet-reflection-file.htm;1; -->
+    </td>
+
+    <td ALIGN='center' width='39%'>
+      <b>hkl </b>:
+<!-- #include reflection-date reflection-date.htm;1; -->
+    </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+
+
+<tr ALIGN='left' width='100%'>
+<!-- #include tool-help-first-column gui\blocks\tool-help-first-column.htm;help_ext=Set-HKLF5-Reflection-File;1 -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+    <td ALIGN='left' width='12%'>
+      <b>hklf5 </b>
+    </td>
+
+    <td ALIGN='left' width='45%'>
+    $spy.tools.get_twin_law_from_hklf5()
+    </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+$spy.twin.init_twin_gui()
+
+<!-- #includeif File.Exists(spy.get_twinning_result_filename()) twinning-result spy.get_twinning_result_filename();1; -->
+<!-- #include tool-footer gui\blocks\tool-footer.htm;colspan=2;1; -->

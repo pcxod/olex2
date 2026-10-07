@@ -1,0 +1,85 @@
+<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='LEGEND_SETTINGS';help_ext=Legend-Settings;1 -->
+
+
+<td width='25%'>
+<b>Legend </b>
+</td>
+
+<td width='15%'>
+    <font size="$GetVar('HtmlFontSizeControls')">
+    <input
+      type="checkbox"
+      name = "LEGEND#scope"
+      height="$GetVar(HtmlCheckboxHeight)"
+      width="$GetVar(HtmlCheckboxWidth)"
+      fgcolor="GetVar('HtmlFontColour')"
+      bgcolor="GetVar('HtmlTableBgColour')"
+      checked="spy.GetParam(user.show_legend)"
+      onclick="spy.SetParam(user.show_legend,html.GetState(~name~))>>legend html.GetState(~name~)"
+      target="Show or hide the atom type legend"
+    >
+    </font>
+</td>
+
+  <td width='30%'>
+    $+
+    html.Snippet(
+    "gui/snippets/input-combo",
+    "width='100%'",
+    "name=LEGEND_HORIZONTAL",
+    "items='left<-l;right<-r'",
+    "value=spy.GetParam(user.legend.horizontal)",
+    "readonly=true",
+    "onchange=spy.SetParam(user.legend.horizontal,html.GetValue(~name~))>>legend -r=html.GetValue(LEGEND_HORIZONTAL)html.GetValue(LEGEND_VERTICAL),html.GetValue(LEGEND_PADDING)",
+    )
+    $-
+  </td>
+
+  <td width='30%'>
+    $+
+    html.Snippet(
+    "gui/snippets/input-combo", "name=LEGEND_VERTICAL",
+    "width='100%'",
+    "value=spy.GetParam(user.legend.vertical)",
+    "items='top<-t;bottom<-b'",
+    "readonly=true",
+    "onchange=spy.SetParam(user.legend.vertical,html.GetValue(~name~))>>legend -r=html.GetValue(LEGEND_HORIZONTAL)html.GetValue(LEGEND_VERTICAL),html.GetValue(LEGEND_PADDING)",
+    )
+    $-
+  </td>
+
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+<!-- #include tool-row gui\blocks\tool-row.htm;name='LEGEND_SETTINGS_2';1 -->
+
+  <td width='25%'>
+    Padding
+  </td>
+
+  <td width='35%'>
+    $+
+    html.Snippet(
+    "gui/snippets/input-combo",
+    "name=LEGEND_PADDING",
+    "width='100%'",
+    "value=spy.GetParam(user.legend.padding)",
+    "items='10;20;30;60;80;100'",
+    "readlonly=false",
+    "onchange=spy.SetParam(user.legend.padding,html.GetValue  (~name~))>>legend -r=html.GetValue(LEGEND_HORIZONTAL)html.GetValue(LEGEND_VERTICAL),html.GetValue(LEGEND_PADDING)",
+  )
+    $-
+  </td>
+
+
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=Reset Legend",
+    "td1=<td width='40%'>",
+    "name=RESET_LEGEND",
+    "scope=#scope",
+    "onclick=legend -r=html.GetValue(LEGEND_HORIZONTAL)html.GetValue(LEGEND_VERTICAL),html.GetValue(LEGEND_PADDING)",
+    "bgcolor=GetVar(gui.action_colour)",
+    "fgcolor=#ffffff",
+    )
+  $-
+
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->

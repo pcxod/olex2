@@ -15,7 +15,7 @@ Python and cctbx extension modules stay assets, CPython dlopens them by path.
       [--payload D:/Android/stage/<abi> --jnilibs <build>/package/libs/<abi>]
   python assemble_assets.py --self-test
 """
-import argparse, fnmatch, hashlib, pathlib, shutil, struct, subprocess, sys, tempfile, zipfile
+import argparse, fnmatch, hashlib, pathlib, runpy, shutil, struct, subprocess, sys, tempfile, zipfile
 
 # relative to the rundir; a directory is copied recursively
 ALLOW = [
@@ -56,6 +56,8 @@ PATCHES = [
      'if "bad magic number" not in str(err):',
      'if "bad magic number" not in str(err) and err.name != "AC7":'),
 ]
+# tablet-sized GUI: layout patches to etc/gui and util/pyUtil
+PATCHES += runpy.run_path(str(pathlib.Path(__file__).with_name("gui_tablet_patches.py")))["PATCHES"]
 
 
 def refused(rel):
