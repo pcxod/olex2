@@ -82,7 +82,10 @@ static bool extract_assets(AAssetManager *am, const fs::path &dst) {
       olx_log("cannot read asset " + line);
       return false;
     }
-    const fs::path p = dst / fs::u8path(line);
+    // assemble_assets.py appends '-' to *.gz (and *-) names: aapt would
+    // decompress them
+    const fs::path p = dst / fs::u8path(line.back() == '-'
+      ? line.substr(0, line.size() - 1) : line);
     fs::create_directories(p.parent_path(), ec);
     std::ofstream f(p, std::ios::binary | std::ios::trunc);
     if (!f.write(data.data(), data.size())) {
@@ -142,6 +145,35 @@ int main(int argc, char **argv) {
   setenv("OLEX2_CONFIGDIR", (fs::path(files_dir) / "config").c_str(), 1);
   setenv("OLEX2_GL_STEREO", "false", 1);
   setenv("OLEX2_GL_MULTISAMPLE", "false", 1);
+  /* Embedded CPython: the stdlib, lib-dynload and site-packages are assets
+  under base/python; libpython and every other lib*.so are in the APK's
+  native library dir, where the linker finds them by soname. cctbx is found
+  by initpy.py under base/cctbx.
+  */
+  setenv("PYTHONHOME", (base / "python").c_str(), 1);
+  // C's measurements: one BLAS thread is fastest on every ABI, the OpenMP
+  // loops of smtbx take all cores. Affinity off: libomp's topology probe
+  // aborts under ndk_translation and binding buys nothing on big.LITTLE
+  setenv("OPENBLAS_NUM_THREADS", "1", 0);
+  setenv("KMP_AFFINITY", "disabled", 0);
+  /* NoSpherA2 is a PIE executable packaged as libNoSpherA2.so so that it is
+  installed executable; files under filesDir cannot be exec'd (W^X, API 29+).
+  NoSpherA2.py finds <basedir>/NoSpherA2 and its basis_sets and occ/share
+  next to it, so a symlink stands in. The native dir changes with every
+  install, hence relinked on every start.
+  */
+  {
+    const std::string nld = ctx
+      .callObjectMethod("getApplicationInfo",
+        "()Landroid/content/pm/ApplicationInfo;")
+      .getObjectField<jstring>("nativeLibraryDir").toString().toStdString();
+    const fs::path link = base / "NoSpherA2";
+    fs::remove(link, ec);
+    fs::create_symlink(fs::path(nld) / "libNoSpherA2.so", link, ec);
+    if (ec) {
+      olx_log("cannot link NoSpherA2: " + ec.message());
+    }
+  }
   // argv[0] is the .so path, /data/app/~~<base64>==/..., and TBasicApp
   // reads any argument holding '=' as an option: Olex2 gets its base dir
   // from OLEX2_DIR anyway. No file picker before S4: with no
