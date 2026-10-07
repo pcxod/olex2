@@ -157,6 +157,27 @@ int main(int argc, char **argv) {
   }
   mkdir(data_dir.c_str(), 0700);
   mkdir(config_dir.c_str(), 0700);
+  /* Optional <config_dir>/env.txt, one KEY=VALUE per line, '#' comments:
+  device tuning without a rebuild, e.g. LIBGL_NOHIGHP=1 (gl4es, Mali-400
+  fragment shaders are mediump only) or OMP_NUM_THREADS. Wins over the
+  defaults below that are set without overwrite. Written with
+  adb shell run-as <package> (the legacy APK is debuggable)
+  */
+  {
+    std::ifstream ef(config_dir + "/env.txt");
+    std::string l;
+    while (std::getline(ef, l)) {
+      if (!l.empty() && l.back() == '\r') {
+        l.pop_back();
+      }
+      const size_t eq = l.find('=');
+      if (l.empty() || l[0] == '#' || eq == std::string::npos || eq == 0) {
+        continue;
+      }
+      setenv(l.substr(0, eq).c_str(), l.c_str() + eq + 1, 1);
+      olx_log("env.txt: " + l);
+    }
+  }
   // first start: Android defaults (rundir-overlay); later edits are the user's
   const std::string options = config_dir + "/.options";
   if (access(options.c_str(), F_OK) != 0) {
