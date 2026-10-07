@@ -38,7 +38,9 @@ Remove-Item -Recurse -Force "$ab/assets", "$ab/build" -ErrorAction SilentlyConti
   --jdk $env:JAVA_HOME --gradle --release
 $gp = "$ab/gradle.properties"
 if (-not (Select-String -Quiet 'qtMinSdkVersion' $gp)) { throw "androiddeployqt failed before gradle" }
-(Get-Content $gp) -notmatch '^android\.bundle\.enableUncompressedNativeLibs' | Set-Content $gp
+# Blank lines go too: androiddeployqt doubles them on every run (5 M lines
+# after ~22 builds, minutes of Get-Content here)
+(Get-Content $gp) -notmatch '^(android\.bundle\.enableUncompressedNativeLibs|\s*$)' | Set-Content $gp
 # Qt 5.15.2's prebuilt .so files keep .symtab and .debug_*: strip them. Not
 # the payload's (package/libs: patchelf'ed, stripped already, llvm-strip
 # would misalign their segments) and not libolex2 (linked with -s).

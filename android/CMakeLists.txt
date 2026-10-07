@@ -83,7 +83,13 @@ target_link_libraries(olex2 PRIVATE ${_olx_unwind}
 target_link_options(olex2 PRIVATE "LINKER:--exclude-libs,ALL")
 # stripped here: build.gradle keeps gradle's llvm-strip off every .so, because
 # it breaks the patchelf'ed payload libs (segment offsets lose their alignment)
-target_link_options(olex2 PRIVATE "$<$<NOT:$<CONFIG:Debug>>:-s>")
+# OLX_SYMTAB keeps .symtab (no DWARF) so simpleperf can name the static gl4es code
+option(OLX_SYMTAB "keep the symbol table in libolex2 for profiling" OFF)
+if (OLX_SYMTAB)
+  target_link_options(olex2 PRIVATE "$<$<NOT:$<CONFIG:Debug>>:LINKER:--strip-debug>")
+else ()
+  target_link_options(olex2 PRIVATE "$<$<NOT:$<CONFIG:Debug>>:-s>")
+endif ()
 if (OLX_TUNE)
   # CMake's clang IPO is -flto=thin; the prebuilt static deps stay native code
   set_target_properties(olex2 PROPERTIES INTERPROCEDURAL_OPTIMIZATION ON)

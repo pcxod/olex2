@@ -51,7 +51,7 @@ PATCHES = [
      "    if os.path.exists(stamp):  # Android: rewritten by every new APK\r\n"
      "      version = int(os.path.getmtime(stamp))\r\n"),
     ('util/pyUtil/gui/skin/__init__.py',
-     "table_width =int(olx.html.ClientWidth('self')) - 2 * int(olx.html.GetBorders())",
+     "table_width = int(olx.html.ClientWidth('self')) - 2 * int(olx.html.GetBorders())",
      "table_width = int(olx.html.ClientWidth('self')) - 2 * int(olx.html.GetBorders()) - 16"),
     # ---- header (6)
     ('etc/gui/blocks/snum-info.htm',
@@ -60,9 +60,12 @@ PATCHES = [
     ('etc/gui/blocks/snum-info.htm',
      '<tr bgcolor=$GetVar(HtmlTableBgColour)>',
      "<tr valign='center' bgcolor=$GetVar(HtmlTableBgColour)>"),
+    # tags on their own lines: the call returns an <!-- #include --> that
+    # htmlprep expands only at a line start. Size 2: the tablet default and
+    # size 3 wrap "c = 10.9002(15)" in the 60 % column
     ('etc/gui/blocks/snum-info.htm',
      '$spy.gui.tools.make_cell_dimensions_display()',
-     "<font size='3'>$spy.gui.tools.make_cell_dimensions_display()</font>"),
+     "<font size='2'>\n$spy.gui.tools.make_cell_dimensions_display()\n</font>"),
     ('etc/gui/blocks/snum-info.htm',
      "<td width='35%' align='right'",
      "<td width='28%' align='right'"),
