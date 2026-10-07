@@ -57,6 +57,10 @@ gui {
       arrows = "bar:right:44,arrow_right:onup:offdown:hoverdown:hoveronup"
       vline = 44
       dot_size = 6
+      # arrow circle is height - 2*dot_pad = 42 px at x = width - height + dot_left,
+      # i.e. centred in the 44 px bar (defaults 1/1 made it 50 px, spilling left)
+      dot_pad = 5
+      dot_left = 9
     }
     button {
       height = 44
