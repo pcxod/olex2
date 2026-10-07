@@ -33,7 +33,7 @@ public:
   shared_base(cont_t &l) : p(new olx_ptr_<cont_t>(new cont_t)) {
     p->p->TakeOver(l);
   }
-  ~shared_base()  {
+  virtual ~shared_base()  {
     if( p != NULL && --p->ref_cnt == 0 ) {
       delete p->p;
       delete p;
@@ -90,7 +90,7 @@ public:
       return *this;
     }
     Item& operator = (const Item &v) {
-      instance->Set(index, v.instance.Get(v.index));
+      instance.Set(index, v.instance.Get(v.index));
       return *this;
     }
     operator const item_t & () {  return instance.Get(index);  }

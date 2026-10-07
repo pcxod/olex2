@@ -88,7 +88,7 @@ public:
   DefPropP(double, Z);
   DefPropP(short, Latt);
 
-    const mat3d& GetCellToCartesian() const { return Cell2Cartesian; }
+  const mat3d& GetCellToCartesian() const { return Cell2Cartesian; }
   const mat3d& GetCartesianToCell() const { return Cartesian2Cell; }
   const mat3d& GetHklToCartesian() const { return Hkl2Cartesian; }
   template <typename FT> TVector3<FT>& CellToCartesian(TVector3<FT>& crt) const

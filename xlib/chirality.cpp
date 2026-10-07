@@ -158,7 +158,7 @@ struct CIPElem {
       sa << "{" << type->symbol << "}";
     }
     else {
-      sa << node->atom->GetLabel();
+      sa << node->get_label();
     }
     return sa.RightPadding(5, ' ');
   }
@@ -202,24 +202,25 @@ struct CIPCompare {
     n.SetTag(n.GetTag() | side);
     if (e.from != 0) {
       for (int k = 1; k < e.from_order; k++) {
-        out.Add(new CIPElem(0, &e.from->atom->GetType(), (const TSymmNode*)0, 0, true));
+        out.Add(new CIPElem(0, &e.from->get_type(), (const TSymmNode*)0, 0, true));
       }
     }
-    for (size_t i = 0; i < n.children.Count(); i++) {
-      TSymmNode* child = registry.find_or_add(n, *n.children[i]);
+    uint32_t im = registry.unit_cell.InvMatrixId(n.matrix);
+    for (size_t i = 0; i < n.aun.children.Count(); i++) {
+      TSymmNode* child = registry.find_or_add(n, *n.aun.children[i]);
       if (e.from != 0 && child == e.from) {
         continue;   // safe: registry guarantees one canonical TSymmNode* per position
       }
       if ((child->crd - root_crd).QLength() > MaxCIPRadiusSq) {
         continue;
       }
-      olx_pair_t<TCAtom*, TCAtom::Site> r = registry.remap(n, *child);
+      olx_pair_t<TCAtom*, TCAtom::Site> r = registry.remap(n, *child, im);
       int bo = boa.get_order(*r.a, r.b);
       bool closure = (child->GetTag() & side) != 0;
-      out.AddNew(child, &child->atom->GetType(), &n, bo, closure);
+      out.AddNew(child, &child->get_type(), &n, bo, closure);
       if (!closure) {
         for (int k = 1; k < bo; k++) {
-          out.Add(new CIPElem(0, &child->atom->GetType(), (const TSymmNode*)0, 0, true));
+          out.Add(new CIPElem(0, &child->get_type(), (const TSymmNode*)0, 0, true));
         }
       }
     }
@@ -339,23 +340,24 @@ struct RSA_Full_EnviSorter {
     : registry(*c.GetParent()),
     cip(boa_, registry, debug_ ? &out : 0), center(0)
   {
-    center = cip.registry.find(TSymmNode::build_id(c));
+    center = cip.registry.find(TSymmNode::build_id(c.GetId(), FirstMatrixRawId));
     if (center == 0) {
       throw TFunctionFailedException(__OlxSourceInfo, "__assert__");
     }
     cip.root_crd = center->crd;
   }
 
-  RSA_Full_EnviSorter(RSA_BondOrder& boa_, const TSAtom& c, bool debug_)
-    : registry(c.GetNetwork()),
-    cip(boa_, registry, debug_ ? &out : 0), center(0)
-  {
-    center = cip.registry.find(TSymmNode::build_id(c.CAtom(), c.GetMatrix()));
-    if (center == 0) {
-      throw TFunctionFailedException(__OlxSourceInfo, "__assert__");
-    }
-    cip.root_crd = center->crd;
-  }
+  //RSA_Full_EnviSorter(RSA_BondOrder& boa_, const TSAtom& c, bool debug_)
+  //  : registry(c.GetNetwork()),
+  //  cip(boa_, registry, debug_ ? &out : 0), center(0)
+  //{
+  //  center = cip.registry.find(
+  //    TSymmNode::build_id(c.CAtom().GetId(), c.GetMatrix().GetId()));
+  //  if (center == 0) {
+  //    throw TFunctionFailedException(__OlxSourceInfo, "__assert__");
+  //  }
+  //  cip.root_crd = center->crd;
+  //}
 
   int Comparator(const TCAtom::Site& a, const TCAtom::Site& b) const {
     if (center == 0) {
@@ -638,7 +640,7 @@ protected:
 //.............................................................................
 //.............................................................................
 template <class envi_sorter_t>
-olx_pair_t<olxstr, olxstr> rsa_analyse(TCAtom& a, bool debug) {
+olx_pair_t<olxstr, olxstr> rsa_analyse(TCAtom& a, bool debug, bool dry_run) {
   if (a.IsDeleted() || a.GetType() < 2) {
     return EmptyString();
   }
@@ -653,7 +655,6 @@ olx_pair_t<olxstr, olxstr> rsa_analyse(TCAtom& a, bool debug) {
   olxstr w, di;
   if (attached.Count() == 4) {
     RSA_BondOrder boa;
-    a.ClearChiralFlag();
     envi_sorter_t es(boa, a, debug);
     BubbleSorter::SortMF(attached, es, &envi_sorter_t::Comparator);
     bool chiral = true;
@@ -676,40 +677,39 @@ olx_pair_t<olxstr, olxstr> rsa_analyse(TCAtom& a, bool debug) {
     else if (debug) {
       di = olxstr("For ") << a.GetLabel() << olxstr(es.out);
     }
-    vec3d_alist crds(4);
-    for (int j = 0; j < 4; j++) {
-      crds[j] = a.GetParent()->Orthogonalise(
-        attached[j]->matrix * attached[j]->atom->ccrd());
-    }
-    vec3d cnt = (crds[1] + crds[2] + crds[3]) / 3;
-    vec3d n = (crds[1] - crds[2]).XProdVec(crds[3] - crds[2]).Normalise();
-    if ((crds[0] - cnt).DotProd(n) < 0) {
-      n *= -1;
-    }
-    vec3d np = (crds[1] - cnt).XProdVec(n);
-    if ((crds[3] - cnt).DotProd(np) < 0) { //clockwise
-      a.SetChiralR(true);
-    }
-    else {
-      a.SetChiralS(true);
+    if (!dry_run) {
+      a.ClearChiralFlag();
+      vec3d_alist crds(4);
+      for (int j = 0; j < 4; j++) {
+        crds[j] = a.GetParent()->Orthogonalise(
+          attached[j]->matrix * attached[j]->atom->ccrd());
+      }
+      vec3d cnt = (crds[1] + crds[2] + crds[3]) / 3;
+      vec3d n = (crds[1] - crds[2]).XProdVec(crds[3] - crds[2]).Normalise();
+      if ((crds[0] - cnt).DotProd(n) < 0) {
+        n *= -1;
+      }
+      vec3d np = (crds[1] - cnt).XProdVec(n);
+      if ((crds[3] - cnt).DotProd(np) < 0) { //clockwise
+        a.SetChiralR();
+      }
+      else {
+        a.SetChiralS();
+      }
     }
   }
   return olx_pair::make(w, di);
 }
 //.............................................................................
 olx_pair_t<olxstr, olxstr>  xlib::olx_analysis::chirality
-::rsa_analyse_digraph(TCAtom& a, bool debug)
+::rsa_analyse_digraph(TCAtom& a, bool debug, bool dry_run)
 {
-  return rsa_analyse<RSA_Digraph_EnviSorter>(a, debug);
+  return rsa_analyse<RSA_Digraph_EnviSorter>(a, debug, dry_run);
 }
 //.............................................................................
 olx_pair_t<olxstr, olxstr>  xlib::olx_analysis
-::chirality::rsa_analyse_full(TCAtom& a, bool debug)
+::chirality::rsa_analyse_full(TCAtom& a, bool debug, bool dry_run)
 {
-  return rsa_analyse<RSA_Full_EnviSorter>(a, debug);
+  return rsa_analyse<RSA_Full_EnviSorter>(a, debug, dry_run);
 }
-//.............................................................................
-//olx_pair_t<olxstr, olxstr>  xlib::olx_analysis::chirality::rsa_analyse_full(TSAtom& a, bool debug) {
-//  return rsa_analyse<RSA_Full_EnviSorter>(a, debug);
-//}
 //.............................................................................

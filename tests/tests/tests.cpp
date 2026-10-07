@@ -19,6 +19,7 @@
 #include "filetree.h"
 #include "cif.h"
 //..............................
+#include "tests/bond_eq_test.h"
 #include "tests/alg_test.h"
 #include "tests/container_test.h"
 #include "tests/dataitem_test.h"
@@ -73,6 +74,7 @@ int main(int argc, char* argv[]) {
   xapp.GetLog().AddStream(TUtf8File::Create(xapp.GetBaseDir()+"log.out", false), true);
   xapp.SetProfiling(true);
   OlxTests tests;
+  tests.Add(&test::bond_eq_test);
   tests.Add(&test::HashedTests);
   tests.Add(&test::exparse::ExparseTests);
   tests.Add(&test::StringTests);

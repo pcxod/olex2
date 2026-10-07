@@ -309,7 +309,7 @@ namespace SymmSpace {
       // use info - it has the I
       size_t mc = info.matrices.Count();
       rv.matrices.SetCapacity(mc * 2);
-      smatd invt(-mat3d::Idenity(), -info.inv_trans * 2);
+      smatd invt(-mat3d::Identity(), -info.inv_trans * 2);
       for (size_t i = 0; i < mc; i++) {
         smatd& m = rv.matrices.AddCopy(info.matrices[i] * invt);
         m.t -= m.t.Floor<int>();

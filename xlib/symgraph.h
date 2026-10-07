@@ -12,67 +12,97 @@
 
 BeginXlibNamespace()
 
+struct TASymmNode : public ACollectionItem {
+  const TCAtom& atom;
+  TPtrList<struct TSymmNode> children;
+
+  TASymmNode(const TCAtom& a)
+    : atom(a)
+  {}
+};
+
 struct TSymmNode : public ACollectionItem {
-  const TCAtom* atom;
-  smatd matrix;
+  const TASymmNode& aun;
+  uint32_t matrix;
   vec3d crd;
-  TPtrList<TSymmNode> children;
 
-  TSymmNode(const TCAtom::Site& s)
-    : atom(s.atom), matrix(s.matrix)
+  TSymmNode(const TASymmNode& au_node, uint32_t m_id)
+    : aun(au_node), matrix(m_id)
   {}
 
-  TSymmNode(const TCAtom& a, const smatd& m)
-    : atom(&a), matrix(m)
+  TSymmNode(const TASymmNode& au_node, const smatd& m)
+    : aun(au_node), matrix(m.GetId())
   {}
 
-  void init() {
-    crd = atom->GetParent()->Orthogonalise(matrix * atom->ccrd());
+  void init(const TUnitCell &uc) {
+    crd = aun.atom.GetParent()->Orthogonalise(uc.GetMatrixById(matrix) * aun.atom.ccrd());
   }
 
-  static uint64_t build_id(const TCAtom& a, uint32_t m_id) {
-    return (((uint64_t)a.GetId()) << 32) | (uint64_t)m_id;
+  static uint64_t build_id(uint64_t au_id, uint64_t m_id) {
+    return (au_id << 32) | m_id;
   }
-  static uint64_t build_id(const TCAtom& a, const smatd& m) {
+  static uint64_t build_id(const TASymmNode& a, uint32_t m_id) {
+    return build_id(a.atom.GetId(), m_id);
+  }
+  static uint64_t build_id(const TASymmNode& a, const smatd& m) {
     return build_id(a, m.GetId());
   }
-  static uint64_t build_id(const TCAtom& a) {
+  static uint64_t build_id(const TASymmNode& a) {
     return build_id(a, FirstMatrixRawId);
   }
   static uint64_t build_id(const TCAtom::Site& s) {
-    return build_id(*s.atom, s.matrix);
+    return build_id(s.atom->GetId(), s.matrix.GetId());
   }
   uint64_t build_id() const {
-    return build_id(*atom, matrix);
+    return build_id(aun, matrix);
   }
+
+  const olxstr& get_label() const {
+    return aun.atom.GetLabel();
+  }
+  const cm_Element& get_type() const { return aun.atom.GetType(); }
 };
 
 struct TSymmNodeRegistry {
+  TTypeList<TASymmNode> au_nodes;
   mutable olx_pdict<uint64_t, TSymmNode*> registry;
   const TUnitCell& unit_cell;
 
   TSymmNodeRegistry(const TAsymmUnit& au);
-  TSymmNodeRegistry(const TNetwork& net);
 
   ~TSymmNodeRegistry();
 
   TSymmNode* find(uint64_t id) const {
     return registry.Find(id, 0);
   }
-  // def_tag - tag for the new node
+  // def_tag - tag for the new node, new node gets its children intialised
   TSymmNode* find_or_add(const TSymmNode& parent, const TSymmNode& child,
     index_t def_tag = 0) const;
 
   olx_pair_t<TCAtom*, TCAtom::Site> remap(const TSymmNode& parent,
     const TSymmNode& child) const
   {
-    if (parent.matrix.IsFirst()) {
-      return olx_pair::make(const_cast<TCAtom*>(parent.atom),
-        TCAtom::Site(const_cast<TCAtom*>(child.atom), child.matrix));
+    if (parent.matrix == FirstMatrixRawId) {
+      return olx_pair::make(const_cast<TCAtom*>(&parent.aun.atom),
+        TCAtom::Site(const_cast<TCAtom*>(&child.aun.atom),
+          unit_cell.GetMatrixById(child.matrix)));
     }
-    return olx_pair::make(const_cast<TCAtom*>(parent.atom),
-      TCAtom::Site(const_cast<TCAtom*>(child.atom),
-        unit_cell.MulMatrix(child.matrix, unit_cell.InvMatrix(parent.matrix))));
+    return olx_pair::make(const_cast<TCAtom*>(&parent.aun.atom),
+      TCAtom::Site(const_cast<TCAtom*>(&child.aun.atom),
+        unit_cell.MulMatrix(child.matrix, unit_cell.InvMatrixId(parent.matrix))));
+  }
+
+  olx_pair_t<TCAtom*, TCAtom::Site> remap(const TSymmNode& parent,
+    const TSymmNode& child, uint32_t parent_im) const
+  {
+    if (parent_im == FirstMatrixRawId) {
+      return olx_pair::make(const_cast<TCAtom*>(&parent.aun.atom),
+        TCAtom::Site(const_cast<TCAtom*>(&child.aun.atom),
+          unit_cell.GetMatrixById(child.matrix)));
+    }
+    return olx_pair::make(const_cast<TCAtom*>(&parent.aun.atom),
+      TCAtom::Site(const_cast<TCAtom*>(&child.aun.atom),
+        unit_cell.MulMatrix(child.matrix, parent_im)));
   }
 
   template <class Functor>
@@ -81,8 +111,5 @@ struct TSymmNodeRegistry {
       f.OnItem(registry.GetValue(i), i);
     }
   }
-protected:
-  void copy_au_(const TPtrList<TSymmNode>& nodes, TSymmNode& n, const TAsymmUnit& au);
-  void copy_net_(const TPtrList<TSymmNode>& nodes, TSymmNode& n, const TNetwork& net);
 };
 EndXlibNamespace()

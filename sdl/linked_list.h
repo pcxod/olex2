@@ -12,7 +12,8 @@ avoid memory leaks!
 */
 #ifndef __olx_sdl_linked_list_H
 #define __olx_sdl_linked_list_H
-#include "ebase.h"
+#include "constlist.h"
+
 BeginEsdlNamespace()
 
 class NewCleanup {
@@ -93,6 +94,10 @@ public:
     }
   }
 
+  size_t Count() const {
+    return count;
+  }
+
   struct Iterator {
   private:
     Entry *first, *cur;
@@ -156,6 +161,7 @@ public:
   }
 public:
   typedef T list_item_type;
+  olx_list_2_std;
 };
 
 EndEsdlNamespace()

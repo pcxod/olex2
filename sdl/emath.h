@@ -10,6 +10,7 @@
 #ifndef __olx_emath_H
 #define __olx_emath_H
 #include <math.h>
+#include <cmath>
 #include "exception.h"
 // Linux stuff....
 #undef QLength
@@ -64,11 +65,17 @@ inline float_t olx_round(const float_t a, long num) {
 }
 template <typename int_t, typename float_t>
 inline int_t olx_floor_t(const float_t a) {
-  int_t b = (int_t)a;
-  return (a < 0) ? b - 1 : b;
+  return static_cast<int_t>(std::floor(a));
 }
 template <typename float_t> inline long olx_floor(const float_t a) {
   return olx_floor_t<long>(a);
+}
+template <typename int_t, typename float_t>
+inline int_t olx_ceil_t(const float_t a) {
+  return static_cast<int_t>(std::ceil(a));
+}
+template <typename float_t> inline long olx_ceil(const float_t a) {
+  return olx_ceil_t<long>(a);
 }
 // returns true if the given value is within (-eps,eps) range
 template <typename float_t> inline bool olx_is_zero(float_t v, float_t eps) {

@@ -328,6 +328,9 @@ namespace cif_dp {
     virtual ~CifBlock();
     ICifEntry& Add(ICifEntry* p);
     ICifEntry& Add(ICifEntry& p) { return Add(&p); }
+    CifBlock& operator = (const CifBlock&) {
+      throw TNotImplementedException(__OlxSourceInfo);
+    }
     template <class SC>
     bool Remove(const SC &pname) { return Delete(param_map.IndexOf(pname)); }
     bool Remove(const ICifEntry& e) { return Remove(e.GetName()); }

@@ -1092,6 +1092,9 @@ void DistanceGenerator::GenerateSADI_(
   RefinementModel &rm, const DistanceGenerator::atom_map_N_t &atom_map,
   TStrList *log)
 {
+  if (atom_map.IsEmpty()) {
+    return;
+  }
   size_t gc = atom_map.GetValue(0).Count();
   for (size_t i = 0; i < d.Count(); i++) {
     TSimpleRestraint &sr = rm.rSADI.AddNew();
@@ -1136,6 +1139,9 @@ TStrList::const_list_type DistanceGenerator::GenerateSADIList_(
   const TAsymmUnit& au, const DistanceGenerator::atom_map_N_t& atom_map)
 {
   TStrList rv;
+  if (atom_map.IsEmpty()) {
+    return rv;
+  }
   size_t gc = atom_map.GetValue(0).Count();
   for (size_t i = 0; i < d.Count(); i++) {
     olxstr &sadi = rv.Add("SADI ") << esd << ' ' << au.GetAtom(d[i].a).GetResiLabel()
@@ -1167,6 +1173,9 @@ DistanceGenerator::GeneratePairList(
   const atom_map_N_t& atom_map)
 {
   TTypeList<TTypeList<idx_pair_t> > res;
+  if (atom_map.IsEmpty()) {
+    return res;
+  }
   size_t gc = atom_map.GetValue(0).Count();
   for (size_t i = 0; i < d.Count(); i++) {
     TTypeList<idx_pair_t>& row = res.AddNew();

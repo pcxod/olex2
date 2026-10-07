@@ -704,7 +704,7 @@ void cetString::ToStrings(TStrList& list) const {
     list.Add(' ') : (list.GetLastString() << ' ');
   if (quoted) {
     if (qsz == 3) {
-      size_t qidx = InvalidIndex;
+      size_t qidx = 0;
       bool use_dq = false, use_ml = false;
       // check if ' will be valid in this case
       while ((qidx = value.FirstIndexOf('\'', qidx)) != InvalidIndex) {
@@ -717,6 +717,7 @@ void cetString::ToStrings(TStrList& list) const {
       }
       // check if " will be valid in this case
       if (use_dq) {
+        qidx = 0;
         while ((qidx = value.FirstIndexOf('"', qidx)) != InvalidIndex) {
           if (++qidx < value.Length() &&
             olxstr::o_isoneof(value.CharAt(qidx), " \t"))
@@ -777,12 +778,15 @@ olxstr cetStringList::GetStringValue() const {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-CifBlock::CifBlock(const CifBlock& v) {
+CifBlock::CifBlock(const CifBlock& v)
+  : ICifEntry(v), parent(v.parent) 
+{
   for (size_t i = 0; i < v.params.Count(); i++) {
-    param_map.Add(v.params[i], v.params.GetObject(i));
-    params.Add(v.params[i], v.params.GetObject(i));
-    if (v.params.GetObject(i)->Is<cetTable>()) {
-      table_map.Add(v.params[i], (cetTable*)v.params.GetObject(i));
+    ICifEntry *e = v.params.GetObject(i)->Replicate();
+    param_map.Add(v.params[i], e);
+    params.Add(v.params[i], e);
+    if (e->Is<cetTable>()) {
+      table_map.Add(v.params[i], (cetTable*)e);
     }
   }
 }

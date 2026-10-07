@@ -13,7 +13,6 @@ cleanup class must be chosen to avoid memory leaks!
 #ifndef __olx_sdl_linked_indexable_list_H
 #define __olx_sdl_linked_indexable_list_H
 #include "linked_list.h"
-#include "constlist.h"
 BeginEsdlNamespace()
 
 template <typename> class ConstLList;
@@ -59,14 +58,9 @@ public:
     if (pos == (ind - 1)) {
       return Next();
     }
-    else if (ind == 0) {
-      cur = parent_t::first;
-      pos = 0;
-      return cur->data;
-    }
     pos = 0;
     cur = parent_t::first;
-    while (ind-- != 1) {
+    while (ind-- != 0) {
       cur = cur->next;
       pos++;
     }
@@ -74,7 +68,6 @@ public:
   }
 
   T& Add(const T &v) {
-    pos++;
     return parent_t::Add(v);
   }
 
@@ -108,7 +101,6 @@ protected:
 public:
   typedef ConstLList<T> const_list_type;
   typedef T list_item_type;
-  olx_list_2_std;
 };
 
 template <typename T>

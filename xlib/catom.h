@@ -236,7 +236,7 @@ public:
     return (PartAndChargeAndChirality & 0x0100) != 0;
   }
 
-  void SetChiralR(bool v) {
+  void SetChiralR() {
     PartAndChargeAndChirality = (PartAndChargeAndChirality & ~0x0300) | 0x0100;
   }
 
@@ -244,7 +244,7 @@ public:
     return (PartAndChargeAndChirality & 0x0200) != 0;
   }
 
-  void SetChiralS(bool v) {
+  void SetChiralS() {
     PartAndChargeAndChirality = (PartAndChargeAndChirality & ~0x0300) | 0x0200;
   }
   // returns multiplicity of the position

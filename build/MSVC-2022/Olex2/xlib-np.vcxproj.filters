@@ -825,6 +825,15 @@
     <ClCompile Include="..\..\..\xlib\label_utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\xlib\symgraph.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\bonds_eq_search.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\xlib\structure_generator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\xlib\asymmunit.h">
@@ -990,6 +999,9 @@
       <Filter>Header Files\tests</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\xlib\analysis.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\xlib\symgraph.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
