@@ -21,7 +21,7 @@
         android:hardwareAccelerated="true"
         android:extractNativeLibs="true"
         android:label="Olex2"
-        android:icon="-- %%INSERT_APP_ICON%% --"
+        android:icon="@mipmap/ic_launcher"
         android:enableOnBackInvokedCallback="false"
         android:allowBackup="false">
         <activity

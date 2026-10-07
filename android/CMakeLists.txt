@@ -143,6 +143,8 @@ else ()
   # Qt 6.11.1's template plus ignoreAssetsPattern (keeps "_*" asset dirs)
   configure_file(build.gradle "${pkg}/build.gradle" COPYONLY)
 endif ()
+# launcher icon (@mipmap/ic_launcher), the Olex2 1.5 logo
+file(COPY res DESTINATION "${pkg}")
 set_target_properties(olex2 PROPERTIES
   QT_ANDROID_PACKAGE_SOURCE_DIR "${pkg}"
   QT_ANDROID_PACKAGE_NAME "org.olex2.android"
