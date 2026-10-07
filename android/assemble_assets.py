@@ -81,11 +81,6 @@ PATCHES = [
     ("util/pyUtil/NoSpherA2/cubes_maps.py",
      "from scipy import linalg",
      "from numpy import linalg  # Android has no scipy; only inv/det are used here"),
-    # the CIF program reference rebuilt every program definition per refine (0.28 s);
-    # get_program_dictionaries caches them
-    ("util/pyUtil/olexFunctions.py",
-     "      prg = ExternalPrgParameters.defineExternalPrograms()[1].programs[pname]",
-     "      prg = ExternalPrgParameters.get_program_dictionaries()[1].programs[pname]"),
 ]
 # tablet-sized GUI: layout patches to etc/gui and util/pyUtil
 PATCHES += runpy.run_path(str(pathlib.Path(__file__).with_name("gui_tablet_patches.py")))["PATCHES"]
