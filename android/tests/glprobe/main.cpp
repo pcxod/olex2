@@ -19,6 +19,7 @@ off one at a time: 0 = all, 1 = no gl4es_setMainFBO, 2 = no gl4es swap. */
 #include <dlfcn.h>
 #include <android/log.h>
 #include <cstdarg>
+#include <chrono>
 
 extern "C" {
 void initialize_gl4es();
@@ -237,6 +238,70 @@ private:
     ticks++;
     angle += 15;
     Render("timer");
+    if (ticks == 6) Bench();
+  }
+
+  /* Frame time of a mid-size structure the way Olex2 draws it: 64 lit atom
+  spheres and 144 bond cylinders, each a display-listed GLU quadric placed by
+  the matrix stack, rotating. glFinish per frame, so the time is CPU (gl4es)
+  plus GPU, without vsync. Logged as "bench: ...". */
+  void Bench() {
+    SetCurrent(ctx);
+    const wxSize sz = GetClientSize() * GetContentScaleFactor();
+    GLuint sph = glGenLists(2), cyl = sph + 1;
+    glNewList(sph, GL_COMPILE);
+    gluSphere(quad, 0.25, 16, 12);
+    glEndList();
+    glNewList(cyl, GL_COMPILE);
+    gluCylinder(quad, 0.08, 0.08, 1.0, 12, 1);
+    glEndList();
+    const int N = 120;
+    const auto t0 = std::chrono::steady_clock::now();
+    for (int f = 0; f < N; f++) {
+      glViewport(0, 0, sz.x, sz.y);
+      glClearColor(0.1f, 0.15f, 0.3f, 1);
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      glEnable(GL_DEPTH_TEST);
+      glEnable(GL_LIGHTING);
+      glEnable(GL_LIGHT0);
+      glEnable(GL_COLOR_MATERIAL);
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+      gluPerspective(45, double(sz.x) / wxMax(sz.y, 1), 1, 30);
+      glMatrixMode(GL_MODELVIEW);
+      glLoadIdentity();
+      glTranslatef(0, 0, -12);
+      glRotatef(f * 3.0f, 0.3f, 1, 0.1f);
+      for (int i = 0; i < 64; i++) {  // 4x4x4 grid, 1.4 apart
+        const float x = (i % 4 - 1.5f) * 1.4f, y = (i / 4 % 4 - 1.5f) * 1.4f,
+          z = (i / 16 - 1.5f) * 1.4f;
+        glColor3f(0.3f + 0.2f * (i % 4), 0.5f, 0.9f - 0.2f * (i / 16));
+        glPushMatrix();
+        glTranslatef(x, y, z);
+        glCallList(sph);
+        glColor3f(0.7f, 0.7f, 0.7f);
+        if (i % 4 != 3) {  // bond to +x
+          glPushMatrix(); glRotatef(90, 0, 1, 0); glScalef(1, 1, 1.4f);
+          glCallList(cyl); glPopMatrix();
+        }
+        if (i / 4 % 4 != 3) {  // bond to +y
+          glPushMatrix(); glRotatef(-90, 1, 0, 0); glScalef(1, 1, 1.4f);
+          glCallList(cyl); glPopMatrix();
+        }
+        if (i / 16 != 3) {  // bond to +z
+          glPushMatrix(); glScalef(1, 1, 1.4f); glCallList(cyl); glPopMatrix();
+        }
+        glPopMatrix();
+      }
+      glFinish();
+    }
+    const double ms = std::chrono::duration<double, std::milli>(
+      std::chrono::steady_clock::now() - t0).count();
+    Chk("bench", "frames");
+    L("bench: %d frames, 64 spheres + 144 cylinders, %dx%d px, %.2f ms/frame (%.1f fps)",
+      N, sz.x, sz.y, ms / N, 1000.0 * N / ms);
+    glDeleteLists(sph, 2);
+    SwapBuffers();
   }
 };
 
