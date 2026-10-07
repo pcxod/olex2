@@ -30,7 +30,7 @@ TGlCanvas::TGlCanvas(TMainForm *parent, int* gl_attr, wxWindowID id,
 #endif
   FXApp = NULL;
   MouseButton = 0;
-  TouchEnabled = false;
+  TouchEnabled = DrawPending = false;
   FParent = parent;
   Bind(wxEVT_PAINT, &TGlCanvas::OnPaint, this);
   Bind(wxEVT_ERASE_BACKGROUND, &TGlCanvas::OnEraseBackground, this);
@@ -51,15 +51,15 @@ TGlCanvas::TGlCanvas(TMainForm *parent, int* gl_attr, wxWindowID id,
   // only delivered after EnableTouchEvents in XApp()
   Bind(wxEVT_GESTURE_ZOOM, [this](wxZoomGestureEvent &e) {
     ToPixels(e);
-    if (TouchNav.OnZoom(e)) FXApp->Draw();
+    if (TouchNav.OnZoom(e)) DrawLater();
   });
   Bind(wxEVT_GESTURE_PAN, [this](wxPanGestureEvent &e) {
     ToPixels(e);
-    if (TouchNav.OnPan(e)) FXApp->Draw();
+    if (TouchNav.OnPan(e)) DrawLater();
   });
   Bind(wxEVT_GESTURE_ROTATE, [this](wxRotateGestureEvent &e) {
     ToPixels(e);
-    if (TouchNav.OnRotate(e)) FXApp->Draw();
+    if (TouchNav.OnRotate(e)) DrawLater();
   });
   Bind(wxEVT_LONG_PRESS, [this](wxLongPressEvent &e) {
     ToPixels(e);
@@ -265,9 +265,23 @@ void TGlCanvas::OnMouseMove(wxMouseEvent& me) {
     */
     wxWindow::Refresh();
 #else
-    FXApp->Draw();
+    DrawLater();
 #endif
   }
+}
+//..............................................................................
+void TGlCanvas::DrawLater() {
+  if (DrawPending) {
+    return;
+  }
+  DrawPending = true;
+  // posted events run after the pending input, so one draw takes them all
+  CallAfter([this]() {
+    DrawPending = false;
+    if (FXApp != 0) {
+      FXApp->Draw();
+    }
+  });
 }
 //..............................................................................
 void TGlCanvas::OnMouseDblClick(wxMouseEvent& me)  {

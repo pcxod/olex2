@@ -18,7 +18,11 @@ class TGlCanvas: public wxGLCanvas  {
 private:
   class TGXApp *FXApp;
   TTouchNav TouchNav;
-  bool TouchEnabled;
+  bool TouchEnabled, DrawPending;
+  /* one redraw after the queued input: drawing per move event lets the
+  events pile up behind a slow frame and the view lags behind the finger
+  */
+  void DrawLater();
   void OnMouseDown(wxMouseEvent& event);
   void OnMouseUp(wxMouseEvent& event);
   void OnMouseMove(wxMouseEvent& event);
