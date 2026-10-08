@@ -7110,6 +7110,30 @@ void TGXApp::HidePolymerAtoms(const TArrayList<bool> &traced,
       CartoonHiddenAtoms.Add(xa);
     }
   }
+  /* An H goes where its atom goes. The amide H of a residue showing its
+  sidechain is no backbone slot, so it survives the pass above while its N is
+  drawn by the ribbon - and floats beside it, once per residue after HADD.
+  Same rule as SyncAtomAndBondVisiblity: kept if any neighbour is visible.
+  */
+  ai.Reset();
+  while (ai.HasNext()) {
+    TXAtom &xa = ai.Next();
+    if (xa.IsDeleted() || !xa.IsVisible() || xa.GetType().z != 1) {
+      continue;
+    }
+    size_t nc = 0;
+    bool vis = false;
+    for (size_t i = 0; i < xa.NodeCount() && !vis; i++) {
+      if (!xa.Node(i).IsDeleted()) {
+        nc++;
+        vis = xa.Node(i).IsVisible();
+      }
+    }
+    if (nc != 0 && !vis) {
+      xa.SetVisible(false);
+      CartoonHiddenAtoms.Add(xa);
+    }
+  }
   /* Bonds are not hidden by hiding their atoms, so the same rule is applied
   here rather than through ShowResi, which ends in UpdateConnectivity and
   rebuilds lattice connectivity for the whole file.
