@@ -206,6 +206,11 @@ int main(int argc, char **argv) {
   // aborts under ndk_translation and binding buys nothing on big.LITTLE
   setenv("OPENBLAS_NUM_THREADS", "1", 0);
   setenv("KMP_AFFINITY", "disabled", 0);
+  // FLINT's trials: the adapter's default of cores - 1 leaves the 8th of 8
+  // trials for a second round on the 8-core tablet (52.6 -> 46.5 s on water);
+  // the GUI thread only polls meanwhile
+  setenv("SMTBX_SOLVE_THREADS",
+    std::to_string(sysconf(_SC_NPROCESSORS_CONF)).c_str(), 0);
   /* NoSpherA2 is a PIE executable packaged as libNoSpherA2.so so that it is
   installed executable; files under filesDir cannot be exec'd (W^X, API 29+).
   NoSpherA2.py finds <basedir>/NoSpherA2 and its basis_sets and occ/share
