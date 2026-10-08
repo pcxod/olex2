@@ -114,6 +114,9 @@
 #include <atomic>
 #include <memory>
 #include <thread>
+#ifdef __ANDROID__
+#include <QtWidgets/QApplication>
+#endif
 
 namespace {
   /* SaveVFS serializes on the caller and writes the file here: global.odb is
@@ -223,6 +226,18 @@ TMainForm::TMainForm(TGlXApp *Parent)
     Bind(wxEVT_SIZE, &TMainForm::OnSize, this);
     Bind(wxEVT_MOVE, &TMainForm::OnMove, this);
     Bind(wxEVT_CLOSE_WINDOW, &TMainForm::OnCloseWindow, this);
+#ifdef __ANDROID__
+    /* Android kills the process instead of closing the window, so the save
+    on exit never runs: write what start-up reads whenever Olex2 is put aside.
+    wxQt sends no wxEVT_ACTIVATE then, Qt's application state does change
+    */
+    QObject::connect(qApp, &QGuiApplication::applicationStateChanged,
+      [this](Qt::ApplicationState s) {
+        if (s == Qt::ApplicationSuspended && StartupInitialised && !Destroying) {
+          SaveSettings(FXApp->GetConfigDir() + FLastSettingsFile);
+        }
+      });
+#endif
 
     Bind(wxEVT_MENU, &TMainForm::OnHtmlPanel, this, ID_HtmlPanel);
 
@@ -2823,7 +2838,12 @@ void TMainForm::OnResize() {
   if (FInfoBox->IsCreated()) {
     FInfoBox->SetTop(1);
     FInfoBox->SetWidth(w);
+#ifdef __ANDROID__
+    // clear of the atom legend, which also sits at the top left
+    FInfoBox->SetLeft(3*FInfoBox->GetFont().GetMaxHeight());
+#else
     FInfoBox->SetLeft(0);
+#endif
   }
 }
 //..............................................................................
@@ -4490,6 +4510,10 @@ void TMainForm::UpdateInfoBox() {
       TEFile::ExtractFilePath(FXApp->XFile().GetFileName()));
     FInfoBox->PostText(TEFile::ExtractFileName(FXApp->XFile().GetFileName()));
     FInfoBox->PostText(FXApp->XFile().LastLoader()->GetTitle());
+#ifdef __ANDROID__
+    // reap reloads the default style, which resets Left to 0 (see OnResize)
+    FInfoBox->SetLeft(3*FInfoBox->GetFont().GetMaxHeight());
+#endif
     FInfoBox->Fit();
   }
   else {

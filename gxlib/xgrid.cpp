@@ -421,6 +421,17 @@ void TXGrid::Create(const olxstr& cName) {
   GlM.AmbientF = 0xD80f0f0f;
   GlM.DiffuseF = 0xD80f0f0f;
   Info->Create();
+#ifdef __ANDROID__
+  /* the style's 0,0 puts "Current level" over the file info box, which holds
+  the top left corner on Android: start below its lines, clear of the atom
+  legend as the info box is (TMainForm::OnResize)
+  */
+  if (Info->GetLeft() == 0 && Info->GetTop() == 0) {
+    const int h = Info->GetFont().GetMaxHeight();
+    Info->SetLeft(3*h);
+    Info->SetTop(4*h);
+  }
+#endif
   Legend->SetMaterial(GS.GetMaterial("eMap", GlM));
   Legend->Create();
   if (GPC.PrimitiveCount() != 0) {
