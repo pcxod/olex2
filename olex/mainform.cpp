@@ -4002,10 +4002,19 @@ void TMainForm::SaveVFS(short persistenceId) {
         "undefined persistence level");
     }
 
+    // FlushFS runs several times per start (every plugin's setup_gui): skip
+    // a file that would be rewritten byte-identical
+    static olxstr_dict<uint64_t> saved;
+    const uint64_t gen = TFileHandlerManager::Generation();
+    const size_t si = saved.IndexOf(dbFN);
+    if (si != InvalidIndex && saved.GetValue(si) == gen && TEFile::Exists(dbFN)) {
+      return;
+    }
     TEFile dbf(dbFN + ".tmp", "wb");
     TFileHandlerManager::SaveToStream(dbf, persistenceId);
     dbf.Close();
     TEFile::Rename(dbFN + ".tmp", dbFN);
+    saved.Add(dbFN) = gen;
   }
   catch (const TExceptionBase &e) {
     TBasicApp::NewLogEntry(logInfo) << "Failed to save VFS: " << e;
