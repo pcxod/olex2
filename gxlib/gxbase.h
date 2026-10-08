@@ -29,15 +29,6 @@ const int
   qaMedium  = 2,
   qaLow     = 3,
   qaPict    = 4;
-/* what a fresh style starts with (qual 1/2 and their tessellation). Android:
-low - gl4es emulates fixed-function GL per vertex on the CPU, and on a
-Cortex-A53 that halves the frame time of a small structure
-*/
-#ifdef __ANDROID__
-const int qaDefault = qaLow, qaDefaultSteps = 5;
-#else
-const int qaDefault = qaMedium, qaDefaultSteps = 15;
-#endif
 
 const int
   ddsDef       = 0, // default drawing style for primitives

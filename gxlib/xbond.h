@@ -148,7 +148,7 @@ public:
     void SetUnitLength(double v) const {
       return style->SetParam("UnitL", (unit_length = v), true);
     }
-    int GetConeQ() const { return GetParam("ConeQ", cone_q, qaDefaultSteps); }
+    int GetConeQ() const { return GetParam("ConeQ", cone_q, int(15)); }
     void SetConeQ(int v) const {
       return style->SetParam("ConeQ", (cone_q = v), true);
     }
@@ -157,7 +157,7 @@ public:
     }
     int GetMask() const { return GetParam("DefM", mask, int(7)); }
     void SetMask(int v) { style->SetParam("DefM", (mask = v), true); }
-    int GetQuality() const { return GetParam("Quality", quality, qaDefault); }
+    int GetQuality() const { return GetParam("Quality", quality, qaMedium); }
     void SetQuality(int v) const {
       return style->SetParam("Quality", (quality = v), true);
     }

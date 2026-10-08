@@ -290,19 +290,19 @@ public:
     int GetMask() const { return GetParam("DefMask", mask, int(5)); }
     void SetMask(int v) { style->SetParam("DefMask", (mask = v), true); }
 
-    int GetSphereQ() const { return GetParam("SphereQ", sphere_q, qaDefaultSteps); }
+    int GetSphereQ() const { return GetParam("SphereQ", sphere_q, int(15)); }
     void SetSphereQ(int v) const {
       return style->SetParam("SphereQ", (sphere_q = v), true);
     }
-    int GetRimsQ() const { return GetParam("RimQ", rim_q, qaDefaultSteps); }
+    int GetRimsQ() const { return GetParam("RimQ", rim_q, int(15)); }
     void SetRimQ(int v) const {
       return style->SetParam("RimQ", (rim_q = v), true);
     }
-    int GetDiskQ() const { return GetParam("DiskQ", disk_q, qaDefaultSteps); }
+    int GetDiskQ() const { return GetParam("DiskQ", disk_q, int(15)); }
     void SetDiskQ(int v) const {
       return style->SetParam("DiskQ", (disk_q = v), true);
     }
-    int GetQuality() const { return GetParam("Quality", quality, qaDefault); }
+    int GetQuality() const { return GetParam("Quality", quality, qaMedium); }
     void SetQuality(int v) const {
       return style->SetParam("Quality", (quality = v), true);
     }
