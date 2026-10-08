@@ -237,6 +237,69 @@ PATCHES = [
                         rt_mx_l = rt_mx_lk.multiply(asu_mappings.get_rt_mx(l_seq, l_sym))
                         l_site_frac = rt_mx_l *  sites_frac[l_seq]
 """),
+    # fcf loop: miller indices a column at a time instead of add_row per reflection; ZP2 0.26 -> 0.08 s
+    ("cctbx/cctbx_sources/iotbx/cif/__init__.py", """\
+    for hkl in indices:
+      refln_loop.add_row(hkl)
+    return refln_loop
+""", """\
+    # a column at a time: add_row's per-row key lookups were most of an fcf
+    # block on an A53 (same strings)
+    hkl = list(indices)
+    for i, key in enumerate(refln_loop):
+      refln_loop[key].extend(flex.std_string([str(x[i]) for x in hkl]))
+    return refln_loop
+"""),
+    # loop.show with a format string (the fcf in as_cif_block): no deepcopy, numeric columns
+    # out of their buffers, one write; ZP2 0.37 -> 0.19 s. Same text
+    ("cctbx/cctbx_sources/iotbx/cif/model.py", """\
+      #   contain spaces.
+      # Avoid modifying self in place
+      values = copy.deepcopy(values)
+""", """\
+      #   contain spaces.
+      # self stays as it is: converted columns are new arrays, the rest is only read
+"""),
+    ("cctbx/cctbx_sources/iotbx/cif/model.py", """\
+      for i in range(self.size()):
+        print(fmt_str % tuple([values[j][i] for j in range_len_values]), file=out)
+""", """\
+      # whole columns to python once and one write: element access and a print
+      # per row were most of an fcf on an A53 (same text). Numbers come straight
+      # from their buffers, list() is a boost call per element
+      import array
+      def as_list(v):
+        for t, c in ((flex.int, "i"), (flex.double, "d")):
+          if isinstance(v, t):
+            return array.array(c, v.copy_to_byte_str()).tolist()
+        return list(v)
+      out.write("".join([fmt_str % row + "\\n" for row in zip(*[as_list(v) for v in values])]))
+"""),
+    # loop.show aligned: a formatted copy per column instead of deepcopy + per-cell assignment and a
+    # print per row; the refinement CIF 0.10 -> 0.09 s, an aligned fcf 1.35 -> 1.0 s. Every text
+    # identical on the tablet. Proposed for cctbx, carried here until then
+    ("cctbx/cctbx_sources/iotbx/cif/model.py", """\
+      fmt_str = []
+      # Avoid modifying self in place
+      values = copy.deepcopy(values)
+      for i, v in enumerate(values):
+        for i_v in range(v.size()):
+          v[i_v] = format_value(v[i_v])
+""", """\
+      fmt_str = []
+      for i, v in enumerate(values):
+        # a formatted copy, self stays as it is
+        values[i] = v = flex.std_string([format_value(x) for x in v])
+"""),
+    ("cctbx/cctbx_sources/iotbx/cif/model.py", """\
+      for i in range(self.size()):
+        print((fmt_str %
+                       tuple([values[j][i]
+                              for j in range_len_values])).rstrip(), file=out)
+""", """\
+      out.write("".join([(fmt_str % row).rstrip() + "\\n"
+                         for row in zip(*[list(v) for v in values])]))
+"""),
 ]
 # tablet-sized GUI: layout patches to etc/gui and util/pyUtil
 PATCHES += runpy.run_path(str(pathlib.Path(__file__).with_name("gui_tablet_patches.py")))["PATCHES"]
