@@ -300,6 +300,43 @@ PATCHES = [
       out.write("".join([(fmt_str % row).rstrip() + "\\n"
                          for row in zip(*[list(v) for v in values])]))
 """),
+    # calculate_angles: python copies of the pair table and the sites, as for the dihedrals; ZP2 0.115 ->
+    # 0.077 s, sucrose 0.106 -> 0.071 s, every angle, rt_mx and su bitwise equal (the same copy makes
+    # calculate_distances slower, so not there). Proposed for cctbx, carried here until then
+    ("cctbx/cctbx_sources/cctbx/crystal/__init__.py", """\
+    ## angle is formed by j_seq-i_seq-k_seq
+    for i_seq,asu_dict in enumerate(self.pair_asu_table.table()):
+      rt_mx_i_inv = asu_mappings.get_rt_mx(i_seq, 0).inverse()
+      site_frac_i = self.sites_frac[i_seq]
+      angles = flex.double()
+      for j_seq,j_sym_groups in asu_dict.items():
+        site_frac_j = self.sites_frac[j_seq]
+""", """\
+    ## angle is formed by j_seq-i_seq-k_seq
+    # python copies of the pair table and the sites, as in calculate_dihedrals
+    table = [[(j, [list(g) for g in groups]) for j, groups in d.items()]
+             for d in self.pair_asu_table.table()]
+    sites_frac = list(self.sites_frac)
+    for i_seq,asu_dict in enumerate(table):
+      rt_mx_i_inv = asu_mappings.get_rt_mx(i_seq, 0).inverse()
+      site_frac_i = sites_frac[i_seq]
+      angles = flex.double()
+      for j_seq,j_sym_groups in asu_dict:
+        site_frac_j = sites_frac[j_seq]
+"""),
+    ("cctbx/cctbx_sources/cctbx/crystal/__init__.py", """\
+            for k_seq, k_sym_groups in asu_dict.items():
+              if self.skip_j_seq_less_than_i_seq and j_seq < k_seq: continue
+              if k_seq == j_seq and j_sym_group.size() <= 1: continue
+              if k_seq > j_seq: continue
+              site_frac_k = self.sites_frac[k_seq]
+""", """\
+            for k_seq, k_sym_groups in asu_dict:
+              if self.skip_j_seq_less_than_i_seq and j_seq < k_seq: continue
+              if k_seq == j_seq and len(j_sym_group) <= 1: continue
+              if k_seq > j_seq: continue
+              site_frac_k = sites_frac[k_seq]
+"""),
 ]
 # tablet-sized GUI: layout patches to etc/gui and util/pyUtil
 PATCHES += runpy.run_path(str(pathlib.Path(__file__).with_name("gui_tablet_patches.py")))["PATCHES"]
