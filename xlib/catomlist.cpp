@@ -400,8 +400,13 @@ void ImplicitCAtomRef::InitRef(const RefinementModel& rm,
           .GetFullMessage();
         return;
       }
+      /* the label alone: FindCAtom reads the _SER of C_SER as an old SHELX
+      part suffix (part 18) and finds nothing, which logged a warning for every
+      class reference on every load
+      */
+      const olxstr label = Name.SubStringTo(idx);
       for (size_t ri = 0; ri < residues.Count(); ri++) {
-        ca = rm.aunit.FindCAtom(Name, residues[ri]);
+        ca = rm.aunit.FindCAtom(label, residues[ri]);
         if (ca != 0) {
           break;
         }
