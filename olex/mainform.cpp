@@ -110,6 +110,50 @@
 #endif
 
 #include "refinement_listener.h"
+#include "ememstream.h"
+#include <atomic>
+#include <memory>
+#include <thread>
+
+namespace {
+  /* SaveVFS serializes on the caller and writes the file here: global.odb is
+  3.5 MB and run_skin flushes it on every structure load (25-50 ms per changed
+  flush on an A53 written inline, 22-26 ms on the main thread now). One write
+  at a time; SaveVFS, LoadVFS and exit wait for it. The worker touches only
+  its job: olxstr reference counts are not atomic and exceptions are not
+  logged (AutoLog is off) */
+  struct VFSJob {
+    TEMemoryStream data;
+    olxstr fn;
+    VFSJob(size_t segment) : data(segment) {}
+  };
+  struct VFSWriter {
+    std::thread t;
+    std::atomic<bool> failed;
+    VFSWriter() : failed(false) {}
+    ~VFSWriter() { Join(); }
+    void Join() {
+      if (t.joinable()) {
+        t.join();
+      }
+    }
+    void Start(VFSJob* job) {
+      Join();
+      t = std::thread([this, job]() {
+        try {
+          job->data.SaveToFile(job->fn + ".tmp");
+          if (!TEFile::Rename(job->fn + ".tmp", job->fn)) {
+            failed = true;
+          }
+        }
+        catch (...) {
+          failed = true;
+        }
+        delete job;
+      });
+    }
+  } vfs_writer;
+}
 
 #ifdef __GNUC__
   #undef Bool
@@ -349,6 +393,7 @@ bool TMainForm::Destroy() {
   tensor::tensor_rank_4::cleanup();
   SaveVFS(plGlobal);  // save virtual db to file
   SaveVFS(plStructure);
+  vfs_writer.Join();
   FXApp->OnObjectsDestroy.Remove(this);
   processMacro("onexit");
   {
@@ -4005,15 +4050,23 @@ void TMainForm::SaveVFS(short persistenceId) {
     // FlushFS runs several times per start (every plugin's setup_gui): skip
     // a file that would be rewritten byte-identical
     static olxstr_dict<uint64_t> saved;
+    if (vfs_writer.failed.exchange(false)) {
+      saved.Clear(); // the last write failed: rewrite whatever is asked next
+      TBasicApp::NewLogEntry(logInfo) << "Failed to save VFS";
+    }
     const uint64_t gen = TFileHandlerManager::Generation();
     const size_t si = saved.IndexOf(dbFN);
     if (si != InvalidIndex && saved.GetValue(si) == gen && TEFile::Exists(dbFN)) {
       return;
     }
-    TEFile dbf(dbFN + ".tmp", "wb");
-    TFileHandlerManager::SaveToStream(dbf, persistenceId);
-    dbf.Close();
-    TEFile::Rename(dbFN + ".tmp", dbFN);
+    vfs_writer.Join(); // the file is briefly missing while a write renames it
+    // one segment sized from the last save: default 1 KB segments cost
+    // thousands of mallocs, most of a 30 ms serialization on an A53
+    std::unique_ptr<VFSJob> job(new VFSJob(TEFile::Exists(dbFN)
+      ? (size_t)TEFile::FileLength(dbFN) + 65536 : DefBufferSize));
+    job->fn = olxstr(dbFN.raw_str(), dbFN.Length()); // own buffer
+    TFileHandlerManager::SaveToStream(job->data, persistenceId);
+    vfs_writer.Start(job.release());
     saved.Add(dbFN) = gen;
   }
   catch (const TExceptionBase &e) {
@@ -4040,6 +4093,7 @@ void TMainForm::LoadVFS(short persistenceId) {
         "undefined persistence level");
     }
 
+    vfs_writer.Join();
     if (!TEFile::Exists(dbFN)) {
       return;
     }
