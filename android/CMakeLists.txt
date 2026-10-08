@@ -143,6 +143,7 @@ endif ()
 if (OLX_QT EQUAL 5)
   configure_file(qt5/AndroidManifest.xml "${pkg}/AndroidManifest.xml" COPYONLY)
   configure_file(qt5/build.gradle "${pkg}/build.gradle" COPYONLY)
+  file(COPY qt5/src DESTINATION "${pkg}")
   # Qt 5.15.2's own wrapper is Gradle 5.6.4: Qt 6.11.1's (9.3.1) instead
   set(OLX_GRADLE_WRAPPER "C:/Qt/6.11.1/android_armv7/src/3rdparty/gradle" CACHE PATH
     "gradlew, gradlew.bat and gradle/wrapper of a Gradle that runs on JDK 17")

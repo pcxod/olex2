@@ -4,11 +4,13 @@
      Its own package name, so it installs next to the API 28+ APK. -->
 <manifest package="org.olex2.android.legacy" xmlns:android="http://schemas.android.com/apk/res/android" android:versionName="-- %%INSERT_VERSION_NAME%% --" android:versionCode="-- %%INSERT_VERSION_CODE%% --" android:installLocation="auto">
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- KeepAlive, see src/org/olex2/android -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <!-- %%INSERT_PERMISSIONS -->
     <uses-feature android:glEsVersion="0x00020000" android:required="true" />
     <!-- %%INSERT_FEATURES -->
     <supports-screens android:anyDensity="true" android:largeScreens="true" android:xlargeScreens="true" android:normalScreens="true" android:smallScreens="false"/>
-    <application android:hardwareAccelerated="true" android:name="org.qtproject.qt5.android.bindings.QtApplication" android:label="Olex2" android:icon="@mipmap/ic_launcher" android:extractNativeLibs="true" android:allowBackup="false">
+    <application android:hardwareAccelerated="true" android:name="org.olex2.android.OlexApplication" android:label="Olex2" android:icon="@mipmap/ic_launcher" android:extractNativeLibs="true" android:allowBackup="false">
         <activity android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density" android:name="org.qtproject.qt5.android.bindings.QtActivity" android:label="Olex2" android:screenOrientation="sensorLandscape" android:launchMode="singleTop" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -33,5 +35,6 @@
             <meta-data android:name="android.app.auto_screen_scale_factor" android:value="false"/>
             <meta-data android:name="android.app.extract_android_style" android:value="default"/>
         </activity>
+        <service android:name="org.olex2.android.KeepAlive" android:exported="false"/>
     </application>
 </manifest>
