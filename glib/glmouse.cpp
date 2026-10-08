@@ -21,6 +21,9 @@ TGlMouse::TGlMouse(TGlRenderer *Parent, TDFrame *Frame)
   FSX = FSY = 0;
   MData.GlMouse = this;
   InMode = FDblClick = false;
+#ifdef __ANDROID__
+  ViewBaked = false;
+#endif
   FParent = Parent;
   SetHandler(MouseEvtHandler::New(smbLeft, 0, smeMouseMove, meRotateXY));
   SetHandler(MouseEvtHandler::New(smbLeft, sssCtrl, smeMouseMove, meRotateZ));
@@ -122,6 +125,9 @@ bool TGlMouse::MouseUp(int x, int y, short Shift, short button) {
   }
   MData.Button &= ~button;
   MData.SetObject(0);
+#ifdef __ANDROID__
+  BakeView(false);
+#endif
   return res;
 }
 //..............................................................................
@@ -218,6 +224,9 @@ bool TGlMouse::MouseMove(int x, int y, short Shift)  {
     // default handlers...
     for (size_t i=0; i < Handlers.Count(); i++) {
       if (Handlers[i]->WillProcess(MData)) {
+#ifdef __ANDROID__
+        BakeView(true);  // the move handlers change only the view
+#endif
         Handlers[i]->Process(MData);
         res = true;
         break;
@@ -228,6 +237,15 @@ bool TGlMouse::MouseMove(int x, int y, short Shift)  {
   FSY = y;
   return res;
 }
+//..............................................................................
+#ifdef __ANDROID__
+void TGlMouse::BakeView(bool v) {
+  if (v != ViewBaked) {
+    ViewBaked = v;
+    FParent->Compile(v);
+  }
+}
+#endif
 //..............................................................................
 AMouseEvtHandler &TGlMouse::SetHandler(AMouseEvtHandler &eh) {
   bool found = false;

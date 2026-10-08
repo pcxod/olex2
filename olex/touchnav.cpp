@@ -24,10 +24,20 @@ void TTouchNav::Begin(const wxGestureEvent &e, int g) {
   }
   ActiveMask |= g;
   PendingUp = true;
+#ifdef __ANDROID__
+  if (Mouse != 0) {
+    Mouse->BakeView(true);
+  }
+#endif
 }
 //..............................................................................
 void TTouchNav::End(const wxGestureEvent &e, int g) {
   ActiveMask &= ~g;
+#ifdef __ANDROID__
+  if (ActiveMask == 0 && Mouse != 0) {
+    Mouse->BakeView(false);
+  }
+#endif
 }
 //..............................................................................
 bool TTouchNav::OnZoom(const wxZoomGestureEvent &e) {

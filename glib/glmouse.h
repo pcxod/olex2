@@ -168,6 +168,9 @@ protected:
     TranslationEnabled,
     ZoomingEnabled,
     InMode;
+#ifdef __ANDROID__
+  bool ViewBaked;
+#endif
   // to distinguish clicking on an object
   int ClickThreshold;
   void process_command_list(TStrObjList& Cmds, bool enable);
@@ -204,6 +207,12 @@ public:
   bool MoveView(double dx, double dy);
   bool RotateViewZ(double ddeg);
   bool ZoomView(double z);
+#ifdef __ANDROID__
+  /* true at the first view move of a drag, false at its end; in between the
+  renderer draws the model from one baked list (TGlRenderer::Compile)
+  */
+  void BakeView(bool v);
+#endif
   /* find objects group. If selected or the parent group is selected - the
   selection group is returned
   */

@@ -154,6 +154,9 @@ public:
     }
   }
   bool Orient(TGlPrimitive& P);
+#ifdef __ANDROID__
+  bool IsBakeable(const TGlPrimitive& P) const;
+#endif
   bool GetDimensions(vec3d& Max, vec3d& Min);
   virtual vec3d CalcCenter() const;
 
