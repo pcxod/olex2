@@ -447,6 +447,17 @@ void TXGrid::Create(const olxstr& cName) {
   glpN = &GPC.NewPrimitive("-Surface", sgloQuads);
   glpN->SetProperties(GS.GetMaterial("-Surface",
     TGlMaterial("85;1.000,0.000,0.000,0.850;3632300160;1.000,1.000,1.000,0.500;36")));
+  // shells cut open by the mask show their inside: give it a darker front
+  // colour instead of the black that a front-only material leaves there
+  for (TGlPrimitive* p : { glpP, glpN }) {
+    TGlMaterial m = p->GetProperties();
+    if ((m.GetFlags() & sglmAmbientB) == 0) {
+      m.AmbientB = m.AmbientF * 0.6f;
+      m.DiffuseB = m.DiffuseF * 0.6f;
+      m.SetFlags(m.GetFlags() | sglmAmbientB | sglmDiffuseB);
+      p->SetProperties(m);
+    }
+  }
 
   glpC = &GPC.NewPrimitive("Contour plane", sgloQuads);
   glpC->SetProperties(GS.GetMaterial("Contour plane",
@@ -889,6 +900,14 @@ void TXGrid::SetScale(float v) {
         vertices.Add(0).TakeOver(IS.VertexList());
         normals.Add(0).TakeOver(IS.NormalList());
         triangles.Add(0).TakeOver(IS.TriangleList());
+      }
+      // grid-index normals are covectors: to Cartesian by the inverse transpose
+      const mat3f c2c(XApp->XFile().GetAsymmUnit().GetCartesianToCell());
+      for (size_t li = 0; li < normals.Count(); li++) {
+        for (size_t i = 0; i < normals[li].Count(); i++) {
+          vec3f& n = normals[li][i];
+          n = (c2c * vec3f(n[0] * MaxX, n[1] * MaxY, n[2] * MaxZ)).Normalise();
+        }
       }
     }
     RescaleSurface(false);
