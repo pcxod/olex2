@@ -1065,6 +1065,10 @@ void TMainForm::XApp(Olex2App *XA)  {
 // statusbar initialisation
   StatusBar = CreateStatusBar();
   SetStatusText( wxT("Welcome to OLEX2!"));
+#ifdef __ANDROID__
+  // the base-dir line costs a row of screen; SetStatusText stays valid
+  StatusBar->Hide();
+#endif
 // toolbar initialisation
   ToolBar = NULL;
 //  ToolBar = CreateToolBar(wxTB_FLAT | wxTB_HORIZONTAL | wxTB_TEXT  , -1, "MainToolBar");
@@ -1394,7 +1398,13 @@ void TMainForm::StartupInit() {
   if (FGlCanvas != 0) {
     FGlCanvas->XApp(FXApp);
   }
+#ifdef __ANDROID__
+  // 10 pt reads as ~13 px glyphs on a 224 dpi tablet; only a fresh install
+  // sees this, an existing last.osp keeps its stored <Fonts>
+  wxFont Font(14, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+#else
   wxFont Font(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);//|wxFONTFLAG_ANTIALIASED);
+#endif
   TGlMaterial glm("2049;0.698,0.698,0.698,1.000");
   AGlScene& gls = FXApp->GetRenderer().GetScene();
   TGlFont &fnt_def = gls.CreateFont("Default", Font.GetNativeFontInfoDesc());
