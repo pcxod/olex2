@@ -55,12 +55,13 @@ ExplicitCAtomRef* ExplicitCAtomRef::NewInstance(const RefinementModel& rm,
     olxstr sm = exp.SubStringFrom(symm_ind+1);
     if (sm.CharAt(0) != '$') {
       size_t di = sm.IndexOf('$');
+      // the string overload: ToInt() of chain:number is not a number
       if (di != InvalidIndex) {
-        resi = rm.aunit.FindResidue(sm.SubStringTo(di).ToInt());
+        resi = rm.aunit.FindResidue(sm.SubStringTo(di));
         sm = sm.SubStringFrom(di);
       }
       else {
-        resi = rm.aunit.FindResidue(sm.ToInt());
+        resi = rm.aunit.FindResidue(sm);
         sm.SetLength(0);
       }
     }
@@ -315,7 +316,11 @@ AAtomRef* ImplicitCAtomRef::NewInstance(const RefinementModel& rm,
             if (di != InvalidIndex) {
               ri = ri.SubStringTo(di);
             }
-            if (!ri.IsNumber()) { //is explicit?
+            /* chain:number is a residue number too. Taken for a class, C_A:22
+            was later rewritten by Update() to C_SER - every SER of the chain,
+            pairing atoms of different residues in DFIX/DANG
+            */
+            if (!TResidue::IsValidNumber(ri)) { //is explicit?
               olx_object_ptr< ImplicitCAtomRef> rv = new ImplicitCAtomRef(exp);
               rv->InitRef(rm, resi, _resi);
               return rv.release();
@@ -431,7 +436,7 @@ void ImplicitCAtomRef::Update(const RefinementModel& rm) {
   else {
     olxstr rn = Name.SubStringFrom(idx + 1);
     Name = ref->GetAtom().GetLabel();
-    if (rn.IsNumber()) {
+    if (TResidue::IsValidNumber(rn)) {
       Name = ref->GetAtom().GetResiLabel();
     }
     else {
