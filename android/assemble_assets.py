@@ -149,6 +149,94 @@ PATCHES = [
         g.reshape(gridding)
         binned_chi_sq.append(g)
 """),
+    # CONF dihedrals (generate_all): python copies of the pair table and the sites instead of
+    # boost lookups in the 4-deep loop; ZP2 0.45 -> 0.19 s, sucrose 0.47 -> 0.21 s per refine on
+    # the tablet, every dihedral, rt_mx and su bitwise equal. Proposed for cctbx, carried here until then
+    ("cctbx/cctbx_sources/cctbx/crystal/__init__.py", """\
+    table = self.pair_asu_table.table()
+    for i_seq,i_asu_dict in enumerate(table):
+      rt_mx_i_inv = asu_mappings.get_rt_mx(i_seq, 0).inverse()
+      i_site_frac = self.sites_frac[i_seq]
+      for j_seq,j_sym_groups in i_asu_dict.items():
+        rt_mx_j0_inv = asu_mappings.get_rt_mx(j_seq, 0).inverse()
+        for j_sym_group in j_sym_groups:
+          for j_sym_idx,j_sym in enumerate(j_sym_group):
+            rt_mx_j = rt_mx_i_inv.multiply(asu_mappings.get_rt_mx(j_seq, j_sym))
+            j_site_frac = rt_mx_j * self.sites_frac[j_seq]
+            if j_site_frac == i_site_frac:
+              continue
+            for k_seq, k_sym_groups in table[j_seq].items():
+              if (self.conformer_indices is not None and
+                  self.conformer_indices[i_seq] !=
+                  self.conformer_indices[k_seq]):
+                continue
+              rt_mx_k0_inv = asu_mappings.get_rt_mx(k_seq, 0).inverse()
+              rt_mx_kj = rt_mx_j.multiply(rt_mx_j0_inv)
+              for k_sym_group in k_sym_groups:
+                for k_sym_idx,k_sym in enumerate(k_sym_group):
+                  rt_mx_k = rt_mx_kj.multiply(asu_mappings.get_rt_mx(k_seq, k_sym))
+                  k_site_frac = rt_mx_k *  self.sites_frac[k_seq]
+                  if k_site_frac in (i_site_frac, j_site_frac):
+                    continue
+                  if unit_cell.distance(j_site_frac, k_site_frac) > self.max_d:
+                    continue
+                  if unit_cell.angle(i_site_frac, j_site_frac, k_site_frac) > self.max_angle:
+                    continue
+                  rt_mx_lk = rt_mx_k.multiply(rt_mx_k0_inv)
+                  for l_seq, l_sym_groups in table[k_seq].items():
+                    if (self.conformer_indices is not None and
+                        self.conformer_indices[j_seq] !=
+                        self.conformer_indices[l_seq]):
+                      continue
+                    for l_sym_group in l_sym_groups:
+                      for l_sym_idx, l_sym in enumerate(l_sym_group):
+                        rt_mx_l = rt_mx_lk.multiply(asu_mappings.get_rt_mx(l_seq, l_sym))
+                        l_site_frac = rt_mx_l *  self.sites_frac[l_seq]
+""", """\
+    # python copies of the pair table and the sites: the loops below re-fetched them
+    # through boost on every pass (2.4x faster on an A53, same dihedrals bit for bit)
+    table = [[(j, [list(g) for g in groups]) for j, groups in d.items()]
+             for d in self.pair_asu_table.table()]
+    sites_frac = list(self.sites_frac)
+    for i_seq,i_asu_dict in enumerate(table):
+      rt_mx_i_inv = asu_mappings.get_rt_mx(i_seq, 0).inverse()
+      i_site_frac = sites_frac[i_seq]
+      for j_seq,j_sym_groups in i_asu_dict:
+        rt_mx_j0_inv = asu_mappings.get_rt_mx(j_seq, 0).inverse()
+        for j_sym_group in j_sym_groups:
+          for j_sym_idx,j_sym in enumerate(j_sym_group):
+            rt_mx_j = rt_mx_i_inv.multiply(asu_mappings.get_rt_mx(j_seq, j_sym))
+            j_site_frac = rt_mx_j * sites_frac[j_seq]
+            if j_site_frac == i_site_frac:
+              continue
+            for k_seq, k_sym_groups in table[j_seq]:
+              if (self.conformer_indices is not None and
+                  self.conformer_indices[i_seq] !=
+                  self.conformer_indices[k_seq]):
+                continue
+              rt_mx_k0_inv = asu_mappings.get_rt_mx(k_seq, 0).inverse()
+              rt_mx_kj = rt_mx_j.multiply(rt_mx_j0_inv)
+              for k_sym_group in k_sym_groups:
+                for k_sym_idx,k_sym in enumerate(k_sym_group):
+                  rt_mx_k = rt_mx_kj.multiply(asu_mappings.get_rt_mx(k_seq, k_sym))
+                  k_site_frac = rt_mx_k *  sites_frac[k_seq]
+                  if k_site_frac in (i_site_frac, j_site_frac):
+                    continue
+                  if unit_cell.distance(j_site_frac, k_site_frac) > self.max_d:
+                    continue
+                  if unit_cell.angle(i_site_frac, j_site_frac, k_site_frac) > self.max_angle:
+                    continue
+                  rt_mx_lk = rt_mx_k.multiply(rt_mx_k0_inv)
+                  for l_seq, l_sym_groups in table[k_seq]:
+                    if (self.conformer_indices is not None and
+                        self.conformer_indices[j_seq] !=
+                        self.conformer_indices[l_seq]):
+                      continue
+                    for l_sym_group in l_sym_groups:
+                      for l_sym_idx, l_sym in enumerate(l_sym_group):
+                        rt_mx_l = rt_mx_lk.multiply(asu_mappings.get_rt_mx(l_seq, l_sym))
+                        l_site_frac = rt_mx_l *  sites_frac[l_seq]
+"""),
 ]
 # tablet-sized GUI: layout patches to etc/gui and util/pyUtil
 PATCHES += runpy.run_path(str(pathlib.Path(__file__).with_name("gui_tablet_patches.py")))["PATCHES"]
