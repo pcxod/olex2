@@ -2384,6 +2384,11 @@ bool TMainForm::ProcessTab() {
 void TMainForm::OnChar(wxKeyEvent& m) {
   OnNonIdle();
   m.Skip(false);
+#ifdef __ANDROID__  // wxQt takes the char code from the key text, and Android's Enter text is '\n'
+  if (m.m_keyCode == '\n') {
+    m.m_keyCode = WXK_RETURN;
+  }
+#endif
   short Fl = 0;
   if (m.GetModifiers() & wxMOD_ALT) {
     Fl |= sssAlt;
