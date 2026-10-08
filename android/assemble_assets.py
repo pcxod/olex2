@@ -337,6 +337,26 @@ PATCHES = [
               if k_seq > j_seq: continue
               site_frac_k = sites_frac[k_seq]
 """),
+    # FLINT's assemble: each placement round re-searched every (placed, unplaced) pair over all
+    # ops x 27 shifts; a placed site never moves, so the pair answer is memoised. FLINT water
+    # 2680 -> <= 408 searches (4.0 s on the tablet), same sites. Proposed for cctbx, carried here until then
+    ("cctbx/cctbx_sources/smtbx/ab_initio/assemble.py", """\
+  max_gap = 0.0
+
+  while remaining:
+""", """\
+  max_gap = 0.0
+  seen = {}  # (i, j) -> _nearest_image: placed[i] never moves once set
+
+  while remaining:
+"""),
+    ("cctbx/cctbx_sources/smtbx/ab_initio/assemble.py", """\
+        d, site = _nearest_image(unit_cell, placed[i], moving, space_group)
+""", """\
+        if (i, j) not in seen:
+          seen[i, j] = _nearest_image(unit_cell, placed[i], moving, space_group)
+        d, site = seen[i, j]
+"""),
 ]
 # tablet-sized GUI: layout patches to etc/gui and util/pyUtil
 PATCHES += runpy.run_path(str(pathlib.Path(__file__).with_name("gui_tablet_patches.py")))["PATCHES"]
