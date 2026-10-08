@@ -379,6 +379,13 @@ ConstPtrList<TResidue> TAsymmUnit::FindResidues(const olxstr& resi, size_t max_n
       }
     }
   }
+  // chain:number, else it is looked up as a class and nothing is found
+  else if (TResidue::IsValidNumber(resi)) {
+    TResidue* r = FindResidue(resi);
+    if (r != 0) {
+      list.Add(r);
+    }
+  }
   else {
     if (resi == '*') {  //special case
       list.SetCapacity(Residues.Count() + 1);
