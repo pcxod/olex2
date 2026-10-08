@@ -19,6 +19,121 @@
 #include "olxstate.h"
 #include "eutf8.h"
 #include "wxzipfs.h"
+#ifdef __ANDROID__
+#include <QtCore/QPointer>
+#include <QtGui/QMouseEvent>
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QWidget>
+namespace {
+  /* Swipe scrolls an HTML panel. Qt turns a touch into mouse events, so a swipe
+  on the sidebar started a text selection or pressed the control under the
+  finger. A press inside a scrollable THtml is held back: past the drag distance
+  the panel follows the finger and the control never sees the press; a finger
+  lifted before that gets the press replayed and the release let through, so a
+  tap works as before. ponytail: no fling, steps of wxHTML_SCROLL_STEP (16 px).
+  */
+  class THtmlSwipe : public QObject {
+    QPointer<QObject> target;
+    THtml* html = nullptr;
+    QPointF lpos, wpos, gpos;
+    Qt::KeyboardModifiers mods;
+    int y0 = 0;
+    bool dragging = false, replaying = false;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    static QPointF LPos(const QMouseEvent* m) { return m->position(); }
+    static QPointF WPos(const QMouseEvent* m) { return m->scenePosition(); }
+    static QPointF GPos(const QMouseEvent* m) { return m->globalPosition(); }
+#else
+    static QPointF LPos(const QMouseEvent* m) { return m->localPos(); }
+    static QPointF WPos(const QMouseEvent* m) { return m->windowPos(); }
+    static QPointF GPos(const QMouseEvent* m) { return m->screenPos(); }
+#endif
+    static THtml* FindHtml(QObject* o) {
+      wxWindow* w = 0;
+      for (QObject* q = o; q != 0 && w == 0; q = q->parent()) {
+        if (q->isWidgetType()) {
+          w = static_cast<wxWindow*>(
+            wxWindow::QtRetrieveWindowPointer(static_cast<QWidget*>(q)));
+        }
+      }
+      for (; w != 0; w = w->GetParent()) {
+        THtml* h = dynamic_cast<THtml*>(w);
+        if (h != 0 && !h->IsMovable() &&
+          h->GetVirtualSize().y > h->GetClientSize().y)
+        {
+          return h;
+        }
+        if (w->IsTopLevel()) {
+          break;
+        }
+      }
+      return 0;
+    }
+  public:
+    bool eventFilter(QObject* o, QEvent* e) override {
+      if (replaying) {
+        return false;
+      }
+      QMouseEvent* m = static_cast<QMouseEvent*>(e);
+      switch (e->type()) {
+      case QEvent::MouseButtonPress: {
+        if (m->button() != Qt::LeftButton || !o->isWidgetType() ||
+          o->inherits("QAbstractSlider") || (html = FindHtml(o)) == 0)
+        {
+          return false;
+        }
+        target = o;
+        dragging = false;
+        lpos = LPos(m);  wpos = WPos(m);  gpos = GPos(m);
+        mods = m->modifiers();
+        int x, px, py;
+        html->GetViewStart(&x, &y0);
+        html->GetScrollPixelsPerUnit(&px, &py);
+        y0 *= py;
+        return true;
+      }
+      case QEvent::MouseMove: {
+        if (target.isNull() || o != target) {
+          return false;
+        }
+        QPointF d = GPos(m) - gpos;
+        if (!dragging) {
+          if (d.manhattanLength() < QApplication::startDragDistance()) {
+            return true;
+          }
+          dragging = true;
+        }
+        int px, py;
+        html->GetScrollPixelsPerUnit(&px, &py);
+        if (py > 0) {
+          html->Scroll(-1, (y0 - qRound(d.y()) + py / 2) / py);
+        }
+        return true;
+      }
+      case QEvent::MouseButtonRelease: {
+        if (target.isNull() || o != target) {
+          return false;
+        }
+        QPointer<QObject> t = target;
+        target = 0;
+        if (dragging) {
+          return true;
+        }
+        QMouseEvent p(QEvent::MouseButtonPress, lpos, wpos, gpos,
+          Qt::LeftButton, Qt::LeftButton, mods);
+        replaying = true;
+        QCoreApplication::sendEvent(t, &p);
+        replaying = false;
+        // the press may have destroyed the control; never hand Qt a dead one
+        return t.isNull();
+      }
+      default:
+        return false;
+      }
+    }
+  };
+}
+#endif
 //.............................................................................
 THtml::THtml(THtmlManager &manager, wxWindow *Parent,
   const olxstr &pop_name, int flags)
@@ -55,6 +170,12 @@ THtml::THtml(THtmlManager &manager, wxWindow *Parent,
   Bind(wxEVT_CHAR, &THtml::OnChar, this);
   Bind(wxEVT_SIZE, &THtml::OnSizeEvt, this);
   Bind(wxEVT_TEXT_COPY, &THtml::OnClipboard, this);
+#ifdef __ANDROID__
+  static THtmlSwipe* swipe = 0;
+  if (swipe == 0) {
+    qApp->installEventFilter(swipe = new THtmlSwipe);
+  }
+#endif
 }
 //.............................................................................
 THtml::~THtml() {
