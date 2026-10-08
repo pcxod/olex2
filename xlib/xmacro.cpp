@@ -5377,6 +5377,19 @@ int32_t ShelXl_checksum(const olxstr &text) {
   return sum;
 }
 
+// a cached loop's rendered rows standing in for one cell (CifMerge_EmbeddData)
+struct cetRenderedRows : public cif_dp::ICifEntry {
+  olx_object_ptr<TStrList> rows;  // shared with the cache, never modified
+  cetRenderedRows(const olx_object_ptr<TStrList>& r) : rows(r) {}
+  virtual void ToStrings(TStrList& list) const {
+    if (rows.ok()) {
+      list.AddAll(*rows);
+    }
+  }
+  virtual ICifEntry* Replicate() const { return new cetRenderedRows(*this); }
+  virtual olxstr GetStringValue() const { return EmptyString(); }
+};
+
 void CifMerge_EmbeddData(TCif &Cif, bool insert_res, bool insert_hkl,
   bool insert_fab, bool hkl_fcf_format)
 {
@@ -5419,26 +5432,61 @@ void CifMerge_EmbeddData(TCif &Cif, bool insert_res, bool insert_hkl,
   if (insert_hkl) {
     olxstr hkl_src = xapp.XFile().LocateHklFile();
     if (TEFile::Exists(hkl_src)) {
-      THklFile hkl;
-      hkl.LoadFromFile(hkl_src, false);
-      cetTable* t;
-      if (hkl_fcf_format) {
-        Cif.Remove("_refln");
-        t = THklFile::ExperimentalToFCF(hkl.RefList(), Cif);
+      /* The loop is rendered once and kept while the hkl content is the same:
+      later merges skip parsing the file and building and freeing ~5 cells per
+      reflection (~1 s for 37k reflections on an A53). Only into a temporary
+      TCif - a loaded CIF keeps real rows for anything that reads them.
+      ponytail: the last hkl only, one copy of its loop text in memory.
+      */
+      static olxstr cache_key;
+      static TStrList cache_cols;
+      static olx_object_ptr<TStrList> cache_rows;
+      const bool cacheable = !use_md5 && !xapp.CheckFileType<TCif>();
+      olxstr key;
+      if (cacheable) {
+        TEFile hf(hkl_src, "rb");
+        key << MD5::Digest(hf) << hkl_fcf_format;
+      }
+      Cif.Remove(hkl_fcf_format ? "_refln" : "_diffrn_refln");
+      if (!cacheable || key != cache_key) {
+        THklFile hkl;
+        hkl.LoadFromFile(hkl_src, false);
+        cetTable* t = hkl_fcf_format
+          ? THklFile::ExperimentalToFCF(hkl.RefList(), Cif)
+          : THklFile::ExperimentalToCIF(hkl.RefList(), Cif);
+        if (use_md5) {
+          olxstr_buf bf;
+          for (size_t i = 0; i < t->RowCount(); i++) {
+            for (size_t j = 0; j < t->ColCount(); j++) {
+              bf << (*t)[i][j]->GetStringValue();
+            }
+          }
+          Cif.SetParam("_olex2_hkl_file_MD5",
+            MD5::Digest(olxcstr(olxstr(bf).DeleteChars(' '))), false);
+        }
+        if (cacheable && t != 0) {
+          cache_rows = new TStrList;
+          for (size_t i = 0; i < t->RowCount(); i++) {
+            olx_object_ptr<TStrList> rc = t->RowContent(i);
+            if (rc.ok()) {
+              cache_rows->AddAll(*rc);
+            }
+          }
+          cache_cols.Clear();
+          for (size_t i = 0; i < t->ColCount(); i++) {
+            cache_cols.Add(t->ColName(i));
+          }
+          cache_key = key;
+        }
       }
       else {
-        Cif.Remove("_diffrn_refln");
-        t = THklFile::ExperimentalToCIF(hkl.RefList(), Cif);
-      }
-      if (use_md5) {
-        olxstr_buf bf;
-        for (size_t i = 0; i < t->RowCount(); i++) {
-          for (size_t j = 0; j < t->ColCount(); j++) {
-            bf << (*t)[i][j]->GetStringValue();
-          }
+        // one row whose first cell emits all the rows keeps it a cetTable,
+        // which the _diffrn_refln# sort pivot needs, and the text identical
+        CifRow& r = Cif.AddLoopDef(olxstr(',').Join(cache_cols), true).AddRow();
+        r[0] = new cetRenderedRows(cache_rows);
+        for (size_t i = 1; i < r.Count(); i++) {
+          r[i] = new cetRenderedRows(olx_object_ptr<TStrList>());
         }
-        Cif.SetParam("_olex2_hkl_file_MD5",
-          MD5::Digest(olxcstr(olxstr(bf).DeleteChars(' '))), false);
       }
     }
   }
