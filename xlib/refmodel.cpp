@@ -26,6 +26,8 @@
 #include "vcov.h"
 #include "olxvar.h"
 #include "absorpc.h"
+#include <algorithm>
+#include <vector>
 
 
 RefinementModel::RefinementModel(TAsymmUnit& au) :
@@ -2717,27 +2719,26 @@ double RefinementModel::CalcCompletenessTo2Theta(double tt, bool Laue) {
   else {
     refs.AddAll(refs_);
   }
-  for (size_t i = 0; i < refs.Count(); i++) {
-    refs[i]->Standardise(info_ex);
-  }
   if (refs.IsEmpty()) {
     completeness_cache.Add(key, 0);
     return 0;
   }
-  QuickSorter::SortSF(refs, &TReflection::Compare);
+  // only the distinct standardised indices count: sorting plain indices is
+  // several times faster than sorting reflection pointers
+  std::vector<vec3i> uniq(refs.Count());
+  for (size_t i = 0; i < refs.Count(); i++) {
+    uniq[i] = TReflection::Standardise(refs[i]->GetHkl(), info_ex);
+  }
+  std::sort(uniq.begin(), uniq.end(), [](const vec3i& a, const vec3i& b) {
+    return a[2] != b[2] ? a[2] < b[2] : (a[1] != b[1] ? a[1] < b[1] : a[0] < b[0]);
+  });
+  uniq.erase(std::unique(uniq.begin(), uniq.end()), uniq.end());
   size_t u_cnt = 0;
-  for (size_t i=0; i < refs.Count(); i++) {
-    TReflection &r = *refs[i];
-    bool skip = omits.Contains(r.GetHkl());
-    while (++i < refs.Count() && r.CompareTo(*refs[i]) == 0) {
-      ;
-    }
-    i--;
-    if (skip || r.IsAbsent()) {
+  for (size_t i = 0; i < uniq.size(); i++) {
+    if (omits.Contains(uniq[i]) || TReflection::IsAbsent(uniq[i], info_ex)) {
       continue;
     }
-    double qd = r.ToCart(h2c).QLength();
-    if (qd <= min_ds_sq) {
+    if (TReflection::ToCart(uniq[i], h2c).QLength() <= min_ds_sq) {
       u_cnt++;
     }
   }
@@ -2751,17 +2752,17 @@ double RefinementModel::CalcCompletenessTo2Theta(double tt, bool Laue) {
           continue;
         }
         vec3i hkl(h,k,l);
-        vec3i shkl = TReflection::Standardise(hkl, info_ex);
-        if (shkl != hkl) {
+        // the box is about twice the sphere: test the cheap condition first
+        if (TReflection::ToCart(hkl, h2c).QLength() > min_ds_sq) {
+          continue;
+        }
+        if (TReflection::Standardise(hkl, info_ex) != hkl) {
           continue;
         }
         if (TReflection::IsAbsent(hkl, info_ex)) {
           continue;
         }
-        double qd = TReflection::ToCart(hkl, h2c).QLength();
-        if (qd <= min_ds_sq) {
-          e_cnt++;
-        }
+        e_cnt++;
       }
     }
   }
