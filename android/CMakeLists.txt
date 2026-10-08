@@ -81,6 +81,10 @@ target_link_libraries(olex2 PRIVATE ${_olx_unwind}
   ${_olx_qt_libs} android log)
 # keep gl4es's gl* symbols inside libolex2: Qt's own GLES calls must not bind to them
 target_link_options(olex2 PRIVATE "LINKER:--exclude-libs,ALL")
+# 3606 of the 5392 PLT slots (armv7) were calls to libolex2's own functions;
+# nothing loaded ahead of it defines any of them, so binding them locally only
+# turns indirect calls into direct ones
+target_link_options(olex2 PRIVATE "LINKER:-Bsymbolic-functions")
 # stripped here: build.gradle keeps gradle's llvm-strip off every .so, because
 # it breaks the patchelf'ed payload libs (segment offsets lose their alignment)
 # OLX_SYMTAB keeps .symtab (no DWARF) so simpleperf can name the static gl4es code
