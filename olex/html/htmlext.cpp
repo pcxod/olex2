@@ -24,6 +24,7 @@
 #include <QtGui/QMouseEvent>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QWidget>
+#include <algorithm>
 namespace {
   /* Swipe scrolls an HTML panel. Qt turns a touch into mouse events, so a swipe
   on the sidebar started a text selection or pressed the control under the
@@ -132,6 +133,50 @@ namespace {
       }
     }
   };
+
+  void CollectWindows(const wxHtmlCell *c, std::vector<wxWindow*> &l) {
+    for (; c != 0; c = c->GetNext()) {
+      const THtmlWidgetCell *w = dynamic_cast<const THtmlWidgetCell*>(c);
+      if (w != 0) {
+        l.push_back(w->GetWindow());
+      }
+      CollectWindows(c->GetFirstChild(), l);
+    }
+  }
+}
+//.............................................................................
+void THtml::StashPage() {
+  PageCache *c = new PageCache;
+  c->text = PageText;
+  c->width = PageWidth;
+  c->cell = m_Cell;
+  c->bg = GetBackgroundColour();
+  c->objects.TakeOver(Objects);
+  CollectWindows(m_Cell, c->windows);
+  std::sort(c->windows.begin(), c->windows.end());
+  for (size_t i = 0; i < c->windows.size(); i++) {
+    c->windows[i]->Hide();
+  }
+  // DoSetPage must not delete it, and the selection points into it
+  m_Cell = 0;
+  wxDELETE(m_selection);
+  PageCaches.push_back(c);
+  if (PageCaches.size() > 6) {
+    delete PageCaches[0]->cell; // destroys its controls
+    delete PageCaches[0];
+    PageCaches.erase(PageCaches.begin());
+  }
+}
+//.............................................................................
+bool THtml::IsCachedWindow(wxWindow *w) const {
+  for (size_t i = 0; i < PageCaches.size(); i++) {
+    if (std::binary_search(PageCaches[i]->windows.begin(),
+      PageCaches[i]->windows.end(), w))
+    {
+      return true;
+    }
+  }
+  return false;
 }
 #endif
 //.............................................................................
@@ -175,10 +220,17 @@ THtml::THtml(THtmlManager &manager, wxWindow *Parent,
   if (swipe == 0) {
     qApp->installEventFilter(swipe = new THtmlSwipe);
   }
+  PageWidth = -1;
 #endif
 }
 //.............................................................................
 THtml::~THtml() {
+#ifdef __ANDROID__
+  for (size_t i = 0; i < PageCaches.size(); i++) {
+    delete PageCaches[i]->cell;
+    delete PageCaches[i];
+  }
+#endif
   delete Root;
   ClearSwitchStates();
 }
@@ -429,15 +481,52 @@ bool THtml::UpdatePage(bool update_indices) {
   Root->ToStrings(Res, false);
   sw.start("Saving object states");
   ObjectsState.SaveState();
+#ifdef __ANDROID__
+  olxstr page = Res.Text(' ');
+  const int width = GetClientSize().GetWidth();
+  PageCache *hit = 0;
+  if (m_Cell != 0 && (width != PageWidth || !page.Equals(PageText))) {
+    for (size_t i = 0; i < PageCaches.size(); i++) {
+      if (PageCaches[i]->width == width && PageCaches[i]->text.Equals(page)) {
+        hit = PageCaches[i];
+        PageCaches.erase(PageCaches.begin() + i);
+        break;
+      }
+    }
+    StashPage();
+  }
+  PageText = page;
+  PageWidth = width;
+  if (hit != 0) {
+    sw.start("Restoring a cached page");
+    m_Cell = hit->cell;
+    Objects.TakeOver(hit->objects);
+    SetBackgroundColour(hit->bg);
+    delete hit;
+    CreateLayout();
+    Refresh();
+  }
+  else {
+    Objects.Clear();
+    sw.start("Setting the page");
+    SetPage(page.u_str());
+  }
+#else
   Objects.Clear();
   sw.start("Setting the page");
   SetPage(Res.Text(' ').u_str());
+#endif
   sw.start("Restoring object states");
   ObjectsState.RestoreState();
   sw.start("Loading inner html objects");
   wxWindowList &wil = GetChildren();
   TPtrList<THtml> htmls;
   for (size_t i = 0; i < wil.size(); i++) {
+#ifdef __ANDROID__
+    if (IsCachedWindow(wil[i])) {
+      continue;
+    }
+#endif
     if (olx_is<THtml>(*wil[i])) {
       THtml * ht = (THtml*)wil[i];
       ht->LoadPage(ht->GetHomePage().u_str());
@@ -493,6 +582,11 @@ bool THtml::UpdatePage(bool update_indices) {
   //this->m_Cell->DrawInvisible(dc, 0, 0, r_info);
   sw.start("Finsihing...");
   for (size_t i = 0; i < wil.size(); i++) {
+#ifdef __ANDROID__
+    if (IsCachedWindow(wil[i])) {
+      continue;
+    }
+#endif
     wil[i]->Show();
   }
   Thaw();

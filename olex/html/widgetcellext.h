@@ -39,6 +39,7 @@ public:
   ~THtmlWidgetCell() {}
 
   int GetFloatY() const { return float_y;  }
+  wxWindow *GetWindow() const { return m_Wnd; }
   // implemented in imagecellext.cpp ...
   void SetHeight(int h);
 
