@@ -211,6 +211,12 @@ int main(int argc, char **argv) {
   // the GUI thread only polls meanwhile
   setenv("SMTBX_SOLVE_THREADS",
     std::to_string(sysconf(_SC_NPROCESSORS_CONF)).c_str(), 0);
+  // Samsung's hotplug keeps cores 4-7 offline at idle, so Python's
+  // cpu_count() (online cores) says 4 on the 8-core tablet and the
+  // NoSpherA2 CPU list and refinement thread defaults follow it.
+  // Python 3.13 reads this at start-up instead
+  setenv("PYTHON_CPU_COUNT",
+    std::to_string(sysconf(_SC_NPROCESSORS_CONF)).c_str(), 0);
   /* NoSpherA2 is a PIE executable packaged as libNoSpherA2.so so that it is
   installed executable; files under filesDir cannot be exec'd (W^X, API 29+).
   NoSpherA2.py finds <basedir>/NoSpherA2 and its basis_sets and occ/share
