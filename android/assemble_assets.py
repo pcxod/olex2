@@ -357,6 +357,71 @@ PATCHES = [
           seen[i, j] = _nearest_image(unit_cell, placed[i], moving, space_group)
         d, site = seen[i, j]
 """),
+    # FLINT's space-group shortlist: solve_in per candidate ran one after another, each with
+    # only 4 trials, so half of the 8 cores idled (9.95 s of 15.5 s on water). The solves now
+    # run concurrently; R1 stays in rank order on the calling thread, so split_free's global
+    # RNG draws are the serial ones. Proposed for cctbx, carried here until then
+    ("cctbx/cctbx_sources/smtbx/ab_initio/composite.py", """\
+  entries = []
+  for rank, s in enumerate(suggestions[:N_SHORTLIST]):
+    info = s.space_group_info
+    entry = dict(space_group_info=info, rank=rank, placed=None, r1=None)
+    try:
+      # the trials already solved in f_obs's own group: that is this candidate
+      if f_calc_in_start is not None and info.group() == f_obs.space_group():
+        entry["placed"] = f_calc_in_start
+      else:
+        entry["placed"] = ab_initio_solve.solve_in(
+          f_obs, info, f_calc_in_p1=f_calc_in_p1, out=out,
+          n_threads=n_threads)
+    except Exception:
+      entry["placed"] = None
+    if entry["placed"] is not None:
+      entry["r1"] = refined_r1(f_obs, info, entry["placed"], n_heavy)
+    entries.append(entry)
+  return rank_fusion(entries, weight=weight)
+""", """\
+  shortlist = suggestions[:N_SHORTLIST]
+
+  def placed_in(info, out):
+    try:
+      # the trials already solved in f_obs's own group: that is this candidate
+      if f_calc_in_start is not None and info.group() == f_obs.space_group():
+        return f_calc_in_start
+      return ab_initio_solve.solve_in(
+        f_obs, info, f_calc_in_p1=f_calc_in_p1, out=out,
+        n_threads=n_threads)
+    except Exception:
+      return None
+
+  # The candidates solve concurrently: a solve_in runs only 4 trials, which
+  # left half of an 8-core machine idle, and multi_trial's answer does not
+  # depend on its threading. R1 stays on this thread in rank order, because
+  # split_free reseeds and draws from the global flex generator: the draws,
+  # and the state left behind, are the serial ones.
+  # ponytail: each solve gets all n_threads; only the 16-trial fallback
+  # oversubscribes, split n_threads per candidate if that ever matters
+  jobs = None
+  if n_threads > 1 and len(shortlist) > 1:
+    from concurrent.futures import ThreadPoolExecutor
+    bufs = [StringIO() for _ in shortlist]
+    pool = ThreadPoolExecutor(len(shortlist))
+    jobs = [pool.submit(placed_in, s.space_group_info, b)
+            for s, b in zip(shortlist, bufs)]
+  entries = []
+  for rank, s in enumerate(shortlist):
+    info = s.space_group_info
+    entry = dict(space_group_info=info, rank=rank, placed=None, r1=None)
+    entry["placed"] = jobs[rank].result() if jobs else placed_in(info, out)
+    if entry["placed"] is not None:
+      entry["r1"] = refined_r1(f_obs, info, entry["placed"], n_heavy)
+    entries.append(entry)
+  if jobs:
+    pool.shutdown()
+    for b in bufs:  # each candidate's log whole, in rank order
+      out.write(b.getvalue())
+  return rank_fusion(entries, weight=weight)
+"""),
 ]
 # tablet-sized GUI: layout patches to etc/gui and util/pyUtil
 PATCHES += runpy.run_path(str(pathlib.Path(__file__).with_name("gui_tablet_patches.py")))["PATCHES"]
