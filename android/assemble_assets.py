@@ -51,10 +51,6 @@ PATCHES = [
      "  try: content = mtz.object(file_name=file_name)\n  except RuntimeError: pass\n",
      "  try: content = mtz.object(file_name=file_name)\n"
      "  except (RuntimeError, AttributeError): pass\n"),
-    # AC7 is closed bytecode and refused above: start without it
-    ("util/pyUtil/initpy_funcs.py",
-     'if "bad magic number" not in str(err):',
-     'if "bad magic number" not in str(err) and err.name != "AC7":'),
     # Exynos 7870 tablet: threaded normal-equation builds pay off from ~10x
     # less work than desktop (ZP2 5404x340: build 0.83 -> 0.24 s, Flack
     # 2.55 -> 0.77 s; never slower on small cells), so lower both thresholds
