@@ -144,8 +144,9 @@ if (OLX_QT EQUAL 5)
   configure_file(qt5/AndroidManifest.xml "${pkg}/AndroidManifest.xml" COPYONLY)
   configure_file(qt5/build.gradle "${pkg}/build.gradle" COPYONLY)
   file(COPY qt5/src DESTINATION "${pkg}")
-  # Qt 5.15.2's own wrapper is Gradle 5.6.4: Qt 6.11.1's (9.3.1) instead
-  set(OLX_GRADLE_WRAPPER "C:/Qt/6.11.1/android_armv7/src/3rdparty/gradle" CACHE PATH
+  # Qt 5.15.2's own wrapper is Gradle 5.6.4: Qt 6.11.1's (9.3.1) instead, kept outside C:/Qt since the
+  # 6.12.0 update removed 6.11.1 (9 Oct 2026; 6.12.0 ships 9.5.1)
+  set(OLX_GRADLE_WRAPPER "D:/Android/gradle-wrapper-9.3.1" CACHE PATH
     "gradlew, gradlew.bat and gradle/wrapper of a Gradle that runs on JDK 17")
   file(COPY "${OLX_GRADLE_WRAPPER}/gradlew" "${OLX_GRADLE_WRAPPER}/gradlew.bat"
     "${OLX_GRADLE_WRAPPER}/gradle" DESTINATION "${pkg}")
