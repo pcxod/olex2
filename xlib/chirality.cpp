@@ -169,6 +169,10 @@ struct CIPCompare {
   TSymmNodeRegistry& registry;
   vec3d root_crd;
   double MaxCIPRadiusSq; // cut-off limit
+  /* sibling ranking nests once per sphere, bounded only by the atoms within the
+  cut-off - hundreds in 3D frameworks at ~1.5 kB of stack each; deeper pairs tie
+  */
+  static const int MaxCIPLevel = 64;
   olxstr_buf* bf;
   mutable olxdict<BigId, int, TComparableComparator> order;
 
@@ -283,6 +287,9 @@ struct CIPCompare {
   int CompareOne(const CIPElem& ea, int sideA, const CIPElem& eb, int sideB, int level) const {
     if (ea.type->z != eb.type->z) {
       return olx_cmp(ea.type->z, eb.type->z);
+    }
+    if (level > MaxCIPLevel) {
+      return 0;
     }
     typedef olx_pair_t<CIPElem, CIPElem> Pair;
     TQueue<Pair> queue;
