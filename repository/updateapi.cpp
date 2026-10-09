@@ -481,6 +481,7 @@ olx_object_ptr<AFileSystem> UpdateAPI::FSFromString(const olxstr& _repo,
         }
         FS = _fs;
       }
+#if defined(__WIN32__) || defined(_OPENSSL)  // no TLS client otherwise
       else if (url.GetProtocol() == "https") {
 #ifdef __WIN32__
         TWinHttpFileSystem* _fs = new TWinHttpFileSystem(url);
@@ -498,6 +499,7 @@ olx_object_ptr<AFileSystem> UpdateAPI::FSFromString(const olxstr& _repo,
         }
         FS = _fs;
     }
+#endif
 #ifdef __WXWIDGETS__
       else if (url.GetProtocol() == "ftp") {
         FS = new TwxFtpFileSystem(url);

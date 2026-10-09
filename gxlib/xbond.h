@@ -51,6 +51,12 @@ public:
   double GetRadius() const {  return FParams[4]; }
 
   bool Orient(TGlPrimitive& P);
+#ifdef __ANDROID__
+  // 14-17 are offset in the view plane
+  bool IsBakeable(const TGlPrimitive& P) const {
+    return P.GetOwnerId() < 14 || P.GetOwnerId() > 17;
+  }
+#endif
   bool GetDimensions(vec3d &, vec3d &)  {  return false; }
   virtual vec3d CalcCenter() const;
 

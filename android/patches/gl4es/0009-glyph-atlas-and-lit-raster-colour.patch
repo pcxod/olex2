@@ -1,0 +1,358 @@
+diff --git a/src/gl/raster.c b/src/gl/raster.c
+--- a/src/gl/raster.c
++++ b/src/gl/raster.c
+@@ -16,6 +16,47 @@
+ #define min(a, b)	((a)<b)?(a):(b)
+ #define max(a, b)	((a)>(b))?(a):(b)
+ 
++// The current raster colour is latched at glRasterPos, lit when GL_LIGHTING
++// is on (GL 1.x 2.13); glBitmap used whatever glColor was left over, and
++// Olex2 sets its font colours as materials, so text took a random colour.
++// ponytail: front face, no specular/attenuation/spot terms.
++static GLfloat raster_color[4] = {1.f, 1.f, 1.f, 1.f};
++static void raster_latch_color(const GLfloat *modelview, const GLfloat *eye) {
++	if (!glstate->enable.lighting) { memcpy(raster_color, glstate->color, 4*sizeof(GLfloat)); return; }
++	const material_t *m = &glstate->material.front;
++	const GLfloat *amb = m->ambient, *dif = m->diffuse;
++	if (glstate->enable.color_material) {
++		if (m->colormat==GL_AMBIENT || m->colormat==GL_AMBIENT_AND_DIFFUSE) amb = glstate->color;
++		if (m->colormat==GL_DIFFUSE || m->colormat==GL_AMBIENT_AND_DIFFUSE) dif = glstate->color;
++	}
++	GLfloat n[3], nn = 0.f;
++	for (int r=0; r<3; r++) {
++		n[r] = 0.f;
++		for (int k=0; k<3; k++) n[r] += modelview[r*4+k]*glstate->normal[k];
++		nn += n[r]*n[r];
++	}
++	nn = nn>0.f ? 1.f/sqrtf(nn) : 0.f;
++	for (int k=0; k<3; k++) {
++		GLfloat c = m->emission[k] + amb[k]*glstate->light.ambient[k];
++		raster_color[k] = c;
++	}
++	for (int i=0; i<MAX_LIGHT; i++) {
++		if (!glstate->enable.light[i]) continue;
++		const light_t *l = &glstate->light.lights[i];
++		GLfloat L[3], ll = 0.f, d = 0.f;
++		for (int k=0; k<3; k++) {
++			L[k] = l->position[k] - (l->position[3]!=0.f ? eye[k] : 0.f);
++			ll += L[k]*L[k];
++		}
++		ll = ll>0.f ? 1.f/sqrtf(ll) : 0.f;
++		for (int k=0; k<3; k++) d += n[k]*nn*L[k]*ll;
++		if (d < 0.f) d = 0.f;
++		for (int k=0; k<3; k++) raster_color[k] += amb[k]*l->ambient[k] + d*dif[k]*l->diffuse[k];
++	}
++	for (int k=0; k<3; k++) raster_color[k] = raster_color[k]>1.f ? 1.f : raster_color[k]<0.f ? 0.f : raster_color[k];
++	raster_color[3] = dif[3];
++}
++
+ void APIENTRY_GL4ES gl4es_glRasterPos3f(GLfloat x, GLfloat y, GLfloat z) {
+     if (glstate->list.active)
+         if (glstate->list.compiling) {
+@@ -40,6 +81,7 @@ void APIENTRY_GL4ES gl4es_glRasterPos3f(GLfloat x, GLfloat y, GLfloat z) {
+     glstate->raster.rPos.x = transl[0]*w2+w2;
+     glstate->raster.rPos.y = transl[1]*h2+h2;
+     glstate->raster.rPos.z = transl[2];
++    raster_latch_color(modelview, t);
+ }
+ #if !defined(NO_EGL) && !defined(NOX11)
+ void refreshMainFBO();
+@@ -55,7 +97,8 @@ void APIENTRY_GL4ES gl4es_glWindowPos3f(GLfloat x, GLfloat y, GLfloat z) {
+ 
+     glstate->raster.rPos.x = x;
+     glstate->raster.rPos.y = y;
+-    glstate->raster.rPos.z = z;	
++    glstate->raster.rPos.z = z;
++    memcpy(raster_color, glstate->color, 4*sizeof(GLfloat));
+ }
+ 
+ void APIENTRY_GL4ES gl4es_glViewport(GLint x, GLint y, GLsizei width, GLsizei height) {
+@@ -285,9 +328,166 @@ void raster_to_texture(rasterlist_t *r)
+ 	glstate->list.compiling = compiling;
+ }
+ 
++// Glyph atlas: glBitmap text (zoom 1, no pixel transfer, GLES2) is cached
++// once per distinct bitmap in a 512x512 texture and queued as one quad per
++// glyph; bitmap_flush draws the queue in a single call. The CPU path
++// rasterised every glyph into a viewport-sized buffer and uploaded its dirty
++// rect each frame, and console + legend made that rect most of the screen.
++// ponytail: one atlas for the process (single context); full -> flush + reset.
++#define ATLAS 512
++#define ATLAS_SLOTS 4096
++typedef struct { int w, h, ax, ay; GLubyte *bits; } glyph_t;
++typedef struct { GLfloat x, y, u, v; GLubyte c[4]; } glyphvtx_t;
++static glyph_t atlas_glyph[ATLAS_SLOTS];
++static int atlas_n, atlas_x, atlas_y, atlas_shelf, atlas_dirty0 = ATLAS, atlas_dirty1;
++static GLubyte *atlas_pix;	// RGBA mirror, uploaded by row band at flush
++static GLuint atlas_tex;
++static glyphvtx_t *glyph_vtx;
++static int glyph_nvtx, glyph_capvtx, bm_cpu;	// bm_cpu: CPU dirty rect in use
++
++static void atlas_reset() {
++	for (int i=0; i<ATLAS_SLOTS; i++) { free(atlas_glyph[i].bits); atlas_glyph[i].bits = NULL; }
++	atlas_n = atlas_x = atlas_y = atlas_shelf = 0;
++	memset(atlas_pix, 0, ATLAS*ATLAS*4);
++	atlas_dirty0 = 0; atlas_dirty1 = ATLAS;
++}
++
++// atlas slot of this bitmap, added if new; NULL when the atlas is full
++static glyph_t *atlas_get(int w, int h, const GLubyte *bitmap) {
++	int sz = ((w+7)/8)*h;
++	unsigned hs = 2166136261u;
++	hs = (hs^w)*16777619u; hs = (hs^h)*16777619u;
++	for (int i=0; i<sz; i++) hs = (hs^bitmap[i])*16777619u;
++	int i = hs & (ATLAS_SLOTS-1);
++	for (glyph_t *g; (g = &atlas_glyph[i])->bits; i = (i+1) & (ATLAS_SLOTS-1))
++		if (g->w==w && g->h==h && !memcmp(g->bits, bitmap, sz)) return g;
++	if (atlas_n >= ATLAS_SLOTS*3/4) return NULL;
++	if (atlas_x+w > ATLAS) { atlas_y += atlas_shelf+1; atlas_x = 0; atlas_shelf = 0; }
++	if (atlas_y+h > ATLAS) return NULL;
++	glyph_t *g = &atlas_glyph[i];
++	g->w = w; g->h = h; g->ax = atlas_x; g->ay = atlas_y;
++	g->bits = (GLubyte*)malloc(sz);
++	memcpy(g->bits, bitmap, sz);
++	for (int y=0; y<h; y++)
++		for (int x=0; x<w; x++)
++			if (bitmap[y*((w+7)/8)+x/8] & (1<<(7-x%8)))
++				memset(atlas_pix+4*(g->ax+x+(g->ay+y)*ATLAS), 255, 4);
++	atlas_dirty0 = min(atlas_dirty0, g->ay);
++	atlas_dirty1 = max(atlas_dirty1, g->ay+h);
++	atlas_x += w+1;
++	if (h > atlas_shelf) atlas_shelf = h;
++	atlas_n++;
++	return g;
++}
++
++// 1 when glBitmap could queue the glyph instead of rasterising it
++static int bitmap_atlas(GLsizei w, GLsizei h, GLfloat xorig, GLfloat yorig, const GLubyte *bitmap) {
++	if (hardext.esversion<2 || w>ATLAS || h>ATLAS || w<=0 || h<=0
++		|| glstate->raster.raster_zoomx!=1.f || glstate->raster.raster_zoomy!=1.f || raster_need_transform())
++		return 0;
++	if (!atlas_pix) { atlas_pix = (GLubyte*)malloc(ATLAS*ATLAS*4); atlas_reset(); }
++	glyph_t *g = atlas_get(w, h, bitmap);
++	if (!g) {
++		if (glstate->raster.bm_drawing) bitmap_flush();	// queued quads use the old UVs
++		atlas_reset();
++		g = atlas_get(w, h, bitmap);
++	}
++	if (glyph_nvtx+6 > glyph_capvtx) {
++		glyph_capvtx = glyph_capvtx*2 + 6*64;
++		glyph_vtx = (glyphvtx_t*)realloc(glyph_vtx, glyph_capvtx*sizeof(glyphvtx_t));
++	}
++	// same pixel snapping as the CPU path (int truncation), NDC of the current viewport
++	int rx = glstate->raster.rPos.x-xorig;
++	int ry = glstate->raster.rPos.y-yorig;
++	GLfloat w2 = 2.f/glstate->raster.viewport.width, h2 = 2.f/glstate->raster.viewport.height;
++	GLfloat x1 = rx*w2-1.f, x2 = (rx+w)*w2-1.f, y1 = ry*h2-1.f, y2 = (ry+h)*h2-1.f;
++	GLfloat u1 = g->ax/(GLfloat)ATLAS, u2 = (g->ax+w)/(GLfloat)ATLAS;
++	GLfloat v1 = g->ay/(GLfloat)ATLAS, v2 = (g->ay+h)/(GLfloat)ATLAS;
++	glyphvtx_t q[4] = {{x1,y1,u1,v1}, {x2,y1,u2,v1}, {x2,y2,u2,v2}, {x1,y2,u1,v2}};
++	static const int tri[6] = {0,1,2, 0,2,3};
++	for (int i=0; i<6; i++) {
++		glyphvtx_t *o = &glyph_vtx[glyph_nvtx++];
++		*o = q[tri[i]];
++		for (int k=0; k<4; k++) o->c[k] = raster_color[k]*255.f;
++	}
++	glstate->raster.bm_drawing = 1;
++	return 1;
++}
++
++static const char glyph_vsh[] = "#version 100\n"
++"attribute highp vec2 aPosition;\n"
++"attribute highp vec2 aTexCoord;\n"
++"attribute lowp vec4 aColor;\n"
++"varying mediump vec2 vTexCoord;\n"
++"varying lowp vec4 vColor;\n"
++"void main(){ gl_Position = vec4(aPosition, 0.0, 1.0); vTexCoord = aTexCoord; vColor = aColor; }\n";
++// same test as the CPU path's blit: unset bits and alpha 0 draw nothing
++static const char glyph_fsh[] = "#version 100\n"
++"uniform sampler2D uTex;\n"
++"varying mediump vec2 vTexCoord;\n"
++"varying lowp vec4 vColor;\n"
++"void main(){ if (texture2D(uTex, vTexCoord).a==0.0 || vColor.a==0.0) discard; gl_FragColor = vColor; }\n";
++
++// called by gl4es_blitTexture_gles2 for BLIT_GLYPHS, with its state pushed
++void raster_draw_glyphs() {
++	LOAD_GLES2(glUseProgram);
++	LOAD_GLES2(glVertexAttribPointer);
++	LOAD_GLES2(glEnableVertexAttribArray);
++	LOAD_GLES2(glDisableVertexAttribArray);
++	LOAD_GLES(glDrawArrays);
++	static GLuint prog;
++	if (!prog) {
++		LOAD_GLES2(glCreateShader); LOAD_GLES2(glShaderSource); LOAD_GLES2(glCompileShader);
++		LOAD_GLES2(glCreateProgram); LOAD_GLES2(glAttachShader); LOAD_GLES2(glBindAttribLocation);
++		LOAD_GLES2(glLinkProgram); LOAD_GLES2(glUniform1i); LOAD_GLES(glGetUniformLocation);
++		const char *src[2] = {glyph_vsh, glyph_fsh};
++		GLenum kind[2] = {GL_VERTEX_SHADER, GL_FRAGMENT_SHADER};
++		prog = gles_glCreateProgram();
++		for (int i=0; i<2; i++) {
++			GLuint s = gles_glCreateShader(kind[i]);
++			gles_glShaderSource(s, 1, &src[i], NULL);
++			gles_glCompileShader(s);
++			gles_glAttachShader(prog, s);
++		}
++		gles_glBindAttribLocation(prog, 0, "aPosition");
++		gles_glBindAttribLocation(prog, 1, "aTexCoord");
++		gles_glBindAttribLocation(prog, 2, "aColor");
++		gles_glLinkProgram(prog);
++		glstate->gleshard->program = prog;
++		gles_glUseProgram(prog);
++		gles_glUniform1i(gles_glGetUniformLocation(prog, "uTex"), 0);
++	}
++	if (glstate->gleshard->program != prog) {
++		glstate->gleshard->program = prog;
++		gles_glUseProgram(prog);
++	}
++	// attribs 0-2 from the queue; the cache in gleshard is kept honest so
++	// the next fpe draw re-sends what it needs (as realize_blitenv does)
++	unboundBuffers();
++	for (int i=0; i<hardext.maxvattrib; i++) {
++		vertexattrib_t *v = &glstate->gleshard->vertexattrib[i];
++		if (v->enabled != (i<3)) {
++			v->enabled = (i<3);
++			if (v->enabled) gles_glEnableVertexAttribArray(i); else gles_glDisableVertexAttribArray(i);
++		}
++		if (i<3) {
++			v->size = (i==2)?4:2;
++			v->type = (i==2)?GL_UNSIGNED_BYTE:GL_FLOAT;
++			v->normalized = (i==2);
++			v->stride = sizeof(glyphvtx_t);
++			v->pointer = (i==0)?(void*)&glyph_vtx->x:(i==1)?(void*)&glyph_vtx->u:(void*)glyph_vtx->c;
++			v->buffer = 0;
++			v->real_buffer = 0;
++			gles_glVertexAttribPointer(i, v->size, v->type, v->normalized, v->stride, v->pointer);
++		}
++	}
++	gles_glDrawArrays(GL_TRIANGLES, 0, glyph_nvtx);
++}
++
+ void bitmap_flush() {
+ 	if(!glstate->raster.bm_drawing)
+ 		return;
++	glstate->raster.bm_drawing = 0;
+ 	// draw actual bitmap
+ 	int old_tex_unit = glstate->texture.active;
+ 	if(old_tex_unit)
+@@ -302,6 +502,30 @@ void bitmap_flush() {
+ 	if(IS_TEXTURE_RECTANGLE(old_active)) gl4es_glDisable(GL_TEXTURE_RECTANGLE_ARB);
+ 	if(IS_CUBE_MAP(old_active)) gl4es_glDisable(GL_TEXTURE_CUBE_MAP);
+ 
++	if(glyph_nvtx) {
++		if(!atlas_tex) {
++			gl4es_glGenTextures(1, &atlas_tex);
++			gl4es_glBindTexture(GL_TEXTURE_2D, atlas_tex);
++			gl4es_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
++			gl4es_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
++			gl4es_glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
++			gl4es_glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
++			gl4es_glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
++			gl4es_glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
++			gl4es_glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ATLAS, ATLAS, 0, GL_RGBA, GL_UNSIGNED_BYTE, atlas_pix);
++			atlas_dirty0 = ATLAS; atlas_dirty1 = 0;
++		} else
++			gl4es_glBindTexture(GL_TEXTURE_2D, atlas_tex);
++		if(atlas_dirty1 > atlas_dirty0)	// whole rows: contiguous, no unpack row length
++			gl4es_glTexSubImage2D(GL_TEXTURE_2D, 0, 0, atlas_dirty0, ATLAS, atlas_dirty1-atlas_dirty0,
++				GL_RGBA, GL_UNSIGNED_BYTE, atlas_pix+4*ATLAS*atlas_dirty0);
++		atlas_dirty0 = ATLAS; atlas_dirty1 = 0;
++		gl4es_blitTexture(atlas_tex, 0, 0, 1, 1, 1, 1, 1.f, 1.f, 0, 0, 0, 0, BLIT_GLYPHS);
++		glyph_nvtx = 0;
++	}
++	if(!bm_cpu) goto restore;
++	bm_cpu = 0;
++
+ 	if(!glstate->raster.bm_texture) {
+ 		gl4es_glGenTextures(1, &glstate->raster.bm_texture);
+ 		gl4es_glBindTexture(GL_TEXTURE_2D, glstate->raster.bm_texture);
+@@ -347,16 +571,14 @@ void bitmap_flush() {
+ 		BLIT_ALPHA
+ 	);
+ 
+-	glstate->raster.bm_drawing = 0;
+-
++restore:
+ 	if(IS_TEX1D(old_active)) gl4es_glEnable(GL_TEXTURE_1D);
+ 	if(!IS_TEX2D(old_active)) gl4es_glDisable(GL_TEXTURE_2D);
+ 	if(IS_TEX3D(old_active)) gl4es_glEnable(GL_TEXTURE_3D);
+ 	if(IS_TEXTURE_RECTANGLE(old_active)) gl4es_glEnable(GL_TEXTURE_RECTANGLE_ARB);
+ 	if(IS_CUBE_MAP(old_active)) gl4es_glEnable(GL_TEXTURE_CUBE_MAP);
+ 
+-	if (old_tex!=glstate->raster.bm_texture)
+-		gl4es_glBindTexture(GL_TEXTURE_2D, old_tex);
++	gl4es_glBindTexture(GL_TEXTURE_2D, old_tex);
+ 
+ 	if(old_tex_unit)
+ 		gl4es_glActiveTexture(GL_TEXTURE0 + old_tex_unit);
+@@ -401,6 +623,11 @@ void APIENTRY_GL4ES gl4es_glBitmap(GLsizei width, GLsizei height, GLfloat xorig,
+         return;
+     }
+ 
++	if (bitmap_atlas(width, height, xorig, yorig, bitmap)) {
++		glstate->raster.rPos.x += xmove;
++		glstate->raster.rPos.y += ymove;
++		return;
++	}
+ 	// get start/end of drawed pixel
+ 	float zoomx = glstate->raster.raster_zoomx;
+ 	float zoomy = glstate->raster.raster_zoomy;
+@@ -439,7 +666,7 @@ void APIENTRY_GL4ES gl4es_glBitmap(GLsizei width, GLsizei height, GLfloat xorig,
+ 	}
+ 	// clear buffer if needed: bitmap_flush zeroes what it drew, so only a
+ 	// new buffer or a new viewport size needs the full memset
+-	if(!glstate->raster.bm_drawing) {
++	if(!bm_cpu) {
+ 		if(glstate->raster.bm_width != glstate->raster.viewport.width || glstate->raster.bm_height != glstate->raster.viewport.height)
+ 			memset(glstate->raster.bitmap, 0, glstate->raster.viewport.width*glstate->raster.viewport.height*4);
+ 		glstate->raster.bm_width = glstate->raster.viewport.width;
+@@ -459,7 +686,7 @@ void APIENTRY_GL4ES gl4es_glBitmap(GLsizei width, GLsizei height, GLfloat xorig,
+     GLubyte *to;
+ 	GLubyte col[4];
+ 	for (int i=0; i<4; i++)
+-		col[i] = glstate->color[i]*255.f;
++		col[i] = raster_color[i]*255.f;
+     // copy to pixel data
+ 	if (pixtrans) {
+         for (int y = sy; y < ey; ++y) {
+@@ -503,6 +730,7 @@ void APIENTRY_GL4ES gl4es_glBitmap(GLsizei width, GLsizei height, GLfloat xorig,
+ 	glstate->raster.rPos.y += ymove;
+ 	// draw in buffer...
+ 	glstate->raster.bm_drawing = 1;
++	bm_cpu = 1;
+ }
+ 
+ void APIENTRY_GL4ES gl4es_glDrawPixels(GLsizei width, GLsizei height, GLenum format,
+diff --git a/src/gl/blit.h b/src/gl/blit.h
+--- a/src/gl/blit.h
++++ b/src/gl/blit.h
+@@ -6,6 +6,7 @@
+ #define BLIT_ALPHA      0
+ #define BLIT_OPAQUE     1
+ #define BLIT_COLOR      2
++#define BLIT_GLYPHS     3   // raster.c glyph atlas queue
+ 
+ void gl4es_blitTexture(GLuint texture, 
+     GLfloat sx, GLfloat sy,
+diff --git a/src/gl/blit.c b/src/gl/blit.c
+--- a/src/gl/blit.c
++++ b/src/gl/blit.c
+@@ -172,6 +172,8 @@ const char _blit_fsh_alpha[] = "#version 100            \n" \
+ "gl_FragColor = p;                                      \n" \
+ "}                                                      \n";
+ 
++void raster_draw_glyphs();
++
+ void gl4es_blitTexture_gles2(GLuint texture,
+     GLfloat sx, GLfloat sy,
+     GLfloat width, GLfloat height, 
+@@ -331,6 +333,10 @@ void gl4es_blitTexture_gles2(GLuint texture,
+             break;
+     }
+ 
++    if(mode==BLIT_GLYPHS) {
++        raster_draw_glyphs();
++        return;
++    }
+     realize_blitenv(alpha);
+ 
+     gles_glDrawArrays(GL_TRIANGLE_FAN, 0, 4);

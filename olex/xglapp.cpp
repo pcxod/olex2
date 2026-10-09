@@ -139,7 +139,9 @@ BOOL CALLBACK EnumWindowsFunc(HWND w, LPARAM p) {
 //----------------------------------------------------------------------------//
 //..............................................................................
 bool TGlXApp::OnInit() {
+#ifndef __ANDROID__  // bionic has C and C.UTF-8 only: wxLocale warns in a box
   wxLocale wx_lc(wxLANGUAGE_ENGLISH);
+#endif
   setlocale(LC_NUMERIC, "C");
   wxApp::SetAppName(wxT("olex2"));
   Instance() = this;
@@ -264,12 +266,12 @@ bool TGlXApp::OnInit() {
     str_glStereo = olx_getenv("OLEX2_GL_STEREO"),
     str_glMultisampling = olx_getenv("OLEX2_GL_MULTISAMPLE"),
     str_glDepth = olx_getenv("OLEX2_GL_DEPTH_BITS");
-  GLboolean stereo_supported = GL_FALSE;
-// causes segmentation fault!
-#if !defined(__MAC__)
-  olx_gl::get(GL_STEREO, &stereo_supported);
-#endif
 #if defined(__WIN32__)
+  /* no GL context exists yet: segfaults on Mac and on Android/gl4es (whose
+  GLES entry points are bound at the first makeCurrent); only Windows uses it
+  */
+  GLboolean stereo_supported = GL_FALSE;
+  olx_gl::get(GL_STEREO, &stereo_supported);
   olxstr str_glDefStereo = stereo_supported ? TrueString() : FalseString(),
     str_glDefMultisampling = TrueString();
 #else
@@ -296,9 +298,21 @@ bool TGlXApp::OnInit() {
     TMainForm::ShowAlert(e);
   }
   SetTopWindow(MainForm);
+#ifdef __ANDROID__
+  // a wxQt frame keeps wx's default 400x250 unless maximised before Show();
+  // LoadSettings runs later, from the first idle event
+  MainForm->Maximize(true);
+#else
   //MainForm->Maximize(true);
+#endif
   Bind(OLX_COMMAND_EVT, &TGlXApp::OnCmd, this);
   Bind(wxEVT_IDLE, &TGlXApp::OnIdle, this);
+#ifdef __ANDROID__
+  /* nothing in Olex2 handles wxUpdateUIEvent, but wxQt updates menus from
+  idle (wxUSE_IDLEMENUUPDATES) and walks every window and menu item for them
+  after each 15 ms timer tick: ~10% of an A53 core while idle */
+  wxUpdateUIEvent::SetUpdateInterval(-1);
+#endif
   Bind(wxEVT_CHAR, &TGlXApp::OnChar, this);
   Bind(wxEVT_KEY_DOWN, &TGlXApp::OnKeyDown, this);
   Bind(wxEVT_NAVIGATION_KEY, &TGlXApp::OnNavigation, this);
@@ -433,4 +447,9 @@ bool TGlXApp::ActivateWindow(HWND wnd) {
 }
 #endif
 
+#ifdef __ANDROID__
+// android/src/android_main.cpp prepares the environment, then calls wxEntry
+IMPLEMENT_APP_NO_MAIN(TGlXApp)
+#else
 IMPLEMENT_APP(TGlXApp)
+#endif

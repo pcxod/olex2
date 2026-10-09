@@ -21,6 +21,9 @@
 #include "../ctrls.h"
 #include "widgetcellext.h"
 #include "htmlprep.h"
+#ifdef __ANDROID__
+#include <vector>
+#endif
 
 enum {
   html_parent_resize = 2
@@ -85,6 +88,26 @@ protected:
     bool LoadFromFile(const olxstr& fn);
   };
   TObjectsState ObjectsState;
+#ifdef __ANDROID__
+  /* a tab switch re-parses the whole sidebar, ~85 ms on a Cortex-A53. Keep
+  the last few cell trees alive with their (hidden) controls, keyed by the
+  evaluated page text and the client width: the same text parses to the same
+  tree
+  */
+  struct PageCache {
+    olxstr text;
+    int width;
+    wxHtmlContainerCell *cell;
+    olxstr_dict<AnAssociation3<AOlxCtrl*, wxWindow*, bool>, true> objects;
+    wxColour bg;
+    std::vector<wxWindow*> windows; // sorted
+  };
+  std::vector<PageCache*> PageCaches;
+  olxstr PageText;
+  int PageWidth;
+  void StashPage();
+  bool IsCachedWindow(wxWindow *w) const;
+#endif
 protected:
   olxstr GetObjectValue(const AOlxCtrl *Object);
   const olxstr& GetObjectData(const AOlxCtrl *Object);

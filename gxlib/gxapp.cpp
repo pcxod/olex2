@@ -56,6 +56,7 @@
   #include "wx/wfstream.h"
   #include "wxzipfs.h"
   #include "wx/clipbrd.h"
+  #include "wx/thread.h"
 #elif __WIN32__
   #include "wglscene.h"
   #include <WinGDI.h>
@@ -4103,7 +4104,7 @@ void TGXApp::UpdateLabels()  {
 void TGXApp::Update() {
   Draw();
 #ifdef __WXWIDGETS__
-  if (wxTheApp->Pending()) {
+  if (wxIsMainThread() && wxTheApp->Pending()) {
     wxTheApp->Dispatch();
   }
 #endif
@@ -4113,6 +4114,14 @@ uint64_t TGXApp::Draw() {
   if (!IsMainFormVisible() || DisplayFrozen) {
     return 0;
   }
+#ifdef __WXWIDGETS__
+  // Python prints from worker threads (concurrent.futures) reach here via
+  // runPrintText -> Update(); wxQt aborts on a GL context made current off
+  // the main thread
+  if (!wxIsMainThread()) {
+    return 0;
+  }
+#endif
   uint64_t st = TETime::msNow();
   GetRenderer().Draw();
   return TETime::msNow() - st;

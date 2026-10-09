@@ -1,0 +1,56 @@
+diff --git a/src/gl/fpe.c b/src/gl/fpe.c
+--- a/src/gl/fpe.c
++++ b/src/gl/fpe.c
+@@ -1225,9 +1225,17 @@ void realize_glenv(int ispoint, int first, int count, GLenum type, const void* i
+             }
+         }
+     }
+-    // set light and material if needed
+-    if(glprogram->has_builtin_light)
++    // set light and material if needed. Every value below derives from
++    // glstate->light and glstate->material only, so while both match what this
++    // program was last sent, the ~40 GoUniformfv (hash lookup + memcmp each,
++    // on every draw) are skipped with two memcmp
++    if(glprogram->has_builtin_light && !(glprogram->light_snap_ok
++        && !memcmp(&glprogram->light_snap, &glstate->light, sizeof(light_state_t))
++        && !memcmp(&glprogram->material_snap, &glstate->material, sizeof(material_state_t))))
+     {
++        memcpy(&glprogram->light_snap, &glstate->light, sizeof(light_state_t));
++        memcpy(&glprogram->material_snap, &glstate->material, sizeof(material_state_t));
++        glprogram->light_snap_ok = 1;
+         for (int i=0; i<MAX_LIGHT; i++) {
+             if(glprogram->builtin_lights[i].has) {
+                GoUniformfv(glprogram, glprogram->builtin_lights[i].ambient, 4, 1, glstate->light.lights[i].ambient);
+diff --git a/src/gl/program.h b/src/gl/program.h
+--- a/src/gl/program.h
++++ b/src/gl/program.h
+@@ -5,6 +5,7 @@
+ #include "buffers.h"
+ #include "shader.h"
+ #include "uniform.h"
++#include "light.h"
+ 
+ typedef struct {
+     GLuint      index;
+@@ -232,6 +233,10 @@ typedef struct {
+     builtin_material_t              builtin_material[2];
+     builtin_lightmodelproducts_t    builtin_lightmodelprod[2];
+     builtin_lightproducts_t         builtin_lightprod[2][MAX_LIGHT];
++    // light + material state the light uniforms were last sent for (fpe.c)
++    int                             light_snap_ok;
++    light_state_t                   light_snap;
++    material_state_t                material_snap;
+     GLint                           builtin_normalrescale;
+     GLint                           builtin_clipplanes[MAX_CLIP_PLANES];
+     int                             has_builtin_clipplanes;
+diff --git a/src/gl/program.c b/src/gl/program.c
+--- a/src/gl/program.c
++++ b/src/gl/program.c
+@@ -603,6 +603,7 @@ static void fill_program(program_t *glprogram)
+         glprogram->cache.cache = malloc(glprogram->cache.cap);
+     }
+     memset(glprogram->cache.cache, 0, glprogram->cache.cap);
++    glprogram->light_snap_ok = 0;
+     //Maybe Sampler uniform should not be initialized to 0, but to -1, to be sure the value is initialized?
+     if(glprogram->uniform) {
+         uniform_t *m;

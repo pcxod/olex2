@@ -19,6 +19,166 @@
 #include "olxstate.h"
 #include "eutf8.h"
 #include "wxzipfs.h"
+#ifdef __ANDROID__
+#include <QtCore/QPointer>
+#include <QtGui/QMouseEvent>
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QWidget>
+#include <algorithm>
+namespace {
+  /* Swipe scrolls an HTML panel. Qt turns a touch into mouse events, so a swipe
+  on the sidebar started a text selection or pressed the control under the
+  finger. A press inside a scrollable THtml is held back: past the drag distance
+  the panel follows the finger and the control never sees the press; a finger
+  lifted before that gets the press replayed and the release let through, so a
+  tap works as before. ponytail: no fling, steps of wxHTML_SCROLL_STEP (16 px).
+  */
+  class THtmlSwipe : public QObject {
+    QPointer<QObject> target;
+    THtml* html = nullptr;
+    QPointF lpos, wpos, gpos;
+    Qt::KeyboardModifiers mods;
+    int y0 = 0;
+    bool dragging = false, replaying = false;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    static QPointF LPos(const QMouseEvent* m) { return m->position(); }
+    static QPointF WPos(const QMouseEvent* m) { return m->scenePosition(); }
+    static QPointF GPos(const QMouseEvent* m) { return m->globalPosition(); }
+#else
+    static QPointF LPos(const QMouseEvent* m) { return m->localPos(); }
+    static QPointF WPos(const QMouseEvent* m) { return m->windowPos(); }
+    static QPointF GPos(const QMouseEvent* m) { return m->screenPos(); }
+#endif
+    static THtml* FindHtml(QObject* o) {
+      wxWindow* w = 0;
+      for (QObject* q = o; q != 0 && w == 0; q = q->parent()) {
+        if (q->isWidgetType()) {
+          w = static_cast<wxWindow*>(
+            wxWindow::QtRetrieveWindowPointer(static_cast<QWidget*>(q)));
+        }
+      }
+      for (; w != 0; w = w->GetParent()) {
+        THtml* h = dynamic_cast<THtml*>(w);
+        if (h != 0 && !h->IsMovable() &&
+          h->GetVirtualSize().y > h->GetClientSize().y)
+        {
+          return h;
+        }
+        if (w->IsTopLevel()) {
+          break;
+        }
+      }
+      return 0;
+    }
+  public:
+    bool eventFilter(QObject* o, QEvent* e) override {
+      if (replaying) {
+        return false;
+      }
+      QMouseEvent* m = static_cast<QMouseEvent*>(e);
+      switch (e->type()) {
+      case QEvent::MouseButtonPress: {
+        if (m->button() != Qt::LeftButton || !o->isWidgetType() ||
+          o->inherits("QAbstractSlider") || (html = FindHtml(o)) == 0)
+        {
+          return false;
+        }
+        target = o;
+        dragging = false;
+        lpos = LPos(m);  wpos = WPos(m);  gpos = GPos(m);
+        mods = m->modifiers();
+        int x, px, py;
+        html->GetViewStart(&x, &y0);
+        html->GetScrollPixelsPerUnit(&px, &py);
+        y0 *= py;
+        return true;
+      }
+      case QEvent::MouseMove: {
+        if (target.isNull() || o != target) {
+          return false;
+        }
+        QPointF d = GPos(m) - gpos;
+        if (!dragging) {
+          if (d.manhattanLength() < QApplication::startDragDistance()) {
+            return true;
+          }
+          dragging = true;
+        }
+        int px, py;
+        html->GetScrollPixelsPerUnit(&px, &py);
+        if (py > 0) {
+          html->Scroll(-1, (y0 - qRound(d.y()) + py / 2) / py);
+        }
+        return true;
+      }
+      case QEvent::MouseButtonRelease: {
+        if (target.isNull() || o != target) {
+          return false;
+        }
+        QPointer<QObject> t = target;
+        target = 0;
+        if (dragging) {
+          return true;
+        }
+        QMouseEvent p(QEvent::MouseButtonPress, lpos, wpos, gpos,
+          Qt::LeftButton, Qt::LeftButton, mods);
+        replaying = true;
+        QCoreApplication::sendEvent(t, &p);
+        replaying = false;
+        // the press may have destroyed the control; never hand Qt a dead one
+        return t.isNull();
+      }
+      default:
+        return false;
+      }
+    }
+  };
+
+  void CollectWindows(const wxHtmlCell *c, std::vector<wxWindow*> &l) {
+    for (; c != 0; c = c->GetNext()) {
+      const THtmlWidgetCell *w = dynamic_cast<const THtmlWidgetCell*>(c);
+      if (w != 0) {
+        l.push_back(w->GetWindow());
+      }
+      CollectWindows(c->GetFirstChild(), l);
+    }
+  }
+}
+//.............................................................................
+void THtml::StashPage() {
+  PageCache *c = new PageCache;
+  c->text = PageText;
+  c->width = PageWidth;
+  c->cell = m_Cell;
+  c->bg = GetBackgroundColour();
+  c->objects.TakeOver(Objects);
+  CollectWindows(m_Cell, c->windows);
+  std::sort(c->windows.begin(), c->windows.end());
+  for (size_t i = 0; i < c->windows.size(); i++) {
+    c->windows[i]->Hide();
+  }
+  // DoSetPage must not delete it, and the selection points into it
+  m_Cell = 0;
+  wxDELETE(m_selection);
+  PageCaches.push_back(c);
+  if (PageCaches.size() > 6) {
+    delete PageCaches[0]->cell; // destroys its controls
+    delete PageCaches[0];
+    PageCaches.erase(PageCaches.begin());
+  }
+}
+//.............................................................................
+bool THtml::IsCachedWindow(wxWindow *w) const {
+  for (size_t i = 0; i < PageCaches.size(); i++) {
+    if (std::binary_search(PageCaches[i]->windows.begin(),
+      PageCaches[i]->windows.end(), w))
+    {
+      return true;
+    }
+  }
+  return false;
+}
+#endif
 //.............................................................................
 THtml::THtml(THtmlManager &manager, wxWindow *Parent,
   const olxstr &pop_name, int flags)
@@ -55,9 +215,22 @@ THtml::THtml(THtmlManager &manager, wxWindow *Parent,
   Bind(wxEVT_CHAR, &THtml::OnChar, this);
   Bind(wxEVT_SIZE, &THtml::OnSizeEvt, this);
   Bind(wxEVT_TEXT_COPY, &THtml::OnClipboard, this);
+#ifdef __ANDROID__
+  static THtmlSwipe* swipe = 0;
+  if (swipe == 0) {
+    qApp->installEventFilter(swipe = new THtmlSwipe);
+  }
+  PageWidth = -1;
+#endif
 }
 //.............................................................................
 THtml::~THtml() {
+#ifdef __ANDROID__
+  for (size_t i = 0; i < PageCaches.size(); i++) {
+    delete PageCaches[i]->cell;
+    delete PageCaches[i];
+  }
+#endif
   delete Root;
   ClearSwitchStates();
 }
@@ -308,15 +481,52 @@ bool THtml::UpdatePage(bool update_indices) {
   Root->ToStrings(Res, false);
   sw.start("Saving object states");
   ObjectsState.SaveState();
+#ifdef __ANDROID__
+  olxstr page = Res.Text(' ');
+  const int width = GetClientSize().GetWidth();
+  PageCache *hit = 0;
+  if (m_Cell != 0 && (width != PageWidth || !page.Equals(PageText))) {
+    for (size_t i = 0; i < PageCaches.size(); i++) {
+      if (PageCaches[i]->width == width && PageCaches[i]->text.Equals(page)) {
+        hit = PageCaches[i];
+        PageCaches.erase(PageCaches.begin() + i);
+        break;
+      }
+    }
+    StashPage();
+  }
+  PageText = page;
+  PageWidth = width;
+  if (hit != 0) {
+    sw.start("Restoring a cached page");
+    m_Cell = hit->cell;
+    Objects.TakeOver(hit->objects);
+    SetBackgroundColour(hit->bg);
+    delete hit;
+    CreateLayout();
+    Refresh();
+  }
+  else {
+    Objects.Clear();
+    sw.start("Setting the page");
+    SetPage(page.u_str());
+  }
+#else
   Objects.Clear();
   sw.start("Setting the page");
   SetPage(Res.Text(' ').u_str());
+#endif
   sw.start("Restoring object states");
   ObjectsState.RestoreState();
   sw.start("Loading inner html objects");
   wxWindowList &wil = GetChildren();
   TPtrList<THtml> htmls;
   for (size_t i = 0; i < wil.size(); i++) {
+#ifdef __ANDROID__
+    if (IsCachedWindow(wil[i])) {
+      continue;
+    }
+#endif
     if (olx_is<THtml>(*wil[i])) {
       THtml * ht = (THtml*)wil[i];
       ht->LoadPage(ht->GetHomePage().u_str());
@@ -372,6 +582,11 @@ bool THtml::UpdatePage(bool update_indices) {
   //this->m_Cell->DrawInvisible(dc, 0, 0, r_info);
   sw.start("Finsihing...");
   for (size_t i = 0; i < wil.size(); i++) {
+#ifdef __ANDROID__
+    if (IsCachedWindow(wil[i])) {
+      continue;
+    }
+#endif
     wil[i]->Show();
   }
   Thaw();

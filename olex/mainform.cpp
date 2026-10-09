@@ -33,6 +33,7 @@
 #include "wx/tooltip.h"
 #include "wx/clipbrd.h"
 #include "wx/dynlib.h"
+#include "wx/evtloop.h"
 
 #include "gpcollection.h"
 #include "glgroup.h"
@@ -82,7 +83,9 @@
 
 #include "xmacro.h"
 #include "utf8file.h"
+#ifdef _PYTHON
 #include "py_core.h"
+#endif
 #include "updateth.h"
 #include "msgbox.h"
 #include "updateapi.h"
@@ -111,6 +114,9 @@
 #include <atomic>
 #include <memory>
 #include <thread>
+#ifdef __ANDROID__
+#include <QtWidgets/QApplication>
+#endif
 
 namespace {
   /* SaveVFS serializes on the caller and writes the file here: global.odb is
@@ -220,6 +226,18 @@ TMainForm::TMainForm(TGlXApp *Parent)
     Bind(wxEVT_SIZE, &TMainForm::OnSize, this);
     Bind(wxEVT_MOVE, &TMainForm::OnMove, this);
     Bind(wxEVT_CLOSE_WINDOW, &TMainForm::OnCloseWindow, this);
+#ifdef __ANDROID__
+    /* Android kills the process instead of closing the window, so the save
+    on exit never runs: write what start-up reads whenever Olex2 is put aside.
+    wxQt sends no wxEVT_ACTIVATE then, Qt's application state does change
+    */
+    QObject::connect(qApp, &QGuiApplication::applicationStateChanged,
+      [this](Qt::ApplicationState s) {
+        if (s == Qt::ApplicationSuspended && StartupInitialised && !Destroying) {
+          SaveSettings(FXApp->GetConfigDir() + FLastSettingsFile);
+        }
+      });
+#endif
 
     Bind(wxEVT_MENU, &TMainForm::OnHtmlPanel, this, ID_HtmlPanel);
 
@@ -312,6 +330,7 @@ TMainForm::TMainForm(TGlXApp *Parent)
 #endif
   StartupInitialised = RunOnceProcessed = false;
   wxInitAllImageHandlers();
+#ifdef _PYTHON
   /* a singleton - will be deleted in destructor, we cannot use GC as the Py_DecRef
    would be called after finalising python
   */
@@ -327,6 +346,7 @@ TMainForm::TMainForm(TGlXApp *Parent)
   PythonExt::GetInstance()->Register(
     py_reg::ModuleName(), &py_reg::PyInit);
 #endif
+#endif // _PYTHON
   //TOlxVars::Init().OnVarChange->Add(this, ID_VarChange);
   FGlCanvas = 0;
   FXApp = 0;
@@ -434,7 +454,9 @@ bool TMainForm::Destroy() {
 #endif
   // the order is VERY important!
   TOlxVars::Finalise();
+#ifdef _PYTHON
   PythonExt::Finilise();
+#endif
   return wxFrame::Destroy();
 }
 //..............................................................................
@@ -986,7 +1008,9 @@ void TMainForm::XApp(Olex2App *XA)  {
   Library.AttachLibrary(LibStr::ExportLibrary());
   Library.AttachLibrary(LibMath::ExportLibrary());
   //Library.AttachLibrary(olxstr::ExportLibrary("str"));
+#ifdef _PYTHON
   Library.AttachLibrary(PythonExt::GetInstance()->ExportLibrary());
+#endif
   Library.AttachLibrary(TETime::ExportLibrary());
   Library.AttachLibrary(lcells::IndexManager::ExportLibrary());
 ////////////////////////////////////////////////////////////////////////////////
@@ -1056,6 +1080,10 @@ void TMainForm::XApp(Olex2App *XA)  {
 // statusbar initialisation
   StatusBar = CreateStatusBar();
   SetStatusText( wxT("Welcome to OLEX2!"));
+#ifdef __ANDROID__
+  // the base-dir line costs a row of screen; SetStatusText stays valid
+  StatusBar->Hide();
+#endif
 // toolbar initialisation
   ToolBar = NULL;
 //  ToolBar = CreateToolBar(wxTB_FLAT | wxTB_HORIZONTAL | wxTB_TEXT  , -1, "MainToolBar");
@@ -1372,6 +1400,11 @@ void TMainForm::XApp(Olex2App *XA)  {
     .Add(this, ID_UPDATE_GUI);
 }
 //..............................................................................
+#ifdef __ANDROID__
+// set once onstartup has run initpy: StartupInitialised is set on entry and
+// StartupInit yields, so an idle event inside it would run runonce without olx
+static bool android_startup_done = false;
+#endif
 void TMainForm::StartupInit() {
   if (StartupInitialised) {
     return;
@@ -1380,7 +1413,13 @@ void TMainForm::StartupInit() {
   if (FGlCanvas != 0) {
     FGlCanvas->XApp(FXApp);
   }
+#ifdef __ANDROID__
+  // 10 pt reads as ~13 px glyphs on a 224 dpi tablet; only a fresh install
+  // sees this, an existing last.osp keeps its stored <Fonts>
+  wxFont Font(14, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+#else
   wxFont Font(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);//|wxFONTFLAG_ANTIALIASED);
+#endif
   TGlMaterial glm("2049;0.698,0.698,0.698,1.000");
   AGlScene& gls = FXApp->GetRenderer().GetScene();
   TGlFont &fnt_def = gls.CreateFont("Default", Font.GetNativeFontInfoDesc());
@@ -1530,11 +1569,14 @@ void TMainForm::StartupInit() {
   bool is_arg = false;
   if (FXApp->GetArguments().Count() >= 2) {
     // do the iterpreters job if needed
+#ifdef _PYTHON
     if (FXApp->GetArguments().GetLastString().EndsWith(".py")) {
       TStrList in = TEFile::ReadLines(FXApp->GetArguments().GetLastString());
       PythonExt::GetInstance()->RunPython(in.Text('\n'));
     }
-    else {
+    else
+#endif
+    {
       load_file = FXApp->GetArguments().Text(' ', 1);
       if (!TEFile::Exists(load_file)) {
         load_file.SetLength(0);
@@ -1595,6 +1637,9 @@ void TMainForm::StartupInit() {
   }
   processMacro("onstartup", __OlxSrcInfo);
   processMacro("user_onstartup", __OlxSrcInfo);
+#ifdef __ANDROID__
+  android_startup_done = true;
+#endif
   if (do_load_file) {
     olxstr reap = "reap -check_loaded";
     if (is_arg) { // if parsed as an argument - do not check for crash
@@ -1609,7 +1654,9 @@ void TMainForm::StartupInit() {
   HtmlManager.main->SetHomePage(FHtmlIndexFile);
   FileDropTarget* dndt = new FileDropTarget(*this);
   this->SetDropTarget(dndt);
+#ifndef __ANDROID__  // no TLS client, and the APK is updated by the store
   processMacro("schedule 'update -f=false' -g");
+#endif
   TStateRegistry::GetInstance().RepeatAll();
   try {
     TEFile f(olxstr(FXApp->GetInstanceDir()) << getpid() << ".ready", "wb");
@@ -1670,6 +1717,7 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
     return false;
   }
 
+#ifdef _PYTHON
   if (MsgId == ID_TIMER && wxThread::IsMain() &&
     StartupInitialised && Py_IsInitialized())
   {
@@ -1688,6 +1736,7 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
     }
 #endif
     }
+#endif // _PYTHON
 
   bool res = true, Silent = (FMode & mSilent) != 0, Draw = false;
   static bool actionEntered = false, downloadEntered = false;
@@ -2049,6 +2098,17 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
         FGlConsole->OnPost.SetEnabled(true);
         TimePerFrame = FXApp->Draw();
       }
+#ifdef __ANDROID__
+      /* Qt composites only from its event loop, so a long python job (solve,
+         refine - these run silent) left the screen frozen on the last frame,
+         dialog included; paint/size events only - no taps reach the GUI
+         mid-job. At most ~5 times a second */
+      static uint64_t last_yield = 0;
+      if (TETime::msNow() - last_yield > 200 && wxEventLoopBase::GetActive()) {
+        wxEventLoopBase::GetActive()->YieldFor(wxEVT_CATEGORY_UI);
+        last_yield = TETime::msNow();
+      }
+#endif
       FGlConsole->SetSkipPosting(true);
       res = false;  // propargate to other streams, logs in particular
     }
@@ -2349,6 +2409,11 @@ bool TMainForm::ProcessTab() {
 void TMainForm::OnChar(wxKeyEvent& m) {
   OnNonIdle();
   m.Skip(false);
+#ifdef __ANDROID__  // wxQt takes the char code from the key text, and Android's Enter text is '\n'
+  if (m.m_keyCode == '\n') {
+    m.m_keyCode = WXK_RETURN;
+  }
+#endif
   short Fl = 0;
   if (m.GetModifiers() & wxMOD_ALT) {
     Fl |= sssAlt;
@@ -2748,13 +2813,14 @@ void TMainForm::OnResize() {
     HtmlManager.main->Thaw();
   }
 
+  /* the canvas is placed in window units, GL draws in pixels: sf of them per
+  unit on a HiDPI screen (2 or more on Android)
+  */
   sf = FGlCanvas->GetContentScaleFactor();
-  w = static_cast<int>(w*sf);
-  h = static_cast<int>(h*sf);
   if (CmdLineVisible) {
-    FCmdLine->WI.SetWidth(w);
+    FCmdLine->WI.SetWidth(olx_round(w*sf));
     FCmdLine->WI.SetLeft(l);
-    FCmdLine->WI.SetTop(h - FCmdLine->WI.GetHeight());
+    FCmdLine->WI.SetTop(olx_round(h*sf) - FCmdLine->WI.GetHeight());
   }
   if (w <= 0) {
     w = 5;
@@ -2762,14 +2828,22 @@ void TMainForm::OnResize() {
   if (h <= 0) {
     h = 5;
   }
-  FGlCanvas->SetSize(l, 0, w, h - (CmdLineVisible ? FCmdLine->WI.GetHeight() : 0));
+  FGlCanvas->SetSize(l, 0, w,
+    h - (CmdLineVisible ? olx_round(FCmdLine->WI.GetHeight()/sf) : 0));
   FGlCanvas->GetClientSize(&w, &h);
+  w = olx_round(w*sf);
+  h = olx_round(h*sf);
   FXApp->GetRenderer().Resize(0, 0, w, h, 1);
   FGlConsole->Resize(0, dheight, w, h - dheight);
   if (FInfoBox->IsCreated()) {
     FInfoBox->SetTop(1);
     FInfoBox->SetWidth(w);
+#ifdef __ANDROID__
+    // clear of the atom legend, which also sits at the top left
+    FInfoBox->SetLeft(3*FInfoBox->GetFont().GetMaxHeight());
+#else
     FInfoBox->SetLeft(0);
+#endif
   }
 }
 //..............................................................................
@@ -3617,6 +3691,14 @@ bool TMainForm::OnMouseDown(int x, int y, short Flags, short Buttons) {
   MousePositionX = x;
   MousePositionY = y;
   MouseMoveTimeElapsed = 5000;
+#ifdef __ANDROID__  // popups have no title bar to close them: a touch on the view does
+  for (size_t i = 0; i < HtmlManager.Popups.Count(); i++) {
+    TDialog* d = HtmlManager.Popups.GetValue(i)->Dialog;
+    if (d->IsShown()) {
+      d->Hide();
+    }
+  }
+#endif
   return false;
 }
 //..............................................................................
@@ -3715,11 +3797,20 @@ void TMainForm::OnIdle() {
       Close(true);
       return;
     }
+    // OnSize skipped the size events that came before StartupInit (wxQt
+    // sends all of them before the first idle event)
+    OnResize();
   }
 #endif
     TBasicApp::GetInstance().OnIdle.Execute((AEventsDispatcher*)this, NULL);
   // runonce business...
+#ifdef __ANDROID__
+  // idle events come before the window is shown (or while a system dialog
+  // covers it) and during StartupInit: wait for onstartup, which brings up olx
+  if (!RunOnceProcessed && android_startup_done) {
+#else
   if (!RunOnceProcessed) {
+#endif
     RunOnceProcessed = true;
     TStrList rof;
     TEFile::ListDir(FXApp->GetBaseDir(), rof, "runonce*.*", sefFile);
@@ -3865,7 +3956,13 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons) {
     return true;
   }
   if (G == 0) {
-    processMacro("sel -u");
+    /* with touch on, a double tap on the background clears the selection as
+    a double click does, and centres the model when nothing is selected
+    */
+    const bool centre = FGlCanvas != 0 && FGlCanvas->IsTouchEnabled() &&
+      FXApp->GetSelection().Count() == 0;
+    processMacro(centre ? "center" : "sel -u");
+    TimePerFrame = FXApp->Draw();
     return true;
   }
   if (G->Is<TGlBitmap>()) {
@@ -4235,6 +4332,7 @@ void TMainForm::OnCloseWindow(wxCloseEvent &evt) {
 //..............................................................................
 
 //..............................................................................
+#ifdef _PYTHON
 PyObject* pyIsControl(PyObject* self, PyObject* args)  {
   olxstr cname, pname;  // control and popup (if any) name
   if( !PythonExt::ParseTuple(args, "w|w", &cname, &pname) )
@@ -4372,6 +4470,7 @@ olxcstr &TMainForm::ModuleName() {
 PyObject *TMainForm::PyInit() {
   return PythonExt::init_module(ModuleName(), CORE_Methods);
 }
+#endif // _PYTHON
 //..............................................................................
 //..............................................................................
 //..............................................................................
@@ -4411,6 +4510,10 @@ void TMainForm::UpdateInfoBox() {
       TEFile::ExtractFilePath(FXApp->XFile().GetFileName()));
     FInfoBox->PostText(TEFile::ExtractFileName(FXApp->XFile().GetFileName()));
     FInfoBox->PostText(FXApp->XFile().LastLoader()->GetTitle());
+#ifdef __ANDROID__
+    // reap reloads the default style, which resets Left to 0 (see OnResize)
+    FInfoBox->SetLeft(3*FInfoBox->GetFont().GetMaxHeight());
+#endif
     FInfoBox->Fit();
   }
   else {

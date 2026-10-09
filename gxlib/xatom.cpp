@@ -561,6 +561,19 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
   return false;
 }
 //..............................................................................
+#ifdef __ANDROID__
+// the view-dependent paths of Orient: polyhedra sort, ORTEP octants, exyz split
+bool TXAtom::IsBakeable(const TGlPrimitive& P) const {
+  if (P.GetOwnerId() == xatom_PolyId) {
+    return false;
+  }
+  if (FDrawStyle == adsOrtep && GetEllipsoid() != 0) {
+    return false;
+  }
+  return !(CAtom().GetExyzGroup() != 0 && IsSpecialDrawing());
+}
+#endif
+//..............................................................................
 vec3d TXAtom::CalcCenter() const {
   return crd() + GetCenter();
 }

@@ -30,6 +30,7 @@ TGlCanvas::TGlCanvas(TMainForm *parent, int* gl_attr, wxWindowID id,
 #endif
   FXApp = NULL;
   MouseButton = 0;
+  TouchEnabled = DrawPending = false;
   FParent = parent;
   Bind(wxEVT_PAINT, &TGlCanvas::OnPaint, this);
   Bind(wxEVT_ERASE_BACKGROUND, &TGlCanvas::OnEraseBackground, this);
@@ -46,6 +47,27 @@ TGlCanvas::TGlCanvas(TMainForm *parent, int* gl_attr, wxWindowID id,
   Bind(wxEVT_KEY_UP, &TGlCanvas::OnKeyUp, this);
   Bind(wxEVT_CHAR, &TGlCanvas::OnChar, this);
   Bind(wxEVT_KEY_DOWN, &TGlCanvas::OnKeyDown, this);
+
+  // only delivered after EnableTouchEvents in XApp()
+  Bind(wxEVT_GESTURE_ZOOM, [this](wxZoomGestureEvent &e) {
+    ToPixels(e);
+    if (TouchNav.OnZoom(e)) DrawLater();
+  });
+  Bind(wxEVT_GESTURE_PAN, [this](wxPanGestureEvent &e) {
+    ToPixels(e);
+    if (TouchNav.OnPan(e)) DrawLater();
+  });
+  Bind(wxEVT_GESTURE_ROTATE, [this](wxRotateGestureEvent &e) {
+    ToPixels(e);
+    if (TouchNav.OnRotate(e)) DrawLater();
+  });
+  Bind(wxEVT_LONG_PRESS, [this](wxLongPressEvent &e) {
+    ToPixels(e);
+    TouchNav.OnLongPress(e);
+  });
+  TouchNav.OnContextMenu = [this](int x, int y) {
+    ShowContextMenu(x, y, FXApp->SelectObject(x, y, false));
+  };
   }
 //..............................................................................
 TGlCanvas::~TGlCanvas() {
@@ -64,6 +86,17 @@ TGlCanvas::~TGlCanvas() {
 //..............................................................................
 void TGlCanvas::XApp(TGXApp *XA) {
   FXApp = XA;
+  TouchNav.SetMouse(&XA->GetMouseHandler());
+#ifdef __ANDROID__
+  const char *touch_def = "true";
+#else
+  const char *touch_def = "false";
+#endif
+  TouchEnabled = TBasicApp::GetInstance().GetOptions()
+    .FindValue("gl_touch", touch_def).ToBool();
+  if (TouchEnabled) {
+    EnableTouchEvents(TTouchNav::EventMask());
+  }
   TwxGlScene *wgls = dynamic_cast<TwxGlScene*>(&XA->GetRenderer().GetScene());
   if (wgls == NULL) {
     return;
@@ -127,6 +160,12 @@ short TGlCanvas::EncodeEvent(const wxMouseState &evt, bool update_button)  {
 }
 //..............................................................................
 void TGlCanvas::OnMouseDown(wxMouseEvent& me) {
+  ToPixels(me);
+  if (TouchNav.SwallowMouse(me.GetEventType())) {
+    MouseButton = 0;
+    me.Skip();
+    return;
+  }
   //short mb = MouseButton;
   short Fl = EncodeEvent(me);
   //MouseButton |= mb;
@@ -147,18 +186,49 @@ void TGlCanvas::OnMouseDown(wxMouseEvent& me) {
   me.Skip();
 }
 //..............................................................................
+void TGlCanvas::ShowContextMenu(int x, int y, AGDrawObject *G) {
+  int left = 0, top = 0;
+  GetPosition(&left, &top);
+  x = olx_round(x/GetContentScaleFactor());
+  y = olx_round(y/GetContentScaleFactor());
+  bool Handled = false;
+  if (G != 0) {
+    TGlGroup *GlG = FXApp->FindObjectGroup(*G);
+    if (GlG == 0) {
+      FParent->ObjectUnderMouse(G);
+    }
+    else {
+      FParent->ObjectUnderMouse(GlG);
+    }
+    if (FParent->CurrentPopupMenu()) {
+      FParent->PopupMenu(FParent->CurrentPopupMenu(), x + left, y + top);
+      Handled = true;
+    }
+    if (!Handled) {
+      FParent->PopupMenu(FParent->DefaultPopup(), x + left, y + top);
+    }
+  }
+  else {
+    FParent->PopupMenu(FParent->GeneralPopup(), x + left, y + top);
+  }
+  SetFocus();
+}
+//..............................................................................
 void TGlCanvas::OnMouseUp(wxMouseEvent& me)  {
+  ToPixels(me);
   me.Skip();
+  if (TouchNav.SwallowMouse(me.GetEventType())) {
+    MouseButton = 0;
+    return;
+  }
   short mb = MouseButton;
   short Fl = EncodeEvent(me, true);
   short up = MouseButton ^ mb;
-  int left = 0, top = 0;
 #ifdef __MAC__  // a solution for MAC's single button
   int os_mask = sssCtrl;
 #else
   int os_mask = 0;
 #endif
-  GetPosition(&left, &top);
   // MouseUp resets the previously set object - capture it before that
   AGDrawObject* G = FXApp->GetMouseObject();
   if (FParent->OnMouseUp(me.m_x, me.m_y, Fl, up)) {
@@ -168,34 +238,8 @@ void TGlCanvas::OnMouseUp(wxMouseEvent& me)  {
   else if ((abs(me.m_x-FMX) <= 4) && (abs(me.m_y-FMY) <= 4) &&
     (up == smbRight) && (Fl == os_mask || Fl == 0))
   {
-//    FMY += (wxSystemSettings::GetMetric(wxSYS_MENU_Y)*FParent->pmMenu->GetMenuItemCount());
-//      FXApp->MouseUp(me.m_x, me.m_y, Fl, Btn);
-    //AGDrawObject *G = FXApp->SelectObject(me.m_x, me.m_y, false);
-    bool Handled = false;
-    if (G != 0) {
-      TGlGroup *GlG = FXApp->FindObjectGroup(*G);
-      if (GlG == 0) {
-        FParent->ObjectUnderMouse(G);
-      }
-      else {
-        FParent->ObjectUnderMouse(GlG);
-      }
-      if (FParent->CurrentPopupMenu()) {
-        FParent->PopupMenu(FParent->CurrentPopupMenu(), FMX+left, FMY+top);
-        Handled = true;
-      }
-      if (!Handled) {
-        FParent->PopupMenu(FParent->DefaultPopup(), FMX + left, FMY + top);
-      }
-    }
-    else {
-      FParent->PopupMenu(FParent->GeneralPopup(), FMX + left, FMY + top);
-    }
-    SetFocus();
+    ShowContextMenu(FMX, FMY, G);
     return;
-  }
-  else if (FParent->OnMouseUp(me.m_x, me.m_y, Fl, up)) {
-    FXApp->ResetMouseState(me.m_x, me.m_y);
   }
   FXApp->Draw();
   FXApp->ResetMouseState(me.m_x, me.m_y, Fl, MouseButton);
@@ -203,6 +247,11 @@ void TGlCanvas::OnMouseUp(wxMouseEvent& me)  {
 }
 //..............................................................................
 void TGlCanvas::OnMouseMove(wxMouseEvent& me) {
+  ToPixels(me);
+  if (TouchNav.SwallowMouse(me.GetEventType())) {
+    MouseButton = 0;
+    return;
+  }
   short Fl = EncodeEvent(me, false);
   if (MouseButton == 0)
     FParent->OnMouseMove(me.m_x, me.m_y);
@@ -216,18 +265,38 @@ void TGlCanvas::OnMouseMove(wxMouseEvent& me) {
     */
     wxWindow::Refresh();
 #else
-    FXApp->Draw();
+    DrawLater();
 #endif
   }
 }
 //..............................................................................
+void TGlCanvas::DrawLater() {
+  if (DrawPending) {
+    return;
+  }
+  DrawPending = true;
+  // posted events run after the pending input, so one draw takes them all
+  CallAfter([this]() {
+    DrawPending = false;
+    if (FXApp != 0) {
+      FXApp->Draw();
+    }
+  });
+}
+//..............................................................................
 void TGlCanvas::OnMouseDblClick(wxMouseEvent& me)  {
+  ToPixels(me);
+  if (TouchNav.SwallowMouse(me.GetEventType())) {
+    MouseButton = 0;
+    return;
+  }
   short Fl = EncodeEvent(me);
   if (FXApp != NULL && !FXApp->DblClick())
     FParent->OnMouseDblClick(me.m_x, me.m_y, Fl, MouseButton);
 }
 //..............................................................................
 void TGlCanvas::OnMouseWheel(wxMouseEvent& me) {
+  ToPixels(me);
   if (me.GetWheelRotation() != 0) {
     FParent->OnMouseWheel(me.GetX(), me.GetY(),
     (double)me.GetWheelRotation()/me.GetWheelDelta());

@@ -124,7 +124,9 @@
 
 #ifdef __linux__
 #include <signal.h>
+# ifndef __ANDROID__  // no fontconfig in the NDK
 #include <fontconfig/fontconfig.h>
+# endif
 #endif
 
 #include "olxmps.h"
@@ -3466,6 +3468,9 @@ void TMainForm::macPopup(TStrObjList& Cmds, const TParamList& Options, TMacroDat
 }
 //..............................................................................
 void TMainForm::macPython(TStrObjList& Cmds, const TParamList& Options, TMacroData& E) {
+#ifndef _PYTHON
+  E.ProcessingError(__OlxSrcInfo, "this build has no Python");
+#else
   if (Options.Contains('i') || Options.Contains('l')) {
     TdlgStyledEdit* dlg = new TdlgStyledEdit(this, true);
     olx_finally f_ = olx_finally::make(*dlg, &TdlgStyledEdit::Destroy);
@@ -3494,6 +3499,7 @@ void TMainForm::macPython(TStrObjList& Cmds, const TParamList& Options, TMacroDa
     tmp << '\n';
   }
   PythonExt::GetInstance()->RunPython(tmp);
+#endif
 }
 //..............................................................................
 void TMainForm::macCreateMenu(TStrObjList& Cmds, const TParamList& Options, TMacroData& E) {
@@ -6618,7 +6624,7 @@ void TMainForm::macRegisterFonts(TStrObjList &Cmds, const TParamList &Options,
     TEGC::AddP(toRemove.release());
   }
   SendMessage(HWND_BROADCAST, WM_FONTCHANGE, 0, 0);
-#elif __linux__
+#elif defined(__linux__) && !defined(__ANDROID__)
   if (FcConfigAppFontAddDir(0, (const FcChar8 *)Cmds[0].ToMBStr().c_str())) {
     TBasicApp::NewLogEntry(logInfo) << "Successfully registered the font directory";
   }

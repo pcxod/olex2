@@ -421,6 +421,17 @@ void TXGrid::Create(const olxstr& cName) {
   GlM.AmbientF = 0xD80f0f0f;
   GlM.DiffuseF = 0xD80f0f0f;
   Info->Create();
+#ifdef __ANDROID__
+  /* the style's 0,0 puts "Current level" over the file info box, which holds
+  the top left corner on Android: start below its lines, clear of the atom
+  legend as the info box is (TMainForm::OnResize)
+  */
+  if (Info->GetLeft() == 0 && Info->GetTop() == 0) {
+    const int h = Info->GetFont().GetMaxHeight();
+    Info->SetLeft(3*h);
+    Info->SetTop(4*h);
+  }
+#endif
   Legend->SetMaterial(GS.GetMaterial("eMap", GlM));
   Legend->Create();
   if (GPC.PrimitiveCount() != 0) {
@@ -447,6 +458,17 @@ void TXGrid::Create(const olxstr& cName) {
   glpN = &GPC.NewPrimitive("-Surface", sgloQuads);
   glpN->SetProperties(GS.GetMaterial("-Surface",
     TGlMaterial("85;1.000,0.000,0.000,0.850;3632300160;1.000,1.000,1.000,0.500;36")));
+  // shells cut open by the mask show their inside: give it a darker front
+  // colour instead of the black that a front-only material leaves there
+  for (TGlPrimitive* p : { glpP, glpN }) {
+    TGlMaterial m = p->GetProperties();
+    if ((m.GetFlags() & sglmAmbientB) == 0) {
+      m.AmbientB = m.AmbientF * 0.6f;
+      m.DiffuseB = m.DiffuseF * 0.6f;
+      m.SetFlags(m.GetFlags() | sglmAmbientB | sglmDiffuseB);
+      p->SetProperties(m);
+    }
+  }
 
   glpC = &GPC.NewPrimitive("Contour plane", sgloQuads);
   glpC->SetProperties(GS.GetMaterial("Contour plane",
@@ -889,6 +911,14 @@ void TXGrid::SetScale(float v) {
         vertices.Add(0).TakeOver(IS.VertexList());
         normals.Add(0).TakeOver(IS.NormalList());
         triangles.Add(0).TakeOver(IS.TriangleList());
+      }
+      // grid-index normals are covectors: to Cartesian by the inverse transpose
+      const mat3f c2c(XApp->XFile().GetAsymmUnit().GetCartesianToCell());
+      for (size_t li = 0; li < normals.Count(); li++) {
+        for (size_t i = 0; i < normals[li].Count(); i++) {
+          vec3f& n = normals[li][i];
+          n = (c2c * vec3f(n[0] * MaxX, n[1] * MaxY, n[2] * MaxZ)).Normalise();
+        }
       }
     }
     RescaleSurface(false);

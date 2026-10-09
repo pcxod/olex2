@@ -1,0 +1,111 @@
+#############################################################
+# Android tablet skin (SM-T585: 1920x1200, 240 dpi, touch)  #
+# Loaded by deal_with_gui_phil() on top of gui.params when  #
+# gui.skin.name = default. Upstream has no default.phil, so #
+# this file exists only in the Android rundir overlay.      #
+# Sizes: touch target >= 48 px, body text ~17 px.           #
+#############################################################
+
+gui {
+
+  # Fixed font step: the ClientWidth-keyed steps gave '0' at 480 px and
+  # would give '+1' at 720 px; one deterministic size is easier to tune.
+  font_size_steps = 0
+  font_size_rel_size = '0'
+
+  # Panel ~29 % of 1920 (Florian: 720 too wide, 480 too narrow); applied on
+  # every start by the export_parameters patch in gui_tablet_patches.py.
+  htmlpanelwidth = 550
+  # 21 + the 16 px wxQt scrollbar the generated images did not allow for.
+  htmlpanelwidth_margin_adjust = 36
+
+  skin {
+    icon_size = 44
+  }
+
+  html {
+    # wxHTML size 4 ~ 17 px = the native Qt control text; 2 was ~11 px.
+    font_size = 4
+    # +1 on non-Windows in SetHtmlFontSizeControls -> 4.
+    font_size_controls = 3
+    font_size_medium = 5
+    # Qt draws combos ~40-44 px whatever is asked; match it so rows are even.
+    input_height = 44
+    combo_height = 44
+    spin_height = 44
+    checkbox_height = 36
+    checkbox_width = 36
+    checkbox_width_2 = 36
+    combo_width_2 = 75
+    # Room for the larger (i) icon.
+    table_firstcol_width = 40
+  }
+
+  timage {
+    # Fonts x1.5 of desktop, heights raised to the 44-52 px touch range.
+    # top = text offset; calibrate on the device if text sits off-centre.
+    tab {
+      height = 68
+      font_size = 38
+      top = 13
+    }
+    cbtn {
+      # ~128 px per button at 550: bar + label must fit, 60/30 overlapped
+      height = 52
+      font_size = 24
+      top = 10
+      arrows = "bar:right:44,arrow_right:onup:offdown:hoverdown:hoveronup"
+      vline = 44
+      dot_size = 6
+      # arrow circle is height - 2*dot_pad = 42 px at x = width - height + dot_left,
+      # i.e. centred in the 44 px bar (defaults 1/1 made it 50 px, spilling left)
+      dot_pad = 5
+      dot_left = 9
+    }
+    button {
+      height = 44
+      font_size = 18
+      top = 11
+    }
+    small_button {
+      width = 95
+      height = 44
+    }
+    tinybutton {
+      height = 44
+      width = 44
+      font_size = 21
+      top = 8
+    }
+    h1 {
+      height = 44
+      font_size = 27
+      top = 7
+    }
+    h3 {
+      height = 44
+      # (i) circle scales with h3.height (36 at 19): icon ~35 x 49 px.
+      info_circle = 83
+      font_size = 21
+      top = 10
+    }
+    # header: statistics bars (d min, Rint, GoF ...) are tap targets.
+    hos {
+      height = 44
+      font_size = 24
+    }
+  }
+
+  help_box {
+    width = 640
+    height_factor = 90
+    height_constant = 90
+    height_max = 900
+  }
+
+  buttons {
+    small_buttons {
+      width = 95
+    }
+  }
+}

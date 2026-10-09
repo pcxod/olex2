@@ -1,0 +1,73 @@
+<!-- #include tool-top gui\blocks\tool-top.htm;image=#image;onclick=#onclick;1; -->
+
+<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='MATCH_1';help_ext=match-1;1 -->
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=%Match All Fragments%",
+    "name=MATCH_ALL",
+    "onclick=match",
+    "td1=<td width='50%'>"
+    )
+  $-
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=%UnMatch%",
+    "name=MATCH_UNMATCH",
+    "onclick=match -u",
+    "td1=<td width='50%'>"
+    )
+  $-
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- #include tool-row gui\blocks\tool-row.htm;name='MATCH_2';1 -->
+  <td width='100%'>
+<!-- #includeif File.Exists(match.htm) match match.htm;1; -->
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='MATCH_3';help_ext=match-3;1 -->
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=%Match Selected Atoms%",
+    "name=MATCH_SEL",
+    "onclick=match sel",
+    "td1=<td width='100%'>"
+    )
+  $-
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+
+<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='MATCH_4';help_ext=match-4;1 -->
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=%Overlay Structure%",
+    "name=MATCH_OVERLAY",
+    "onclick=@reap -*>>mode match>>html.update",
+    "td1=<td width='50%'>"
+    )
+  $-
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=%Mode Match%",
+    "name=MATCH_MODE",
+    "onclick=mode match",
+    "td1=<td width='50%'>"
+    )
+  $-
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- #include tool-row gui\blocks\tool-row.htm;name='MATCH_5';1 -->
+  <td width='100%'>
+    %Mode Match-help%
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- #ignoreif math.eval_bool(ofilecount()==1) -->
+<!-- #include tool-row gui\blocks\tool-row.htm;name='MATCH_5';1 -->
+  <td width='100%'>
+    $spy.gui.create_overlay_gui()
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+<!-- ignoreif# -->
+
+<!-- #include tool-footer gui\blocks\tool-footer.htm;colspan=2;1; -->

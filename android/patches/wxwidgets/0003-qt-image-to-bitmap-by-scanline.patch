@@ -1,0 +1,29 @@
+diff --git a/src/qt/bitmap.cpp b/src/qt/bitmap.cpp
+index 03bc721..27538a5 100644
+--- a/src/qt/bitmap.cpp
++++ b/src/qt/bitmap.cpp
+@@ -97,9 +97,13 @@ static QImage ConvertImage( const wxImage &image, wxMask** mask = nullptr  )
+         qtMask.fill(Qt::color0); // filled with 0s
+     }
+ 
+-    for (int y = 0; y < image.GetHeight(); ++y)
++    // a scanline pointer per row: setPixel() is an out-of-line call with a
++    // detach check per pixel, and GetWidth() is not inlined either
++    const int w = image.GetWidth(), h = image.GetHeight();
++    for (int y = 0; y < h; ++y)
+     {
+-        for (int x = 0; x < image.GetWidth(); ++x)
++        QRgb *line = (QRgb*)qtImage.scanLine(y);
++        for (int x = 0; x < w; ++x)
+         {
+             const unsigned char a = hasAlpha ? alpha[0] : 255;
+             const unsigned char r = data[0];
+@@ -120,7 +124,7 @@ static QImage ConvertImage( const wxImage &image, wxMask** mask = nullptr  )
+                 alpha++;
+             }
+ 
+-            qtImage.setPixel(x, y, colour);
++            line[x] = colour; // a = 255 without alpha, as setPixel stores RGB32
+ 
+             data += 3;
+         }

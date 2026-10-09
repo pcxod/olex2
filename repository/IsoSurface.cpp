@@ -552,14 +552,50 @@ void CIsoSurface::CalculateNormals() {
     Normals[Triangles[i][2]] += normal;
   }
 
-  // Normalize normals.
-  for (size_t i = 0; i < Normals.Count(); i++) {
-    if (Normals[i].QLength() > 1e-6f) {
-      Normals[i].Normalise();
-      //Normals[i] *= -1;
+  /* shade with the density gradient (central differences, trilinear at the
+  vertex): face normals facet surfaces only a few grid cells across. The sign
+  follows the face normals, which carry the triangle winding.
+  */
+  const int w = (int)Points.width, h = (int)Points.height,
+    d = (int)Points.depth;
+  float*** D = Points.data;
+  TArrayList<vec3f> grads(Vertices.Count());
+  double agree = 0;
+  for (size_t i = 0; i < Vertices.Count(); i++) {
+    const vec3f& p = Vertices[i];
+    const int x0 = olx_min((int)p[0], w - 1), y0 = olx_min((int)p[1], h - 1),
+      z0 = olx_min((int)p[2], d - 1);
+    const float fx = p[0] - x0, fy = p[1] - y0, fz = p[2] - z0;
+    vec3f g;
+    for (int c = 0; c < 8; c++) {
+      const int x = olx_min(x0 + (c & 1), w - 1), y = olx_min(y0 + ((c >> 1) & 1), h - 1),
+        z = olx_min(z0 + (c >> 2), d - 1);
+      const float wt = ((c & 1) ? fx : 1 - fx) * (((c >> 1) & 1) ? fy : 1 - fy) *
+        ((c >> 2) ? fz : 1 - fz);
+      if (wt == 0) {
+        continue;
+      }
+      const int xm = olx_max(x - 1, 0), xp = olx_min(x + 1, w - 1),
+        ym = olx_max(y - 1, 0), yp = olx_min(y + 1, h - 1),
+        zm = olx_max(z - 1, 0), zp = olx_min(z + 1, d - 1);
+      g[0] += wt * (D[xp][y][z] - D[xm][y][z]) / (xp - xm);
+      g[1] += wt * (D[x][yp][z] - D[x][ym][z]) / (yp - ym);
+      g[2] += wt * (D[x][y][zp] - D[x][y][zm]) / (zp - zm);
     }
-    else
-      Normals[i][2] = 1;
+    grads[i] = g;
+    agree += g.DotProd(Normals[i]);
+  }
+  const float sg = agree < 0 ? -1.0f : 1.0f;
+  for (size_t i = 0; i < Normals.Count(); i++) {
+    if (grads[i].QLength() > 1e-12f) {
+      Normals[i] = grads[i].Normalise() * sg;
+    }
+    else if (Normals[i].QLength() > 1e-6f) {
+      Normals[i].Normalise();
+    }
+    else {
+      Normals[i] = vec3f(0, 0, 1);
+    }
   }
 }
 //..............................................................................

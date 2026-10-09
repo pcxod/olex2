@@ -1,0 +1,173 @@
+diff --git a/include/wx/qt/private/winevent.h b/include/wx/qt/private/winevent.h
+index 8933a1a..1bdb54b 100644
+--- a/include/wx/qt/private/winevent.h
++++ b/include/wx/qt/private/winevent.h
+@@ -272,7 +272,10 @@ protected:
+         if ( !this->GetHandler() )
+             return;
+ 
+-        if ( !this->GetHandler()->QtHandleMouseEvent(this, event) )
++        // QWidget::mouseDoubleClickEvent() passes a double click that wx left
++        // unhandled on to here; it was already sent as wxEVT_LEFT_DCLICK
++        if ( event->type() == QEvent::MouseButtonDblClick ||
++             !this->GetHandler()->QtHandleMouseEvent(this, event) )
+             Widget::mousePressEvent(event);
+         else
+             event->accept();
+@@ -463,7 +466,8 @@ protected:
+             if (gesture->state() == Qt::GestureFinished)
+             {
+                 wxLongPressEvent ev(win->GetId());
+-                ev.SetPosition( wxQtConvertPoint( gesture->position().toPoint() ) );
++                ev.SetPosition( win->ScreenToClient(
++                    wxQtConvertPoint( gesture->position().toPoint() ) ) );
+ 
+                 ev.SetGestureEnd();
+                 win->ProcessWindowEvent( ev );
+@@ -479,8 +483,10 @@ protected:
+         if (win)
+         {
+             wxPanGestureEvent evp(win->GetId());
+-            QPoint pos = QCursor::pos();
+-            evp.SetPosition( wxQtConvertPoint( pos ) );
++            // QCursor::pos() does not follow a touch: use where the first
++            // finger went down plus the offset the fingers moved since
++            const QPointF pos = gesture->hotSpot() + gesture->offset();
++            evp.SetPosition( win->ScreenToClient( wxQtConvertPoint( pos.toPoint() ) ) );
+             evp.SetDelta( wxQtConvertPoint( gesture->delta().toPoint() ) );
+ 
+             switch(gesture->state())
+@@ -507,10 +513,16 @@ protected:
+         wxWindow *win = wxWindow::QtRetrieveWindowPointer( this );
+         if (win)
+         {
+-            if (gesture->changeFlags() & QPinchGesture::ScaleFactorChanged)
++            // Qt finishes a pinch with no change flags when one finger lifts
++            // before the other: still send the end event
++            const bool ended = gesture->state() == Qt::GestureFinished ||
++                               gesture->state() == Qt::GestureCanceled;
++            const wxPoint centre = win->ScreenToClient(
++                wxQtConvertPoint(gesture->centerPoint().toPoint()));
++            if (ended || (gesture->changeFlags() & QPinchGesture::ScaleFactorChanged))
+             {
+                 wxZoomGestureEvent evp(win->GetId());
+-                evp.SetPosition(wxQtConvertPoint(gesture->centerPoint().toPoint()));
++                evp.SetPosition(centre);
+                 evp.SetZoomFactor(gesture->totalScaleFactor());
+ 
+                 switch (gesture->state())
+@@ -529,10 +541,10 @@ protected:
+                 win->ProcessWindowEvent(evp);
+             }
+ 
+-            if (gesture->changeFlags() & QPinchGesture::RotationAngleChanged)
++            if (ended || (gesture->changeFlags() & QPinchGesture::RotationAngleChanged))
+             {
+                 wxRotateGestureEvent evp(win->GetId());
+-                evp.SetPosition(wxQtConvertPoint(gesture->centerPoint().toPoint()));
++                evp.SetPosition(centre);
+                 evp.SetRotationAngle(wxDegToRad(gesture->totalRotationAngle()));
+ 
+                 switch (gesture->state())
+diff --git a/src/qt/glcanvas.cpp b/src/qt/glcanvas.cpp
+index b3cadb8..9323bd9 100644
+--- a/src/qt/glcanvas.cpp
++++ b/src/qt/glcanvas.cpp
+@@ -20,6 +20,20 @@
+ 
+ wxGCC_WARNING_SUPPRESS(unused-parameter)
+ 
++#ifdef __ANDROID__
++// gl4es (desktop GL 1.x on GLES 2) when the application links it: it must be
++// initialised on a current context, has to treat the widget's FBO as
++// framebuffer 0 and holds back display lists and glBitmap batches until a
++// "swap". Weak, so an application without gl4es is unaffected.
++extern "C" {
++void initialize_gl4es() __attribute__((weak));
++void gl4es_setMainFBO(unsigned int fbo) __attribute__((weak));
++void gl4es_pre_swap() __attribute__((weak));
++void gl4es_post_swap() __attribute__((weak));
++void gl4es_resyncState() __attribute__((weak));
++}
++#endif
++
+ class wxQtGLWidget : public wxQtEventSignalHandler< QOpenGLWidget, wxGLCanvas >
+ {
+ public:
+@@ -30,6 +44,9 @@ public:
+         setFocusPolicy(Qt::StrongFocus);
+     }
+ 
++    // true while the wxPaintEvent from paintGL() is being handled
++    bool m_inPaintGL = false;
++
+ protected:
+     virtual void resizeEvent ( QResizeEvent * event ) override;
+     virtual void paintEvent ( QPaintEvent * event ) override;
+@@ -56,8 +73,10 @@ void wxQtGLWidget::resizeGL(int w, int h)
+ 
+ void wxQtGLWidget::paintGL()
+ {
++    m_inPaintGL = true;
+     wxPaintEvent event( GetHandler() );
+     EmitEvent(event);
++    m_inPaintGL = false;
+ }
+ 
+ // ----------------------------------------------------------------------------
+@@ -362,6 +381,18 @@ bool wxGLContext::SetCurrent(const wxGLCanvas& win) const
+     }
+ 
+     qglWidget->makeCurrent();
++#ifdef __ANDROID__
++    if ( initialize_gl4es && gl4es_setMainFBO )
++    {
++        initialize_gl4es(); // only the first call does anything
++        // the FBO is recreated on resize, so set it every time
++        gl4es_setMainFBO(qglWidget->defaultFramebufferObject());
++        // Qt resets the program, array buffer, blend and viewport before
++        // paintGL() without gl4es knowing
++        if ( gl4es_resyncState )
++            gl4es_resyncState();
++    }
++#endif
+     return true;
+ }
+ 
+@@ -480,9 +511,14 @@ bool wxGLCanvas::Create(wxWindow *parent,
+ 
+     m_qtWindow = new wxQtGLWidget(parent, this, format);
+ 
++    // Not on a touch screen: this one-finger recognizer turns every drag into
++    // a pan on top of the mouse drag and follows only the first finger of a
++    // pinch. Qt's own pan recognizer, which wants two fingers, stays.
++#ifndef __ANDROID__
+     // Create and register a custom pan recognizer, available to all instances of this class.
+     QGestureRecognizer* pPanRecognizer = new PanGestureRecognizer();
+     QGestureRecognizer::registerRecognizer(pPanRecognizer);
++#endif
+ 
+     if ( !wxWindow::Create( parent, id, pos, size, style, name ) )
+         return false;
+@@ -494,7 +530,20 @@ bool wxGLCanvas::Create(wxWindow *parent,
+ 
+ bool wxGLCanvas::SwapBuffers()
+ {
+-    // Not possible
++    // There is no buffer to swap: Qt composes the widget's FBO after paintGL()
++    // returns. Flush what gl4es still holds, and for a frame drawn outside
++    // paintGL() (from a mouse or timer handler) request the repaint without
++    // which it would never be shown.
++#ifdef __ANDROID__
++    if ( gl4es_pre_swap && gl4es_post_swap )
++    {
++        gl4es_pre_swap();
++        gl4es_post_swap();
++    }
++#endif
++    wxQtGLWidget* const widget = static_cast<wxQtGLWidget*>(m_qtWindow);
++    if ( !widget->m_inPaintGL )
++        widget->update();
+     return true;
+ }
+ 
