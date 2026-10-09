@@ -173,6 +173,13 @@ struct CIPCompare {
   cut-off - hundreds in 3D frameworks at ~1.5 kB of stack each; deeper pairs tie
   */
   static const int MaxCIPLevel = 64;
+  /* every pair re-ranks the siblings it reaches with this same comparison, so
+  symmetry-equivalent (tied) branches of a framework cost exponential time and
+  memory within the cut-off (>1e6 expansions, GBs). In 800 COD structures
+  organic centres decided within 3e3, one Mn cluster took 3e5; past the budget
+  the pair ties (not chiral) */
+  static const size_t MaxCIPExpansions = 100000;
+  mutable size_t expansions;
   olxstr_buf* bf;
   mutable olxdict<BigId, int, TComparableComparator> order;
 
@@ -191,7 +198,7 @@ struct CIPCompare {
   }
 
   CIPCompare(RSA_BondOrder& b, TSymmNodeRegistry& registry, olxstr_buf* bf)
-    : boa(b), registry(registry), bf(bf)
+    : boa(b), registry(registry), expansions(0), bf(bf)
   {
     MaxCIPRadiusSq = 225;
   }
@@ -203,6 +210,7 @@ struct CIPCompare {
       return;
     }
     const TSymmNode& n = *e.node;
+    expansions++;
     n.SetTag(n.GetTag() | side);
     if (e.from != 0) {
       for (int k = 1; k < e.from_order; k++) {
@@ -288,7 +296,7 @@ struct CIPCompare {
     if (ea.type->z != eb.type->z) {
       return olx_cmp(ea.type->z, eb.type->z);
     }
-    if (level > MaxCIPLevel) {
+    if (level > MaxCIPLevel || expansions > MaxCIPExpansions) {
       return 0;
     }
     typedef olx_pair_t<CIPElem, CIPElem> Pair;
@@ -309,6 +317,9 @@ struct CIPCompare {
       TTypeList<CIPElem> ca, cb;
       SortSiblings(na, sideA, ca, level+1);
       SortSiblings(nb, sideB, cb, level+1);
+      if (expansions > MaxCIPExpansions) {
+        return 0;
+      }
       size_t sz = olx_max(ca.Count(), cb.Count());
       for (size_t j = 0; j < sz; j++) {
         CIPElem pa = j < ca.Count() ? ca[j]
@@ -380,6 +391,7 @@ struct RSA_Full_EnviSorter {
     CIPElem ea(na, &a.atom->GetType(), center, 1, false);
     CIPElem eb(nb, &b.atom->GetType(), center, 1, false);
     cip.order.Clear();
+    cip.expansions = 0;
     return cip.CompareOne(ea, 2, eb, 4, 0);
   }
 public:
