@@ -20,9 +20,11 @@ if [ ! -d ptb-src ]; then
 fi
 
 for abi in "$@"; do
+  AF=""
   case $abi in
+    # armv7ve = hardware sdiv/udiv; -mfpu=neon as before, so no FMA and the same results
     armeabi-v7a) P=$W/tc/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-linux-gnueabihf/bin/arm-none-linux-gnueabihf-
-                 OB="TARGET=ARMV7" ;;
+                 OB="TARGET=ARMV7"; AF=" -march=armv7ve -mfpu=neon" ;;
     arm64-v8a)   P=$W/tc/arm-gnu-toolchain-14.2.rel1-x86_64-aarch64-none-linux-gnu/bin/aarch64-none-linux-gnu-
                  OB="TARGET=ARMV8 DYNAMIC_ARCH=1" ;;
     x86_64)      P=x86_64-linux-gnu-
@@ -44,6 +46,8 @@ for abi in "$@"; do
   pre=$W/openblas-$abi
   if [ ! -f $pre/lib/libopenblas.a ]; then
     rm -rf ob-$abi; cp -r OpenBLAS-0.3.28 ob-$abi
+    # Makefile.arm appends its own -march=armv7-a (and -mfpu=vfpv3) last
+    [ $abi = armeabi-v7a ] && sed -i 's/-march=armv7-a/-march=armv7ve/' ob-$abi/Makefile.arm
     make -C ob-$abi -j$J -s CC=$CC FC=$FC HOSTCC=gcc $OB NO_SHARED=1 USE_OPENMP=1 NUM_THREADS=64 libs netlib > ob-$abi.log 2>&1
     make -C ob-$abi -s PREFIX=$pre NO_SHARED=1 $OB install >> ob-$abi.log 2>&1
   fi
@@ -59,11 +63,11 @@ for abi in "$@"; do
   # LAPACK's ssyev then jumps into it
   sed -i '1s/subroutine sscal(/subroutine ptb_sscal_unused(/' $b/sscal.f90
   # runs before TLS exists: no stack canary (x86 gcc adds one by default)
-  $CC -O2 -fno-stack-protector -c $here/sigsys.c -o $b/sigsys.o
+  $CC -O2$AF -fno-stack-protector -c $here/sigsys.c -o $b/sigsys.o
   mkdir -p out/$abi
   # no -j: the Makefile's module dependencies are incomplete
   make -C $b -s COMPILER=gfortran FC=$FC CC=$CC PROG=$W/out/$abi/ptb \
-    FFLAGS="-O2 -ffree-line-length-none -fopenmp -fno-backtrace" CCFLAGS="-O2 -std=gnu17 -DLINUX" \
+    FFLAGS="-O2$AF -ffree-line-length-none -fopenmp -fno-backtrace" CCFLAGS="-O2$AF -std=gnu17 -DLINUX" \
     LINKER="$LD -static -O2 -fopenmp$KEEP -Wl,-e,ptb_start" \
     LIBS="sigsys.o $pre/lib/libopenblas.a$RT -lpthread -lm" > $b.log 2>&1
   ${P}strip $W/out/$abi/ptb 2>/dev/null || strip $W/out/$abi/ptb
