@@ -262,6 +262,133 @@ TResidue *TCif::MMResidue(const olxstr &comp_id, const olxstr &seq_id,
   return r;
 }
 //..............................................................................
+/* deposited hydrogens ride on the nearest heavy atom of their own residue and
+part, with the AFIX the pivot's H count and bonding call for. HAdd skips an atom
+that has any H, so one left free here stays free and wanders off. An H riding on
+nothing, or a count no AFIX fits, is dropped for HAdd to put back
+*/
+static void MMRideHydrogens(TAsymmUnit& au, RefinementModel& rm) {
+  struct Group {
+    TCAtom* pivot;
+    int part;
+    TCAtomPList hs;
+  };
+  size_t riding = 0, dropped = 0;
+  for (size_t ri = 0; ri < au.ResidueCount(); ri++) {
+    TResidue& r = au.GetResidue(ri);
+    TTypeList<Group> groups;
+    for (size_t i = 0; i < r.Count(); i++) {
+      TCAtom& h = r[i];
+      if (h.IsDeleted() || h.GetType() != iHydrogenZ) {
+        continue;
+      }
+      TCAtom* pivot = 0;
+      double best = 0;
+      for (size_t j = 0; j < r.Count(); j++) {
+        TCAtom& p = r[j];
+        if (p.IsDeleted() || p.GetType() == iHydrogenZ ||
+          (h.GetPart() != 0 && p.GetPart() != 0 && p.GetPart() != h.GetPart()))
+        {
+          continue;
+        }
+        const double d = au.Orthogonalise(p.ccrd() - h.ccrd()).Length(),
+          lim = (p.GetType() == iSulphurZ || p.GetType() == iSeleniumZ) ? 1.55
+          : 1.35;
+        if (d < lim && (pivot == 0 || d < best)) {
+          pivot = &p;
+          best = d;
+        }
+      }
+      if (pivot == 0) {
+        h.SetDeleted(true);
+        dropped++;
+        continue;
+      }
+      Group* g = 0;
+      for (size_t j = 0; j < groups.Count() && g == 0; j++) {
+        if (groups[j].pivot == pivot && groups[j].part == h.GetPart()) {
+          g = &groups[j];
+        }
+      }
+      if (g == 0) {
+        g = &groups.AddNew();
+        g->pivot = pivot;
+        g->part = h.GetPart();
+      }
+      g->hs.Add(h);
+    }
+    for (size_t gi = 0; gi < groups.Count(); gi++) {
+      Group& g = groups[gi];
+      TCAtom& p = *g.pivot;
+      /* heavy neighbours in this and the adjacent residues, a backbone N being
+      bonded to the C before it. Conformers of one atom share its name here and
+      count once
+      */
+      TStrList seen;
+      for (size_t rj = (ri == 0 ? 0 : ri - 1);
+        rj < olx_min(ri + 2, au.ResidueCount()); rj++)
+      {
+        TResidue& nr = au.GetResidue(rj);
+        for (size_t j = 0; j < nr.Count(); j++) {
+          TCAtom& a = nr[j];
+          if (&a == &p || a.IsDeleted() || a.GetType() == iHydrogenZ ||
+            (g.part != 0 && a.GetPart() != 0 && a.GetPart() != g.part) ||
+            (p.GetPart() != 0 && a.GetPart() != 0 && a.GetPart() != p.GetPart()))
+          {
+            continue;
+          }
+          const double d = au.Orthogonalise(a.ccrd() - p.ccrd()).Length();
+          if (d < a.GetType().r_bonding + p.GetType().r_bonding + 0.5) {
+            const olxstr key = olxstr(rj) << ':' << a.GetLabel();
+            if (seen.IndexOf(key) == InvalidIndex) {
+              seen.Add(key);
+            }
+          }
+        }
+      }
+      const size_t nh = g.hs.Count(), nb = seen.Count();
+      const short z = p.GetType().z;
+      int afix = 0;
+      if (z == iCarbonZ || z == iNitrogenZ) {
+        if (nh == 3 && nb == 1) afix = 137;
+        else if (nh == 2 && nb == 2) afix = 23;
+        // an NH2 on one neighbour is planar, so not an N-terminus missing an H
+        else if (nh == 2 && nb == 1 && !p.GetLabel().Equalsi("N")) afix = 93;
+        else if (nh == 1 && nb == 3) afix = 13;
+        else if (nh == 1 && nb == 2) afix = 43;
+        else if (nh == 1 && nb == 1 && z == iCarbonZ) afix = 163;
+      }
+      else if (z == iOxygenZ || z == iSulphurZ || z == iSeleniumZ) {
+        if (nh == 1 && nb == 1) afix = 147;
+        // water: a rigid group that keeps the deposited orientation
+        else if (nh == 2 && nb == 0 && z == iOxygenZ) afix = 6;
+      }
+      if (afix == 0) {
+        for (size_t i = 0; i < nh; i++) {
+          g.hs[i]->SetDeleted(true);
+        }
+        dropped += nh;
+        continue;
+      }
+      TAfixGroup& ag = rm.AfixGroups.New(&p, afix);
+      for (size_t i = 0; i < nh; i++) {
+        TCAtom& h = *g.hs[i];
+        ag.AddDependent(h);
+        h.AssignEllp(0);
+        h.SetUisoOwner(&p);
+        h.SetUisoScale((z == iOxygenZ || (afix == 137 && z == iCarbonZ))
+          ? 1.5 : 1.2);
+      }
+      riding += nh;
+    }
+  }
+  if (riding + dropped > 0) {
+    TBasicApp::NewLogEntry(logInfo) << "mmCIF: " << riding <<
+      " deposited H riding on their pivots, " << dropped << " dropped - "
+      "no heavy atom of their residue to ride on, or a count no AFIX fits";
+  }
+}
+//..............................................................................
 void TCif::_LoadCurrentMM() {
   /* InvalidIndex means "choose one", which is what TBasicCFile::LoadFromFile
   passes for a file named without a block, i.e. every file opened normally.
@@ -539,6 +666,7 @@ void TCif::_LoadCurrentMM() {
       GetAsymmUnit().SetZ(z->GetStringValue().ToDouble());
     }
   }
+  MMRideHydrogens(GetAsymmUnit(), GetRM());
 }
 //..............................................................................
 void TCif::SaveToStrings(TStrList& Strings) {
