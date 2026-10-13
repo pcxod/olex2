@@ -26,6 +26,8 @@
 #include "equeue.h"
 #include "analysis.h"
 #include "estopwatch.h"
+#include "residue.h"
+#include "protein.h"
 
 #undef GetObject
 
@@ -1925,6 +1927,10 @@ size_t TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
       return count;
     }
   }
+  if (_ResidueHAdd(cg, atom, AE, part, dry_run, generated, count)) {
+    ProcessingAtoms.Delete(ProcessingAtoms.IndexOf(&atom));
+    return count;
+  }
   if (atom.GetType() == iCarbonZ) {
     if (AE.Count() == 1) {
       // check acetylene
@@ -2443,6 +2449,194 @@ size_t TLattice::_AnalyseAtomHAdd(AConstraintGenerator& cg, TSAtom& atom,
   }
   ProcessingAtoms.Delete(ProcessingAtoms.IndexOf(&atom));
   return count;
+}
+//..............................................................................
+bool TLattice::_ResidueHAdd(AConstraintGenerator& cg, TSAtom& atom,
+  TAtomEnvi& envi, int part, bool dry_run, TCAtomPList* generated, size_t& count)
+{
+  const TCAtom& ca = atom.CAtom();
+  TAsymmUnit& au = GetAsymmUnit();
+  if (ca.GetResiId() >= au.ResidueCount()) {
+    return false;
+  }
+  const TResidue& r = au.GetResidue(ca.GetResiId());
+  /* a water bonded to a residue is the solvent of another conformer that the
+  model keeps in part 0, 0.5 A from 5D8V Arg 33's minor NH2
+  */
+  TAtomEnvi AE(envi);
+  for (size_t i = envi.Count(); i > 0; i--) {
+    TCAtom& a = envi.GetCAtom(i - 1);
+    if (a.GetResiId() < au.ResidueCount()) {
+      const olxstr& cls = au.GetResidue(a.GetResiId()).GetClassName();
+      if (cls.Equalsi("HOH") || cls.Equalsi("WAT") || cls.Equalsi("DOD")) {
+        AE.Exclude(a);
+      }
+    }
+  }
+  olxstr name = ca.GetLabel();
+  int h, heavy;
+  if (!protein::ResidueHydrogens(r.GetClassName(), name, h, heavy)) {
+    /* a conformer renamed when the .ins was written, CE of part 2 saved as
+    C1x: it is the nearest atom of that element in another part whose name
+    this part lacks, or within 0.5 A of that one with the same heavy neighbour
+    count - an Arg NH2 of one part can sit as close to NE of the other
+    */
+    if (ca.GetPart() <= 0) {
+      return false;
+    }
+    TStrList own;
+    for (size_t i = 0; i < r.Count(); i++) {
+      if (!r[i].IsDeleted() &&
+        (r[i].GetPart() == 0 || r[i].GetPart() == ca.GetPart()))
+      {
+        own.Add(r[i].GetLabel());
+      }
+    }
+    const TCAtom *match = 0, *fit = 0;
+    double best = 0, best_fit = 0;
+    for (size_t i = 0; i < r.Count(); i++) {
+      const TCAtom& a = r[i];
+      if (a.IsDeleted() || a.GetType().z != ca.GetType().z || a.GetPart() <= 0 ||
+        a.GetPart() == ca.GetPart() || own.IndexOfi(a.GetLabel()) != InvalidIndex ||
+        !protein::ResidueHydrogens(r.GetClassName(), a.GetLabel(), h, heavy))
+      {
+        continue;
+      }
+      const double d = au.Orthogonalise(a.ccrd() - ca.ccrd()).Length();
+      if (match == 0 || d < best) {
+        best = d;
+        match = &a;
+      }
+      if ((size_t)heavy == AE.Count() && (fit == 0 || d < best_fit)) {
+        best_fit = d;
+        fit = &a;
+      }
+    }
+    if (match == 0) {
+      return false;
+    }
+    if (fit != 0 && best_fit < best + 0.5) {
+      match = fit;
+    }
+    name = match->GetLabel();
+    protein::ResidueHydrogens(r.GetClassName(), name, h, heavy);
+  }
+  if (name.Equalsi("N")) {
+    /* at a mutation site the conformers share the N, and its residue in this
+    part is the one its CA belongs to
+    */
+    bool peptide = false;
+    for (size_t i = 0; i < AE.Count(); i++) {
+      const TCAtom& a = AE.GetCAtom(i);
+      if (a.GetResiId() == ca.GetResiId() || a.GetResiId() >= au.ResidueCount()) {
+        continue;
+      }
+      const TResidue& ar = au.GetResidue(a.GetResiId());
+      if (ar.GetNumber() == r.GetNumber() && ar.GetChainId() == r.GetChainId()) {
+        protein::ResidueHydrogens(ar.GetClassName(), name, h, heavy);
+      }
+      else {
+        peptide = true;
+      }
+    }
+    // an N-terminus or the first residue after a break: NH3+, Pro NH2+
+    if (!peptide && AE.Count() + 1 == (size_t)heavy) {
+      h = (heavy == 3 ? 2 : 3);
+      heavy--;
+    }
+  }
+  // whatever the neighbours: a C-terminal carbonyl missing OXT is no aldehyde
+  if (h == 0) {
+    return true;
+  }
+  // bonded to a metal, a disulfide or atoms missing - the geometry decides
+  if (AE.Count() != (size_t)heavy) {
+    return false;
+  }
+  if (h < 0) {
+    // the His ring angle at N is ~109 degrees with the H and ~105 without
+    const double a = olx_angle(AE.GetCrd(0), atom.crd(), AE.GetCrd(1));
+    double b = -1;
+    for (size_t i = 0; i < AE.Count() && b < 0; i++) {
+      TSAtom* c = FindSAtom(AE.GetCAtom(i));
+      if (c == 0) {
+        continue;
+      }
+      TAtomEnvi ce = UnitCell->GetAtomEnviList(*c, false, part);
+      for (size_t j = 0; j < ce.Count(); j++) {
+        if (ce.GetType(j) != iNitrogenZ || &ce.GetCAtom(j) == &ca) {
+          continue;
+        }
+        TSAtom* n = FindSAtom(ce.GetCAtom(j));
+        if (n == 0) {
+          break;
+        }
+        TAtomEnvi ne = UnitCell->GetAtomEnviList(*n, false, part);
+        vec3d v[3];
+        size_t nv = 0;
+        for (size_t k = 0; k < ne.Count() && nv < 3; k++) {
+          if (ne.GetType(k) != iHydrogenZ) {
+            v[nv++] = ne.GetCrd(k);
+          }
+        }
+        // 0 when the other N binds a metal, which leaves the H to this one
+        b = (nv == 2 ? olx_angle(v[0], n->crd(), v[1]) : 0);
+        break;
+      }
+    }
+    h = (b < 0 || a > 107 || (b <= 107 && a >= b)) ? 1 : 0;
+    if (!dry_run) {
+      TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": HIS " << name
+        << (h == 0 ? ", no H" : "-H") << " (C-N-C " << olxstr::FormatFloat(1, a)
+        << ')';
+    }
+    if (h == 0) {
+      return true;
+    }
+  }
+  short group = 0;
+  switch (atom.GetType().z) {
+  case iCarbonZ:
+    group = (h == 3 ? fgCH3 : (h == 2 ? fgCH2 : fgCH1));
+    break;
+  case iNitrogenZ:
+    group = (h == 3 ? fgNH3 : (h == 2 ? fgNH2 : fgNH1));
+    break;
+  case iOxygenZ:
+    group = fgOH1;
+    break;
+  case iSulphurZ:
+    group = fgSH1;
+    break;
+  }
+  if (group == 0) {
+    return false;
+  }
+  // a terminal NH2 lies in the plane of its amide or guanidinium
+  const bool planar = (group == fgNH2 && AE.Count() == 1);
+  TSAtom* A = planar ? FindSAtom(AE.GetCAtom(0)) : 0;
+  TAtomEnvi NAE = (A != 0) ? UnitCell->GetAtomEnviList(*A, false, part)
+    : TAtomEnvi(atom);
+  NAE.Exclude(atom.CAtom());
+  if (planar && NAE.Count() < 2) {
+    return false;
+  }
+  if (!dry_run) {
+    TBasicApp::NewLogEntry(logInfo) << atom.GetLabel() << ": " <<
+      r.GetClassName() << ' ' << name << " H" << h;
+    if (group == fgOH1) {
+      TAtomEnvi pivoting = UnitCell->GetAtomPossibleHBonds(AE);
+      RemoveNonHBonding(pivoting, 1);
+      cg.FixAtom(AE, group, XElementLib::GetByIndex(iHydrogenIndex), &pivoting,
+        generated);
+    }
+    else {
+      cg.FixAtom(AE, group, XElementLib::GetByIndex(iHydrogenIndex),
+        planar ? &NAE : 0, generated);
+    }
+  }
+  count += h;
+  return true;
 }
 //..............................................................................
 size_t TLattice::_ProcessRingHAdd(AConstraintGenerator& cg,

@@ -332,6 +332,82 @@ size_t ResidueAtomCount(const olxstr &class_name) {
   return 0;
 }
 //.............................................................................
+bool ResidueHydrogens(const olxstr &class_name, const olxstr &atom_name,
+  int &h, int &heavy)
+{
+  struct Site { const char *resi, *atom; short h, heavy; };
+  static const Site sites[] = {
+    // the variants, before they are folded onto their parent
+    {"HID", "ND1", 1, 2}, {"HID", "NE2", 0, 2},
+    {"HIE", "ND1", 0, 2}, {"HIE", "NE2", 1, 2},
+    {"HIP", "ND1", 1, 2}, {"HIP", "NE2", 1, 2},
+    {"ASH", "OD2", 1, 1}, {"GLH", "OE2", 1, 1}, {"CYX", "SG", 0, 2},
+    {"GLY", "CA", 2, 2}, {"PRO", "N", 0, 3},
+    {"ALA", "CB", 3, 1},
+    {"ARG", "CB", 2, 2}, {"ARG", "CG", 2, 2}, {"ARG", "CD", 2, 2},
+    {"ARG", "NE", 1, 2}, {"ARG", "CZ", 0, 3}, {"ARG", "NH1", 2, 1},
+    {"ARG", "NH2", 2, 1},
+    {"ASN", "CB", 2, 2}, {"ASN", "CG", 0, 3}, {"ASN", "OD1", 0, 1},
+    {"ASN", "ND2", 2, 1},
+    {"ASP", "CB", 2, 2}, {"ASP", "CG", 0, 3}, {"ASP", "OD1", 0, 1},
+    {"ASP", "OD2", 0, 1},
+    {"CYS", "CB", 2, 2}, {"CYS", "SG", 1, 1},
+    {"GLN", "CB", 2, 2}, {"GLN", "CG", 2, 2}, {"GLN", "CD", 0, 3},
+    {"GLN", "OE1", 0, 1}, {"GLN", "NE2", 2, 1},
+    {"GLU", "CB", 2, 2}, {"GLU", "CG", 2, 2}, {"GLU", "CD", 0, 3},
+    {"GLU", "OE1", 0, 1}, {"GLU", "OE2", 0, 1},
+    {"HIS", "CB", 2, 2}, {"HIS", "CG", 0, 3}, {"HIS", "ND1", -1, 2},
+    {"HIS", "CD2", 1, 2}, {"HIS", "CE1", 1, 2}, {"HIS", "NE2", -1, 2},
+    {"ILE", "CB", 1, 3}, {"ILE", "CG1", 2, 2}, {"ILE", "CG2", 3, 1},
+    {"ILE", "CD1", 3, 1},
+    {"LEU", "CB", 2, 2}, {"LEU", "CG", 1, 3}, {"LEU", "CD1", 3, 1},
+    {"LEU", "CD2", 3, 1},
+    {"LYS", "CB", 2, 2}, {"LYS", "CG", 2, 2}, {"LYS", "CD", 2, 2},
+    {"LYS", "CE", 2, 2}, {"LYS", "NZ", 3, 1},
+    {"MET", "CB", 2, 2}, {"MET", "CG", 2, 2}, {"MET", "SD", 0, 2},
+    {"MET", "SE", 0, 2}, {"MET", "CE", 3, 1},
+    {"PHE", "CB", 2, 2}, {"PHE", "CG", 0, 3}, {"PHE", "CD1", 1, 2},
+    {"PHE", "CD2", 1, 2}, {"PHE", "CE1", 1, 2}, {"PHE", "CE2", 1, 2},
+    {"PHE", "CZ", 1, 2},
+    {"PRO", "CB", 2, 2}, {"PRO", "CG", 2, 2}, {"PRO", "CD", 2, 2},
+    {"SER", "CB", 2, 2}, {"SER", "OG", 1, 1},
+    {"THR", "CB", 1, 3}, {"THR", "OG1", 1, 1}, {"THR", "CG2", 3, 1},
+    {"TRP", "CB", 2, 2}, {"TRP", "CG", 0, 3}, {"TRP", "CD1", 1, 2},
+    {"TRP", "CD2", 0, 3}, {"TRP", "NE1", 1, 2}, {"TRP", "CE2", 0, 3},
+    {"TRP", "CE3", 1, 2}, {"TRP", "CZ2", 1, 2}, {"TRP", "CZ3", 1, 2},
+    {"TRP", "CH2", 1, 2},
+    {"TYR", "CB", 2, 2}, {"TYR", "CG", 0, 3}, {"TYR", "CD1", 1, 2},
+    {"TYR", "CD2", 1, 2}, {"TYR", "CE1", 1, 2}, {"TYR", "CE2", 1, 2},
+    {"TYR", "CZ", 0, 3}, {"TYR", "OH", 1, 1},
+    {"VAL", "CB", 1, 3}, {"VAL", "CG1", 3, 1}, {"VAL", "CG2", 3, 1},
+    // crystallisation anions: bond lengths read their oxygens as OH
+    {"SO4", "*", 0, 0}, {"ACT", "CH3", 3, 1}, {"ACT", "*", 0, 0},
+    {"FMT", "C", 1, 2}, {"FMT", "*", 0, 0},
+    // the backbone of all of the above, last so GLY CA and PRO N win
+    {"*", "N", 1, 2}, {"*", "CA", 1, 3}, {"*", "C", 0, 3}, {"*", "O", 0, 1},
+    {"*", "OXT", 0, 1}
+  };
+  const olxstr raw = olxstr(class_name).Trim(' ').UpperCase(),
+    parent = normalise_residue(raw),
+    name = olxstr(atom_name).Trim(' ').UpperCase();
+  // LYN is a neutral NH2, which no riding group of one heavy neighbour fits
+  if (raw == "LYN" && name == "NZ") {
+    return false;
+  }
+  const bool amino_acid = ResidueIndex(parent) != InvalidIndex;
+  for (size_t i = 0; i < sizeof(sites)/sizeof(sites[0]); i++) {
+    const Site &s = sites[i];
+    if ((s.resi[0] == '*' ? amino_acid : (raw == s.resi || parent == s.resi)) &&
+      (s.atom[0] == '*' || name == s.atom))
+    {
+      h = s.h;
+      heavy = s.heavy;
+      return true;
+    }
+  }
+  return false;
+}
+//.............................................................................
 bool IsContinuous(const BackboneResidue &prev, const BackboneResidue &next,
   double break_distance)
 {

@@ -48,6 +48,7 @@
 #include "olxdll.h"
 #include "refinement_listener.h"
 #include "xyz.h"
+#include "protein.h"
 
 #ifdef _CUSTOM_BUILD_
   #include "custom_base.h"
@@ -2216,18 +2217,29 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
     }
     for (size_t i = 0; i < au.AtomCount(); i++) {
       TCAtom &a = au.GetAtom(i);
-      if (a.IsDeleted() || a.GetType() != iNitrogenZ) {
+      if (a.IsDeleted() || a.GetType() != iNitrogenZ || !a.IsRingAtom()) {
+        continue;
+      }
+      // two conformers close a ring through a disordered backbone; of the
+      // amino acid N only His has a tautomer to choose
+      const size_t ri = protein::ResidueIndex(
+        au.GetResidue(a.GetResiId()).GetClassName());
+      if (ri != InvalidIndex && protein::StandardResidueName(ri) != "HIS") {
         continue;
       }
       TCAtom *h_atom = 0;
+      size_t h_cnt = 0;
       for (size_t j = 0; j < a.AttachedSiteCount(); j++) {
         TCAtom &aa = a.GetAttachedAtom(j);
         if (!aa.IsDeleted() && aa.GetType() == iHydrogenZ) {
-          h_atom = &aa;
-          break;
+          if (h_atom == 0) {
+            h_atom = &aa;
+          }
+          h_cnt++;
         }
       }
-      if (h_atom == 0) {
+      // taking one H of an NH2 leaves a broken AFIX 93
+      if (h_atom == 0 || h_cnt > 1) {
         continue;
       }
       bool conflict = false;

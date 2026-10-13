@@ -105,6 +105,16 @@ a real answer - the caller then counts the residue's atoms in the model
 */
 size_t ResidueAtomCount(const olxstr &class_name);
 
+/* hydrogens a standard amino acid atom carries at neutral pH, by RESI class and
+PDB atom name, with the number of heavy atoms it is bonded to. Lys NZ and the
+N-terminus are NH3+, carboxylates and the C-terminus carry none, and the
+protonation variants say what they are - ASH, GLH, CYX, HID/HIE/HIP. Plain His
+ND1/NE2 give h=-1 since the tautomer is not a property of the name. SO4, ACT
+and FMT are covered as the anions they are in a protein crystal
+*/
+bool ResidueHydrogens(const olxstr &class_name, const olxstr &atom_name,
+  int &h, int &heavy);
+
 /* A residue reduced to what a backbone trace needs. */
 struct BackboneResidue {
   int number;
