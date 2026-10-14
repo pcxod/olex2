@@ -403,3 +403,20 @@ void TImgButton::SetDown(bool v) {
   _SetDown(v);
 }
 //..............................................................................
+void TImgButton::Reuse() {
+  _SetDown(false);
+  // SetImages sets only the bitmaps its source names
+  bmpUp = bmpDown = bmpDisabled = bmpHover = wxNullBitmap;
+  ResetActionQueues();
+  if (ActionQueue != 0) {
+    ActionQueue->Remove(this);
+    ActionQueue = 0;
+  }
+  Data.SetLength(0);
+  DependMode.SetLength(0);
+  Hint.SetLength(0);
+  UnsetToolTip();
+  state = (MouseIn ? stHover : 0);
+  ProcessingOnDown = false;
+}
+//..............................................................................

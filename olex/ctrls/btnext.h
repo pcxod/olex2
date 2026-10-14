@@ -127,6 +127,11 @@ namespace ctrl_ext {
     short GetHeight() const {  return height;  }
     void Render(wxDC& dc) const;
     void SetImages(const olxstr& src, int w=-1, int h=-1);
+    /* a new button's state for the html page that takes this one again. The
+    native window keeps its mouse tracking, so with the cursor still on it the
+    tooltip comes back on the next mouse enter
+    */
+    void Reuse();
     void MouseDownEvent(wxMouseEvent& event);
     void MouseUpEvent(wxMouseEvent& event);
     void MouseMoveEvent(wxMouseEvent& event);

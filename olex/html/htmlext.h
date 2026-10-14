@@ -88,6 +88,12 @@ protected:
     bool LoadFromFile(const olxstr& fn);
   };
   TObjectsState ObjectsState;
+  /* named combo boxes and image buttons of the previous page while the next
+  one is parsed: a reload recreates every control and the native create, fill
+  and destroy are most of its time, so the INPUT tag takes these back by name
+  */
+  olxstr_dict<wxWindow*, true> Recycled;
+  void RecycleControls();
 #ifdef __ANDROID__
   /* a tab switch re-parses the whole sidebar, ~85 ms on a Cortex-A53. Keep
   the last few cell trees alive with their (hidden) controls, keyed by the
@@ -189,6 +195,15 @@ public:
   wxWindow *FindObjectWindow(const olxstr& Name)  {
     const size_t ind = Objects.IndexOf(Name);
     return (ind == InvalidIndex) ? 0 : Objects.GetValue(ind).b;
+  }
+  // the previous page's control by this name if it is a T, see Recycled
+  template <class T> T *TakeRecycled(const olxstr &name) {
+    const size_t i = Recycled.IndexOf(name);
+    T *w = (i == InvalidIndex) ? 0 : dynamic_cast<T*>(Recycled.GetValue(i));
+    if (w != 0) {
+      Recycled.Delete(i);
+    }
+    return w;
   }
   size_t ObjectCount() const {  return Objects.Count();  }
   AOlxCtrl* GetObject(size_t i)  {  return Objects.GetValue(i).a;  }

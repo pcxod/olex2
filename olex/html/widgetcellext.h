@@ -40,8 +40,22 @@ public:
 
   int GetFloatY() const { return float_y;  }
   wxWindow *GetWindow() const { return m_Wnd; }
+  /* hands the window to the caller, deleting the cell then leaves it alive
+  (implemented in htmlext.cpp)
+  */
+  wxWindow *Release();
   // implemented in imagecellext.cpp ...
   void SetHeight(int h);
+
+  /* the wx version also resizes the window on every pass, and a table lays out
+  each cell three times; Draw/DrawInvisible place it once at the final rect
+  */
+  void Layout(int w) {
+    if (m_WidthFloat != 0) {
+      m_Width = (w * m_WidthFloat) / 100;
+    }
+    wxHtmlCell::Layout(w);
+  }
 
   void Draw(wxDC& WXUNUSED(dc), int WXUNUSED(x), int WXUNUSED(y),
     int WXUNUSED(view_y1), int WXUNUSED(view_y2),

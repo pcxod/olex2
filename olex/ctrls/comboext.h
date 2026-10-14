@@ -22,6 +22,7 @@ namespace ctrl_ext {
     void EnterEvent(wxFocusEvent& event);
     olxstr Data;
     olxstr StrValue;
+    olxstr ItemsSrc; // what SetItemsFrom filled the list from, Clear resets
     int entered_counter;
     bool OnChangeAlways;
   public:
@@ -33,6 +34,10 @@ namespace ctrl_ext {
     virtual ~TComboBox();
 
     void Clear();
+    /* fills the list from ';' separated items, skips the refill when the
+    list already came from the same string: a reused html control
+    */
+    void SetItemsFrom(const olxstr &src);
 
     bool HasValue() const {
       return !(IsReadOnly() && GetSelection() == -1);

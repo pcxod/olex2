@@ -180,6 +180,51 @@ bool THtml::IsCachedWindow(wxWindow *w) const {
 }
 #endif
 //.............................................................................
+namespace {
+  // stands in for a released window: ~wxHtmlWidgetCell calls Destroy on it
+  struct TReleasedWindow : public wxWindow {
+    virtual bool Destroy() { return true; }
+  };
+
+  void CollectCells(wxHtmlCell *c, TPtrList<THtmlWidgetCell> &l) {
+    for (; c != 0; c = c->GetNext()) {
+      THtmlWidgetCell *w = dynamic_cast<THtmlWidgetCell*>(c);
+      if (w != 0) {
+        l.Add(w);
+      }
+      CollectCells(c->GetFirstChild(), l);
+    }
+  }
+}
+wxWindow *THtmlWidgetCell::Release() {
+  static wxWindow *placeholder = new TReleasedWindow; // never deleted
+  wxWindow *w = m_Wnd;
+  m_Wnd = placeholder;
+  return w;
+}
+//.............................................................................
+void THtml::RecycleControls() {
+  TPtrList<THtmlWidgetCell> cells;
+  CollectCells(m_Cell, cells);
+  // only the registered window of a name, a duplicate dies with its cell
+  for (size_t i = 0; i < Objects.Count(); i++) {
+    wxWindow *w = Objects.GetValue(i).b;
+    if (w == 0 || !(olx_type<TComboBox>::check(*w) ||
+      olx_type<TImgButton>::check(*w)))
+    {
+      continue;
+    }
+    for (size_t j = 0; j < cells.Count(); j++) {
+      if (cells[j] != 0 && cells[j]->GetWindow() == w) {
+        w->Hide(); // the tag sizes it, a hidden window moves cheaper
+        Recycled.Add(Objects.GetKey(i), cells[j]->Release());
+        cells[j] = 0;
+        break;
+      }
+    }
+  }
+}
+//.............................................................................
 THtml::THtml(THtmlManager &manager, wxWindow *Parent,
   const olxstr &pop_name, int flags)
   : wxHtmlWindow(Parent, -1, wxDefaultPosition, wxDefaultSize, flags),
@@ -512,9 +557,14 @@ bool THtml::UpdatePage(bool update_indices) {
     SetPage(page.u_str());
   }
 #else
+  RecycleControls();
   Objects.Clear();
   sw.start("Setting the page");
   SetPage(Res.Text(' ').u_str());
+  for (size_t i = 0; i < Recycled.Count(); i++) { // not on the new page
+    Recycled.GetValue(i)->Destroy();
+  }
+  Recycled.Clear();
 #endif
   sw.start("Restoring object states");
   ObjectsState.RestoreState();

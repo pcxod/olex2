@@ -571,7 +571,14 @@ TAG_HANDLER_PROC(tag) {
     olxstr buttonImage = tag.GetParam(wxT("IMAGE"));
     if (!buttonImage.IsEmpty()) {
       if (buttonImage.IndexOf(',') != InvalidIndex) {
-        TImgButton* ibtn = new TImgButton(html);
+        // the same button of the previous page, see THtml::Recycled
+        TImgButton* ibtn = html->TakeRecycled<TImgButton>(ObjectName);
+        if (ibtn == 0) {
+          ibtn = new TImgButton(html);
+        }
+        else {
+          ibtn->Reuse();
+        }
         ibtn->SetImages(buttonImage, width_set ? ax : -1, height_set ? ay : -1);
         ibtn->SetDown(GetBoolAttribute(tag, "DOWN"));
         CreatedWindow = ibtn;
@@ -680,8 +687,23 @@ TAG_HANDLER_PROC(tag) {
     if (GetBoolAttribute(tag, "READONLY")) {
       style = wxCB_READONLY;
     }
-    TComboBox *Box = new TComboBox(html, wxID_ANY, wxEmptyString, wxDefaultPosition,
-      wxSize(ax, ay), style);
+    // the same combo of the previous page, a read-only one stays read-only
+    TComboBox *Box = html->TakeRecycled<TComboBox>(ObjectName);
+    if (Box != 0 &&
+      (Box->GetWindowStyleFlag() & (wxCB_READONLY | wxTE_PROCESS_ENTER)) != style)
+    {
+      Box->Destroy();
+      Box = 0;
+    }
+    if (Box == 0) {
+      Box = new TComboBox(html, wxID_ANY, wxEmptyString, wxDefaultPosition,
+        wxSize(ax, ay), style);
+    }
+    else {
+      Box->ResetActionQueues();
+      Box->SetOnChangeAlways(false);
+      Box->SetSize(ax, ay);
+    }
     Box->SetFont(m_WParser->GetDC()->GetFont());
     AdjustSize(*Box);
     CreatedObject = Box;
@@ -689,10 +711,10 @@ TAG_HANDLER_PROC(tag) {
     if (tag.HasParam(wxT("ITEMS"))) {
       olxstr Items = ExpandMacroShortcuts(tag.GetParam(wxT("ITEMS")), macro_map);
       op->processFunction(Items, SrcInfo, true);
-      TStrList SL(Items, ';');
-      Box->AddItems(SL);
+      Box->SetItemsFrom(Items);
     }
     else {
+      Box->Clear();
       Box->AddObject(Value);
     }
     Box->SetText(Value);
@@ -1108,6 +1130,9 @@ TAG_HANDLER_PROC(tag) {
     else if (m_WParser->GetActualColor().IsOk()) {
       CreatedWindow->SetForegroundColour(m_WParser->GetActualColor());
     }
+    else { // a reused control drops the colour of the previous page
+      CreatedWindow->SetForegroundColour(wxNullColour);
+    }
 
     if (ParseColor(SrcInfo, tag, "BGCOLOR", macro_map, cl)) {
       CreatedWindow->SetBackgroundColour(cl);
@@ -1115,6 +1140,9 @@ TAG_HANDLER_PROC(tag) {
     else if (m_WParser->GetContainer()->GetBackgroundColour().IsOk()) {
       CreatedWindow->SetBackgroundColour(
         m_WParser->GetContainer()->GetBackgroundColour());
+    }
+    else {
+      CreatedWindow->SetBackgroundColour(wxNullColour);
     }
     CreatedWindow->Enable(!GetBoolAttribute(tag, "DISABLED"));
   }
