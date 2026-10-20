@@ -172,6 +172,8 @@ public:
     AttachedSites.Clear();
     AttachedSitesI.Clear();
   }
+  // by atom id, then matrix id
+  void SortAttachedSites();
   // aplies conninfo to the list of attached sites
   void UpdateAttachedSites();
   /* as above, for the atoms having conn info. Over a whole unit the list is

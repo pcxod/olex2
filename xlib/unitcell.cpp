@@ -261,6 +261,10 @@ void TUnitCell::FindSymmEq() const {
       BondsSymmEqTaskFactory::build(ACA, Matrices);
     searchTask->InitEquiv();
     OlxListTask::Run(*searchTask, ACA.Count(), tQuadraticTask, 100);
+    // the threads append in scheduling order, and compaq/grow follow it
+    for (size_t i = 0; i < ACA.Count(); i++) {
+      ACA[i]->SortAttachedSites();
+    }
     // gathered once, rather than rebuilt inside every atom's update
     TCAtomPList conn_atoms;
     ConnInfo::CollectConnAtoms(GetLattice().GetAsymmUnit(), conn_atoms);

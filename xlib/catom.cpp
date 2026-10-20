@@ -513,6 +513,10 @@ bool TCAtom::AttachSite(TCAtom* atom, const smatd& matrix) {
   return true;
 }
 //..............................................................................
+void TCAtom::SortAttachedSites() {
+  QuickSorter::Sort(AttachedSites, TComparableComparator());
+}
+//..............................................................................
 bool TCAtom::AttachSiteI(TCAtom* atom, const smatd& matrix) {
   for (size_t i = 0; i < AttachedSitesI.Count(); i++) {
     if (AttachedSitesI[i].atom == atom) {
