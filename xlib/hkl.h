@@ -25,6 +25,9 @@ class THklFile: public IOlxObject {
     return (d == 0 ? olx_cmp(r1.GetI(), r2.GetI()) : d);
   }
   TRefList Refs;
+  // satellites of an .hklm file and their m; the main reflections (m = 0) are in Refs
+  TRefList Satellites;
+  TIntList SatelliteM;
   olx_array::TArray3D< TRefPList* > *Hkl3D;
   mat3d Basis;
   int HKLF;
@@ -64,6 +67,13 @@ public:
   TReflection& operator [](size_t i) const {  return Refs[i];  }
   size_t RefCount() const {  return Refs.Count();  }
   const TRefList &RefList() const { return Refs;  }
+  size_t SatelliteCount() const { return Satellites.Count(); }
+  const TRefList &SatelliteList() const { return Satellites; }
+  int GetSatelliteM(size_t i) const { return SatelliteM[i]; }
+  // (3+1)D data: h k l m I sigma [batch] as 4I4,2F8 or space separated
+  static bool IsHklmFile(const olxstr& FN) {
+    return TEFile::ExtractFileExt(FN).Equalsi("hklm");
+  }
 
   const vec3i& GetMaxHkl() const {  return MaxHkl;  }
   const vec3i& GetMinHkl() const {  return MinHkl;  }
@@ -84,6 +94,8 @@ public:
     const olxstr &format=EmptyString());
   olx_object_ptr<TIns> LoadFromStrings(const TStrList& lines, bool get_ins,
     const olxstr &format=EmptyString());
+  // main reflections to Refs, satellites to SatelliteList
+  void LoadHklmFromStrings(const TStrList& lines);
   void SaveToFile(const olxstr& FN) {
     THklFile::SaveToFile(FN, Refs);
   }

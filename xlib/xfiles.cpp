@@ -1770,6 +1770,11 @@ olxstr TXFile::LocateHklFile() {
   if (TEFile::Existsi(HklFN, HklFN)) {
     return HklFN;
   }
+  // (3+1)D data: THklFile reads the main reflections and keeps the satellites
+  HklFN = TEFile::ChangeFileExt(fn, "hklm");
+  if (TEFile::Existsi(HklFN, HklFN)) {
+    return HklFN;
+  }
   HklFN = TEFile::ChangeFileExt(fn, "raw");
   if (TEFile::Existsi(HklFN, HklFN)) {
     THklFile Hkl;
@@ -1797,6 +1802,12 @@ olxstr TXFile::LocateHklFile() {
   TEFile::ListDir(dir, hkl_files, "*.hkl", sefFile);
   if (hkl_files.Count() == 1) {
     return TEFile::AddPathDelimeterI(dir) << hkl_files[0];
+  }
+  if (hkl_files.IsEmpty()) {
+    TEFile::ListDir(dir, hkl_files, "*.hklm", sefFile);
+    if (hkl_files.Count() == 1) {
+      return TEFile::AddPathDelimeterI(dir) << hkl_files[0];
+    }
   }
   return EmptyString();
 }

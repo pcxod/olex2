@@ -894,6 +894,9 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitFunc(DataDir, fpNone, "Returns the location of user data");
   xlib_InitFunc(HKLSrc, fpNone|fpOne|psFileLoaded,
     "Returns/sets hkl source for currently loaded file");
+  xlib_InitFunc(HKLM, fpNone|psFileLoaded,
+    "Returns 'main,satellites,max|m|' when the hkl source is an .hklm file of "
+    "(3+1)D data, empty otherwise");
 //_____________________________________________________________________________
   xlib_InitFunc(LSM, fpNone|fpOne|psCheckFileTypeIns,
     "Return/sets current refinement method, L.S. or CGLS currently. The method"
@@ -4662,6 +4665,22 @@ void XLibMacros::funSGS(const TStrObjList& Cmds, TMacroData& E) {
   }
 }
 //.............................................................................
+void XLibMacros::funHKLM(const TStrObjList& Params, TMacroData &E) {
+  RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
+  olxstr fn = rm.GetHKLSource();
+  if (!THklFile::IsHklmFile(fn) || !TEFile::Exists(fn)) {
+    E.SetRetVal(EmptyString());
+    return;
+  }
+  THklFile hf(rm.GetHKLF_mat());
+  hf.LoadFromFile(fn, false);
+  int max_m = 0;
+  for (size_t i = 0; i < hf.SatelliteCount(); i++) {
+    max_m = olx_max(max_m, olx_abs(hf.GetSatelliteM(i)));
+  }
+  E.SetRetVal(olxstr(hf.RefCount()) << ',' << hf.SatelliteCount() << ',' << max_m);
+}
+//..............................................................................
 void XLibMacros::funHKLSrc(const TStrObjList& Params, TMacroData &E) {
   TXApp& xapp = TXApp::GetInstance();
   if (Params.Count() == 1) {
@@ -4672,7 +4691,8 @@ void XLibMacros::funHKLSrc(const TStrObjList& Params, TMacroData &E) {
     if (TEFile::Exists(fn) && !TEFile::IsDir(fn)) {  // check the format...
       static TEFile::FileID fid;
       TEFile::FileID tfid = TEFile::GetFileID(fn);
-      if (tfid != fid && !fn.EndsWith(".hkl.fcf")) {
+      // an .hklm fails the HKL line test by design; renaming it would lose the satellites
+      if (tfid != fid && !fn.EndsWith(".hkl.fcf") && !THklFile::IsHklmFile(fn)) {
         fid = tfid;
         TEFile f(fn, "rb");
         olxstr l = f.ReadLine();

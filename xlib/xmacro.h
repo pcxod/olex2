@@ -195,6 +195,7 @@ public:
   static DefFunc(BaseDir)
   static DefFunc(DataDir)
   static DefFunc(HKLSrc)
+  static DefFunc(HKLM)
 
   static DefFunc(LSM)
   static DefFunc(SSM)
