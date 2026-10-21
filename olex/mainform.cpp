@@ -4480,11 +4480,11 @@ bool TMainForm::FileDropTarget::OnDropFiles(wxCoord x, wxCoord y,
   if (filenames.Count() != 1) {
     return false;
   }
-  const olxstr fn = filenames[0];
-  // reap opens an .hklm's structure (macReap)
-  if (!TEFile::ExtractFileExt(fn).Equalsi("hklm")) {
+  const olxstr fn = filenames[0], ext = TEFile::ExtractFileExt(fn);
+  // reap opens a reflection file's structure (macReap)
+  if (!ext.Equalsi("hkl") && !ext.Equalsi("hklm")) {
     try {
-      if (parent.FXApp->XFile().FindFormat(TEFile::ExtractFileExt(fn)) == 0) {
+      if (parent.FXApp->XFile().FindFormat(ext) == 0) {
         return false;
       }
     }
