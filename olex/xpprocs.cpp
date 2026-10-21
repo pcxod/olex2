@@ -2952,7 +2952,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
       return;
     }
     FileFilter ff;
-    ff.AddAll("ins;cif;cmf;res;xyz;p4p;crs;pdb;fco;fcf;hkl");
+    ff.AddAll("ins;cif;cmf;res;xyz;p4p;crs;pdb;fco;fcf;hkl;hklm");
     ff.Add("*.mol", "MDL MOL");
     ff.Add("*.mas", "XD master");
     ff.Add("*.mol2", "Tripos MOL2");
@@ -3005,8 +3005,10 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
         FXApp->GetRenderer().GetStyles().LoadFromFile(DefStyle, false);
       }
     }
-    // special treatment of the hkl files
-    if (TEFile::ExtractFileExt(file_n.file_name).Equalsi("hkl")) {
+    // special treatment of the hkl files; an .hklm opens the same way and stays the HKL source
+    const olxstr hklm_src = THklFile::IsHklmFile(file_n.file_name)
+      ? file_n.file_name : EmptyString();
+    if (TEFile::ExtractFileExt(file_n.file_name).Equalsi("hkl") || !hklm_src.IsEmpty()) {
       if (!TEFile::Exists(TEFile::ChangeFileExt(file_n.file_name, "ins"))) {
         THklFile hkl;
         sw.start("Loading HKL file");
@@ -3107,6 +3109,9 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
         ins.SaveForSolution(ins_fn, EmptyString(), EmptyString(), false);
       }
       Macros.ProcessMacro(olxstr("reap ").quote() << ins_fn, Error);
+      if (!hklm_src.IsEmpty()) {
+        FXApp->XFile().GetRM().SetHKLSource(hklm_src);
+      }
       return;
     }
     try {
@@ -3146,6 +3151,9 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
       sw.start("Loading the XFile");
       TEFile::ChangeDir(TEFile::ExtractFilePath(file_n.ToString()));
       FXApp->LoadXFile(file_n.ToString());
+      if (!hklm_src.IsEmpty()) {
+        FXApp->XFile().GetRM().SetHKLSource(hklm_src);
+      }
       sw.start("Creating bad reflections and refinement info tables");
       BadReflectionsTable(false, false);
       RefineDataTable(false, false);
