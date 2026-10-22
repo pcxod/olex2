@@ -392,8 +392,11 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
 }
 //..............................................................................
 void SFUtil::WienerFilter(const TRefList& refs, TArrayList<compd>& F,
-  const TArrayList<compd>& Fc, double Fsq_scale, size_t shell_n)
+  const TArrayList<compd>& Fc, double Fsq_scale, MapType mapType,
+  size_t shell_n)
 {
+  // F = (m-1)Fc + m*dF, m = 1 for Fo-Fc and 2 for 2Fo-Fc
+  const double m = mapType == MapType::TwoObs_Calc ? 2 : 1;
   const RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
   const mat3d& h2c = rm.aunit.GetHklToCartesian();
   RefUtil::ShelxWeightCalculator wc(rm.used_weight, h2c, Fsq_scale);
@@ -401,7 +404,7 @@ void SFUtil::WienerFilter(const TRefList& refs, TArrayList<compd>& F,
   std::vector<double> stl(n), dF2(n), sw2(n);
   for (size_t i = 0; i < n; i++) {
     stl[i] = refs[i].ToCart(h2c).Length() / 2;
-    dF2[i] = F[i].qmod();
+    dF2[i] = (F[i] - Fc[i] * (m - 1)).qmod() / (m * m);
     // sigma_w(F)^2 = sigma_w(Fo^2)^2 / 4Fo^2, Fo^2 floored at sigma(Fo^2)
     const double w = wc.Calculate(refs[i], Fc[i].qmod()),
       Fo2 = olx_max(Fsq_scale * refs[i].GetI(), Fsq_scale * refs[i].GetS());
@@ -412,7 +415,7 @@ void SFUtil::WienerFilter(const TRefList& refs, TArrayList<compd>& F,
     &shells);
   double kept = 0;
   for (size_t i = 0; i < n; i++) {
-    F[i] *= c[i];
+    F[i] = Fc[i] * (m - 1) + (F[i] - Fc[i] * (m - 1)) * c[i];
     kept += olx_sqr(c[i]);
   }
   TBasicApp::NewLogEntry() << "Wiener filter on " << n << " reflections, "

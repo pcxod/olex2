@@ -110,13 +110,15 @@ namespace SFUtil {
     bool anom_only = false,
     EXTIDest extiDest=EXTIDest::Fc,
     TArrayList<compd>* Fc = 0);
-  /* Wiener-filters difference map coefficients F = (Fo - |Fc|)e^{i phi} in
- place, see wiener_filter.h. Fsq_scale puts refs' Fo^2 on the Fc^2 scale
- (scale^2 from GetSF, 1 for an fcf); the noise comes from the refinement
- weights. Logs the shell table
+  /* Wiener-filters the residual dF = (Fo - |Fc|)e^{i phi} in map coefficients
+ F in place, see wiener_filter.h. For a 2Fo-Fc map F = Fc + 2dF, only dF is
+ filtered and Fc kept. Fsq_scale puts refs' Fo^2 on the Fc^2 scale (scale^2
+ from GetSF, 1 for an fcf); the noise comes from the refinement weights. Logs
+ the shell table
  */
   void WienerFilter(const TRefList& refs, TArrayList<compd>& F,
-    const TArrayList<compd>& Fc, double Fsq_scale, size_t shell_n = 20);
+    const TArrayList<compd>& Fc, double Fsq_scale,
+    MapType mapType = MapType::Diff, size_t shell_n = 20);
   // calculates the structure factors for given reflections
   void CalcSF(const TXFile& xfile, olx_object_ptr<IMillerIndexList> refs,
     TArrayList<compd>& F, bool UseFpFdp = true, bool anom_only = false);
