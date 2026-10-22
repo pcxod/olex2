@@ -1165,7 +1165,7 @@ void TSameGroupList::PrepareSave() {
         }
         TAtomRefList& arl = sg_atoms[&sg2];
         for (size_t ai = 0; ai < arl.Count(); ai++) {
-          arl[i].GetAtom().SetSameId((uint16_t)sg1.GetReleasableId());
+          arl[ai].GetAtom().SetSameId((uint16_t)sg1.GetReleasableId());
         }
         sg2.SetTag(2);
         sg2.OnReleasedDelete();

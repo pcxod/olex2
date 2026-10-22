@@ -1147,6 +1147,10 @@ void AtomRefList::SortExplicitRefs() {
   if (!IsExplicit()) {
     return;
   }
+  /* IsExplicit only rules out implicit atoms: a 'C6 < C2' range is a
+  ListAtomRef, which the cast below turns into a null atom (COD 4089043)
+  */
+  ConvertToExplicit();
   QuickSorter::Sort(refs, ComplexComparator::Make(
     DynamicCastAccessor<ExplicitCAtomRef>(),
     FunctionComparator::Make(&AtomRefList::RefTagCmp)));
@@ -1156,7 +1160,12 @@ void AtomRefList::SortByTag(const TPtrList<AtomRefList> &sync) {
   if (!IsExplicit()) {
     return;
   }
+  // ranges expand first, as in SortExplicitRefs, so the counts compare atoms
+  ConvertToExplicit();
   for (size_t i = 0; i < sync.Count(); i++) {
+    if (sync[i]->IsExplicit()) {
+      sync[i]->ConvertToExplicit();
+    }
     if (sync[i]->GetRefs().Count() != refs.Count()) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         "atoms lists sizes mismatch");
