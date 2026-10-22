@@ -926,6 +926,7 @@ void TSameGroupList::Analyse() {
     olxstr_dict<TPtrList<TSameGroup> > dep2ref; // ins_str of dep -> ref
     for (size_t i = 0; i < items.Count(); i++) {
       if (!items[i].IsReference() && items[i].GetAtoms().IsExplicit() &&
+        items[i].GetParentGroup() != 0 && // an orphan dependent has none
         items[i].GetParentGroup()->DependentCount() == 1)
       {
         olxstr ss = items[i].ToInsString();
