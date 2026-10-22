@@ -99,7 +99,8 @@ namespace SFUtil {
   void FindMinMax(const TArrayList<StructureFactor>& F,
     vec3i& min, vec3i& max);
   /* prepares the list of hkl and structure factors, return error message or
- empty string. scale is for Fc ~ scale*(Fo^0.5)
+ empty string. scale is for Fc ~ scale*(Fo^0.5). Fc, if given, receives the
+ calculated structure factors whatever the map type
  */
   olxstr GetSF(TRefList& refs, TArrayList<compd>& F,
     MapType mt, SFOrigin sfOrigin=SFOrigin::Olex2,
@@ -107,7 +108,15 @@ namespace SFUtil {
     double *scale = 0,
     FPMerge friedelMerge=FPMerge::Default,
     bool anom_only = false,
-    EXTIDest extiDest=EXTIDest::Fc);
+    EXTIDest extiDest=EXTIDest::Fc,
+    TArrayList<compd>* Fc = 0);
+  /* Wiener-filters difference map coefficients F = (Fo - |Fc|)e^{i phi} in
+ place, see wiener_filter.h. Fsq_scale puts refs' Fo^2 on the Fc^2 scale
+ (scale^2 from GetSF, 1 for an fcf); the noise comes from the refinement
+ weights. Logs the shell table
+ */
+  void WienerFilter(const TRefList& refs, TArrayList<compd>& F,
+    const TArrayList<compd>& Fc, double Fsq_scale, size_t shell_n = 20);
   // calculates the structure factors for given reflections
   void CalcSF(const TXFile& xfile, olx_object_ptr<IMillerIndexList> refs,
     TArrayList<compd>& F, bool UseFpFdp = true, bool anom_only = false);

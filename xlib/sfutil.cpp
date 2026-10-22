@@ -15,6 +15,7 @@
 #include "estopwatch.h"
 #include "twinning.h"
 #include "refutil.h"
+#include "wiener_filter.h"
 
 using namespace SFUtil;
 
@@ -96,7 +97,8 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
   double *e_scale,
   FPMerge friedelMerge,
   bool anom_only,
-  EXTIDest extiDest)
+  EXTIDest extiDest,
+  TArrayList<compd>* Fc)
 {
   TXApp& xapp = TXApp::GetInstance();
   TStopWatch sw(__FUNC__);
@@ -157,6 +159,9 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     fc_squared = list == -6;
     refs.SetCapacity(hklLoop->RowCount());
     F.SetCount(hklLoop->RowCount());
+    if (Fc != 0) {
+      Fc->SetCount(hklLoop->RowCount());
+    }
     olx_pset<uint32_t> read_in;
     if (list == 3 && !info_ex.centrosymmetric) {
       read_in.SetCapacity(refs.Count());
@@ -190,6 +195,9 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
         rv = compd::polar(sqrt(row[fcqInd]->GetStringValue().ToDouble()),
           row[fcpInd]->GetStringValue().ToDouble()*M_PI / 180);
       }
+      if (Fc != 0) {
+        (*Fc)[i] = rv;
+      }
       if (mapType == MapType::Diff) {
         double dI = (sqrt(olx_max(0, ref.GetI())) - rv.mod());
         F[i] = compd::polar(dI, rv.arg());
@@ -219,6 +227,9 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
         }
         refs.Add(new TReflection(nr, refs[i].GetI(), refs[i].GetS()));
         F.Add(F[i].conj());
+        if (Fc != 0) {
+          Fc->Add((*Fc)[i].conj());
+        }
       }
     }
     //sw.start("Expanding the set");
@@ -326,6 +337,9 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
         }
       }
     }
+    if (Fc != 0) {
+      *Fc = F;
+    }
     sw.start("Scaling structure factors");
     if (mapType != MapType::Calc) {
       // find a linear scale between F
@@ -375,6 +389,47 @@ olxstr SFUtil::GetSF(TRefList& refs, TArrayList<compd>& F,
     }
   }
   return EmptyString();
+}
+//..............................................................................
+void SFUtil::WienerFilter(const TRefList& refs, TArrayList<compd>& F,
+  const TArrayList<compd>& Fc, double Fsq_scale, size_t shell_n)
+{
+  const RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
+  const mat3d& h2c = rm.aunit.GetHklToCartesian();
+  RefUtil::ShelxWeightCalculator wc(rm.used_weight, h2c, Fsq_scale);
+  const size_t n = refs.Count();
+  std::vector<double> stl(n), dF2(n), sw2(n);
+  for (size_t i = 0; i < n; i++) {
+    stl[i] = refs[i].ToCart(h2c).Length() / 2;
+    dF2[i] = F[i].qmod();
+    // sigma_w(F)^2 = sigma_w(Fo^2)^2 / 4Fo^2, Fo^2 floored at sigma(Fo^2)
+    const double w = wc.Calculate(refs[i], Fc[i].qmod()),
+      Fo2 = olx_max(Fsq_scale * refs[i].GetI(), Fsq_scale * refs[i].GetS());
+    sw2[i] = (w > 0 && Fo2 > 0) ? 1. / (w * 4 * Fo2) : 0;
+  }
+  std::vector<olx_wiener::shell_info> shells;
+  std::vector<double> c = olx_wiener::shell_weights(stl, dF2, sw2, shell_n,
+    &shells);
+  double kept = 0;
+  for (size_t i = 0; i < n; i++) {
+    F[i] *= c[i];
+    kept += olx_sqr(c[i]);
+  }
+  TBasicApp::NewLogEntry() << "Wiener filter on " << n << " reflections, "
+    << shells.size() << " shells; signal = <|dF|^2> - <sigma_w(F)^2>, sigma_w "
+    "from the refinement weights";
+  TBasicApp::NewLogEntry() << "  sin(th)/l <=     n      signal       noise"
+    "      <c>";
+  for (size_t k = 0; k < shells.size(); k++) {
+    TBasicApp::NewLogEntry() << "  "
+      << olxstr::FormatFloat(4, shells[k].stl_max).LeftPadding(9, ' ')
+      << olxstr(shells[k].n).LeftPadding(9, ' ')
+      << olxstr::FormatFloat(4, shells[k].S, true).LeftPadding(12, ' ')
+      << olxstr::FormatFloat(4, shells[k].noise, true).LeftPadding(12, ' ')
+      << olxstr::FormatFloat(3, shells[k].c).LeftPadding(9, ' ');
+  }
+  TBasicApp::NewLogEntry() << "Map coefficient weight kept: "
+    << olxstr::FormatFloat(1, n == 0 ? 0 : 100 * kept / n) << "%";
 }
 //..............................................................................
 void SFUtil::PrepareCalcSF(const TAsymmUnit& au, double* U,
