@@ -1084,7 +1084,17 @@ double RefinementModel::CalcF000(const ContentList* cont_, Logging logging) cons
   size_t skipped_fp_fdp = 0;
   for (size_t i = 0; i < cont.Count(); i++) {
     XScatterer* xs = FindSfacData(cont[i].element->GetChargedLabel(cont[i].charge));
-    compd f0 = round(cont[i].element->gaussians->calc_sq(0));
+    // a peak 'Q' in SFAC/UNIT has no tabulated Gaussians (COD 2018650); only
+    // its own full SFAC data, the first branch below, can be used
+    const cm_Gaussians* g = cont[i].element->gaussians;
+    if (g == 0 && (xs == 0 || !xs->IsSet(XScatterer::setGaussian) ||
+      !xs->IsSet(XScatterer::setDispersion)))
+    {
+      TBasicApp::NewLogEntry(logging) << "No scattering factors for " <<
+        cont[i].element->symbol << ", skipped in F000";
+      continue;
+    }
+    compd f0 = g == 0 ? compd(0) : compd(round(g->calc_sq(0)));
     bool processed = false;
     if (xs != 0) {
       if (xs->IsSet(XScatterer::setGaussian) &&
