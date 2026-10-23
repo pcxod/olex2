@@ -1076,59 +1076,29 @@ const TRefList& RefinementModel::GetReflections() const {
   }
 }
 //.............................................................................
+// Non-dispersive F(000) = sum f0(0), the number of electrons in the cell: the
+// value Fourier inversion (maps, masks) needs and the one the IUCr dictionary
+// means (dictionary.iucr.org/F(000)). f' and f'' stay out; the old code added
+// them and, worse, summed |f0 + f' + i f''| per element instead of taking the
+// modulus of the complex sum.
 double RefinementModel::CalcF000(const ContentList* cont_, Logging logging) const {
   const ContentList& cont = cont_ == 0 ? GetUserContent() : *cont_;
-  double r_e = expl.GetRadiationEnergy();
-  bool compute_fp_fdp = r_e <= 30000;
   double F000 = 0;
-  size_t skipped_fp_fdp = 0;
   for (size_t i = 0; i < cont.Count(); i++) {
     XScatterer* xs = FindSfacData(cont[i].element->GetChargedLabel(cont[i].charge));
-    // a peak 'Q' in SFAC/UNIT has no tabulated Gaussians (COD 2018650); only
-    // its own full SFAC data, the first branch below, can be used
+    // full SFAC Gaussians first: a peak 'Q' in SFAC/UNIT has no tabulated
+    // ones (COD 2018650)
+    if (xs != 0 && xs->IsSet(XScatterer::setGaussian)) {
+      F000 += cont[i].count * xs->calc_sq(0);
+      continue;
+    }
     const cm_Gaussians* g = cont[i].element->gaussians;
-    if (g == 0 && (xs == 0 || !xs->IsSet(XScatterer::setGaussian) ||
-      !xs->IsSet(XScatterer::setDispersion)))
-    {
+    if (g == 0) {
       TBasicApp::NewLogEntry(logging) << "No scattering factors for " <<
         cont[i].element->symbol << ", skipped in F000";
       continue;
     }
-    compd f0 = g == 0 ? compd(0) : compd(round(g->calc_sq(0)));
-    bool processed = false;
-    if (xs != 0) {
-      if (xs->IsSet(XScatterer::setGaussian) &&
-        xs->IsSet(XScatterer::setDispersion))
-      {
-        F000 += cont[i].count * xs->calc_sq_anomalous(0).mod();
-        processed = true;
-      }
-      else if (xs->IsSet(XScatterer::setDispersion)) {
-        f0 += xs->GetFpFdp();
-        F000 += cont[i].count * f0.mod();
-        processed = true;
-      }
-    }
-    if (!processed) {
-      try {
-        if (compute_fp_fdp) {
-          f0 += cont[i].element->CalcFpFdp(r_e);
-          f0.Re() -= cont[i].element->z;
-        }
-        else {
-          skipped_fp_fdp++;
-        }
-      }
-      catch (...) {
-        TBasicApp::NewLogEntry(logging) << "Failed to calculated DISP for " <<
-          cont[i].element->symbol;
-      }
-      F000 += cont[i].count * f0.mod();
-    }
-  }
-  if (!compute_fp_fdp && skipped_fp_fdp > 0) {
-    TBasicApp::NewLogEntry(logWarning) <<
-      "No anomaloud dispersion data available for this wavelength";
+    F000 += cont[i].count * round(g->calc_sq(0));
   }
   return F000;
 }
