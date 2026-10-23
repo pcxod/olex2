@@ -958,6 +958,26 @@ bool TIns::ProcessSFAC(ParseContext& cx, const TStrList& Toks, bool update_rm) {
             << Toks[1]);
         }
         lb = XScatterer::NormaliseCharge(lb, elm);
+        // a label without a charge still keys by element, so OI/OII (O-, O2-)
+        // and a second SI (Si4+) next to plain O and SI all end up as one O
+        // and one Si and a split site between them goes singular (COD
+        // 2312749-53). Z - f(0) of the table's own Gaussians names the ion;
+        // X-ray tables only: a neutron table has no Gaussians and an electron
+        // table (lambda < 0.1 A) no integer f(0)
+        if (XScatterer::ChargeFromLabel(lb, elm) == 0) {
+          const double a = Toks[2].ToDouble() + Toks[4].ToDouble() +
+            Toks[6].ToDouble() + Toks[8].ToDouble(),
+            dq = elm->z - a - Toks[10].ToDouble();
+          const long q = olx_round(dq);
+          if (q != 0 && olx_abs(q) <= 8 && olx_abs(dq - q) < 0.05 && a > 0 &&
+            cx.rm.expl.GetRadiation() > 0.1)
+          {
+            TBasicApp::NewLogEntry() << "SFAC " << Toks[1] << ": f(0) = Z"
+              << (q > 0 ? " - " : " + ") << olx_abs(q) << ", read as "
+              << elm->GetChargedLabel((int)q);
+            lb = elm->GetChargedLabel((int)q);
+          }
+        }
         if (update_rm) {
           cx.rm.AddUserContent(*elm, 0, XScatterer::ChargeFromLabel(lb));
         }
