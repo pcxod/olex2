@@ -82,6 +82,25 @@ olx_object_ptr<TIns> THklFile::LoadFromFile(const olxstr& FN, bool get_ins,
     }
     if (IsHklmFile(FN)) {
       LoadHklmFromStrings(SL);
+      // once per file version: the HOS, reap and every refinement re-read it
+      static TEFile::FileID logged;
+      TEFile::FileID id = TEFile::GetFileID(FN);
+      if (id != logged) {
+        logged = id;
+        int max_m = 0;
+        for (size_t i = 0; i < SatelliteM.Count(); i++) {
+          max_m = olx_max(max_m, olx_abs(SatelliteM[i]));
+        }
+        olxstr orders;
+        if (max_m == 1) {
+          orders = " (|m| = 1)";
+        }
+        else if (max_m > 1) {
+          orders << " (1 <= |m| <= " << max_m << ')';
+        }
+        TBasicApp::NewLogEntry() << "HKLM: " << Refs.Count()
+          << " main reflections, " << Satellites.Count() << " satellites" << orders;
+      }
       return olx_object_ptr<TIns>();
     }
     return LoadFromStrings(SL, get_ins, format);
@@ -383,7 +402,6 @@ void THklFile::LoadHklmFromStrings(const TStrList& SL) {
   Clear();
   const bool apply_basis = !Basis.IsI();
   size_t removed_cnt = 0;
-  int max_m = 0;
   for (size_t i = 0; i < SL.Count(); i++) {
     const olxstr& line = SL[i];
     int idx[4], batch = TReflection::NoBatchSet;
@@ -446,7 +464,6 @@ void THklFile::LoadHklmFromStrings(const TStrList& SL) {
       Satellites.Add(ref);
       ref->SetTag(Satellites.Count());
       SatelliteM.Add(idx[3]);
-      max_m = olx_max(max_m, olx_abs(idx[3]));
     }
   }
   if (removed_cnt != 0) {
@@ -460,8 +477,6 @@ void THklFile::LoadHklmFromStrings(const TStrList& SL) {
       "no main reflections (m = 0) in the hklm file");
   }
   HKLF = 4;
-  TBasicApp::NewLogEntry() << "HKLM: " << Refs.Count() << " main reflections, "
-    << Satellites.Count() << " satellites (|m| <= " << max_m << ')';
 }
 //..............................................................................
 void THklFile::UpdateRef(const TReflection& R, bool update_data) {
