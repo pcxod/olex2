@@ -90,6 +90,9 @@ void GXLibMacros::Export(TLibrary& lib) {
     "obs-calculates observed map&;"
     "calc-calculates calculated map&;"
     "fcfmc-calculates FCF Fc-Fc map&;"
+    "wiener-Wiener-filters the Fo-Fc part of a -diff or -tomc map: each"
+    " resolution shell is weighted by its residual power above the noise the"
+    " refinement weights imply&;"
     "scale-scale to use for difference maps, [external], external-forced, sigma,"
     " shelx. External may be replace with shelx if the two differ too much.&;"
     "anom_only-Create Fc Map only using anomalous dispersion scattering factor,"
@@ -935,11 +938,29 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
     TBasicApp::NewLogEntry() << "wR2 = " << olxstr::FormatFloat(4, rstat.wR2);
     return;
   }
+  const bool wiener = Options.GetBoolOption("wiener");
+  if (wiener && mapType != SFUtil::MapType::Diff &&
+    mapType != SFUtil::MapType::TwoObs_Calc)
+  {
+    E.ProcessingError(__OlxSrcInfo, "-wiener needs -diff or -tomc");
+    return;
+  }
+  TArrayList<compd> Fc;
   olxstr err = SFUtil::GetSF(refs, F, mapType, src,
-    scale, &scale_value, SFUtil::FPMerge::Merge, anom_only);
+    scale, &scale_value, SFUtil::FPMerge::Merge, anom_only,
+    SFUtil::EXTIDest::Fc, wiener ? &Fc : 0);
   if (!err.IsEmpty()) {
     E.ProcessingError(__OlxSrcInfo, err);
     return;
+  }
+  if (wiener) {
+    if (Fc.Count() != F.Count()) {
+      E.ProcessingError(__OlxSrcInfo, "F arrays mismatch");
+      return;
+    }
+    // an fcf holds Fo^2 on the Fc scale already
+    SFUtil::WienerFilter(refs, F, Fc,
+      src == SFUtil::SFOrigin::Fcf ? 1.0 : olx_sqr(scale_value), mapType);
   }
   if (Options.GetBoolOption("fcfmc")) {
     if (src != SFUtil::SFOrigin::Fcf || mapType != SFUtil::MapType::Calc) {

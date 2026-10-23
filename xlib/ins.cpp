@@ -518,7 +518,7 @@ void TIns::_ProcessSame(ParseContext& cx, const TIndexList *index)  {
   for (size_t i=0; i < cx.Same.Count(); i++) {
     TCAtom* ca = cx.Same[i].b;
     size_t index_index = InvalidIndex;
-    if (index != 0) {
+    if (index != 0 && ca != 0) { // ca is 0 for a SAME after the last atom
       index_index = index->IndexOf(ca->GetId());
       if (index_index == InvalidIndex) {
         throw TInvalidArgumentException(__OlxSourceInfo, "atom index");
@@ -609,6 +609,22 @@ void TIns::_ProcessSame(ParseContext& cx, const TIndexList *index)  {
         for (size_t gi = 0; gi < size_groups.Count(); gi++) {
           sgl.Delete(size_groups.GetValue(gi));
         }
+      }
+    }
+    else {
+      // no atom follows the SAME or none of its atoms resolved (a missing
+      // name, an esd after the atoms): an explicit group would stay as a
+      // dependent without a reference and Analyse dereferences its null parent
+      TPtrList<TSameGroup> orphans;
+      for (size_t j = 0; j < all_groups.Count(); j++) {
+        if (all_groups[j]->GetAtoms().IsExplicit()) {
+          orphans.Add(all_groups[j]);
+        }
+      }
+      if (!orphans.IsEmpty()) {
+        TBasicApp::NewLogEntry(logError) << "Skipping SAME without a "
+          "reference group: " << sl.Text(' ');
+        sgl.Delete(orphans);
       }
     }
   }
@@ -942,6 +958,26 @@ bool TIns::ProcessSFAC(ParseContext& cx, const TStrList& Toks, bool update_rm) {
             << Toks[1]);
         }
         lb = XScatterer::NormaliseCharge(lb, elm);
+        // a label without a charge still keys by element, so OI/OII (O-, O2-)
+        // and a second SI (Si4+) next to plain O and SI all end up as one O
+        // and one Si and a split site between them goes singular (COD
+        // 2312749-53). Z - f(0) of the table's own Gaussians names the ion;
+        // X-ray tables only: a neutron table has no Gaussians and an electron
+        // table (lambda < 0.1 A) no integer f(0)
+        if (XScatterer::ChargeFromLabel(lb, elm) == 0) {
+          const double a = Toks[2].ToDouble() + Toks[4].ToDouble() +
+            Toks[6].ToDouble() + Toks[8].ToDouble(),
+            dq = elm->z - a - Toks[10].ToDouble();
+          const long q = olx_round(dq);
+          if (q != 0 && olx_abs(q) <= 8 && olx_abs(dq - q) < 0.05 && a > 0 &&
+            cx.rm.expl.GetRadiation() > 0.1)
+          {
+            TBasicApp::NewLogEntry() << "SFAC " << Toks[1] << ": f(0) = Z"
+              << (q > 0 ? " - " : " + ") << olx_abs(q) << ", read as "
+              << elm->GetChargedLabel((int)q);
+            lb = elm->GetChargedLabel((int)q);
+          }
+        }
         if (update_rm) {
           cx.rm.AddUserContent(*elm, 0, XScatterer::ChargeFromLabel(lb));
         }
@@ -1227,7 +1263,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
     if (Toks.Count() == 1) {
       number = "0";
     }
-    if (Toks.Count() == 2) {
+    else if (Toks.Count() == 2) { // a bare RESI must not reach Toks[1..2]
       if (Toks[1].Contains(':') || Toks[1].IsNumber()) {
         number = Toks[1];
       }
@@ -1320,11 +1356,17 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
         size_t iv = hklsrc.IndexOf("</HKL>");
         if (iv == InvalidIndex) {
           while ((i + 1) < ins.Count()) {
-            i++;
-            if (!ins[i].StartsFromi("rem")) {
+            // the next instruction ends an unterminated <HKL> - leave it to
+            // the caller's loop instead of skipping it
+            if (!ins[i + 1].StartsFromi("rem")) {
               break;
             }
-            hklsrc << ins[i].SubStringFrom(4);
+            i++;
+            // a bare 'REM' is shorter than 'REM ' - SubStringFrom(4) would
+            // read past its end
+            if (ins[i].Length() > 4) {
+              hklsrc << ins[i].SubStringFrom(4);
+            }
             if ((iv = hklsrc.IndexOf("</HKL>")) != InvalidIndex) {
               break;
             }

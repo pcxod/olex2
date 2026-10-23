@@ -926,6 +926,7 @@ void TSameGroupList::Analyse() {
     olxstr_dict<TPtrList<TSameGroup> > dep2ref; // ins_str of dep -> ref
     for (size_t i = 0; i < items.Count(); i++) {
       if (!items[i].IsReference() && items[i].GetAtoms().IsExplicit() &&
+        items[i].GetParentGroup() != 0 && // an orphan dependent has none
         items[i].GetParentGroup()->DependentCount() == 1)
       {
         olxstr ss = items[i].ToInsString();
@@ -1165,7 +1166,7 @@ void TSameGroupList::PrepareSave() {
         }
         TAtomRefList& arl = sg_atoms[&sg2];
         for (size_t ai = 0; ai < arl.Count(); ai++) {
-          arl[i].GetAtom().SetSameId((uint16_t)sg1.GetReleasableId());
+          arl[ai].GetAtom().SetSameId((uint16_t)sg1.GetReleasableId());
         }
         sg2.SetTag(2);
         sg2.OnReleasedDelete();
