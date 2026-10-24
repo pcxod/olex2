@@ -710,7 +710,12 @@ TAG_HANDLER_PROC(tag) {
     CreatedWindow = Box;
     if (tag.HasParam(wxT("ITEMS"))) {
       olxstr Items = ExpandMacroShortcuts(tag.GetParam(wxT("ITEMS")), macro_map);
-      op->processFunction(Items, SrcInfo, true);
+      // ITEMS was already expanded once by htmlprep; a '(' in a plain list
+      // (IAM(FLAT).tscb) parses as a call here and fails - keep the list then
+      const olxstr raw = Items;
+      if (!op->processFunction(Items, SrcInfo, true)) {
+        Items = raw;
+      }
       Box->SetItemsFrom(Items);
     }
     else {
@@ -1035,7 +1040,10 @@ TAG_HANDLER_PROC(tag) {
     }
     else if (itemsTag) {
       olxstr items = tag.GetParam(wxT("ITEMS"));
-      op->processFunction(items, SrcInfo, true);
+      const olxstr raw = items;  // as for the combo ITEMS above
+      if (!op->processFunction(items, SrcInfo, true)) {
+        items = raw;
+      }
       itemsList.Strtok(items, ';');
     }
     TListBox *List = new TListBox(html);
