@@ -154,6 +154,20 @@ public:
     }
   }
   bool Orient(TGlPrimitive& P);
+  /* EASTER EGG / JOKE CODE - nothing serious, purely cosmetic, see the hidden
+  'boo' macro. Never saved, never touches the model or the styles.
+    funSkinHalloween: H atoms as ghosts, heavier atoms as jack-o'-lanterns
+    funSkinEaster: H atoms as painted eggs, heavier atoms get bunny ears
+  */
+  enum { funSkinNone = 0, funSkinHalloween, funSkinEaster };
+  static short &FunSkin() {
+    static short v = funSkinNone;
+    return v;
+  }
+private:
+  // joke code: returns true if the atom has been fully drawn
+  bool OrientFunSkin(TGlPrimitive& P, double scale);
+public:
 #ifdef __ANDROID__
   bool IsBakeable(const TGlPrimitive& P) const;
 #endif

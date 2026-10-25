@@ -36,6 +36,7 @@
 #include "listalg.h"
 #include "xangle.h"
 #include "refutil.h"
+#include "etime.h"
 
 #define gxlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.Register(\
@@ -124,6 +125,15 @@ void GXLibMacros::Export(TLibrary& lib) {
     "t-temporary: not saved in the atom style, undone by 'ads def' or a reload",
     fpAny^(fpNone),
     "Changes atom draw style [sph,elp,ort,std,def - back to the saved style]");
+  /* EASTER EGG / JOKE CODE - nothing serious. Deliberately left without
+  descriptions: boo/unboo - Halloween skin on/off, eggy/uneggy - Easter skin
+  on/off */
+  gxlib_InitMacro(Boo, EmptyString(), fpNone, EmptyString());
+  gxlib_InitMacro(Unboo, EmptyString(), fpNone, EmptyString());
+  gxlib_InitMacro(Eggy, EmptyString(), fpNone, EmptyString());
+  gxlib_InitMacro(Uneggy, EmptyString(), fpNone, EmptyString());
+  // joke code, nothing serious: 'order 66' plays a little space-fight movie
+  gxlib_InitMacro(Order, EmptyString(), fpOne | psFileLoaded, EmptyString());
   gxlib_InitMacro(Cartoon,
     "c-colour mode: chain, rainbow (along the chain, N terminus blue),"
     " polarity (lipophilic or hydrophilic), charge (acidic, basic or neutral),"
@@ -1282,6 +1292,466 @@ void GXLibMacros::macADS(TStrObjList &Cmds, const TParamList &Options,
     return;
   }
   app.SetAtomDrawingStyle(ads, Atoms.IsEmpty() ? 0 : &Atoms);
+}
+//.............................................................................
+/* EASTER EGG / JOKE CODE - nothing serious, these only switch a cosmetic
+skin. The 'un' versions switch back to the normal atoms, but only their own
+skin, so 'unboo' does not hatch the eggs */
+void GXLibMacros::SetFunSkin(short skin, bool on) {
+  short &current = TXAtom::FunSkin();
+  if (on) {
+    // the joke shapes cost ~2x a normal atom to draw, keep big scenes snappy
+    const size_t max_atoms = 1000;
+    size_t visible = 0;
+    TGXApp::AtomIterator ai = app.GetAtoms();
+    while (ai.HasNext()) {
+      if (ai.Next().IsVisible()) {
+        visible++;
+      }
+    }
+    if (visible > max_atoms) {
+      TBasicApp::NewLogEntry() << "Too many atoms for this joke (" << visible
+        << " > " << max_atoms << ")";
+      return;
+    }
+    current = skin;
+  }
+  else if (current == skin) {
+    current = TXAtom::funSkinNone;
+  }
+  app.Draw();
+}
+void GXLibMacros::macBoo(TStrObjList &, const TParamList &, TMacroData &) {
+  SetFunSkin(TXAtom::funSkinHalloween, true);
+}
+void GXLibMacros::macUnboo(TStrObjList &, const TParamList &, TMacroData &) {
+  SetFunSkin(TXAtom::funSkinHalloween, false);
+}
+void GXLibMacros::macEggy(TStrObjList &, const TParamList &, TMacroData &) {
+  SetFunSkin(TXAtom::funSkinEaster, true);
+}
+void GXLibMacros::macUneggy(TStrObjList &, const TParamList &, TMacroData &) {
+  SetFunSkin(TXAtom::funSkinEaster, false);
+}
+//.............................................................................
+/* =============================================================================
+  EASTER EGG / JOKE CODE - nothing serious here!
+  'order 66': three star-destroyer shaped ball-and-stick 'molecules' jump in
+  from hyperspace, shoot green lasers at the visible atoms and jump out again.
+  A temporary draw object plays for a few seconds and is then removed. It
+  never touches the model, the styles or anything that is saved.
+  Directions: for a model vector v the screen coordinates are v*B (B - the
+  scene basis matrix), so columns of B are screen right/up/towards-viewer in
+  model space - the same convention as the EXYZ separation code in TXAtom.
+============================================================================= */
+namespace order66 {
+const double
+  t_in = 0.9,       // hyperspace arrival, s
+  t_fire0 = 1.4,    // shooting window
+  t_fire1 = 5.2,
+  t_turn0 = 5.4,    // turning around
+  t_turn1 = 6.3,
+  t_out = 0.7,      // hyperspace departure
+  ship_delay = 0.3, // stagger between the ships
+  flash_t = 0.4;    // laser impact flash
+const int ship_count = 3;
+
+void material(float r, float g, float b, float e = 0) {
+  const float d[4] = { r, g, b, 1 }, em[4] = { r*e, g*e, b*e, 1 },
+    s[4] = { 0.4f, 0.4f, 0.4f, 1 };
+  olx_gl::material(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, d);
+  olx_gl::material(GL_FRONT_AND_BACK, GL_EMISSION, em);
+  olx_gl::material(GL_FRONT_AND_BACK, GL_SPECULAR, s);
+  olx_gl::material(GL_FRONT_AND_BACK, GL_SHININESS, 40.0f);
+}
+
+void ball(GLUquadric *q, const vec3d &p, double r, int slices = 10) {
+  olx_gl::pushMatrix();
+  olx_gl::translate(p);
+  gluSphere(q, r, slices, slices*2/3);
+  olx_gl::popMatrix();
+}
+
+void stick(GLUquadric *q, const vec3d &a, const vec3d &b, double r) {
+  vec3d d = b - a;
+  const double l = d.Length();
+  if (l < 1e-6) {
+    return;
+  }
+  d /= l;
+  olx_gl::pushMatrix();
+  olx_gl::translate(a);
+  // gluCylinder runs along +z
+  vec3d ax = vec3d(0, 0, 1).XProdVec(d);
+  const double ang = acos(olx_max(-1.0, olx_min(1.0, d[2])))*180/M_PI;
+  if (ax.QLength() < 1e-12) {
+    ax = vec3d(1, 0, 0);
+  }
+  olx_gl::rotate(ang, ax);
+  gluCylinder(q, r, r, l, 6, 1);
+  olx_gl::popMatrix();
+}
+
+struct Shot {
+  int ship, gun;
+  size_t target;
+  double t0;
+};
+
+class TShow : public AGDrawObject {
+  TTypeList<vec3d> targets;
+  vec3d centre, right, up, toward;
+  double R, L, a, time;
+  // the ship 'molecule' in local coordinates: +x - nose, +y - top deck
+  TTypeList<vec3d> hull, deck, engines;
+  TTypeList<olx_pair_t<size_t, size_t> > bonds;
+  TTypeList<Shot> shots;
+  vec3d P[ship_count], F[ship_count], U[ship_count], W[ship_count];
+  GLUquadric *quadric;
+  uint32_t seed;
+  double rnd() {
+    seed = seed * 1664525u + 1013904223u;
+    return (seed >> 8) / double(1 << 24);
+  }
+public:
+  TShow(TGlRenderer &r, const TTypeList<vec3d> &atoms)
+    : AGDrawObject(r, "Order66"), time(0), quadric(0), seed(66)
+  {
+    SetSelectable(false);
+    targets = atoms;
+    const mat3d &B = r.GetBasis().GetMatrix();
+    right = vec3d(B[0][0], B[1][0], B[2][0]);
+    up = vec3d(B[0][1], B[1][1], B[2][1]);
+    toward = vec3d(B[0][2], B[1][2], B[2][2]);
+    centre = -r.GetBasis().GetCenter();
+    R = 3;
+    if (!targets.IsEmpty()) {
+      centre.Null();
+      for (size_t i = 0; i < targets.Count(); i++) {
+        centre += targets[i];
+      }
+      centre /= targets.Count();
+      for (size_t i = 0; i < targets.Count(); i++) {
+        R = olx_max(R, targets[i].DistanceTo(centre) + 1);
+      }
+    }
+    else {
+      targets.AddCopy(centre);
+    }
+    L = olx_max(4.0, 0.6*R);
+    a = L / 7;
+    BuildShip();
+    const double angles[ship_count] = { 150, 30, 270 };
+    for (int i = 0; i < ship_count; i++) {
+      const double ang = angles[i] * M_PI / 180;
+      P[i] = centre + (right*cos(ang) + up*sin(ang))*(R + 0.8*L) +
+        toward*(0.2*R);
+      F[i] = (centre - P[i]).Normalise();
+      U[i] = (toward - F[i] * toward.DotProd(F[i])).Normalise();
+      W[i] = F[i].XProdVec(U[i]);
+    }
+    // the shooting schedule, each ship alternates between its deck guns
+    for (int s = 0; s < ship_count; s++) {
+      int gun = 0;
+      for (double t = t_fire0 + s*ship_delay + 0.1*rnd();
+        t < t_fire1 + s*ship_delay; t += 0.12 + 0.12*rnd())
+      {
+        Shot &sh = shots.AddNew();
+        sh.ship = s;
+        sh.gun = (gun++) % (int)deck.Count();
+        sh.target = (size_t)(rnd()*targets.Count()) % targets.Count();
+        sh.t0 = t;
+      }
+    }
+  }
+  ~TShow() {
+    if (quadric != 0) {
+      gluDeleteQuadric(quadric);
+    }
+  }
+  static double Duration() {
+    return t_turn1 + t_out + (ship_count - 1)*ship_delay + 0.3;
+  }
+  void SetTime(double t) { time = t; }
+
+  void BuildShip() {
+    // flat triangular wedge of 'atoms', one bond length apart
+    for (int i = 0; i <= 6; i++) {
+      for (int j = 0; j <= i; j++) {
+        hull.AddCopy(vec3d(L/2 - i*a, 0, (j - i/2.0)*a));
+      }
+    }
+    // a raised spine and the bridge tower towards the stern
+    for (int i = 2; i <= 6; i++) {
+      hull.AddCopy(vec3d(L/2 - i*a, 0.55*a, 0));
+    }
+    hull.AddCopy(vec3d(L/2 - 5.5*a, 1.2*a, 0));
+    hull.AddCopy(vec3d(L/2 - 5.5*a, 1.8*a, -0.45*a));
+    hull.AddCopy(vec3d(L/2 - 5.5*a, 1.8*a, 0.45*a));
+    for (size_t i = 0; i < hull.Count(); i++) {
+      for (size_t j = i + 1; j < hull.Count(); j++) {
+        if (hull[i].DistanceTo(hull[j]) < 1.2*a) {
+          bonds.AddNew(i, j);
+        }
+      }
+    }
+    for (int i = 0; i < 4; i++) { // gun turrets along the deck
+      deck.AddCopy(vec3d(L/2 - (2.5 + i)*a, 0.35*a, (i % 2 ? 1 : -1)*0.8*a));
+    }
+    for (int i = -1; i <= 1; i++) {
+      engines.AddCopy(vec3d(L/2 - 6.6*a, 0, i*a));
+    }
+  }
+
+  // ship placement at time t; returns false while it is not on screen
+  bool ShipFrame(int s, double t, vec3d &pos, vec3d &f, vec3d &w,
+    double &stretch, double &jump) const
+  {
+    t -= s*ship_delay;
+    pos = P[s];
+    f = F[s];
+    w = W[s];
+    stretch = 1;
+    jump = 0;
+    const double far_d = 8 * R;
+    if (t < 0) {
+      return false;
+    }
+    if (t < t_in) { // arrival: decelerate out of hyperspace
+      const double u = 1 - t / t_in;
+      pos -= f*(far_d*u*u*u);
+      stretch = 1 + 10 * u*u;
+      jump = u;
+      return true;
+    }
+    if (t > t_turn0) { // turn around about the ship's 'up' axis
+      const double th = M_PI*olx_min(1.0, (t - t_turn0) / (t_turn1 - t_turn0));
+      const double sm = (1 - cos(th)) / 2 * M_PI;
+      f = F[s] * cos(sm) + W[s] * sin(sm);
+      w = f.XProdVec(U[s]);
+    }
+    if (t > t_turn1) { // departure: accelerate into hyperspace
+      const double v = (t - t_turn1) / t_out;
+      if (v > 1) {
+        return false;
+      }
+      pos += f*(far_d*v*v*v);
+      stretch = 1 + 10 * v*v;
+      jump = v;
+    }
+    else { // a gentle bob while in combat
+      pos += U[s] * (0.1*a*sin(2.5*t + s));
+    }
+    return true;
+  }
+
+  static void Frame(const vec3d &pos, const vec3d &f, const vec3d &u,
+    const vec3d &w, double stretch)
+  {
+    // column-major: images of the local x, y, z axes and the origin
+    const double m[16] = {
+      f[0]*stretch, f[1]*stretch, f[2]*stretch, 0,
+      u[0], u[1], u[2], 0,
+      w[0], w[1], w[2], 0,
+      pos[0], pos[1], pos[2], 1 };
+    olx_gl::orient(m);
+  }
+
+  vec3d ToWorld(int s, const vec3d &l) const {
+    vec3d pos, f, w;
+    double st, j;
+    ShipFrame(s, time, pos, f, w, st, j);
+    return pos + f*(l[0] * st) + U[s] * l[1] + w*l[2];
+  }
+
+  void Create(const olxstr &cName = EmptyString()) {
+    if (!cName.IsEmpty()) {
+      SetCollectionName(cName);
+    }
+    TGPCollection &gpc = Parent.FindOrCreateCollection(GetCollectionName());
+    gpc.AddObject(*this);
+    if (gpc.PrimitiveCount() != 0) {
+      return;
+    }
+    TGlPrimitive &glp = gpc.NewPrimitive("Show", sgloMacro);
+    TGlMaterial glm;
+    glm.SetFlags(sglmAmbientF | sglmDiffuseF);
+    glm.AmbientF = 0x7f7f7f;
+    glm.DiffuseF = 0x7f7f7f;
+    glp.SetProperties(glm);
+  }
+
+  bool GetDimensions(vec3d &, vec3d &) { return false; }
+
+  bool Orient(TGlPrimitive &) {
+    if (Parent.IsSelecting()) {
+      return true;
+    }
+    if (quadric == 0) {
+      quadric = gluNewQuadric();
+      gluQuadricNormals(quadric, GLU_SMOOTH);
+    }
+    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_LIGHTING_BIT |
+      GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_LINE_BIT);
+    // ships
+    for (int s = 0; s < ship_count; s++) {
+      vec3d pos, f, w;
+      double stretch, jump;
+      if (!ShipFrame(s, time, pos, f, w, stretch, jump)) {
+        continue;
+      }
+      olx_gl::pushMatrix();
+      Frame(pos, f, U[s], w, stretch);
+      material(0.78f, 0.8f, 0.84f);
+      for (size_t i = 0; i < hull.Count(); i++) {
+        ball(quadric, hull[i], 0.28*a);
+      }
+      material(0.55f, 0.57f, 0.62f);
+      for (size_t i = 0; i < bonds.Count(); i++) {
+        stick(quadric, hull[bonds[i].a], hull[bonds[i].b], 0.08*a);
+      }
+      material(0.35f, 0.35f, 0.4f);
+      for (size_t i = 0; i < deck.Count(); i++) {
+        ball(quadric, deck[i], 0.18*a, 8);
+      }
+      material(0.4f, 0.7f, 1.0f, 1.0f);
+      for (size_t i = 0; i < engines.Count(); i++) {
+        ball(quadric, engines[i], 0.42*a);
+      }
+      olx_gl::popMatrix();
+    }
+    // glowing effects: no lighting, additive blending, no depth writes
+    olx_gl::disable(GL_LIGHTING);
+    olx_gl::enable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    glDepthMask(GL_FALSE);
+    for (int s = 0; s < ship_count; s++) { // hyperspace streaks and flashes
+      vec3d pos, f, w;
+      double stretch, jump;
+      if (!ShipFrame(s, time, pos, f, w, stretch, jump) || jump <= 0) {
+        continue;
+      }
+      glLineWidth(2);
+      olx_gl::begin(GL_LINES);
+      for (int i = -2; i <= 2; i++) {
+        for (int j = 0; j <= 1; j++) {
+          const vec3d o = pos + w*(i*0.6*a) + U[s] * (j*0.8*a - 0.2*a);
+          glColor4f(0.8f, 0.9f, 1.0f, (float)(0.8*jump));
+          olx_gl::vertex(o);
+          glColor4f(0.3f, 0.5f, 1.0f, 0.0f);
+          olx_gl::vertex(o - f*(L*olx_min(4.0, stretch*1.5)));
+        }
+      }
+      olx_gl::end();
+      if (jump < 0.25) { // the bright flash at the jump point
+        glColor4f(0.85f, 0.92f, 1.0f, (float)(0.7*(1 - jump*4)));
+        ball(quadric, pos, L*(0.1 + 0.6*jump), 12);
+      }
+    }
+    const double bolt_v = olx_max(10.0, 2.5*R), bolt_l = 0.15*R + 0.5;
+    for (size_t i = 0; i < shots.Count(); i++) { // laser bolts and hits
+      const Shot &sh = shots[i];
+      if (time < sh.t0) {
+        continue;
+      }
+      // the bolt starts where the gun was when it fired
+      const double keep = time;
+      time = sh.t0;
+      const vec3d from = ToWorld(sh.ship, deck[sh.gun]);
+      time = keep;
+      const vec3d &to = targets[sh.target];
+      const double dist = from.DistanceTo(to), t_hit = sh.t0 + dist / bolt_v;
+      if (time < t_hit) {
+        const vec3d dir = (to - from) / dist;
+        const double head = (time - sh.t0)*bolt_v;
+        const vec3d h = from + dir*head,
+          tail = from + dir*olx_max(0.0, head - bolt_l);
+        glLineWidth(6);
+        glColor4f(0.1f, 1.0f, 0.2f, 0.35f);
+        olx_gl::begin(GL_LINES);
+        olx_gl::vertex(tail);
+        olx_gl::vertex(h);
+        olx_gl::end();
+        glLineWidth(2);
+        glColor4f(0.8f, 1.0f, 0.8f, 1.0f);
+        olx_gl::begin(GL_LINES);
+        olx_gl::vertex(tail);
+        olx_gl::vertex(h);
+        olx_gl::end();
+      }
+      else if (time < t_hit + flash_t) {
+        const double u = (time - t_hit) / flash_t;
+        glColor4f(1.0f, 0.55f, 0.1f, (float)(0.9*(1 - u)));
+        ball(quadric, to, 0.3 + 0.9*u, 12);
+        glColor4f(1.0f, 0.95f, 0.6f, (float)(1 - u));
+        ball(quadric, to, 0.15 + 0.4*u, 10);
+      }
+    }
+    glPopAttrib();
+    return true;
+  }
+};
+}  // namespace order66
+//.............................................................................
+// EASTER EGG / JOKE CODE - nothing serious, a purely cosmetic movie
+void GXLibMacros::macOrder(TStrObjList &Cmds, const TParamList &Options,
+  TMacroData &Error)
+{
+  if (!Cmds[0].Equals("66")) {
+    Error.ProcessingError(__OlxSrcInfo, "these are not the orders you are "
+      "looking for");
+    return;
+  }
+  static bool running = false;
+  if (running) {
+    return;
+  }
+  {
+    TTypeList<vec3d> targets;
+    TGXApp::AtomIterator ai = app.GetAtoms();
+    while (ai.HasNext()) {
+      TXAtom &a = ai.Next();
+      if (a.IsVisible()) {
+        targets.AddCopy(a.crd());
+      }
+    }
+    TGlRenderer &r = app.GetRenderer();
+    order66::TShow *show = new order66::TShow(r, targets);
+    const olxstr name = show->GetCollectionName();
+    /* afterwards everything must be exactly as before: the model and the view
+    were never touched, the GL state is restored by the object itself, so only
+    the temporary object has to go - also when something throws on the way */
+    struct Cleanup {
+      TGlRenderer &r;
+      order66::TShow *show;
+      const olxstr &name;
+      bool &running;
+      ~Cleanup() {
+        // a reload in the meantime may have cleared the scene already
+        r.RemoveObject(*show);
+        TGPCollection *gpc = r.FindCollection(name);
+        if (gpc != 0) {
+          r.RemoveCollection(*gpc);
+        }
+        delete show;
+        running = false;
+      }
+    } cleanup = { r, show, name, running };
+    running = true;
+    show->Create();
+    // capped at ~30 fps, so the gag does not spin the CPU/GPU flat out
+    const uint64_t start = TETime::msNow(), frame_ms = 33;
+    double t = 0;
+    while (t < order66::TShow::Duration()) {
+      const uint64_t frame_start = TETime::msNow();
+      show->SetTime(t);
+      app.Update(); // draws and keeps the window responsive
+      const uint64_t spent = TETime::msNow() - frame_start;
+      olx_sleep(spent < frame_ms ? (int)(frame_ms - spent) : 1);
+      t = (TETime::msNow() - start) / 1000.0;
+    }
+  }
+  app.Draw(); // the plain scene again
 }
 //.............................................................................
 /* centre what is on the screen and scale to fit. An isolated stretch sits

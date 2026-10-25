@@ -25,6 +25,13 @@ public:
   DefMacro(Mask)
   DefMacro(ARad)
   DefMacro(ADS)
+  // joke code, nothing serious: cosmetic Halloween/Easter atom skins
+  DefMacro(Boo)
+  DefMacro(Unboo)
+  DefMacro(Eggy)
+  DefMacro(Uneggy)
+  DefMacro(Order)
+  void SetFunSkin(short skin, bool on);
   DefMacro(Cartoon)
   /* Not 'focus': TMainForm::macFocus already owns that name and does something
   else entirely, raising the window and giving the canvas keyboard focus.

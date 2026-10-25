@@ -404,6 +404,284 @@ struct PolyFacesSorter {
   }
 };
 //..............................................................................
+/* =============================================================================
+  EASTER EGG / JOKE CODE - nothing serious here!
+  Seasonal skins toggled by the hidden 'boo' macro. Purely cosmetic: no effect
+  on the model, the styles, the saved files or any of the scientific output.
+  'boo off' brings back the normal atoms.
+  Shapes are built around the origin with radius ~1, +z towards the viewer and
+  +y up (OrientFunSkin billboards them).
+============================================================================= */
+namespace {
+GLUquadric *fun_quadric() {
+  static GLUquadric *q = 0;
+  if (q == 0) {
+    q = gluNewQuadric();
+    gluQuadricNormals(q, GLU_SMOOTH);
+  }
+  return q;
+}
+
+void fun_material(float r, float g, float b,
+  float er = 0, float eg = 0, float eb = 0)
+{
+  const float d[4] = { r, g, b, 1 }, e[4] = { er, eg, eb, 1 },
+    s[4] = { 0.3f, 0.3f, 0.3f, 1 };
+  olx_gl::material(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, d);
+  olx_gl::material(GL_FRONT_AND_BACK, GL_EMISSION, e);
+  olx_gl::material(GL_FRONT_AND_BACK, GL_SPECULAR, s);
+  olx_gl::material(GL_FRONT_AND_BACK, GL_SHININESS, 32.0f);
+}
+
+// small details (eyes, hem bumps) need few triangles, keeping the joke cheap
+void fun_ball(double x, double y, double z, double r, int slices = 8) {
+  olx_gl::pushMatrix();
+  olx_gl::translate(x, y, z);
+  gluSphere(fun_quadric(), r, slices, slices * 3 / 4);
+  olx_gl::popMatrix();
+}
+
+// joke code: Halloween ghost for H atoms
+void draw_ghost() {
+  GLUquadric *q = fun_quadric();
+  fun_material(0.95f, 0.95f, 1.0f, 0.15f, 0.15f, 0.25f);
+  fun_ball(0, 0.3, 0, 0.6, 16); // head
+  olx_gl::pushMatrix(); // body, gluCylinder runs along +z, turn it to -y
+  olx_gl::translate(0.0, 0.3, 0.0);
+  olx_gl::rotate(90.0, 1.0, 0.0, 0.0);
+  gluCylinder(q, 0.6, 0.68, 0.8, 16, 1);
+  olx_gl::popMatrix();
+  for (int i = 0; i < 6; i++) { // wavy hem
+    double a = i * M_PI / 3;
+    fun_ball(0.5*cos(a), -0.5, 0.5*sin(a), 0.2);
+  }
+  fun_material(0.02f, 0.02f, 0.02f);
+  fun_ball(-0.2, 0.42, 0.52, 0.1); // eyes
+  fun_ball(0.2, 0.42, 0.52, 0.1);
+  olx_gl::pushMatrix(); // 'Ooo' mouth
+  olx_gl::translate(0.0, 0.12, 0.55);
+  olx_gl::scale(1.0, 1.5, 0.6);
+  gluSphere(q, 0.08, 8, 6);
+  olx_gl::popMatrix();
+}
+
+/* joke code: Halloween jack-o'-lantern for heavier atoms. The body takes the
+atom colour, the stem and the glowing face keep their 'proper' colours
+*/
+void draw_pumpkin(const float *body) {
+  GLUquadric *q = fun_quadric();
+  fun_material(body[0], body[1], body[2]);
+  for (int i = 0; i < 6; i++) { // ribbed body
+    olx_gl::pushMatrix();
+    olx_gl::rotate(i * 30.0, 0.0, 1.0, 0.0);
+    olx_gl::scale(0.55, 0.85, 1.0);
+    gluSphere(q, 1.0, 14, 10);
+    olx_gl::popMatrix();
+  }
+  fun_material(0.2f, 0.5f, 0.1f);
+  olx_gl::pushMatrix(); // stem
+  olx_gl::translate(0.0, 1.05, 0.0);
+  olx_gl::rotate(90.0, 1.0, 0.0, 0.0);
+  gluCylinder(q, 0.08, 0.12, 0.3, 8, 1);
+  olx_gl::popMatrix();
+  // glowing carved face, just in front of the body
+  fun_material(0.05f, 0.02f, 0.0f, 1.0f, 0.8f, 0.1f);
+  const float z = 1.02f;
+  olx_gl::normal(0.0f, 0.0f, 1.0f);
+  olx_gl::begin(GL_TRIANGLES);
+  for (int s = -1; s <= 1; s += 2) { // eyes
+    olx_gl::vertex(s*0.15f, 0.15f, z);
+    olx_gl::vertex(s*0.55f, 0.15f, z);
+    olx_gl::vertex(s*0.35f, 0.45f, z);
+  }
+  olx_gl::vertex(-0.1f, -0.05f, z); // nose
+  olx_gl::vertex(0.1f, -0.05f, z);
+  olx_gl::vertex(0.0f, 0.12f, z);
+  olx_gl::end();
+  olx_gl::begin(GL_QUAD_STRIP); // zig-zag grin
+  const int n = 8;
+  for (int i = 0; i <= n; i++) {
+    float x = -0.6f + 1.2f*i/n, sag = 0.25f*(1 - (x*x)/0.36f);
+    float top = -0.25f - sag + ((i % 2) ? -0.08f : 0.0f);
+    olx_gl::vertex(x, top, z);
+    olx_gl::vertex(x, -0.35f - sag, z);
+  }
+  olx_gl::end();
+}
+
+/* joke code: painted Easter egg for H atoms. Colours and pattern come from the
+atom id, so an egg keeps its look from frame to frame
+*/
+void draw_easter_egg(size_t seed) {
+  static const float palette[][3] = {
+    { 1.0f, 0.6f, 0.75f }, { 0.6f, 0.8f, 1.0f }, { 1.0f, 0.95f, 0.5f },
+    { 0.65f, 0.95f, 0.65f }, { 0.8f, 0.65f, 1.0f }, { 1.0f, 0.75f, 0.5f },
+    { 1.0f, 1.0f, 1.0f }, { 0.4f, 0.75f, 0.85f }
+  };
+  const size_t pc = sizeof(palette) / sizeof(palette[0]);
+  uint32_t h = (uint32_t)seed + 0x9e3779b9u; // murmur3 finaliser
+  h ^= h >> 16; h *= 0x85ebca6bu;
+  h ^= h >> 13; h *= 0xc2b2ae35u;
+  h ^= h >> 16;
+  const float *base = palette[h % pc],
+    *paint = palette[(h / pc + 1 + h % pc) % pc];
+  if (base == paint) {
+    paint = palette[(h % pc + 3) % pc];
+  }
+  const int pattern = (int)((h >> 8) % 4);
+  const float bands = 3.0f + (h >> 12) % 3;
+  // lat-long mesh, each quad coloured from its centre so patterns stay crisp
+  const int nt = 20, np = 24;
+  for (int i = 0; i < nt; i++) {
+    olx_gl::begin(GL_QUAD_STRIP);
+    for (int j = 0; j <= np; j++) {
+      for (int k = 1; k >= 0; k--) {
+        float t = (float)M_PI*(i + k) / nt, p = 2 * (float)M_PI*j / np;
+        if (k == 1) {
+          // pattern at the quad centre: u along the egg (0..1), p around
+          float u = (i + 0.5f) / nt, pc_ = p - (float)M_PI / np;
+          bool painted = false;
+          switch (pattern) {
+          case 0: // stripes
+            painted = (int)(u * 2 * bands) % 2 == 1;
+            break;
+          case 1: { // dots
+            float a = u * 2 * bands, b = pc_ * bands / (float)M_PI;
+            if ((int)a % 2 == 1) b += 0.5f;
+            float da = a - floor(a) - 0.5f, db = b - floor(b) - 0.5f;
+            painted = da*da + db*db < 0.12f;
+            break;
+          }
+          case 2: { // zig-zag band around the waist
+            float zz = 0.08f*fabs(fmod(pc_ * 3 / (float)M_PI, 2.0f) - 1);
+            painted = fabs(u - 0.5f - zz + 0.04f) < 0.07f ||
+              u < 0.12f || u > 0.88f;
+            break;
+          }
+          default: // two-tone halves with a white ribbon
+            painted = u > 0.5f;
+            if (fabs(u - 0.5f) < 0.04f) {
+              fun_material(1, 1, 1);
+              break;
+            }
+            break;
+          }
+          if (pattern != 3 || fabs(u - 0.5f) >= 0.04f) {
+            const float *c = painted ? paint : base;
+            fun_material(c[0], c[1], c[2]);
+          }
+        }
+        // egg profile: elongated along y, the top a bit narrower
+        float st = sin(t), ct = cos(t);
+        float rr = 0.78f*(1 - 0.12f*ct);
+        olx_gl::normal(st*cos(p), ct, st*sin(p));
+        olx_gl::vertex(rr*st*cos(p), ct, rr*st*sin(p));
+      }
+    }
+    olx_gl::end();
+  }
+}
+
+// joke code: Easter bunny ears in the atom colour with pink insides
+void draw_bunny_ears(const float *fur) {
+  GLUquadric *q = fun_quadric();
+  for (int s = -1; s <= 1; s += 2) {
+    olx_gl::pushMatrix();
+    olx_gl::translate(s*0.35, 0.85, 0.0);
+    olx_gl::rotate(-s*15.0, 0.0, 0.0, 1.0);
+    olx_gl::translate(0.0, 0.6, 0.0);
+    fun_material(fur[0], fur[1], fur[2]);
+    olx_gl::pushMatrix();
+    olx_gl::scale(0.22, 0.7, 0.12);
+    gluSphere(q, 1.0, 10, 8);
+    olx_gl::popMatrix();
+    fun_material(1.0f, 0.6f, 0.7f);
+    olx_gl::translate(0.0, -0.05, 0.07);
+    olx_gl::scale(0.12, 0.5, 0.06);
+    gluSphere(q, 1.0, 8, 6);
+    olx_gl::popMatrix();
+  }
+}
+}  // namespace
+//..............................................................................
+// joke code, see the comment above - nothing serious
+bool TXAtom::OrientFunSkin(TGlPrimitive& GlP, double scale) {
+  const bool hydrogen = GetType().z == 1,
+    easter = (FunSkin() == funSkinEaster);
+  const bool adp_style = (FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep);
+  const TEllipsoid *elp = adp_style ? GetEllipsoid() : 0;
+  if (elp != 0 && elp->IsNPD()) {
+    elp = 0;
+  }
+  // undo the scene rotation so the faces always look at the viewer
+  mat3d billboard = Parent.GetBasis().GetMatrix();
+  billboard.Transpose();
+  const float *colour = GlP.GetProperties().AmbientF.Data();
+  if (easter && !hydrogen) {
+    // ears on top, the atom itself is then drawn as usual
+    if (GlP.GetOwnerId() == xatom_SphereId) {
+      // the ellipsoid half-height on screen, so the ears sit on its top
+      double top = GetR();
+      if (elp != 0) {
+        const mat3d m = elp->GetMatrix()*Parent.GetBasis().GetMatrix();
+        top = 0;
+        for (int i = 0; i < 3; i++) {
+          top += olx_sqr(elp->GetNorms()[i] * m[i][1]);
+        }
+        top = sqrt(top);
+      }
+      top *= scale;
+      olx_gl::pushMatrix();
+      olx_gl::orient(billboard);
+      olx_gl::scale(top);
+      glPushAttrib(GL_LIGHTING_BIT | GL_CURRENT_BIT);
+      draw_bunny_ears(colour);
+      glPopAttrib();
+      olx_gl::popMatrix();
+    }
+    return false;
+  }
+  if (GlP.GetOwnerId() != xatom_SphereId) {
+    return true; // no rims/disks/crosses on ghosts, pumpkins and eggs
+  }
+  glPushAttrib(GL_LIGHTING_BIT | GL_CURRENT_BIT);
+  if (hydrogen) {
+    // ghosts and eggs follow the ADP size, but are not deformed
+    double r = GetR()*scale;
+    if (elp != 0) {
+      const vec3d &n = elp->GetNorms();
+      r = pow(n[0] * n[1] * n[2], 1. / 3)*scale;
+    }
+    else if (adp_style) {
+      r = sqrt(olx_max(CAtom().GetUiso(), 1e-4))*
+        GetSettings().GetTelpProb()*GetZoom();
+    }
+    olx_gl::orient(billboard);
+    olx_gl::scale(r*(easter ? 1.0 : 0.8));
+    if (easter) {
+      draw_easter_egg(CAtom().GetId());
+    }
+    else {
+      draw_ghost();
+    }
+  }
+  else { // a pumpkin, squashed by the ellipsoid
+    if (elp != 0) {
+      mat3d em = elp->GetMatrix();
+      olx_gl::orient(em);
+      olx_gl::scale(elp->GetNorms()*scale);
+      olx_gl::orient(em.Transpose());
+    }
+    else {
+      olx_gl::scale(GetR()*scale);
+    }
+    olx_gl::orient(billboard);
+    draw_pumpkin(colour);
+  }
+  glPopAttrib();
+  return true;
+}
+//..............................................................................
 bool TXAtom::Orient(TGlPrimitive& GlP) {
   // override for standalone atoms
   if (FDrawStyle == adsStandalone && !IsStandalone()) {
@@ -494,6 +772,13 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
   }
   else if ((FRadius & darIsotH) != 0)
     scale *= defs.GetTelpProb();
+
+  // EASTER EGG / JOKE CODE ('boo' macro) - nothing serious
+  if (FunSkin() != funSkinNone && GetType().z >= 1 &&
+    OrientFunSkin(GlP, scale))
+  {
+    return true;
+  }
 
   if (FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep) {
     if (GetEllipsoid() != 0) {
