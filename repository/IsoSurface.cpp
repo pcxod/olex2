@@ -317,8 +317,7 @@ const int CIsoSurface::m_triTable[256][16] = {
 };
 //..............................................................................
 CIsoSurface::CIsoSurface(array_3d<float>& points, const array_3d<int>* data)
-  : ZSlice(points.width*points.height),
-  Points(points),
+  : Points(points),
   PointData(data)
 {
   m_tIsoLevel = 0;
@@ -327,40 +326,41 @@ CIsoSurface::CIsoSurface(array_3d<float>& points, const array_3d<int>* data)
 //..............................................................................
 void CIsoSurface::GenerateSurface(float tIsoLevel) {
   DeleteSurface();
-  //  IsoPoints.SetCapacity(DimmX*DimmY);
-  AllTriangles.SetCapacity(ZSlice);
-
   m_tIsoLevel = tIsoLevel;
+  if (Points.width < 2 || Points.height < 2 || Points.depth < 2) {
+    Normals.Clear();  // the old path ran CalculateNormals on 0 vertices
+    m_bValidSurface = true;
+    return;
+  }
+  const size_t plane_sz = Points.height*Points.depth * 3;
+  planes[0].Reset(plane_sz);
+  planes[1].Reset(plane_sz);
   float*** D = Points.data;
   const int xmo = Points.width - 2,
     ymo = Points.height - 2,
     zmo = Points.depth - 2;
+  const size_t Dp = Points.depth;
   // Generate isosurface.
   for (size_t x = 0; x < Points.width - 1; x++) {
+    // the plane two behind is resolved already, reuse it for x+1
+    if (x > 0) {
+      planes[(x + 1) % 3].Reset(plane_sz);
+    }
+    std::vector<uint32_t>& corners = pending[x % 2];
+    corners.clear();
     for (size_t y = 0; y < Points.height - 1; y++) {
+      const float *r00 = D[x][y], *r01 = D[x][y + 1],
+        *r11 = D[x + 1][y + 1], *r10 = D[x + 1][y];
+      /* corners of the z face of the voxel: bits 1,2,4,8; the z+1 face gives
+      16,32,64,128 and becomes the z face of the next voxel. For a positive
+      level 'inside' is above it, otherwise below it - as before.
+      */
+      unsigned int face = Classify(r00[0], r01[0], r11[0], r10[0]);
       for (size_t z = 0; z < Points.depth - 1; z++) {
-        // Calculate table lookup index from those vertices which are below the isolevel.
-        unsigned int tableIndex = 0;
-        if (m_tIsoLevel > 0) {
-          if (D[x][y][z] > m_tIsoLevel)        tableIndex |= 1;
-          if (D[x][y + 1][z] > m_tIsoLevel)      tableIndex |= 2;
-          if (D[x + 1][y + 1][z] > m_tIsoLevel)    tableIndex |= 4;
-          if (D[x + 1][y][z] > m_tIsoLevel)      tableIndex |= 8;
-          if (D[x][y][z + 1] > m_tIsoLevel)      tableIndex |= 16;
-          if (D[x][y + 1][z + 1] > m_tIsoLevel)    tableIndex |= 32;
-          if (D[x + 1][y + 1][z + 1] > m_tIsoLevel)  tableIndex |= 64;
-          if (D[x + 1][y][z + 1] > m_tIsoLevel)    tableIndex |= 128;
-        }
-        else {
-          if (D[x][y][z] < m_tIsoLevel)        tableIndex |= 1;
-          if (D[x][y + 1][z] < m_tIsoLevel)      tableIndex |= 2;
-          if (D[x + 1][y + 1][z] < m_tIsoLevel)    tableIndex |= 4;
-          if (D[x + 1][y][z] < m_tIsoLevel)      tableIndex |= 8;
-          if (D[x][y][z + 1] < m_tIsoLevel)      tableIndex |= 16;
-          if (D[x][y + 1][z + 1] < m_tIsoLevel)    tableIndex |= 32;
-          if (D[x + 1][y + 1][z + 1] < m_tIsoLevel)  tableIndex |= 64;
-          if (D[x + 1][y][z + 1] < m_tIsoLevel)    tableIndex |= 128;
-        }
+        const size_t z1 = z + 1;
+        const unsigned int next = Classify(r00[z1], r01[z1], r11[z1], r10[z1]);
+        const unsigned int tableIndex = face | (next << 4);
+        face = next;
         const unsigned int eid = m_edgeTable[tableIndex];
         // Now create a triangulation of the isosurface in this cell.
         if (eid == 0)  continue;
@@ -384,20 +384,42 @@ void CIsoSurface::GenerateSurface(float tIsoLevel) {
           if (eid & 16)  AddSurfacePoint(x, y, z, 4);
           if (eid & 128) AddSurfacePoint(x, y, z, 7);
         }
-        for (unsigned int i = 0; m_triTable[tableIndex][i] != -1; i += 3) {
-          IsoTriangle triangle;
-          triangle[0] =
-            T4DIndex::encode(x, y, z, m_triTable[tableIndex][i]);
-          triangle[1] =
-            T4DIndex::encode(x, y, z, m_triTable[tableIndex][i + 1]);
-          triangle[2] =
-            T4DIndex::encode(x, y, z, m_triTable[tableIndex][i + 2]);
-          AllTriangles.Add(triangle);
+        for (unsigned int i = 0; m_triTable[tableIndex][i] != -1; i++) {
+          int ox = (int)x, oy = (int)y, oz = (int)z, slot;
+          EdgeOwner(m_triTable[tableIndex][i], ox, oy, oz, slot);
+          corners.push_back((uint32_t)(((size_t)oy*Dp + oz) * 3 + slot) |
+            (ox != (int)x ? next_plane_bit : 0));
         }
       }
     }
+    NumberPlane(x);
+    if (x > 0) {
+      ResolveSlab(x - 1);
+    }
   }
-  RenameVerticesAndTriangles();
+  NumberPlane(Points.width - 1);
+  ResolveSlab(Points.width - 2);
+  Vertices.SetCount(new_vertices.size());
+  for (size_t i = 0; i < new_vertices.size(); i++) {
+    Vertices[i] = new_vertices[i];
+  }
+  VertexData.SetCount(new_data.size());
+  for (size_t i = 0; i < new_data.size(); i++) {
+    VertexData[i] = new_data[i];
+  }
+  Triangles.SetCount(new_triangles.size() / 3);
+  for (size_t i = 0; i < Triangles.Count(); i++) {
+    IsoTriangle& t = Triangles[i];
+    t[0] = new_triangles[i * 3];
+    t[1] = new_triangles[i * 3 + 1];
+    t[2] = new_triangles[i * 3 + 2];
+  }
+  std::vector<vec3f>().swap(new_vertices);
+  std::vector<int>().swap(new_data);
+  std::vector<uint32_t>().swap(new_triangles);
+  for (int i = 0; i < 3; i++) {
+    planes[i].Release();
+  }
   CalculateNormals();
   m_bValidSurface = true;
 }
@@ -408,8 +430,71 @@ void CIsoSurface::DeleteSurface()  {
   Vertices.Clear();
   VertexData.Clear();
   Triangles.Clear();
-  AllTriangles.Clear();
-  IsoPoints.Clear();
+  pending[0].clear();
+  pending[1].clear();
+  new_vertices.clear();
+  new_data.clear();
+  new_triangles.clear();
+}
+//..............................................................................
+void CIsoSurface::EdgeOwner(int edgeNo, int& x, int& y, int& z, int& slot) {
+  switch (edgeNo) {
+  case 0:  slot = 1;              break; // (x,y,z) + 1
+  case 1:  y++;  slot = 0;        break; // (x,y+1,z)
+  case 2:  x++;  slot = 1;        break; // (x+1,y,z) + 1;
+  case 3:  slot = 0;              break; // (x,y,z)
+  case 4:  z++;  slot = 1;        break; // (x,y,z+1) + 1
+  case 5:  y++;  z++;  slot = 0;  break; // (x,y+1,z+1)
+  case 6:  x++;  z++;  slot = 1;  break; // (x+1,y,z+1) + 1
+  case 7:  z++;  slot = 0;        break; // (x,y,z+1)
+  case 8:  slot = 2;              break; // (x,y,z)+2;
+  case 9:  y++;  slot = 2;        break; // (x,y+1,z) + 2;
+  case 10: x++;  y++;  slot = 2;  break; // (x+1,y+1,z) + 2;
+  case 11: x++;  slot = 2;        break; // (x+1,y,z) + 2
+  default: slot = 0;              break; // Invalid edge no.
+  }
+}
+//..............................................................................
+void CIsoSurface::NumberPlane(size_t x) {
+  EdgePlane& p = planes[x % 3];
+  for (size_t w = 0; w < p.used.Count(); w++) {
+    uint64_t bits = p.used[w];
+    // slots in increasing order, as the vertex order requires
+    for (size_t b = 0; bits != 0; b++, bits >>= 1) {
+      if ((bits & 1) == 0) {
+        continue;
+      }
+      const size_t i = w * 64 + b;
+      p.id[i] = (uint32_t)new_vertices.size();
+      new_vertices.push_back(p.crd[i]);
+      if (PointData != 0) {
+        new_data.push_back(p.data[i]);
+      }
+    }
+  }
+}
+//..............................................................................
+void CIsoSurface::ResolveSlab(size_t x) {
+  const std::vector<uint32_t>& corners = pending[x % 2];
+  const EdgePlane* ps[2] = { &planes[x % 3], &planes[(x + 1) % 3] };
+  for (size_t i = 0; i + 2 < corners.size(); i += 3) {
+    uint32_t ta[3];
+    for (int j = 0; j < 3; j++) {
+      const uint32_t c = corners[i + j];
+      ta[j] = ps[c >> 31]->id[c & ~next_plane_bit];
+    }
+    const vec3f& v1 = new_vertices[ta[0]];
+    const vec3f& v2 = new_vertices[ta[1]];
+    const vec3f& v3 = new_vertices[ta[2]];
+    if (v1.QDistanceTo(v2) == 0 || v1.QDistanceTo(v3) == 0 ||
+      v2.QDistanceTo(v3) == 0)
+    {
+      continue;
+    }
+    new_triangles.push_back(ta[0]);
+    new_triangles.push_back(ta[1]);
+    new_triangles.push_back(ta[2]);
+  }
 }
 //..............................................................................
 void CIsoSurface::AddSurfacePoint(unsigned int nX, unsigned int nY,
@@ -489,50 +574,33 @@ void CIsoSurface::AddSurfacePoint(unsigned int nX, unsigned int nY,
   on a grid point for maps whose levels are of that order (an MO at 0.05 a.u.)
   */
   const float eps = 1e-6f;
+  vec3f crd;
+  int p_data;
   if (olx_abs(m_tIsoLevel - val1) < eps) {
-    IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v1x, (float)v1y, (float)v1z, p_data1);
+    crd = vec3f((float)v1x, (float)v1y, (float)v1z);
+    p_data = p_data1;
   }
   else if (olx_abs(m_tIsoLevel - val2) < eps) {
-    IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v2x, (float)v2y, (float)v2z, p_data2);
+    crd = vec3f((float)v2x, (float)v2y, (float)v2z);
+    p_data = p_data2;
   }
   else if (olx_abs(val1 - val2) < eps) {
-    IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v1x, (float)v1y, (float)v1z, p_data1);
+    crd = vec3f((float)v1x, (float)v1y, (float)v1z);
+    p_data = p_data1;
   }
   else {
     const float mu = (m_tIsoLevel - val1) / (val2 - val1);
-    IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v1x + mu*(v2x - v1x),
-      (float)v1y + mu*(v2y - v1y), (float)v1z + mu*(v2z - v1z),
-      p_data1 == -1 ? p_data2 : p_data1);
+    crd = vec3f((float)v1x + mu*(v2x - v1x),
+      (float)v1y + mu*(v2y - v1y), (float)v1z + mu*(v2z - v1z));
+    p_data = p_data1 == -1 ? p_data2 : p_data1;
   }
-}
-//..............................................................................
-void CIsoSurface::RenameVerticesAndTriangles() {
-  IsoPoints.GetVertices(Vertices, PointData == 0 ? 0 : &VertexData);
-  Triangles.SetCapacity(AllTriangles.Count());
-  for (size_t i = 0; i < AllTriangles.Count(); i++) {
-    IsoTriangle& ta = AllTriangles[i];
-    ta[0] = IsoPoints.Get(ta[0]).newID;
-    ta[1] = IsoPoints.Get(ta[1]).newID;
-    ta[2] = IsoPoints.Get(ta[2]).newID;
-    const vec3f& v1 = Vertices[ta[0]];
-    const vec3f& v2 = Vertices[ta[1]];
-    const vec3f& v3 = Vertices[ta[2]];
-    float d = v1.QDistanceTo(v2);
-    if (d == 0) {
-      continue;
-    }
-    else {
-      if ((d = v1.QDistanceTo(v3)) == 0) {
-        continue;
-      }
-      else if ((d = v2.QDistanceTo(v3)) == 0) {
-        continue;
-      }
-    }
-    Triangles.Add(ta);
-  }
-  IsoPoints.Clear();
-  AllTriangles.Clear();
+  int ox = nX, oy = nY, oz = nZ, slot;
+  EdgeOwner(nEdgeNo, ox, oy, oz, slot);
+  EdgePlane& p = planes[ox % 3];
+  const size_t idx = ((size_t)oy*Points.depth + oz) * 3 + slot;
+  p.crd[idx] = crd;
+  p.data[idx] = p_data;
+  p.used[idx / 64] |= (uint64_t)1 << (idx % 64);
 }
 //..............................................................................
 void CIsoSurface::CalculateNormals() {

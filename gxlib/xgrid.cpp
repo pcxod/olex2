@@ -369,6 +369,10 @@ TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp)
   ED = 0;
   ColorData = 0;
   MouseDown = false;
+  PlaneCacheValid = false;
+  DataVersion = 0;
+  PlaneMinVal = PlaneMaxVal = 0;
+  memset(&LastPlaneKey, 0, sizeof(LastPlaneKey));
   Size = 10;
   // texture related data
   TextIndex = ~0;
@@ -552,12 +556,43 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
     GlP.SetTextureId(~0);
     return false;
   }
-  TPlaneCalculationTask calc_task(*this, ED->Data, ContourData, TextData,
-    MaxDim, Size, Depth, bm, c2c, center, RenderMode);
-  TListIteratorManager<TPlaneCalculationTask> tasks(calc_task, MaxDim,
-    tLinearTask, MaxDim > 64);
+  const TGlOption& start_p =
+    GetPrimitives().FindPrimitiveByName("-Surface")->GetProperties().AmbientF;
+  const TGlOption& end_p =
+    GetPrimitives().FindPrimitiveByName("+Surface")->GetProperties().AmbientF;
+  PlaneKey key;
+  memset(&key, 0, sizeof(key));  // padding takes part in the comparison
+  for (int i = 0; i < 9; i++) {
+    key.bm[i] = bm[i / 3][i % 3];
+    key.c2c[i] = c2c[i / 3][i % 3];  // a cell change keeps ED but moves the plane
+  }
+  for (int i = 0; i < 3; i++) {
+    key.center[i] = center[i];
+  }
+  for (int i = 0; i < 4; i++) {
+    key.colours[i] = start_p[i];
+    key.colours[4 + i] = end_p[i];
+  }
+  key.depth = Depth;
+  key.size = Size;
+  key.box_min = box_min;
+  key.box_step = box_step;
+  key.max_dim = MaxDim;
+  key.levels = ContourLevelCount;
+  key.data_version = DataVersion;
+  key.data = ED;
+  key.mode = RenderMode;
+  key.reverse = ReverseColors;
+  const bool cached = PlaneCacheValid &&
+    memcmp(&key, &LastPlaneKey, sizeof(key)) == 0 &&
+    ((RenderMode & planeRenderModePlane) == 0 ||
+      olx_is_valid_index(TextIndex));
   float minVal = 1000, maxVal = -1000;
-  if (!olx_feq(box_step, 0.0f)) {
+  if (cached) {
+    minVal = PlaneMinVal;
+    maxVal = PlaneMaxVal;
+  }
+  else if (!olx_feq(box_step, 0.0f)) {
     if (box_step < 0) {
       minVal = box_min + box_step*(ContourLevelCount-1);
       maxVal = box_min - box_step;
@@ -567,20 +602,24 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
       maxVal = box_min + box_step*ContourLevelCount;
     }
   }
-  else {
-    for (size_t i = 0; i < tasks.Count(); i++) {
-      if (tasks[i].minVal < minVal) {
-        minVal = tasks[i].minVal;
-      }
-      if (tasks[i].maxVal > maxVal) {
-        maxVal = tasks[i].maxVal;
+  if (!cached) {
+    TPlaneCalculationTask calc_task(*this, ED->Data, ContourData, TextData,
+      MaxDim, Size, Depth, bm, c2c, center, RenderMode);
+    TListIteratorManager<TPlaneCalculationTask> tasks(calc_task, MaxDim,
+      tLinearTask, MaxDim > 64);
+    if (olx_feq(box_step, 0.0f)) {
+      for (size_t i = 0; i < tasks.Count(); i++) {
+        if (tasks[i].minVal < minVal) {
+          minVal = tasks[i].minVal;
+        }
+        if (tasks[i].maxVal > maxVal) {
+          maxVal = tasks[i].maxVal;
+        }
       }
     }
+    PlaneMinVal = minVal;
+    PlaneMaxVal = maxVal;
   }
-  const TGlOption& start_p =
-    GetPrimitives().FindPrimitiveByName("-Surface")->GetProperties().AmbientF;
-  const TGlOption& end_p =
-    GetPrimitives().FindPrimitiveByName("+Surface")->GetProperties().AmbientF;
   vec3i colours2[] = {
     vec3i(int(start_p[0] * 255), int(start_p[1] * 255), int(start_p[2] * 255)),
     vec3i(int(end_p[0] * 255), int(end_p[1] * 255), int(end_p[2] * 255))
@@ -617,7 +656,7 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
   }
   olx_gl::normal(bm[0][2], bm[1][2], bm[2][2]);
   const float max_v = olx_max(olx_abs(minVal), olx_abs(maxVal));
-  if ((RenderMode&planeRenderModePlane) != 0) {
+  if (!cached && (RenderMode&planeRenderModePlane) != 0) {
     for (size_t i = 0; i < MaxDim; i++) {
       for (size_t j = 0; j < MaxDim; j++) {
         const size_t off = (i + j*MaxDim) * 3;
@@ -653,6 +692,10 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
     }
     GlP.SetTextureId(TextIndex);
   }
+  else if ((RenderMode&planeRenderModePlane) != 0) {
+    // the selection pass detaches it
+    GlP.SetTextureId(TextIndex);
+  }
   if ((RenderMode&planeRenderModeContour) != 0) {
     Contour<float> cm;
     Contour<float>::MemberFeedback<TXGrid> mf(*this, &TXGrid::GlLine);
@@ -673,7 +716,7 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
       ContourLevelCount, ContourLevels, mf);
     GlP.EndColorRendering();
   }
-  if ((RenderMode&planeRenderModePlane) != 0) {
+  if (!cached && (RenderMode&planeRenderModePlane) != 0) {
     float legend_step = (maxVal - minVal) / 32;
     for (int i = 0; i < 32; i++) {
       float val = minVal + legend_step*i;
@@ -704,6 +747,8 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
     Legend->Fit();
     UpdateInfo();
   }
+  LastPlaneKey = key;
+  PlaneCacheValid = true;
   return false;
 }
 //.............................................................................
@@ -725,6 +770,7 @@ bool TXGrid::GetDimensions(vec3d &Max, vec3d &Min)  {
 };
 //.............................................................................
 void TXGrid::InitGrid(size_t maxX, size_t maxY, size_t maxZ, bool use_colors) {
+  DataChanged();
   DeleteObjects();
   _ResetLists();
   MaxX = maxX;
@@ -754,6 +800,7 @@ void TXGrid::InitGrid(size_t maxX, size_t maxY, size_t maxZ, bool use_colors) {
 }
 //.............................................................................
 void TXGrid::DeleteObjects() {
+  DataChanged();
   if (ED != 0) {
     delete ED;
     MaxX = MaxY = MaxZ = 0;
@@ -816,6 +863,7 @@ bool TXGrid::LoadFromFile(const olxstr& GridFile) {
 }
 //.............................................................................
 void TXGrid::SetScale(float v) {
+  DataChanged();
   const bool _3d = Is3D();
   if (!Loading_) {
     Boxed = false;
@@ -1282,54 +1330,72 @@ void TXGrid::RescaleSurface(bool collect_only) {
       }
     }
   }
-  else if (Mask != 0) {
-    vec3d pts[3];
+  else {
+    /* a vertex is shared by ~6 triangles: transform (and mask-test) every
+    vertex once per cell replica instead of once per triangle corner. The
+    arithmetic is the same as before, so the coordinates are identical
+    */
+    TArrayList<vec3d> cart;
+    TArrayList<bool> inside;
     for (size_t li = 0; li < triangles.Count(); li++) {
       const TArrayList<vec3f>& verts = vertices[li];
       const TArrayList<vec3f>& norms = normals[li];
       const TArrayList<IsoTriangle>& trians = triangles[li];
       TTypeList<vec3f> *va = (li == 0 ? &cp_vertices : &cn_vertices);
+      cart.SetCount(verts.Count());
+      inside.SetCount(verts.Count());
       if (!collect_only) {
         olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
         olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
         olx_gl::begin(GL_TRIANGLES);
       }
-      for (int x = -1; x <= 1; x++) {
-        for (int y = -1; y <= 1; y++) {
-          for (int z = -1; z <= 1; z++) {
-            for (size_t i = 0; i < trians.Count(); i++) {
-              bool draw = true;
-              for (int j = 0; j < 3; j++) {
-                pts[j] = verts[trians[i][j]];
-                pts[j][0] = pts[j][0] / MaxX + x;
-                pts[j][1] = pts[j][1] / MaxY + y;
-                pts[j][2] = pts[j][2] / MaxZ + z;
-                if (!Mask->Get(pts[j])) {
-                  draw = false;
-                  break;
-                }
-                au.CellToCartesian(pts[j]);
-              }
-              if (!draw) {
-                continue;
-              }
-              if (collect_only) {
-                for (int j = 0; j < 3; j++) {
-                  va->AddCopy(pts[j]);
+      if (Mask != 0) {
+        for (int x = -1; x <= 1; x++) {
+          for (int y = -1; y <= 1; y++) {
+            for (int z = -1; z <= 1; z++) {
+              for (size_t i = 0; i < verts.Count(); i++) {
+                vec3d p = verts[i];
+                p[0] = p[0] / MaxX + x;
+                p[1] = p[1] / MaxY + y;
+                p[2] = p[2] / MaxZ + z;
+                if ((inside[i] = Mask->Get(p))) {
+                  cart[i] = au.CellToCartesian(p);
                 }
               }
-              else {
-                for (int j = 0; j < 3; j++) {
-                  olx_gl::normal(norms[trians[i][j]]);
-                  if (ColorData != 0) {
-                    olx_gl::color(colors[li][trians[i][j]]);
-                  }
-                  olx_gl::vertex(pts[j]);
-                }
-              }
+              EmitTriangles(trians, norms, li, cart, &inside, va, collect_only);
             }
           }
         }
+      }
+      else if (Extended) {
+        for (float x = ExtMin[0]; x < ExtMax[0]; x++) {
+          for (float y = ExtMin[1]; y < ExtMax[1]; y++) {
+            for (float z = ExtMin[2]; z < ExtMax[2]; z++) {
+              for (size_t i = 0; i < verts.Count(); i++) {
+                vec3d p = verts[i];
+                p[0] = p[0] / MaxX + x;
+                p[1] = p[1] / MaxY + y;
+                p[2] = p[2] / MaxZ + z;
+                if ((inside[i] = !(p[0] > ExtMax[0] || p[1] > ExtMax[1] ||
+                  p[2] > ExtMax[2])))
+                {
+                  cart[i] = au.CellToCartesian(p);
+                }
+              }
+              EmitTriangles(trians, norms, li, cart, &inside, va, collect_only);
+            }
+          }
+        }
+      }
+      else {
+        for (size_t i = 0; i < verts.Count(); i++) {
+          vec3d p = verts[i];
+          p[0] = p[0] / MaxX;
+          p[1] = p[1] / MaxY;
+          p[2] = p[2] / MaxZ;
+          cart[i] = au.CellToCartesian(p);  // cell drawing
+        }
+        EmitTriangles(trians, norms, li, cart, 0, va, collect_only);
       }
       if (!collect_only) {
         olx_gl::end();
@@ -1338,111 +1404,38 @@ void TXGrid::RescaleSurface(bool collect_only) {
       }
     }
   }
-  else {
-    if (Extended) {
-      vec3d pts[3]; // ext drawing
-      for (size_t li = 0; li < triangles.Count(); li++) {
-        const TArrayList<vec3f>& verts = vertices[li];
-        const TArrayList<vec3f>& norms = normals[li];
-        const TArrayList<IsoTriangle>& trians = triangles[li];
-        TTypeList<vec3f> *va = (li == 0 ? &cp_vertices : &cn_vertices);
-        if (!collect_only) {
-          olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
-          olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
-          olx_gl::begin(GL_TRIANGLES);
-        }
-        for (float x = ExtMin[0]; x < ExtMax[0]; x++) {
-          for (float y = ExtMin[1]; y < ExtMax[1]; y++) {
-            for (float z = ExtMin[2]; z < ExtMax[2]; z++) {
-              for (size_t i = 0; i < trians.Count(); i++) {
-                bool draw = true;
-                for (int j = 0; j < 3; j++) {
-                  pts[j] = verts[trians[i][j]];
-                  pts[j][0] = pts[j][0] / MaxX + x;
-                  pts[j][1] = pts[j][1] / MaxY + y;
-                  pts[j][2] = pts[j][2] / MaxZ + z;
-                  if (pts[j][0] > ExtMax[0] || pts[j][1] > ExtMax[1] ||
-                    pts[j][2] > ExtMax[2])
-                  {
-                    draw = false;
-                    break;
-                  }
-                  au.CellToCartesian(pts[j]);
-                }
-                if (!draw) {
-                  continue;
-                }
-                if (collect_only) {
-                  for (int j = 0; j < 3; j++) {
-                    va->AddCopy(pts[j]);
-                  }
-                }
-                else {
-                  for (int j = 0; j < 3; j++) {
-                    olx_gl::normal(norms[trians[i].pointID[j]]);
-                    if (ColorData != 0) {
-                      olx_gl::color(colors[li][trians[i][j]]);
-                    }
-                    olx_gl::vertex(pts[j]);
-                  }
-                }
-              }
-            }
-          }
-        }
-        if (!collect_only) {
-          olx_gl::end();
-          olx_gl::polygonMode(GL_FRONT_AND_BACK, GL_FILL);
-          olx_gl::endList();
-        }
+}
+//.............................................................................
+void TXGrid::EmitTriangles(const TArrayList<IsoTriangle>& trians,
+  const TArrayList<vec3f>& norms, size_t li, const TArrayList<vec3d>& cart,
+  const TArrayList<bool>* inside, TTypeList<vec3f>* va, bool collect_only)
+{
+  for (size_t i = 0; i < trians.Count(); i++) {
+    const IsoTriangle& t = trians[i];
+    if (inside != 0 &&
+      !((*inside)[t[0]] && (*inside)[t[1]] && (*inside)[t[2]]))
+    {
+      continue;
+    }
+    if (collect_only) {
+      for (int j = 0; j < 3; j++) {
+        va->AddCopy(cart[t[j]]);
       }
     }
     else {
-      vec3d pts[3];
-      for (size_t li = 0; li < triangles.Count(); li++) {
-        const TArrayList<vec3f>& verts = vertices[li];
-        const TArrayList<vec3f>& norms = normals[li];
-        const TArrayList<IsoTriangle>& trians = triangles[li];
-        TTypeList<vec3f> *va = (li == 0 ? &cp_vertices : &cn_vertices);
-        if (!collect_only) {
-          olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
-          olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
-          olx_gl::begin(GL_TRIANGLES);
+      for (int j = 0; j < 3; j++) {
+        olx_gl::normal(norms[t[j]]);
+        if (ColorData != 0) {
+          olx_gl::color(colors[li][t[j]]);
         }
-        for (size_t i = 0; i < trians.Count(); i++) {
-          for (int j = 0; j < 3; j++) {
-            pts[j] = verts[trians[i][j]];
-            pts[j][0] = pts[j][0] / MaxX;
-            pts[j][1] = pts[j][1] / MaxY;
-            pts[j][2] = pts[j][2] / MaxZ;
-            au.CellToCartesian(pts[j]);
-          }
-          if (collect_only) {
-            for (int j = 0; j < 3; j++) {
-              va->AddCopy(pts[j]);
-            }
-          }
-          else {
-            for (int j = 0; j < 3; j++) {
-              olx_gl::normal(norms[trians[i][j]]);
-              if (ColorData != 0) {
-                olx_gl::color(colors[li][trians[i][j]]);
-              }
-              olx_gl::vertex(pts[j]);  // cell drawing
-            }
-          }
-        }
-        if (!collect_only) {
-          olx_gl::end();
-          olx_gl::polygonMode(GL_FRONT_AND_BACK, GL_FILL);
-          olx_gl::endList();
-        }
+        olx_gl::vertex(cart[t[j]]);
       }
     }
   }
 }
 //.............................................................................
 void TXGrid::AdjustMap() {
+  DataChanged();
   if (ED == 0) {
     return;
   }
@@ -1494,6 +1487,7 @@ void TXGrid::SetColourLegend(const unsigned char* rgb,
 }
 //.............................................................................
 void TXGrid::InitIso() {
+  DataChanged();
   if (Is3D() && ED != 0) {
     SetScale(Scale);
     Legend->text.Clear();

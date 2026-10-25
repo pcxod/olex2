@@ -25,6 +25,8 @@
 #include "estlist.h"
 #include "threex3.h"
 #include "eset.h"
+#include <vector>
+#include <string.h>
 
 using namespace olx_array;
 struct IsoTriangle {
@@ -55,179 +57,87 @@ public:
   /* This list may be empty if no data was provided */
   inline TArrayList<int>& GetVertexData() { return VertexData; }
 protected:
-////////////////////////////////////////////////////////////////////////
-  struct IsoPoint {
-    size_t newID;
-    int data;
-    vec3f crd;
-    bool initialised;
-    IsoPoint()
-      : initialised(false), data(-1)
-    {}
-  };
-  class T4DIndex {
-    struct Points3  {
-      IsoPoint ps[3];
-    };
-    typedef olx_pdict<int, Points3> IsoPointListZ;  //x
-    typedef olx_pdict<int, IsoPointListZ*> IsoPointListY;  //y
-    typedef olx_pdict<int, IsoPointListY*> IsoPointListX;  //z
-    IsoPointListX Data;
-    size_t Count;
-  public:
-    T4DIndex() : Count(0) {  }
-    ~T4DIndex()  {  Clear();  }
-    IsoPoint &Add(int x, int y, int z, int edgeId,
-      float vx, float vy, float vz, int p_data)
-    {
-      adjust(x, y, z, edgeId);
-      IsoPoint* ip;
-      const size_t yi = Data.IndexOf(x);
-      if (yi == InvalidIndex) {
-        ip = &Data.Add(x, new IsoPointListY)->Add(y, new IsoPointListZ)->
-          Add(z, Points3()).ps[edgeId];
+  /* Vertices sit on grid edges: every grid point (x,y,z) owns the three edges
+  that start there, along x (slot 0), y (slot 1) and z (slot 2). A vertex with
+  grid x = X can only come from the voxel slabs X-1 and X, so the scan keeps
+  three planes of such edge slots, numbers plane X as soon as slab X is done
+  and resolves the triangles of a slab once both planes they touch are
+  numbered. This gives the same vertex order (x, y, z, slot) and the same
+  triangles as the former dictionary based index, at a fraction of the cost
+  and with memory proportional to one grid plane.
+  */
+  struct EdgePlane {
+    TArrayList<vec3f> crd;
+    TArrayList<int> data;
+    TArrayList<uint32_t> id;  // valid where the occupancy bit is set
+    /* occupancy bitmap: only ~1-2% of the slots carry a vertex, so numbering
+    skips empty words and resetting clears a few KB only
+    */
+    TArrayList<uint64_t> used;
+    void Reset(size_t sz) {
+      if (id.Count() != sz) {
+        crd.SetCount(sz);
+        data.SetCount(sz);
+        id.SetCount(sz);
+        used.SetCount((sz + 63) / 64);
       }
-      else {
-        IsoPointListY* ly = Data.GetValue(yi);
-        const size_t zi = ly->IndexOf(y);
-        if (zi == InvalidIndex) {
-          ip = &ly->Add(y, new IsoPointListZ)->Add(z, Points3()).ps[edgeId];
-        }
-        else {
-          IsoPointListZ* lz = ly->GetValue(zi);
-          const size_t pi = lz->IndexOf(z);
-          if (pi == InvalidIndex) {
-            ip = &lz->Add(z, Points3()).ps[edgeId];
-          }
-          else {
-            ip = &lz->GetValue(pi).ps[edgeId];
-          }
-        }
-      }
-      ip->crd[0] = vx;
-      ip->crd[1] = vy;
-      ip->crd[2] = vz;
-      ip->data = p_data;
-      ip->initialised = true;
-      Count++;
-      return *ip;
-    }
-    const IsoPoint& Get(int x, int y, int z, int extra) const {
-      return Data.Get(x)->Get(y)->Get(z).ps[extra];
-    }
-    const IsoPoint& Get(uint64_t crd) const {
-      int x, y, z, e;
-      decode(crd, x, y, z, e);
-      return Data.Get(x)->Get(y)->Get(z).ps[e];
-    }
-    void Clear() {
-      for (size_t i = 0; i < Data.Count(); i++) {
-        IsoPointListY* ly = Data.GetValue(i);
-        for (size_t j = 0; j < ly->Count(); j++) {
-          delete ly->GetValue(j);
-        }
-        delete ly;
-      }
-      Data.Clear();
-      Count = 0;
-    }
-    void GetVertices(TArrayList<vec3f>& v, TArrayList<int> *d) {
-      v.SetCount(Count);
-      if (d != 0) {
-        d->SetCount(Count);
-      }
-      size_t ind = 0;
-      for (size_t i = 0; i < Data.Count(); i++) {
-        IsoPointListY* ly = Data.GetValue(i);
-        for (size_t j = 0; j < ly->Count(); j++) {
-          IsoPointListZ* lz = ly->GetValue(j);
-          for (size_t k = 0; k < lz->Count(); k++) {
-            Points3& p = lz->GetValue(k);
-            for (int l = 0; l < 3; l++) {
-              if (p.ps[l].initialised) {
-                p.ps[l].newID = ind;
-                v[ind] = p.ps[l].crd;
-                if (d != 0) {
-                  (*d)[ind] = p.ps[l].data;
-                }
-                ind++;
-              }
-              else {
-                p.ps[l].newID = ind;
-              }
-            }
-          }
-        }
+      if (!used.IsEmpty()) {
+        memset(&used[0], 0, used.Count() * sizeof(uint64_t));
       }
     }
-    static void adjust(int& x, int& y, int& z, int& edgeId) {
-      int extra = 0;
-      switch (edgeId) {
-      case 0:  extra = 1;              break; // (x,y,z) + 1
-      case 1:  y++;                    break; // (x,y+1,z)
-      case 2:  x++;  extra = 1;        break;  // (x+1,y,z) + 1;
-      case 3:                          break; // (x,y,z)
-      case 4:  z++;  extra = 1;        break;  // (x,y,z+1) + 1
-      case 5:  y++;  z++;              break; //(x,y+1,z+1)
-      case 6:  x++;  z++;  extra = 1;  break;  //(x+1,y,z+1) + 1
-      case 7:  z++;                    break;  //(x,y,z+1)
-      case 8:  extra = 2;              break;  //(x,y,z)+2;
-      case 9:  y++;  extra = 2;        break;  //(x,y+1,z) + 2;
-      case 10: x++;  y++;  extra = 2;  break;  //(x+1,y+1,z) + 2;
-      case 11: x++;  extra = 2;        break;  //(x+1,y,z) + 2
-      default: break;         // Invalid edge no.
-      }
-      edgeId = extra;
-    }
-    static uint64_t encode(int x, int y, int z, int edgeId) {
-      int extra = 0;
-      switch (edgeId) {
-      case 0:  extra = 1;              break; // (x,y,z) + 1
-      case 1:  y++;                    break; // (x,y+1,z)
-      case 2:  x++;  extra = 1;        break;  // (x+1,y,z) + 1;
-      case 3:                          break; // (x,y,z)
-      case 4:  z++;  extra = 1;        break;  // (x,y,z+1) + 1
-      case 5:  y++;  z++;              break; //(x,y+1,z+1)
-      case 6:  x++;  z++;  extra = 1;  break;  //(x+1,y,z+1) + 1
-      case 7:  z++;                    break;  //(x,y,z+1)
-      case 8:  extra = 2;              break;  //(x,y,z)+2;
-      case 9:  y++;  extra = 2;        break;  //(x,y+1,z) + 2;
-      case 10: x++;  y++;  extra = 2;  break;  //(x+1,y+1,z) + 2;
-      case 11: x++;  extra = 2;        break;  //(x+1,y,z) + 2
-      default: return ~0;         // Invalid edge no.
-      }
-      // max grid size is 1024x1024x1022
-      return (uint64_t)(((uint64_t)extra) << 60)    |
-             ((((uint64_t)x) << 40) & 0xFFFFF0000000000) |
-             ((((uint64_t)y) << 20) & 0x00000FFFFF00000) |
-             (((uint64_t)z) & 0x0000000000FFFFF);
-    }
-    static inline void decode(uint64_t code, int& x, int& y, int& z, int& extra) {
-      extra = static_cast<int>(((code & 0xF000000000000000) >> 60));
-      z =     static_cast<int>(((code & 0x0000000000FFFFF)));
-      y =     static_cast<int>(((code & 0x00000FFFFF00000) >> 20));
-      x =     static_cast<int>(((code & 0xFFFFF0000000000) >> 40));
+    void Release() {
+      crd.Clear();
+      data.Clear();
+      id.Clear();
+      used.Clear();
     }
   };
-///////////////////////////////////////////////////////////////////////////////////
-  const int ZSlice;
+  EdgePlane planes[3];
+  /* triangle corners of the last two slabs: the slot index within its plane,
+  bit 31 set when the corner lies in plane x+1 (a plane holds < 2^31 slots)
+  */
+  static const uint32_t next_plane_bit = 1u << 31;
+  /* std::vector: clear() keeps the capacity, TArrayList::Clear frees it and
+  the lists would regrow from scratch for every slab
+  */
+  std::vector<uint32_t> pending[2];
+  // collected here, copied to the lists below once the size is known
+  std::vector<vec3f> new_vertices;
+  std::vector<int> new_data;
+  std::vector<uint32_t> new_triangles;  // vertex id triples
 
   TArrayList<vec3f> Normals;
   TArrayList<vec3f> Vertices;
   TArrayList<int> VertexData;
 
-  // List of POINT3Ds which form the isosurface.
-  T4DIndex IsoPoints;
-
   // List of IsoTriangleS which form the triangulation of the isosurface.
-  TArrayList<IsoTriangle> Triangles, AllTriangles;
+  TArrayList<IsoTriangle> Triangles;
 
+  /* maps a cube edge (0-11) of voxel (x,y,z) to the grid point owning it and
+  the slot there
+  */
+  static void EdgeOwner(int edgeNo, int& x, int& y, int& z, int& slot);
+  /* the 4 corners of a voxel face as bits 1,2,4,8: for a positive level
+  'inside' is above it, otherwise below it
+  */
+  unsigned int Classify(float a, float b, float c, float d) const {
+    if (m_tIsoLevel > 0) {
+      return (unsigned int)(a > m_tIsoLevel) |
+        ((unsigned int)(b > m_tIsoLevel) << 1) |
+        ((unsigned int)(c > m_tIsoLevel) << 2) |
+        ((unsigned int)(d > m_tIsoLevel) << 3);
+    }
+    return (unsigned int)(a < m_tIsoLevel) |
+      ((unsigned int)(b < m_tIsoLevel) << 1) |
+      ((unsigned int)(c < m_tIsoLevel) << 2) |
+      ((unsigned int)(d < m_tIsoLevel) << 3);
+  }
   void AddSurfacePoint(unsigned int nX, unsigned int nY,
     unsigned int nZ, unsigned int nEdgeNo);
-  /* Renames vertices and triangles so that they can be accessed more
-   efficiently.
-   */
-  void RenameVerticesAndTriangles();
+  // gives plane x its final vertex ids
+  void NumberPlane(size_t x);
+  // turns the corners of slab x into vertex ids, dropping degenerate triangles
+  void ResolveSlab(size_t x);
 
   // Calculates the normals.
   void CalculateNormals();

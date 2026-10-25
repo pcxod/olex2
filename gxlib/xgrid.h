@@ -88,6 +88,12 @@ class TXGrid : public AGDrawObject {
   GLuint TextIndex;
   static TXGrid* Instance;
   void RescaleSurface(bool collect_only);
+  /* emits (or collects) the triangles whose vertices are all inside, using
+  the per vertex Cartesian coordinates; inside == 0 - all are
+  */
+  void EmitTriangles(const TArrayList<IsoTriangle>& trians,
+    const TArrayList<vec3f>& norms, size_t li, const TArrayList<vec3d>& cart,
+    const TArrayList<bool>* inside, TTypeList<vec3f>* va, bool collect_only);
   TGlTextBox *Info;
   TLegend *Legend;
   short RenderMode;
@@ -135,8 +141,26 @@ protected:
   static void _ResetLists() {
     if (Instance != 0) {
       Instance->PListId = Instance->NListId = ~0;
+      Instance->PlaneCacheValid = false;
     }
   }
+  /* 2D map modes: Orient resampled the plane, refilled and uploaded the
+  texture and rebuilt the legend on every redraw. These are kept as long as
+  nothing they depend on changes; DataVersion is bumped by everything that
+  alters the map values (raw writes through Data() end with AdjustMap)
+  */
+  struct PlaneKey {
+    float bm[9], c2c[9], center[3], depth, size, box_min, box_step, colours[8];
+    size_t max_dim, levels, data_version;
+    const void* data;
+    short mode;
+    bool reverse;
+  };
+  PlaneKey LastPlaneKey;
+  bool PlaneCacheValid;
+  size_t DataVersion;
+  float PlaneMinVal, PlaneMaxVal;
+  void DataChanged() { DataVersion++; }
 public:
   TXGrid(const olxstr& collectionName, TGXApp* xapp);
   virtual ~TXGrid();
@@ -155,6 +179,7 @@ public:
     if (ColorData != 0) {
       ColorData->Data[i][j][k] = cl;
     }
+    DataChanged();
   }
   double GetValue(int i, int j, int k) const {
     return ED->Data[i][j][k];
@@ -165,6 +190,7 @@ public:
     if (ColorData != 0) {
       ColorData->Data[(int)ind[0]][(int)ind[1]][(int)ind[2]] = cl;
     }
+    DataChanged();
   }
   template <class T> float GetValue(const T& v) const {
     return ED->Data[(int)v[0]][(int)v[1]][(int)v[2]];
