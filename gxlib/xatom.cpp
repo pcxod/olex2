@@ -602,12 +602,33 @@ void draw_bunny_ears(const float *fur) {
     olx_gl::popMatrix();
   }
 }
+
+// joke code: a Santa hat for H atoms, sitting on top of the atom
+void draw_santa_hat() {
+  GLUquadric *q = fun_quadric();
+  fun_material(1.0f, 1.0f, 1.0f, 0.15f, 0.15f, 0.15f);
+  olx_gl::pushMatrix(); // the fur brim, hugging the top of the atom
+  olx_gl::translate(0.0, 0.8, 0.0);
+  olx_gl::scale(0.8, 0.22, 0.8);
+  gluSphere(q, 1.0, 16, 8);
+  olx_gl::popMatrix();
+  olx_gl::pushMatrix(); // the red cone, flopping over to one side
+  olx_gl::translate(0.0, 0.85, 0.0);
+  olx_gl::rotate(-25.0, 0.0, 0.0, 1.0);
+  olx_gl::rotate(-90.0, 1.0, 0.0, 0.0); // gluCylinder runs along +z
+  fun_material(0.85f, 0.05f, 0.05f);
+  gluCylinder(q, 0.62, 0.0, 1.1, 16, 1);
+  fun_material(1.0f, 1.0f, 1.0f, 0.15f, 0.15f, 0.15f);
+  fun_ball(0.0, 0.0, 1.12, 0.17); // pom-pom
+  olx_gl::popMatrix();
+}
 }  // namespace
 //..............................................................................
 // joke code, see the comment above - nothing serious
 bool TXAtom::OrientFunSkin(TGlPrimitive& GlP, double scale) {
   const bool hydrogen = GetType().z == 1,
-    easter = (FunSkin() == funSkinEaster);
+    easter = (FunSkin() == funSkinEaster),
+    christmas = (FunSkin() == funSkinChristmas);
   const bool adp_style = (FDrawStyle == adsEllipsoid || FDrawStyle == adsOrtep);
   const TEllipsoid *elp = adp_style ? GetEllipsoid() : 0;
   if (elp != 0 && elp->IsNPD()) {
@@ -617,8 +638,13 @@ bool TXAtom::OrientFunSkin(TGlPrimitive& GlP, double scale) {
   mat3d billboard = Parent.GetBasis().GetMatrix();
   billboard.Transpose();
   const float *colour = GlP.GetProperties().AmbientF.Data();
-  if (easter && !hydrogen) {
-    // ears on top, the atom itself is then drawn as usual
+  if ((easter && !hydrogen) || christmas) {
+    /* ears or a hat on top, the atom itself is then drawn as usual; at
+    Christmas only the H atoms dress up
+    */
+    if (christmas && !hydrogen) {
+      return false;
+    }
     if (GlP.GetOwnerId() == xatom_SphereId) {
       // the ellipsoid half-height on screen, so the ears sit on its top
       double top = GetR();
@@ -635,7 +661,12 @@ bool TXAtom::OrientFunSkin(TGlPrimitive& GlP, double scale) {
       olx_gl::orient(billboard);
       olx_gl::scale(top);
       glPushAttrib(GL_LIGHTING_BIT | GL_CURRENT_BIT);
-      draw_bunny_ears(colour);
+      if (christmas) {
+        draw_santa_hat();
+      }
+      else {
+        draw_bunny_ears(colour);
+      }
       glPopAttrib();
       olx_gl::popMatrix();
     }

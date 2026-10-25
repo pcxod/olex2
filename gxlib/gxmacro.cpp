@@ -127,11 +127,13 @@ void GXLibMacros::Export(TLibrary& lib) {
     "Changes atom draw style [sph,elp,ort,std,def - back to the saved style]");
   /* EASTER EGG / JOKE CODE - nothing serious. Deliberately left without
   descriptions: boo/unboo - Halloween skin on/off, eggy/uneggy - Easter skin
-  on/off */
+  on/off, hohoho/unhohoho - Christmas skin on/off */
   gxlib_InitMacro(Boo, EmptyString(), fpNone, EmptyString());
   gxlib_InitMacro(Unboo, EmptyString(), fpNone, EmptyString());
   gxlib_InitMacro(Eggy, EmptyString(), fpNone, EmptyString());
   gxlib_InitMacro(Uneggy, EmptyString(), fpNone, EmptyString());
+  gxlib_InitMacro(Hohoho, EmptyString(), fpNone, EmptyString());
+  gxlib_InitMacro(Unhohoho, EmptyString(), fpNone, EmptyString());
   // joke code, nothing serious: 'order 66' plays a little space-fight movie
   gxlib_InitMacro(Order, EmptyString(), fpOne | psFileLoaded, EmptyString());
   gxlib_InitMacro(Cartoon,
@@ -1332,6 +1334,234 @@ void GXLibMacros::macEggy(TStrObjList &, const TParamList &, TMacroData &) {
 }
 void GXLibMacros::macUneggy(TStrObjList &, const TParamList &, TMacroData &) {
   SetFunSkin(TXAtom::funSkinEaster, false);
+}
+//.............................................................................
+/* =============================================================================
+  EASTER EGG / JOKE CODE - nothing serious here!
+  'hohoho': a garland hangs along the top of the view, like the decorated
+  mantelpiece over a fireplace in the films - pine swags with red bows, baubles
+  and stockings. Drawn in screen pixels on top of everything, only while the
+  Christmas skin is on, never selected and never printed.
+============================================================================= */
+namespace xmas {
+uint32_t hash(uint32_t x) {
+  x ^= x >> 16; x *= 0x7feb352du;
+  x ^= x >> 15; x *= 0x846ca68bu;
+  return x ^ (x >> 16);
+}
+
+void disc(double x, double y, double r, int seg = 16) {
+  olx_gl::begin(GL_TRIANGLE_FAN);
+  olx_gl::vertex(x, y, 0.0);
+  for (int i = 0; i <= seg; i++) {
+    const double a = 2 * M_PI*i / seg;
+    olx_gl::vertex(x + r*cos(a), y + r*sin(a), 0.0);
+  }
+  olx_gl::end();
+}
+
+void quad(double x0, double y0, double x1, double y1) {
+  olx_gl::begin(GL_QUADS);
+  olx_gl::vertex(x0, y0, 0.0);
+  olx_gl::vertex(x1, y0, 0.0);
+  olx_gl::vertex(x1, y1, 0.0);
+  olx_gl::vertex(x0, y1, 0.0);
+  olx_gl::end();
+}
+
+class TMantel : public AGDrawObject {
+public:
+  TMantel(TGlRenderer &r) : AGDrawObject(r, "XmasMantel") {
+    SetSelectable(false);
+    SetPrintable(false);
+  }
+  void Create(const olxstr &cName = EmptyString()) {
+    if (!cName.IsEmpty()) {
+      SetCollectionName(cName);
+    }
+    TGPCollection &gpc = Parent.FindOrCreateCollection(GetCollectionName());
+    gpc.AddObject(*this);
+    if (gpc.PrimitiveCount() != 0) {
+      return;
+    }
+    // translucent + identity: drawn last, over everything else
+    TGlPrimitive &glp = gpc.NewPrimitive("Mantel", sgloMacro);
+    TGlMaterial glm;
+    glm.SetFlags(sglmAmbientF | sglmDiffuseF | sglmTransparent |
+      sglmIdentityDraw);
+    glm.AmbientF = 0x7f7f7f;
+    glm.DiffuseF = 0x7f7f7f;
+    glp.SetProperties(glm);
+  }
+  bool GetDimensions(vec3d &, vec3d &) { return false; }
+
+  bool Orient(TGlPrimitive &) {
+    if (Parent.IsSelecting() ||
+      TXAtom::FunSkin() != TXAtom::funSkinChristmas)
+    {
+      return true;
+    }
+    GLint vp[4];
+    glGetIntegerv(GL_VIEWPORT, vp);
+    const double W = vp[2], H = vp[3];
+    if (W < 100 || H < 100) {
+      return true;
+    }
+    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_LIGHTING_BIT |
+      GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_LINE_BIT |
+      GL_TRANSFORM_BIT);
+    olx_gl::disable(GL_LIGHTING);
+    olx_gl::disable(GL_DEPTH_TEST);
+    olx_gl::disable(GL_CULL_FACE);
+    olx_gl::disable(GL_FOG);
+    olx_gl::disable(GL_TEXTURE_2D);
+    olx_gl::enable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glMatrixMode(GL_PROJECTION);
+    olx_gl::pushMatrix();
+    glLoadIdentity();
+    glOrtho(0, W, 0, H, -1, 1);
+    glMatrixMode(GL_MODELVIEW);
+    olx_gl::pushMatrix();
+    glLoadIdentity();
+    Draw(W, H);
+    olx_gl::popMatrix();
+    glMatrixMode(GL_PROJECTION);
+    olx_gl::popMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopAttrib();
+    return true;
+  }
+
+  // pixel coordinates, y up; everything scales with the view height
+  static void Draw(double W, double H) {
+    const double u = olx_max(4.0, H / 90);  // a 'unit', ~1% of the height
+    const double top = H - 1.5*u, sag = 4.5*u;
+    const int swags = olx_max(3, (int)(W / (22 * u)));
+    const double sw = W / swags;
+    // hanging things first, so the garland covers their strings
+    for (int i = 0; i < swags; i++) {
+      const double cx = (i + 0.5)*sw, cy = top - sag;
+      if (i % 2 == 0) {
+        Bauble(cx, cy - 1.5*u, u, i);
+      }
+      else {
+        Stocking(cx, cy - 0.5*u, u, i);
+      }
+    }
+    // the pine swags: clusters of needles along a sagging curve
+    for (int i = 0; i < swags; i++) {
+      const int n = (int)(sw / (0.9*u)) + 1;
+      for (int j = 0; j <= n; j++) {
+        const double t = double(j) / n;
+        const double x = (i + t)*sw, y = top - sag * 4 * t*(1 - t);
+        for (int k = 0; k < 3; k++) {
+          const uint32_t h = hash(uint32_t(i * 7919 + j * 31 + k));
+          const double dx = ((h & 0xff) / 255.0 - 0.5)*1.2*u,
+            dy = (((h >> 8) & 0xff) / 255.0 - 0.5)*1.2*u;
+          const float g = 0.28f + 0.22f*((h >> 16) & 0xff) / 255.0f;
+          glColor4f(0.05f, g, 0.12f, 1.0f);
+          disc(x + dx, y + dy, (1.1 + 0.4*((h >> 24) & 0xf) / 15.0)*u, 10);
+        }
+        // a few lights in the garland
+        if ((hash(uint32_t(i * 131 + j)) % 5) == 0) {
+          static const float lc[][3] = {
+            { 1.0f, 0.85f, 0.2f }, { 1.0f, 0.2f, 0.2f }, { 0.3f, 0.6f, 1.0f }
+          };
+          const float *c = lc[hash(uint32_t(j + i)) % 3];
+          glColor4f(c[0], c[1], c[2], 0.35f);
+          disc(x, y - 0.3*u, 0.8*u, 10);
+          glColor4f(c[0], c[1], c[2], 1.0f);
+          disc(x, y - 0.3*u, 0.35*u, 8);
+        }
+      }
+    }
+    // red bows where the swags meet
+    for (int i = 0; i <= swags; i++) {
+      Bow(i*sw, top, u);
+    }
+  }
+
+  static void Bow(double x, double y, double u) {
+    glColor4f(0.8f, 0.04f, 0.06f, 1.0f);
+    olx_gl::begin(GL_TRIANGLES);
+    for (int s = -1; s <= 1; s += 2) {
+      olx_gl::vertex(x, y, 0.0);  // loops
+      olx_gl::vertex(x + s*2.4*u, y + 1.3*u, 0.0);
+      olx_gl::vertex(x + s*2.4*u, y - 1.3*u, 0.0);
+      olx_gl::vertex(x, y, 0.0);  // tails
+      olx_gl::vertex(x + s*0.5*u, y - 3.2*u, 0.0);
+      olx_gl::vertex(x + s*1.4*u, y - 2.8*u, 0.0);
+    }
+    olx_gl::end();
+    glColor4f(0.6f, 0.02f, 0.04f, 1.0f);
+    disc(x, y, 0.7*u, 10);
+  }
+
+  static void Bauble(double x, double y, double u, int i) {
+    static const float bc[][3] = {
+      { 0.85f, 0.08f, 0.1f }, { 0.95f, 0.75f, 0.15f },
+      { 0.15f, 0.35f, 0.85f }, { 0.75f, 0.78f, 0.82f }
+    };
+    const float *c = bc[(i / 2) % 4];
+    const double r = 1.8*u, cy = y - 2.5*u - r;
+    glColor4f(0.7f, 0.6f, 0.3f, 1.0f);  // string
+    glLineWidth(1);
+    olx_gl::begin(GL_LINES);
+    olx_gl::vertex(x, y + 2 * u, 0.0);
+    olx_gl::vertex(x, cy + r, 0.0);
+    olx_gl::end();
+    glColor4f(0.85f, 0.7f, 0.25f, 1.0f);  // cap
+    quad(x - 0.45*u, cy + r - 0.2*u, x + 0.45*u, cy + r + 0.6*u);
+    glColor4f(c[0] * 0.6f, c[1] * 0.6f, c[2] * 0.6f, 1.0f);
+    disc(x, cy, r, 24);
+    glColor4f(c[0], c[1], c[2], 1.0f);
+    disc(x - 0.2*r, cy + 0.2*r, 0.78*r, 24);
+    glColor4f(1.0f, 1.0f, 1.0f, 0.75f);  // shine
+    disc(x - 0.4*r, cy + 0.4*r, 0.2*r, 10);
+  }
+
+  static void Stocking(double x, double y, double u, int i) {
+    const bool green = (i / 2) % 2 == 1;
+    const double w = 2.6*u, len = 5.5*u, top = y - 0.8*u;
+    glColor4f(0.7f, 0.6f, 0.3f, 1.0f);  // hanging loop
+    olx_gl::begin(GL_LINES);
+    olx_gl::vertex(x, y + 1.5*u, 0.0);
+    olx_gl::vertex(x, top, 0.0);
+    olx_gl::end();
+    if (green) {
+      glColor4f(0.1f, 0.5f, 0.2f, 1.0f);
+    }
+    else {
+      glColor4f(0.8f, 0.05f, 0.08f, 1.0f);
+    }
+    quad(x - w / 2, top - len, x + w / 2, top);  // leg
+    quad(x - w / 2, top - len - 1.6*u, x + w / 2 + 1.6*u, top - len);  // foot
+    disc(x + w / 2 + 1.6*u, top - len - 0.8*u, 0.8*u, 12);  // toe
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);  // the cuff
+    quad(x - w / 2 - 0.4*u, top - 1.6*u, x + w / 2 + 0.4*u, top + 0.2*u);
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);  // heel and toe patches
+    disc(x - w / 2 + 0.6*u, top - len - 0.9*u, 0.6*u, 10);
+  }
+};
+}  // namespace xmas
+//.............................................................................
+// EASTER EGG / JOKE CODE - nothing serious: Santa hats and a garland
+void GXLibMacros::macHohoho(TStrObjList &, const TParamList &, TMacroData &) {
+  /* the garland is created once and kept: the app recreates it with the
+  scene and deletes it on exit; it draws nothing unless the skin is on
+  */
+  static bool mantel = false;
+  if (!mantel) {
+    AGDrawObject *m = new xmas::TMantel(app.GetRenderer());
+    app.AddObjectToCreate(m);
+    m->Create();
+    mantel = true;
+  }
+  SetFunSkin(TXAtom::funSkinChristmas, true);
+}
+void GXLibMacros::macUnhohoho(TStrObjList &, const TParamList &, TMacroData &) {
+  SetFunSkin(TXAtom::funSkinChristmas, false);
 }
 //.............................................................................
 /* =============================================================================

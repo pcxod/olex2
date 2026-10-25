@@ -158,8 +158,9 @@ public:
   'boo' macro. Never saved, never touches the model or the styles.
     funSkinHalloween: H atoms as ghosts, heavier atoms as jack-o'-lanterns
     funSkinEaster: H atoms as painted eggs, heavier atoms get bunny ears
+    funSkinChristmas: H atoms wear Santa hats, a garland hangs over the view
   */
-  enum { funSkinNone = 0, funSkinHalloween, funSkinEaster };
+  enum { funSkinNone = 0, funSkinHalloween, funSkinEaster, funSkinChristmas };
   static short &FunSkin() {
     static short v = funSkinNone;
     return v;
