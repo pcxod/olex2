@@ -401,7 +401,7 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
 void THklFile::LoadHklmFromStrings(const TStrList& SL) {
   Clear();
   const bool apply_basis = !Basis.IsI();
-  size_t removed_cnt = 0;
+  size_t removed_cnt = 0, bad_cnt = 0, first_bad = 0;
   for (size_t i = 0; i < SL.Count(); i++) {
     const olxstr& line = SL[i];
     int idx[4], batch = TReflection::NoBatchSet;
@@ -421,15 +421,24 @@ void THklFile::LoadHklmFromStrings(const TStrList& SL) {
       }
     }
     else {
-      TStrList toks(line, ' ');
+      // tabs and a stray CR count as blanks
+      TStrList toks(olxstr(line).Replace('\t', ' ').Replace('\r', ' '), ' ');
+      if (toks.IsEmpty()) {
+        continue;
+      }
       if (toks.Count() < 6 || !toks[0].IsInt() || !toks[1].IsInt() ||
         !toks[2].IsInt() || !toks[3].IsInt() || !toks[4].IsNumber() ||
         !toks[5].IsNumber())
       {
-        if (Refs.IsEmpty() && Satellites.IsEmpty()) {
-          continue;  // header lines
+        // before the data a header; after it an unreadable line (an
+        // overflowed "********" column, a stray character) is skipped and
+        // reported: stopping there silently dropped the rest of the file
+        if (!Refs.IsEmpty() || !Satellites.IsEmpty()) {
+          if (bad_cnt++ == 0) {
+            first_bad = i;
+          }
         }
-        break;
+        continue;
       }
       for (int j = 0; j < 4; j++) {
         idx[j] = toks[j].ToInt();
@@ -472,9 +481,15 @@ void THklFile::LoadHklmFromStrings(const TStrList& SL) {
     TBasicApp::NewLogEntry(logError) << "Removed: " << removed_cnt <<
       " invalid reflections";
   }
+  if (bad_cnt != 0) {
+    TBasicApp::NewLogEntry(logError) << "HKLM: skipped " << bad_cnt
+      << " unreadable line(s), the first is line " << (first_bad + 1)
+      << ": '" << SL[first_bad] << '\'';
+  }
   if (Refs.IsEmpty()) {
     throw TFunctionFailedException(__OlxSourceInfo,
-      "no main reflections (m = 0) in the hklm file");
+      "no main reflections (m = 0) in the hklm file: each line needs "
+      "h k l m I sigma [batch]");
   }
   HKLF = 4;
 }
