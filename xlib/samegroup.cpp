@@ -518,6 +518,11 @@ void TSameGroup::GetRestrainedDistances(
     TArrayList<list_t*>& esd_map = di == 0 ? l12_map : l13_map;
     for (size_t i = 0; i < dl.Count(); i++) {
       for (size_t j = 1; j < dl[i].Count(); j++) {
+        // SHELXL: SAME s1 0 restrains no 1-3 distances (7710647: 20 fewer restraints, a
+        // zero-sigma SADI here divided by zero in olexex)
+        if (di == 1 && Dependent[dl[i][j].extra]->Esd13 == 0) {
+          continue;
+        }
         TTypeList<DistanceGenerator::idx_pair_t>& l = esd_map[dl[i][j].extra]->AddNew();
         l.AddCopy(dl[i][0]);
         l.AddCopy(dl[i][j]);
