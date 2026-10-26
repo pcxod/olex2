@@ -388,40 +388,58 @@ PyObject* runOlexFunction(PyObject* self, PyObject* args) {
     olxstr("Function '") << functionName << "' failed");
 }
 //.............................................................................
-PyObject* runOlexFunctionEx(PyObject* self, PyObject* args) {
-  using namespace macrolib;
-  olxstr name;
-  bool macro;
-  PyObject *args_, *kwds_ = 0;
-  if (!PythonExt::ParseTuple(args, "wbO|O", &name, &macro, &args_, &kwds_)) {
-    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "wbO|O");
-  }
-  olex2::IOlex2Processor* o_r = olex2::IOlex2Processor::GetInstance();
-  TStrObjList params;
-  for (Py_ssize_t i = 0; i < PyList_Size(args_); i++) {
-    olxstr val = exparse::parser_util::unquote(
-      PythonExt::ParseStr(PyList_GetItem(args_, i)));
-    //olxstr val = PythonExt::ParseStr(PyList_GetItem(args_, i));
-    params.Add(val);
-  }
-  if (macro) {
-    TParamList options;
-    if (kwds_ != 0 && PyDict_Size(kwds_) != 0) {
-      PyObject* keys_ = PyDict_Keys(kwds_);
-      for (Py_ssize_t i = 0; i < PyList_Size(keys_); i++) {
-        PyObject* key_ = PyList_GetItem(keys_, i);
-        PyObject* val = PyDict_GetItem(kwds_, key_);
+//.............................................................................
+namespace {
+  typedef olx_object_ptr<TParamList> options_ptr;
+  options_ptr parseKwds(PyObject* kwds) {
+    options_ptr options = new TParamList();
+    if (kwds != 0 && PyDict_Size(kwds) != 0) {
+      PyObject* keys = PyDict_Keys(kwds);
+      for (Py_ssize_t i = 0; i < PyList_Size(keys); i++) {
+        PyObject* key = PyList_GetItem(keys, i);
+        PyObject* val = PyDict_GetItem(kwds, key);
         if (val == 0 || val == Py_None) {
           continue;
         }
         olxstr str_val = PythonExt::ParseStr(val);
-        options.AddParam(PythonExt::ParseStr(key_), str_val);
+        options->AddParam(PythonExt::ParseStr(key), str_val);
       }
-      Py_DECREF(keys_);
+      Py_DECREF(keys);
+    }
+    return options;
+  }
+
+  PyObject* runFunc(olex2::IOlex2Processor* o_r, const olxstr& name,
+    const TStrObjList &args)
+  {
+    ABasicFunction* func = o_r->GetLibrary().FindFunction(name);
+    if (func == 0) {
+      return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo,
+        olxstr("Undefined function '") << name << '\'');
     }
     TMacroData er;
-    o_r->processMacroExt(name, params, options, er, __OlxSourceInfo);
-    if ((PythonExt::GetInstance()->GetLogLevel() & macro_log_macro) != 0) {
+    func->Run(args, er);
+    if ((PythonExt::GetInstance()->GetLogLevel() & macrolib::macro_log_function) != 0) {
+      TBasicApp::NewLogEntry(logInfo) << "@py: " <<
+        func->GetRuntimeSignature();
+    }
+    if (er.IsSuccessful()) {
+      olxstr rv = (er.HasRetVal() ? olxstr(er.RetObj()->ToString())
+        : EmptyString());
+      return PythonExt::BuildString(rv);
+    }
+    else {
+      return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo,
+        olxstr("Function '") << name << "' failed: " << er.GetInfo());
+    }
+  }
+  PyObject* runMacro(olex2::IOlex2Processor* o_r, const olxstr& name,
+    TStrObjList& args, PyObject* kwds)
+  {
+    options_ptr options = parseKwds(kwds);
+    TMacroData er;
+    o_r->processMacroExt(name, args, options, er, __OlxSourceInfo);
+    if ((PythonExt::GetInstance()->GetLogLevel() & macrolib::macro_log_macro) != 0) {
       TBasicApp::NewLogEntry(logInfo) << "@py: " <<
         (er.GetStack().IsEmpty() ? name : er.GetStack().Top());
     }
@@ -437,27 +455,28 @@ PyObject* runOlexFunctionEx(PyObject* self, PyObject* args) {
       return Py_BuildValue("b", false);
     }
   }
+}
+//.............................................................................
+PyObject* runOlexFunctionEx(PyObject* self, PyObject* args) {
+  using namespace macrolib;
+  olxstr name;
+  bool macro;
+  PyObject *args_, *kwds_ = 0;
+  if (!PythonExt::ParseTuple(args, "wbO|O", &name, &macro, &args_, &kwds_)) {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "wbO|O");
+  }
+  olex2::IOlex2Processor* o_r = olex2::IOlex2Processor::GetInstance();
+  TStrObjList params;
+  for (Py_ssize_t i = 0; i < PyList_Size(args_); i++) {
+    olxstr val = exparse::parser_util::unquote(
+      PythonExt::ParseStr(PyList_GetItem(args_, i)));
+    params.Add(val);
+  }
+  if (macro) {
+    return runMacro(o_r, name, params, kwds_);
+  }
   else {
-    ABasicFunction* func = o_r->GetLibrary().FindFunction(name);
-    if (func == 0) {
-      return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo,
-        olxstr("Undefined function '") << name << '\'');
-    }
-    TMacroData er;
-    func->Run(params, er);
-    if ((PythonExt::GetInstance()->GetLogLevel() & macro_log_function) != 0) {
-      TBasicApp::NewLogEntry(logInfo) << "@py: " <<
-        func->GetRuntimeSignature();
-    }
-    if (er.IsSuccessful()) {
-      olxstr rv = (er.HasRetVal() ? olxstr(er.RetObj()->ToString())
-        : EmptyString());
-      return PythonExt::BuildString(rv);
-    }
-    else {
-      return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo,
-        olxstr("Function '") << name << "' failed: " << er.GetInfo());
-    }
+    return runFunc(o_r, name, params);
   }
 }
 //.............................................................................
@@ -478,59 +497,10 @@ PyObject* runOlex2(PyObject* self, PyObject* args, PyObject* kwds) {
     params.Add(val);
   }
   if (macro) {
-    TParamList options;
-    if (kwds != 0 && PyDict_Size(kwds) != 0) {
-      PyObject* keys = PyDict_Keys(kwds);
-      for (Py_ssize_t i = 0; i < PyList_Size(keys); i++) {
-        PyObject* key = PyList_GetItem(keys, i);
-        PyObject* val = PyDict_GetItem(kwds, key);
-        if (val == 0 || val == Py_None) {
-          continue;
-        }
-        olxstr str_val = PythonExt::ParseStr(val);
-        options.AddParam(PythonExt::ParseStr(key), str_val);
-      }
-      Py_DECREF(keys);
-    }
-    TMacroData er;
-    o_r->processMacroExt(name, params, options, er, __OlxSourceInfo);
-    if ((PythonExt::GetInstance()->GetLogLevel() & macro_log_macro) != 0) {
-      TBasicApp::NewLogEntry(logInfo) << "@py: " <<
-        (er.GetStack().IsEmpty() ? name : er.GetStack().Top());
-    }
-    if (er.IsSuccessful()) {
-      if (er.RetObj() != 0) {
-        return PythonExt::BuildString(er.RetObj()->ToString());
-      }
-      return Py_BuildValue("b", true);
-    }
-    else {
-      TBasicApp::NewLogEntry() << "Macro '" << name << "' failed: " <<
-        er.GetInfo();
-      return Py_BuildValue("b", false);
-    }
+    return runMacro(o_r, name, params, kwds);
   }
   else {
-    ABasicFunction* func = o_r->GetLibrary().FindFunction(name);
-    if (func == 0) {
-      return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo,
-        olxstr("Undefined function '") << name << '\'');
-    }
-    TMacroData er;
-    func->Run(params, er);
-    if ((PythonExt::GetInstance()->GetLogLevel() & macro_log_function) != 0) {
-      TBasicApp::NewLogEntry(logInfo) << "@py: " <<
-        func->GetRuntimeSignature();
-    }
-    if (er.IsSuccessful()) {
-      olxstr rv = (er.HasRetVal() ? olxstr(er.RetObj()->ToString())
-        : EmptyString());
-      return PythonExt::BuildString(rv);
-    }
-    else {
-      return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo,
-        olxstr("Function '") << name << "' failed: " << er.GetInfo());
-    }
+    return runFunc(o_r, name, params);
   }
 }
 //.............................................................................
