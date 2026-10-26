@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -58,7 +58,7 @@ protected:
   olxstr OnSizeData, OnDblClickData;
   virtual bool Dispatch(int MsgId, short MsgSubId, const IOlxObject* Sender,
     const IOlxObject* Data, TActionQueue *);
-  virtual void ScrollWindow(int dx, int dy, const wxRect* rect = NULL);
+  virtual void ScrollWindow(int dx, int dy, const wxRect* rect = 0);
   virtual void DoScroll(int x_pos, int y_pos);
   // position of where the mous was down
   int MouseX, MouseY;
@@ -67,17 +67,17 @@ protected:
   THtmlSwitch* Root;
   olxstr_dict<AnAssociation3<AOlxCtrl*,wxWindow*,bool>, true> Objects;
   TTypeList<TStrList> Groups;
-  class TObjectsState  {
-    olxstr_dict<olxstr_dict<olxstr,false>*, true> Objects;
+  class TObjectsState {
+    olxstr_dict<olxstr_dict<olxstr, false>*, true> Objects;
     THtml& html;
   public:
-    TObjectsState(THtml& htm) : html(htm) { }
+    TObjectsState(THtml& htm) : html(htm) {}
     ~TObjectsState();
-    olxstr_dict<olxstr,false>* FindProperties(const olxstr& cname) {
+    olxstr_dict<olxstr, false>* FindProperties(const olxstr& cname) const {
       const size_t ind = Objects.IndexOf(cname);
-      return (ind == InvalidIndex) ? NULL : Objects.GetValue(ind);
+      return (ind == InvalidIndex) ? 0 : Objects.GetValue(ind);
     }
-    olxstr_dict<olxstr,false>* DefineControl(const olxstr& name,
+    olxstr_dict<olxstr, false>* DefineControl(const olxstr& name,
       const std::type_info& type);
     void SaveState();
     void RestoreState();
@@ -166,6 +166,14 @@ public:
   wxWindow *FindObjectWindow(const olxstr& Name)  {
     const size_t ind = Objects.IndexOf(Name);
     return (ind == InvalidIndex) ? 0 : Objects.GetValue(ind).b;
+  }
+
+  bool IsDefined(const olxstr & Name) const {
+    size_t ind = Objects.IndexOf(Name);
+    if (ind != InvalidIndex) {
+      return true;
+    }
+    return ObjectsState.FindProperties(Name) != 0;
   }
   size_t ObjectCount() const {  return Objects.Count();  }
   AOlxCtrl* GetObject(size_t i)  {  return Objects.GetValue(i).a;  }
