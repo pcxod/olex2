@@ -4169,7 +4169,7 @@ bool TMainForm::IsControl(const olxstr& _cname) const {
         cname = _cname.SubStringFrom(di + 1);
       }
     }
-    return html->FindObject(cname) != 0;
+    return html->IsDefined(cname);
   }
   else {
     olxstr pname = _cname.SubStringTo(di);
@@ -4180,7 +4180,7 @@ bool TMainForm::IsControl(const olxstr& _cname) const {
         html = pd->Html;
       }
     }
-    return html == 0 ? false : (html->FindObject(cname) != 0);
+    return html == 0 ? false : html->IsDefined(cname);
   }
 }
 //..............................................................................

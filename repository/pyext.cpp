@@ -388,40 +388,58 @@ PyObject* runOlexFunction(PyObject* self, PyObject* args) {
     olxstr("Function '") << functionName << "' failed");
 }
 //.............................................................................
-PyObject* runOlexFunctionEx(PyObject* self, PyObject* args) {
-  using namespace macrolib;
-  olxstr name;
-  bool macro;
-  olex2::IOlex2Processor *o_r = olex2::IOlex2Processor::GetInstance();
-  PyObject *args_, *kwds_ = 0;
-  if (!PythonExt::ParseTuple(args, "wbO|O", &name, &macro, &args_, &kwds_)) {
-    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "wbO|O");
-  }
-  TStrObjList params;
-  for (Py_ssize_t i = 0; i < PyList_Size(args_); i++) {
-    olxstr val = exparse::parser_util::unquote(
-      PythonExt::ParseStr(PyList_GetItem(args_, i)));
-    //olxstr val = PythonExt::ParseStr(PyList_GetItem(args_, i));
-    params.Add(val);
-  }
-  if (macro) {
-    TParamList options;
-    if (kwds_ != 0 && PyDict_Size(kwds_) != 0) {
-      PyObject* keys_ = PyDict_Keys(kwds_);
-      for (Py_ssize_t i = 0; i < PyList_Size(keys_); i++) {
-        PyObject* key_ = PyList_GetItem(keys_, i);
-        PyObject* val = PyDict_GetItem(kwds_, key_);
+//.............................................................................
+namespace {
+  typedef olx_object_ptr<TParamList> options_ptr;
+  options_ptr parseKwds(PyObject* kwds) {
+    options_ptr options = new TParamList();
+    if (kwds != 0 && PyDict_Size(kwds) != 0) {
+      PyObject* keys = PyDict_Keys(kwds);
+      for (Py_ssize_t i = 0; i < PyList_Size(keys); i++) {
+        PyObject* key = PyList_GetItem(keys, i);
+        PyObject* val = PyDict_GetItem(kwds, key);
         if (val == 0 || val == Py_None) {
           continue;
         }
         olxstr str_val = PythonExt::ParseStr(val);
-        options.AddParam(PythonExt::ParseStr(key_), str_val);
+        options->AddParam(PythonExt::ParseStr(key), str_val);
       }
-      Py_DECREF(keys_);
+      Py_DECREF(keys);
+    }
+    return options;
+  }
+
+  PyObject* runFunc(olex2::IOlex2Processor* o_r, const olxstr& name,
+    const TStrObjList &args)
+  {
+    ABasicFunction* func = o_r->GetLibrary().FindFunction(name);
+    if (func == 0) {
+      return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo,
+        olxstr("Undefined function '") << name << '\'');
     }
     TMacroData er;
-    o_r->processMacroExt(name, params, options, er, __OlxSourceInfo);
-    if ((PythonExt::GetInstance()->GetLogLevel() & macro_log_macro) != 0) {
+    func->Run(args, er);
+    if ((PythonExt::GetInstance()->GetLogLevel() & macrolib::macro_log_function) != 0) {
+      TBasicApp::NewLogEntry(logInfo) << "@py: " <<
+        func->GetRuntimeSignature();
+    }
+    if (er.IsSuccessful()) {
+      olxstr rv = (er.HasRetVal() ? olxstr(er.RetObj()->ToString())
+        : EmptyString());
+      return PythonExt::BuildString(rv);
+    }
+    else {
+      return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo,
+        olxstr("Function '") << name << "' failed: " << er.GetInfo());
+    }
+  }
+  PyObject* runMacro(olex2::IOlex2Processor* o_r, const olxstr& name,
+    TStrObjList& args, PyObject* kwds)
+  {
+    options_ptr options = parseKwds(kwds);
+    TMacroData er;
+    o_r->processMacroExt(name, args, options, er, __OlxSourceInfo);
+    if ((PythonExt::GetInstance()->GetLogLevel() & macrolib::macro_log_macro) != 0) {
       TBasicApp::NewLogEntry(logInfo) << "@py: " <<
         (er.GetStack().IsEmpty() ? name : er.GetStack().Top());
     }
@@ -437,27 +455,52 @@ PyObject* runOlexFunctionEx(PyObject* self, PyObject* args) {
       return Py_BuildValue("b", false);
     }
   }
+}
+//.............................................................................
+PyObject* runOlexFunctionEx(PyObject* self, PyObject* args) {
+  using namespace macrolib;
+  olxstr name;
+  bool macro;
+  PyObject *args_, *kwds_ = 0;
+  if (!PythonExt::ParseTuple(args, "wbO|O", &name, &macro, &args_, &kwds_)) {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "wbO|O");
+  }
+  olex2::IOlex2Processor* o_r = olex2::IOlex2Processor::GetInstance();
+  TStrObjList params;
+  for (Py_ssize_t i = 0; i < PyList_Size(args_); i++) {
+    olxstr val = exparse::parser_util::unquote(
+      PythonExt::ParseStr(PyList_GetItem(args_, i)));
+    params.Add(val);
+  }
+  if (macro) {
+    return runMacro(o_r, name, params, kwds_);
+  }
   else {
-    ABasicFunction* func = o_r->GetLibrary().FindFunction(name);
-    if (func == 0) {
-      return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo,
-        olxstr("Undefined function '") << name << '\'');
-    }
-    TMacroData er;
-    func->Run(params, er);
-    if ((PythonExt::GetInstance()->GetLogLevel() & macro_log_function) != 0) {
-      TBasicApp::NewLogEntry(logInfo) << "@py: " <<
-        func->GetRuntimeSignature();
-    }
-    if (er.IsSuccessful()) {
-      olxstr rv = (er.HasRetVal() ? olxstr(er.RetObj()->ToString())
-        : EmptyString());
-      return PythonExt::BuildString(rv);
-    }
-    else {
-      return PythonExt::SetErrorMsg(PyExc_RuntimeError, __OlxSourceInfo,
-        olxstr("Function '") << name << "' failed: " << er.GetInfo());
-    }
+    return runFunc(o_r, name, params);
+  }
+}
+//.............................................................................
+PyObject* runOlex2(PyObject* self, PyObject* args, PyObject* kwds) {
+  using namespace macrolib;
+  Py_ssize_t argc = PyTuple_Size(args);
+  if (argc < 2) {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "type,argc");
+  }
+  bool macro = false;
+  PyArg_Parse(PyTuple_GetItem(args, 0), "b", &macro);
+  olxstr name = PythonExt::ParseStr(PyTuple_GetItem(args, 1));
+  olex2::IOlex2Processor* o_r = olex2::IOlex2Processor::GetInstance();
+  TStrObjList params;
+  for (Py_ssize_t i = 2; i < argc; i++) {
+    olxstr val = exparse::parser_util::unquote(
+      PythonExt::ParseStr(PyTuple_GetItem(args, i)));
+    params.Add(val);
+  }
+  if (macro) {
+    return runMacro(o_r, name, params, kwds);
+  }
+  else {
+    return runFunc(o_r, name, params);
   }
 }
 //.............................................................................
@@ -509,7 +552,9 @@ PyObject* runPrintText(PyObject* self, PyObject* args) {
 PyMethodDef Methods[] = {
   {"m", runOlexMacro, METH_VARARGS, "executes olex2 macro"},
   {"f", runOlexFunction, METH_VARARGS, "executes olex2 function"},
-  {"f_ex", runOlexFunctionEx, METH_VARARGS, "executes olex function"},
+  {"f_ex", runOlexFunctionEx, METH_VARARGS, "executes olex2 using args + kwds"},
+  {"run", (PyCFunction)runOlex2, METH_VARARGS | METH_KEYWORDS,
+  "executes Olex2 macro/function using (bool,name, args), kwds"},
   {"writeImage", runWriteImage, METH_VARARGS, "adds new image/object to olex2 "
     "memory; (name, date, persistence=0). Persistence: 0 - none, 1 - for "
     "current structure, 2 - global"},
