@@ -615,11 +615,12 @@ void TOlex2c::macSchedule(TStrObjList &Cmds, const TParamList &Options,
 //.............................................................................
 //.............................................................................
 void TOlex2c::funSel(const TStrObjList& Params, TMacroData &E) {
-  olxstr rv;
+  // as in the GUI: symmetry copies come back as C1_$n, which FindSAtoms reads
+  AtomRefList arl(XApp.XFile().GetRM());
   for (size_t i = 0; i < Selection.Count(); i++) {
-    rv << Selection[i]->GetLabel() << ' ';
+    arl.AddExplicit(*Selection[i]);
   }
-  E.SetRetVal(rv);
+  E.SetRetVal(arl.GetExpression());
 }
 //.............................................................................
 void TOlex2c::macSel(TStrObjList &Cmds, const TParamList &Options,

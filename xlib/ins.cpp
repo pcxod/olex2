@@ -2819,7 +2819,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   // store the eqiv ...
   for (size_t i = 0; i < rm.UsedSymmCount(); i++) {
     olxstr Tmp = "EQIV ";
-    Tmp << '$' << (i + 1) << ' ' << TSymmParser::MatrixToSymm(rm.GetUsedSymm(i));
+    Tmp << rm.GetUsedSymmName(i) << ' ' << TSymmParser::MatrixToSymm(rm.GetUsedSymm(i));
     SL.Insert(oindex + i, Tmp);
   }
   for (size_t i = 0; i < rm.Vars.EquationCount(); i++) {

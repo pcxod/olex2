@@ -735,8 +735,16 @@ TSAtomPList::const_list_type TXApp::FindSAtoms(const IStrList& toks_,
         TAsymmUnit& au = XFile().GetAsymmUnit();
         objects.atoms.ForEach(ACollectionItem::TagSetter(-1));
         au.GetAtoms().ForEach(ACollectionItem::TagSetter(-1));
-        for (size_t i = 0; i < ag.Count(); i++) {
-          ag[i].GetAtom()->SetTag(i);
+        /* one CAtom can come with several matrices (C1 C1_$3): the tag is its
+        first reference, next[] chains the others
+        */
+        TSizeList next(ag.Count(), olx_list_init::value(InvalidIndex));
+        for (size_t i = ag.Count(); i-- > 0;) {
+          TCAtom* ca = ag[i].GetAtom();
+          if (ca->GetTag() >= 0) {
+            next[i] = ca->GetTag();
+          }
+          ca->SetTag(i);
         }
         TArrayList<TSAtom*> satoms(ag.Count(), olx_list_init::zero());
         for (size_t i = 0; i < objects.atoms.Count(); i++) {
@@ -744,22 +752,21 @@ TSAtomPList::const_list_type TXApp::FindSAtoms(const IStrList& toks_,
           if (sa.CAtom().GetTag() == -1 || !sa.CAtom().IsAvailable()) {
             continue;
           }
-          // get an atom from the asymm unit
-          if (ag[sa.CAtom().GetTag()].GetMatrix() == 0)
-          {
-            if (sa.IsAUAtom()) {
-              satoms[sa.CAtom().GetTag()] = &sa;
+          for (size_t j = sa.CAtom().GetTag(); j != InvalidIndex; j = next[j]) {
+            // get an atom from the asymm unit
+            if (ag[j].GetMatrix() == 0) {
+              if (sa.IsAUAtom()) {
+                satoms[j] = &sa;
+              }
             }
-          }
-          else {
-            if (sa.IsGenerator(*ag[sa.CAtom().GetTag()].GetMatrix())) {
-              satoms[sa.CAtom().GetTag()] = &sa;
+            else if (sa.IsGenerator(*ag[j].GetMatrix())) {
+              satoms[j] = &sa;
             }
           }
         }
         res.SetCapacity(ag.Count());
         for (size_t i = 0; i < ag.Count(); i++) {
-          TSAtom* a = satoms[ag[i].GetAtom()->GetTag()];
+          TSAtom* a = satoms[i];
           if (a != 0) {
             res << a;
           }

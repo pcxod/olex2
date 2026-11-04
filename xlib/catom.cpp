@@ -681,12 +681,12 @@ olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm) const {
   olxstr name = Atom->GetResiLabel(true);
   if (Atom->GetResiId() == 0) {
     if (Matrix != 0) {
-      name << "_$" << (rm.UsedSymmIndex(*Matrix) + 1);
+      name << '_' << rm.UsedSymmName(*Matrix);
     }
   }
   else {  // it is however shown that shelx just IGNORES $EQIV in this notation...
     if (Matrix != 0) {
-      name << '$' << (rm.UsedSymmIndex(*Matrix) + 1);
+      name << rm.UsedSymmName(*Matrix);
     }
   }
   return name;
@@ -699,13 +699,13 @@ olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm,
   TResidue &r = Atom->GetParent()->GetResidue(Atom->GetResiId());
   if( Atom->GetResiId() == 0 || r.GetNumber() == resiId) {
     if (Matrix != 0) {
-      name << "_$" << (rm.UsedSymmIndex(*Matrix) + 1);
+      name << '_' << rm.UsedSymmName(*Matrix);
     }
   }
   else {  // it is however shown that shelx just IGNORES $EQIV in this notation...
     name << '_' << r.GetNumberStr();
     if (Matrix != 0) {
-      name << '$' << (rm.UsedSymmIndex(*Matrix) + 1);
+      name << rm.UsedSymmName(*Matrix);
     }
   }
   return name;
@@ -725,13 +725,13 @@ olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm,
         Atom->GetResiId()).GetNumber() == resiName.ToInt()))
     {
       if (Matrix != 0) {
-        name << "_$" << (rm.UsedSymmIndex(*Matrix) + 1);
+        name << '_' << rm.UsedSymmName(*Matrix);
       }
     }
     else {  // it is however shown that shelx just IGNORES $EQIV in this notation...
       name << '_' << Atom->GetParent()->GetResidue(Atom->GetResiId()).GetNumber();
       if (Matrix != 0) {
-        name << '$' << (rm.UsedSymmIndex(*Matrix) + 1);
+        name << rm.UsedSymmName(*Matrix);
       }
     }
   }
@@ -741,13 +741,13 @@ olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm,
         Atom->GetResiId()).GetClassName().Equalsi(resiName)))
     {
       if (Matrix != 0) {
-        name << "_$" << (rm.UsedSymmIndex(*Matrix) + 1);
+        name << '_' << rm.UsedSymmName(*Matrix);
       }
     }
     else {  // it is however shown that shelx just IGNORES $EQIV in this notation...
       name << '_' << Atom->GetParent()->GetResidue(Atom->GetResiId()).GetNumber();
       if (Matrix != 0) {
-        name << '$' << (rm.UsedSymmIndex(*Matrix) + 1);
+        name << rm.UsedSymmName(*Matrix);
       }
     }
   }

@@ -117,13 +117,10 @@ olxstr ExplicitCAtomRef::GetExpression(TResidue *r) const {
     rv << '_' << atom->GetParent()->GetResidue(atom->GetResiId()).GetNumberStr();
   }
   if (matrix != 0) {
-    if (use_resi) {
-      rv << '$';
+    if (!use_resi) {
+      rv << '_';
     }
-    else {
-      rv << "_$";
-    }
-    rv << (atom->GetParent()->GetRefMod()->UsedSymmIndex(*matrix)+1);
+    rv << atom->GetParent()->GetRefMod()->UsedSymmName(*matrix);
   }
   if (!valid_s) {
     TBasicApp::NewLogEntry(logInfo) << "Expression will not be read correctly"

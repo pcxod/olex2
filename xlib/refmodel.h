@@ -420,6 +420,16 @@ Friedel opposites of components 1 ... m
   the list
   */
   size_t UsedSymmIndex(const smatd& matr) const;
+  /* the EQIV name ("$n") that FindUsedSymm resolves. UsedSymm is sorted by
+  name ($1 < $10 < $2), so index + 1 is not the name
+  */
+  const olxstr& GetUsedSymmName(size_t ind) const {
+    return UsedSymm.GetKey(ind);
+  }
+  olxstr UsedSymmName(const smatd& matr) const {
+    const size_t i = UsedSymmIndex(matr);
+    return (i == InvalidIndex ? olxstr("$0") : UsedSymm.GetKey(i));
+  }
   // deletes all used symmetry matrices
   void ClearUsedSymm()  {  UsedSymm.Clear();  }
   const smatd* FindUsedSymm(const olxstr& name) const {

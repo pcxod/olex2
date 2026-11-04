@@ -313,7 +313,7 @@ void ConnInfo::ToInsList(TStrList& ins) const {
           throw TFunctionFailedException(__OlxSourceInfo,
             "Undefined EQIV in BIND");
         }
-        str << "_$" << (si + 1);
+        str << '_' << rm.GetUsedSymmName(si);
       }
     }
     for (size_t j = 0; j < aci.BondsToRemove.Count(); j++) {
@@ -328,7 +328,7 @@ void ConnInfo::ToInsList(TStrList& ins) const {
           throw TFunctionFailedException(__OlxSourceInfo,
             "Undefined EQIV in FREE");
         }
-        str << "_$" << (si + 1);
+        str << '_' << rm.GetUsedSymmName(si);
       }
     }
   }
