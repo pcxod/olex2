@@ -12110,9 +12110,8 @@ void XLibMacros::macRSA(TStrObjList &Cmds, const TParamList &Options,
         }
       }
     }
-    catch (const TDivException& exc) {
+    catch (const TExceptionBase& exc) {
       TBasicApp::NewLogEntry(logInfo) << "Check connectivity for " << a.GetResiLabel();
-      continue;
     }
     if (w.a.IsEmpty()) {
       continue;
