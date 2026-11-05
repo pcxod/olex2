@@ -382,8 +382,9 @@ struct RSA_Full_EnviSorter {
     cip.order.Clear();
     int r = cip.CompareOne(ea, 2, eb, 4, 0);
     if (cip.overflown) {
-      TBasicApp::NewLogEntry(logWarning)
-        << "RSA OVERFLOWN for " << center->aun.atom.GetLabel();
+      //This could be annoying!
+      //TBasicApp::NewLogEntry(logWarning)
+      //  << "RSA OVERFLOWN for " << center->aun.atom.GetLabel();
       return 0;
     }
     return r;

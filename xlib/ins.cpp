@@ -1426,6 +1426,20 @@ bool TIns::AddIns(const TStrList& toks, RefinementModel& rm, bool CheckUniq) {
     }
     return true;
   }
+  else if (toks[0].Equalsi("CELL")) {
+    if (toks.Count() == 8) {
+      rm.expl.SetRadiation(toks[1].ToDouble());
+      rm.aunit.GetAxes() =
+        vec3d(toks[2].ToDouble(), toks[3].ToDouble(), toks[4].ToDouble());
+      rm.aunit.GetAngles() =
+        vec3d(toks[5].ToDouble(), toks[6].ToDouble(), toks[7].ToDouble());
+      rm.aunit.InitMatrices();
+    }
+    else {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        "invalid Cell instruction");
+    }
+  }
   if (_ParseIns(rm, toks) || ParseRestraint(rm, toks)) {
     return true;
   }

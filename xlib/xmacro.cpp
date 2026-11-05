@@ -758,7 +758,8 @@ void XLibMacros::Export(TLibrary& lib)  {
     );
   xlib_InitMacro(RSA,
     "c-copy to clipboard&;"
-    "d-print debug info [digraph], full",
+    "d-print debug info [digraph], full&;"
+    "m-mode [3], 1 - CIP/full, 2 - digraph, 3 - CIP checked with digraph",
     fpAny|psFileLoaded,
     "Identifies chiral centres and prints R/S their stereo configuration");
   xlib_InitMacro(CONF,
@@ -12085,19 +12086,26 @@ void XLibMacros::macRSA(TStrObjList &Cmds, const TParamList &Options,
   olxstr_ptr debug_str = Options.GetStrPtr('d');
   bool debug = debug_str.ok(),
     debug_full = debug ? debug_str->Equalsi("full") : false;
-  
+  // 1 - CIP/Full, 2 - digraph, 3 - mixed;
+  // could use CIP for descrete and DG for polymeric fragments...
+  int mode = Options.FindValue("m", "3").ToInt();
   TStrList result;
   for (size_t i=0; i < au.AtomCount(); i++) {
     TCAtom &a = au.GetAtom(i);
     if (a.IsDeleted() || a.GetType() < 2 || a.AttachedSiteCount() < 4) {
       continue;
     }
-    olx_pair_t<olxstr, olxstr> w;
+    olx_pair_t<olxstr, olxstr> w, w1;
     try {
-      w = olx_analysis::chirality::rsa_analyse_full(a, debug);
-      if (!w.a.IsEmpty()) {
-        // do dry_run
-        olx_pair_t<olxstr, olxstr> w1 = olx_analysis::chirality::rsa_analyse_digraph(a, debug, true);
+      if ((mode & 1) == 1) {
+        w = olx_analysis::chirality::rsa_analyse_full(a, debug);
+      }
+      if ((mode & 2) == 2) {
+        w1 = olx_analysis::chirality::rsa_analyse_digraph(a, debug,
+          mode == 3 // dry run for mixed mode - accept CIP analysis
+        );
+      }
+      if (mode == 3 && !w.a.IsEmpty()) {
         if (w.a != w1.a) {
           TBasicApp::NewLogEntry(logWarning) << a.GetResiLabel() <<
             ": RSA algorithms do not agree: Full: " << w.a << " vs DG: " << w1.a;
@@ -12108,6 +12116,9 @@ void XLibMacros::macRSA(TStrObjList &Cmds, const TParamList &Options,
         else if (debug) {
           TBasicApp::NewLogEntry() << (debug_full ? w.b : w1.b);
         }
+      }
+      if (mode == 2) {
+        w = w1;
       }
     }
     catch (const TExceptionBase& exc) {
