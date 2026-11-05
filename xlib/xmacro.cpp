@@ -9564,6 +9564,20 @@ void XLibMacros::macUpdateAfix(TStrObjList& Cmds, const TParamList& Options,
     if (d < 0) {
       continue;
     }
+    // X-H distances only: a riding group with a non-H member (BF4 F atoms in
+    // AFIX 3 on B, C in AFIX 3 on S) keeps its geometry
+    bool all_h = true;
+    for (size_t ai = 0; ai < ag.Count(); ai++) {
+      if (ag[ai].GetType() != iHydrogenZ) {
+        all_h = false;
+        break;
+      }
+    }
+    if (!all_h) {
+      TBasicApp::NewLogEntry() << "UpdateAfix: skipping group on "
+        << pivot.GetLabel() << " - it has non-H members";
+      continue;
+    }
     ag.SetD(d);
     vec3d pc = au.Orthogonalise(pivot.ccrd());
     for (size_t ai = 0; ai < ag.Count(); ai++) {
