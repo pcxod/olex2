@@ -169,11 +169,22 @@ struct CIPCompare {
   TSymmNodeRegistry& registry;
   vec3d root_crd;
   double MaxCIPRadiusSq; // cut-off limit
+  int MaxT; // cut-off limit
+  mutable bool overflown;
+  /* sibling ranking nests once per sphere, bounded only by the atoms within the
+  cut-off - hundreds in 3D frameworks at ~1.5 kB of stack each; deeper pairs tie
+  */
+  static const int MaxCIPLevel = 64;
   olxstr_buf* bf;
   mutable olxdict<BigId, int, TComparableComparator> order;
 
   static uint64_t node_id(const TSymmNode* n) {
     return n != 0 ? n->build_id() : 0;
+  }
+  
+  static bool outside(uint32_t id, int lim) {
+    vec3i t = smatd::GetT(id);
+    return olx_abs(t[0]) > lim || olx_abs(t[1]) > lim || olx_abs(t[2]) > lim;
   }
 
   static olx_pair_t<BigId, bool> make_cache_key(const CIPElem& na, const CIPElem& nb) {
@@ -189,7 +200,8 @@ struct CIPCompare {
   CIPCompare(RSA_BondOrder& b, TSymmNodeRegistry& registry, olxstr_buf* bf)
     : boa(b), registry(registry), bf(bf)
   {
-    MaxCIPRadiusSq = 225;
+    MaxCIPRadiusSq = 1000;
+    MaxT = 3;
   }
 
   // Expands one node one sphere, pushing/popping its own bit only.
@@ -211,7 +223,10 @@ struct CIPCompare {
       if (e.from != 0 && child == e.from) {
         continue;   // safe: registry guarantees one canonical TSymmNode* per position
       }
-      if ((child->crd - root_crd).QLength() > MaxCIPRadiusSq) {
+      if (outside(child->matrix, MaxT) ||
+        (child->crd - root_crd).QLength() > MaxCIPRadiusSq)
+      {
+        overflown = true;
         continue;
       }
       olx_pair_t<TCAtom*, TCAtom::Site> r = registry.remap(n, *child, im);
@@ -284,6 +299,9 @@ struct CIPCompare {
     if (ea.type->z != eb.type->z) {
       return olx_cmp(ea.type->z, eb.type->z);
     }
+    if (level > MaxCIPLevel) {
+      return 0;
+    }
     typedef olx_pair_t<CIPElem, CIPElem> Pair;
     TQueue<Pair> queue;
     queue.PushLast(Pair(ea, eb));
@@ -347,33 +365,29 @@ struct RSA_Full_EnviSorter {
     cip.root_crd = center->crd;
   }
 
-  //RSA_Full_EnviSorter(RSA_BondOrder& boa_, const TSAtom& c, bool debug_)
-  //  : registry(c.GetNetwork()),
-  //  cip(boa_, registry, debug_ ? &out : 0), center(0)
-  //{
-  //  center = cip.registry.find(
-  //    TSymmNode::build_id(c.CAtom().GetId(), c.GetMatrix().GetId()));
-  //  if (center == 0) {
-  //    throw TFunctionFailedException(__OlxSourceInfo, "__assert__");
-  //  }
-  //  cip.root_crd = center->crd;
-  //}
-
   int Comparator(const TCAtom::Site& a, const TCAtom::Site& b) const {
     if (center == 0) {
-      throw TInvalidArgumentException(__OlxSourceInfo, "set centere before call!");
+      throw TInvalidArgumentException(__OlxSourceInfo, "set centre before call!");
     }
     cip.registry.ForEach(ACollectionItem::TagSetter(0));
     center->SetTag(2 | 4);   // closes ring back to center correctly on BOTH sides
-    TSymmNode* na = cip.registry.find(TSymmNode::build_id(a));
-    TSymmNode* nb = cip.registry.find(TSymmNode::build_id(b));
+    TSymmNode* na = cip.registry.find_site(center->aun, a);
+    TSymmNode* nb = cip.registry.find_site(center->aun, b);
     if (na == 0 || nb == 0) {
       throw TFunctionFailedException(__OlxSourceInfo, "__assert__");
     }
     CIPElem ea(na, &a.atom->GetType(), center, 1, false);
     CIPElem eb(nb, &b.atom->GetType(), center, 1, false);
+    cip.overflown = false;
     cip.order.Clear();
-    return cip.CompareOne(ea, 2, eb, 4, 0);
+    int r = cip.CompareOne(ea, 2, eb, 4, 0);
+    if (cip.overflown) {
+      //This could be annoying!
+      //TBasicApp::NewLogEntry(logWarning)
+      //  << "RSA OVERFLOWN for " << center->aun.atom.GetLabel();
+      return 0;
+    }
+    return r;
   }
 public:
   mutable olxstr_buf out;

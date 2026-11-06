@@ -29,18 +29,22 @@ void TEMacro::AddOnAbortCmd(const olxstr& cmd)  {
 void TEMacro::DoRun(TStrObjList &Params, const TParamList &Options,
   TMacroData& E)
 {
-  TStrList args;
-  args.SetCapacity(Args.Count());
-  olex2::IOlex2Processor *ip = olex2::IOlex2Processor::GetInstance();
-  olxstr location = __OlxSourceInfo;
-  for (size_t i = 0; i < Args.Count(); i++) {
-    if (i < Params.Count()) {
-      args.Add(Params[i]);
+  TStrList args(olx_reserve(Args.IsEmpty() ? Params.Count() : Args.Count()));
+  if (!Args.IsEmpty()) {
+    olex2::IOlex2Processor* ip = olex2::IOlex2Processor::GetInstance();
+    olxstr location = __OlxSourceInfo;
+    for (size_t i = 0; i < Args.Count(); i++) {
+      if (i < Params.Count()) {
+        args.Add(Params[i]);
+      }
+      // processing needs to be done for the defaults only - the rest already have been
+      else {
+        ip->processFunction(args.Add(Args.GetObject(i)), location);
+      }
     }
-    // processing needs to be done for the defaults only - the rest already have been
-    else {
-      ip->processFunction(args.Add(Args.GetObject(i)), location);
-    }
+  }
+  else if (!Params.IsEmpty()) {
+    args.AddAll(Params);
   }
   for (size_t i = 0; i < Commands.Count(); i++) {
     TEMacroLib::ProcessEvaluator(Commands[i].root, E, args, &Options);
@@ -68,13 +72,19 @@ ABasicFunction *TEMacro::Replicate() const {
 olxstr TEMacroLib::SubstituteArgs(const olxstr& arg_, const TStrList& argv,
   const olxstr& location)
 {
-  if (is_quoted(arg_) || argv.IsEmpty()) return arg_;
+  // special cases
+  if (is_quoted(arg_) || argv.IsEmpty()) {
+    return arg_;
+  }
   olxstr arg(arg_);
   size_t index = arg.FirstIndexOf('%');  // argument by index
   while (index != InvalidIndex && index < (arg.Length() - 1)) {
+    if (exparse::parser_util::is_escaped(arg, index)) {
+      continue;
+    }
     size_t iindex = index;
-    while (++iindex < arg.Length() && olxstr::o_isdigit(arg.CharAt(iindex)))
-      ;
+    while (++iindex < arg.Length() && olxstr::o_isdigit(arg.CharAt(iindex))) {
+    }
     olxstr args = arg.SubString(index + 1, iindex - index - 1);
     if (!args.IsEmpty()) {
       size_t pindex = args.ToSizeT() - 1;  // index of the parameter
@@ -146,6 +156,10 @@ olxstr TEMacroLib::ProcessEvaluator(
       bool math_module = name.StartsFromi("math.");
       for (size_t i = 0; i < e->evator->args.Count(); i++) {
         if (!math_module) {
+          if (e->evator->args[i]->data == "%*") {
+            Cmds.AddAll(argv);
+            continue;
+          }
           arg_t r = EvaluateArg(e->evator->args[i], me, argv);
           if (!me.IsSuccessful()) {
             return EmptyString();
@@ -273,12 +287,17 @@ TEMacroLib::TEMacroLib(olex2::IOlex2Processor& olexProcessor)
 }
 //.............................................................................
 void TEMacroLib::Load(const TDataItem& m_root) {
+  static int current_version = 1;
   for (size_t i = 0; i < m_root.ItemCount(); i++) {
     const TDataItem& m_def = m_root.GetItemByIndex(i);
     const TDataItem* di = m_def.FindItem("body");
     if (di == 0) {
       TBasicApp::NewLogEntry(logError) << "Macro body is not defined: " <<
         m_def.GetName();
+      continue;
+    }
+    int version = m_def.FindField("version", "-1").ToInt();
+    if (version >=0 && version < current_version) {
       continue;
     }
     TEMacro* m = new TEMacro(m_def.GetName(), m_def.FindField("help"));

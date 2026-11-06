@@ -49,8 +49,6 @@ TSymmNodeRegistry::~TSymmNodeRegistry() {
 TSymmNode* TSymmNodeRegistry::find_or_add(const TSymmNode& parent,
   const TSymmNode& child, index_t def_tag) const
 {
-  //olx_pair_t<size_t, bool> ii;
-  
   for (size_t i = 0; i < child.aun.atom.EquivCount() + 1; i++) {
     uint32_t cm = i == 0 ? child.matrix
       : unit_cell.MulMatrixId(child.matrix, child.aun.atom.GetEquiv(i - 1).GetId());
