@@ -1439,6 +1439,7 @@ bool TIns::AddIns(const TStrList& toks, RefinementModel& rm, bool CheckUniq) {
       throw TFunctionFailedException(__OlxSourceInfo,
         "invalid Cell instruction");
     }
+    return true;
   }
   if (_ParseIns(rm, toks) || ParseRestraint(rm, toks)) {
     return true;
