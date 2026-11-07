@@ -3338,14 +3338,59 @@ TLattice::CalcMoiety() const
         }
       }
       else {
+        double min_f = 1;
         for (size_t j = 0; j < frags[i].GetB().Count(); j++) {
           frags[i].b[j].count *= frags[i].a * mult;
+          double o = frags[i].b[j].count;
+          double f = o - olx_floor(o);
+          if (f >  1e-3 && f < min_f) {
+            min_f = f;
+          }
         }
         if (!polymeric) {
           frags[i].a = zp_mult / gd;
+          if (min_f != 1) {
+            if (frags[i].GetB().Count() == 1) {
+              frags[i].a *= frags[i].b[0].count;
+              frags[i].b[0].count = 1;
+            }
+            else {
+              bool apply = true;
+              TDoubleList new_o(frags[i].GetB().Count());
+              for (size_t j = 0; j < frags[i].GetB().Count(); j++) {
+                new_o[j] = frags[i].b[j].count * (zp_mult * min_f);
+                double f = new_o[j] - olx_floor(new_o[j]);
+                if ((f / new_o[j]) > 1e-3) {
+                  apply = false;
+                  break;
+                }
+              }
+              if (apply) { // ints, try to find cgd
+                int gcd = 192;
+                for (size_t ii = 0; ii < new_o.Count(); ii++) {
+                  int ao = olx_round(new_o[ii]);
+                  for (size_t ij = ii + 1; ij < new_o.Count(); ij++) {
+                    int gcd_ = olx_gcd(ao, olx_round(new_o[ij]));
+                    if (gcd_ < gcd) {
+                      if ((gcd = gcd_) == 1) {
+                        break;
+                      }
+                    }
+                  }
+                }
+                if (gcd != 1) {
+                  double m = zp_mult * min_f / gcd;
+                  for (size_t j = 0; j < frags[i].GetB().Count(); j++) {
+                    frags[i].b[j].count *= m;
+                  }
+                  frags[i].a /= m;
+                }
+              }
+            }
+          }
         }
-        else {
-          frags[i].a *= zp_mult;
+        else { // already applied in mult
+          //frags[i].a *= zp_mult;
         }
       }
     }

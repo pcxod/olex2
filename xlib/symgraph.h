@@ -79,6 +79,20 @@ struct TSymmNodeRegistry {
   TSymmNode* find_or_add(const TSymmNode& parent, const TSymmNode& child,
     index_t def_tag = 0) const;
 
+  TSymmNode* find_site(const TASymmNode& center, const TCAtom::Site& s) const {
+    const TCAtom& c = center.atom;
+    if (TSymmNode* n = find(TSymmNode::build_id(s))) {
+      return n;
+    }
+    for (size_t i = 0; i < c.EquivCount(); i++) {
+      uint32_t m = unit_cell.MulMatrixId(s.matrix.GetId(), c.GetEquiv(i).GetId());
+      if (TSymmNode* n = find(TSymmNode::build_id(s.atom->GetId(), m))) {
+        return n;
+      }
+    }
+    return 0;
+  }
+
   olx_pair_t<TCAtom*, TCAtom::Site> remap(const TSymmNode& parent,
     const TSymmNode& child) const
   {
