@@ -958,12 +958,12 @@ bool TIns::ProcessSFAC(ParseContext& cx, const TStrList& Toks, bool update_rm) {
             << Toks[1]);
         }
         lb = XScatterer::NormaliseCharge(lb, elm);
-        // a label without a charge still keys by element, so OI/OII (O-, O2-)
-        // and a second SI (Si4+) next to plain O and SI all end up as one O
-        // and one Si and a split site between them goes singular (COD
-        // 2312749-53). Z - f(0) of the table's own Gaussians names the ion;
-        // X-ray tables only: a neutron table has no Gaussians and an electron
-        // table (lambda < 0.1 A) no integer f(0)
+        /* a label without a charge keys by element, so OI/OII (O-, O2-) next to
+        a plain O merge into one O and a split site between them goes singular.
+        Z - f(0) of the table's own Gaussians names the ion; X-ray only: a
+        neutron table has no Gaussians, an electron one (lambda < 0.1 A) no
+        integer f(0)
+        */
         if (XScatterer::ChargeFromLabel(lb, elm) == 0) {
           const double a = Toks[2].ToDouble() + Toks[4].ToDouble() +
             Toks[6].ToDouble() + Toks[8].ToDouble(),
@@ -1263,7 +1263,7 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
     if (Toks.Count() == 1) {
       number = "0";
     }
-    else if (Toks.Count() == 2) { // a bare RESI must not reach Toks[1..2]
+    else if (Toks.Count() == 2) {
       if (Toks[1].Contains(':') || Toks[1].IsNumber()) {
         number = Toks[1];
       }
@@ -1356,14 +1356,19 @@ bool TIns::ParseIns(const TStrList& ins, const TStrList& Toks,
         size_t iv = hklsrc.IndexOf("</HKL>");
         if (iv == InvalidIndex) {
           while ((i + 1) < ins.Count()) {
-            // the next instruction ends an unterminated <HKL> - leave it to
-            // the caller's loop instead of skipping it
+            /* old: skipped the instruction after an unterminated <HKL>
+            i++;
+            if (!ins[i].StartsFromi("rem")) {
+              break;
+            }
+            hklsrc << ins[i].SubStringFrom(4);
+            */
+            // the next instruction ends an unterminated <HKL>: the caller reads it
             if (!ins[i + 1].StartsFromi("rem")) {
               break;
             }
             i++;
-            // a bare 'REM' is shorter than 'REM ' - SubStringFrom(4) would
-            // read past its end
+            // a bare 'REM' is shorter than 'REM '
             if (ins[i].Length() > 4) {
               hklsrc << ins[i].SubStringFrom(4);
             }
@@ -2834,6 +2839,7 @@ void TIns::SaveRestraints(TStrList& SL, const TCAtomPList* atoms,
   // store the eqiv ...
   for (size_t i = 0; i < rm.UsedSymmCount(); i++) {
     olxstr Tmp = "EQIV ";
+    // old: Tmp << '$' << (i + 1) << ... - index+1 is not the EQIV name
     Tmp << rm.GetUsedSymmName(i) << ' ' << TSymmParser::MatrixToSymm(rm.GetUsedSymm(i));
     SL.Insert(oindex + i, Tmp);
   }

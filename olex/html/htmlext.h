@@ -95,10 +95,9 @@ protected:
   olxstr_dict<wxWindow*, true> Recycled;
   void RecycleControls();
 #ifdef __ANDROID__
-  /* a tab switch re-parses the whole sidebar, ~85 ms on a Cortex-A53. Keep
-  the last few cell trees alive with their (hidden) controls, keyed by the
-  evaluated page text and the client width: the same text parses to the same
-  tree
+  /* a tab switch re-parses the whole sidebar: keep the last few cell trees
+  alive with their (hidden) controls, keyed by the evaluated page text and the
+  client width - the same text parses to the same tree
   */
   struct PageCache {
     olxstr text;

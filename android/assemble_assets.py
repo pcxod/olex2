@@ -51,24 +51,21 @@ PATCHES = [
      "  try: content = mtz.object(file_name=file_name)\n  except RuntimeError: pass\n",
      "  try: content = mtz.object(file_name=file_name)\n"
      "  except (RuntimeError, AttributeError): pass\n"),
-    # Exynos 7870 tablet: threaded normal-equation builds pay off from ~10x
-    # less work than desktop (ZP2 5404x340: build 0.83 -> 0.24 s, Flack
-    # 2.55 -> 0.77 s; never slower on small cells), so lower both thresholds
+    # threaded normal-equation builds pay off from ~10x less work than on a
+    # desktop and are never slower on small cells, so lower both thresholds
     ("cctbx/cctbx_sources/smtbx/refinement/least_squares.py",
      "blas_2_parallel_work_threshold = 2e5",
      "blas_2_parallel_work_threshold = 2e4  # Android: /10, see assemble_assets.py"),
     ("cctbx/cctbx_sources/smtbx/refinement/least_squares.py",
      "blas_3_parallel_work_threshold = 2e6", "blas_3_parallel_work_threshold = 2e5"),
-    # Android parks idle cores offline, so cpu_count() says 4 of the tablet's 8 and the
-    # default refinement gets 3 threads; ZP2 Flack 1.21 -> 0.83 s, LS build 0.47 -> 0.25 s
-    # at 6 (= 3/4 of the possible cores), no gain at 8
+    # Android parks idle cores offline, so cpu_count() undercounts; 3/4 of the
+    # possible cores instead (all of them gain nothing more)
     ("util/pyUtil/olexFunctions.py",
      "        v = max(1, int(os.cpu_count() *3/4))",
      "        v = max(1, int((int(open('/sys/devices/system/cpu/possible').read().strip()"
      ".split('-')[-1]) + 1) *3/4))"),
     # no scipy on Android: refinement.py needs it only for one LU (lazy import,
-    # fails there alone), cubes_maps.py only for inv/det, which numpy has. These
-    # replace the whole-file copies in the stage overlay that went stale on rebase
+    # fails there alone), cubes_maps.py only for inv/det, which numpy has
     ("util/pyUtil/CctbxLib/refinement.py",
      "import scipy.linalg", "# import scipy.linalg  # Android: lazy, see assemble_assets.py"),
     ("util/pyUtil/CctbxLib/refinement.py",
@@ -78,8 +75,8 @@ PATCHES = [
      "from scipy import linalg",
      "from numpy import linalg  # Android has no scipy; only inv/det are used here"),
     # SHELX weight optimiser: each bin's 9x9 a/b grid in one numpy expression
-    # instead of 81 closure calls (ZP2 776 -> 232 ms on the tablet); a, b and all
-    # grid cells bitwise equal on armv7. Proposed for cctbx, carried here until then
+    # instead of 81 closure calls; a, b and all grid cells bitwise equal.
+    # Proposed for cctbx, carried here until then
     ("cctbx/cctbx_sources/smtbx/refinement/weighting_schemes.py", """\
     def mainstream_shelx_weighting_compute_chi_sq(fo_sq, fc_sq, a,b):
       weighting.a = a
@@ -146,8 +143,8 @@ PATCHES = [
         binned_chi_sq.append(g)
 """),
     # CONF dihedrals (generate_all): python copies of the pair table and the sites instead of
-    # boost lookups in the 4-deep loop; ZP2 0.45 -> 0.19 s, sucrose 0.47 -> 0.21 s per refine on
-    # the tablet, every dihedral, rt_mx and su bitwise equal. Proposed for cctbx, carried here until then
+    # boost lookups in the 4-deep loop; every dihedral, rt_mx and su bitwise equal.
+    # Proposed for cctbx, carried here until then
     ("cctbx/cctbx_sources/cctbx/crystal/__init__.py", """\
     table = self.pair_asu_table.table()
     for i_seq,i_asu_dict in enumerate(table):
@@ -189,8 +186,8 @@ PATCHES = [
                         rt_mx_l = rt_mx_lk.multiply(asu_mappings.get_rt_mx(l_seq, l_sym))
                         l_site_frac = rt_mx_l *  self.sites_frac[l_seq]
 """, """\
-    # python copies of the pair table and the sites: the loops below re-fetched them
-    # through boost on every pass (2.4x faster on an A53, same dihedrals bit for bit)
+    # python copies of the pair table and the sites: the loops below would re-fetch
+    # them through boost on every pass
     table = [[(j, [list(g) for g in groups]) for j, groups in d.items()]
              for d in self.pair_asu_table.table()]
     sites_frac = list(self.sites_frac)
@@ -233,21 +230,21 @@ PATCHES = [
                         rt_mx_l = rt_mx_lk.multiply(asu_mappings.get_rt_mx(l_seq, l_sym))
                         l_site_frac = rt_mx_l *  sites_frac[l_seq]
 """),
-    # fcf loop: miller indices a column at a time instead of add_row per reflection; ZP2 0.26 -> 0.08 s
+    # fcf loop: miller indices a column at a time instead of add_row per reflection
     ("cctbx/cctbx_sources/iotbx/cif/__init__.py", """\
     for hkl in indices:
       refln_loop.add_row(hkl)
     return refln_loop
 """, """\
-    # a column at a time: add_row's per-row key lookups were most of an fcf
-    # block on an A53 (same strings)
+    # a column at a time: add_row's per-row key lookups dominate an fcf block
+    # (same strings)
     hkl = list(indices)
     for i, key in enumerate(refln_loop):
       refln_loop[key].extend(flex.std_string([str(x[i]) for x in hkl]))
     return refln_loop
 """),
     # loop.show with a format string (the fcf in as_cif_block): no deepcopy, numeric columns
-    # out of their buffers, one write; ZP2 0.37 -> 0.19 s. Same text
+    # out of their buffers, one write. Same text
     ("cctbx/cctbx_sources/iotbx/cif/model.py", """\
       #   contain spaces.
       # Avoid modifying self in place
@@ -261,8 +258,8 @@ PATCHES = [
         print(fmt_str % tuple([values[j][i] for j in range_len_values]), file=out)
 """, """\
       # whole columns to python once and one write: element access and a print
-      # per row were most of an fcf on an A53 (same text). Numbers come straight
-      # from their buffers, list() is a boost call per element
+      # per row dominate an fcf (same text). Numbers come straight from their
+      # buffers, list() is a boost call per element
       import array
       def as_list(v):
         for t, c in ((flex.int, "i"), (flex.double, "d")):
@@ -272,8 +269,7 @@ PATCHES = [
       out.write("".join([fmt_str % row + "\\n" for row in zip(*[as_list(v) for v in values])]))
 """),
     # loop.show aligned: a formatted copy per column instead of deepcopy + per-cell assignment and a
-    # print per row; the refinement CIF 0.10 -> 0.09 s, an aligned fcf 1.35 -> 1.0 s. Every text
-    # identical on the tablet. Proposed for cctbx, carried here until then
+    # print per row; every text identical. Proposed for cctbx, carried here until then
     ("cctbx/cctbx_sources/iotbx/cif/model.py", """\
       fmt_str = []
       # Avoid modifying self in place
@@ -296,9 +292,9 @@ PATCHES = [
       out.write("".join([(fmt_str % row).rstrip() + "\\n"
                          for row in zip(*[list(v) for v in values])]))
 """),
-    # calculate_angles: python copies of the pair table and the sites, as for the dihedrals; ZP2 0.115 ->
-    # 0.077 s, sucrose 0.106 -> 0.071 s, every angle, rt_mx and su bitwise equal (the same copy makes
-    # calculate_distances slower, so not there). Proposed for cctbx, carried here until then
+    # calculate_angles: python copies of the pair table and the sites, as for the dihedrals; every
+    # angle, rt_mx and su bitwise equal (the same copy makes calculate_distances slower, so not
+    # there). Proposed for cctbx, carried here until then
     ("cctbx/cctbx_sources/cctbx/crystal/__init__.py", """\
     ## angle is formed by j_seq-i_seq-k_seq
     for i_seq,asu_dict in enumerate(self.pair_asu_table.table()):
@@ -334,8 +330,8 @@ PATCHES = [
               site_frac_k = sites_frac[k_seq]
 """),
     # FLINT's assemble: each placement round re-searched every (placed, unplaced) pair over all
-    # ops x 27 shifts; a placed site never moves, so the pair answer is memoised. FLINT water
-    # 2680 -> <= 408 searches (4.0 s on the tablet), same sites. Proposed for cctbx, carried here until then
+    # ops x 27 shifts; a placed site never moves, so the pair answer is memoised. Same sites.
+    # Proposed for cctbx, carried here until then
     ("cctbx/cctbx_sources/smtbx/ab_initio/assemble.py", """\
   max_gap = 0.0
 
@@ -354,8 +350,7 @@ PATCHES = [
         d, site = seen[i, j]
 """),
     # FLINT's space-group shortlist: solve_in per candidate ran one after another, each with
-    # only 4 trials, so half of the 8 cores idled (9.95 s of 15.5 s on water). The solves now
-    # run concurrently; R1 stays in rank order on the calling thread, so split_free's global
+    # only 4 trials, so half of 8 cores idled. The solves run concurrently; R1 stays in rank order on the calling thread, so split_free's global
     # RNG draws are the serial ones. Proposed for cctbx, carried here until then
     ("cctbx/cctbx_sources/smtbx/ab_initio/composite.py", """\
   entries = []
@@ -390,11 +385,10 @@ PATCHES = [
     except Exception:
       return None
 
-  # The candidates solve concurrently: a solve_in runs only 4 trials, which
-  # left half of an 8-core machine idle, and multi_trial's answer does not
-  # depend on its threading. R1 stays on this thread in rank order, because
-  # split_free reseeds and draws from the global flex generator: the draws,
-  # and the state left behind, are the serial ones.
+  # the candidates solve concurrently: a solve_in runs only 4 trials, and
+  # multi_trial's answer does not depend on its threading. R1 stays on this
+  # thread in rank order, because split_free reseeds and draws from the global
+  # flex generator: the draws, and the state left behind, are the serial ones
   # ponytail: each solve gets all n_threads; only the 16-trial fallback
   # oversubscribes, split n_threads per candidate if that ever matters
   jobs = None

@@ -145,10 +145,9 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
     Clear();
     bool free = format.Equals("free");
     size_t start = 0;
-    /* data that is not in the 3I4,2F8 layout: F9.2 or space-separated columns
-    (43 COD files), or a "SHELXL file:" header of a few lines before the fixed
-    columns. Skip to the first line that reads as one or the other; a CIF or
-    fcf never has one within the first lines
+    /* data not in the 3I4,2F8 layout: F9.2 or space-separated columns, or a
+    "SHELXL file:" header of a few lines before the fixed columns. Skip to the
+    first line that reads as either; a CIF or fcf has none in its first lines
     */
     if (format.IsEmpty() && !IsHKLFileLine(SL[0])) {
       for (; start < SL.Count() && start < 8; start++) {
@@ -185,6 +184,7 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
             toks[4].ToDouble());
         }
         catch (const TExceptionBase &) {
+          // old: break; - dropped the rest of the file
           // an overflowed column ("011545064  104806"): skip the line
           continue;
         }
@@ -431,8 +431,7 @@ void THklFile::LoadHklmFromStrings(const TStrList& SL) {
         !toks[5].IsNumber())
       {
         // before the data a header; after it an unreadable line (an
-        // overflowed "********" column, a stray character) is skipped and
-        // reported: stopping there silently dropped the rest of the file
+        // overflowed "********" column, a stray character), skipped and reported
         if (!Refs.IsEmpty() || !Satellites.IsEmpty()) {
           if (bad_cnt++ == 0) {
             first_bad = i;

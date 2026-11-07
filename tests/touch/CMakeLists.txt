@@ -1,8 +1,7 @@
-# Touch-gesture translation test: olex/touchnav.cpp against the real glib
-# TGlRenderer/TGlMouse, fed synthesised wx gesture events. No window, no GL
-# context. Desktop-only; the Android build lives in android/.
-#   cmake -S tests/touch -B <build> -G Ninja -DwxWidgets_ROOT_DIR=C:/wxWidgets-3.2.6
-#   cmake --build <build> -j 6 && ctest --test-dir <build>
+# touch-gesture test: olex/touchnav.cpp against the real glib renderer, no
+# window, no GL context. Desktop only
+#   cmake -S tests/touch -B <build> -DwxWidgets_ROOT_DIR=<wx>
+#   cmake --build <build> && ctest --test-dir <build>
 cmake_minimum_required(VERSION 3.24)
 project(olex2_touch_test CXX)
 set(CMAKE_CXX_STANDARD 17)

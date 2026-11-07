@@ -60,9 +60,8 @@ public:
   DefPropC(int, Alias)
   DefPropP(int, Number)
   DefPropP(olxch, ChainId)
-  /* a blank counts as none - taken as a chain it writes 'RESI CLS  :1', an
-  empty chain and a colon, which does not read back
-  */
+  // old: bool HasChainId() const { return ChainId != NoChainId(); }
+  // a blank counts as none: as a chain it writes 'RESI CLS  :1', which does not read back
   bool HasChainId() const {
     return ChainId != NoChainId() && ChainId != ' ' && ChainId != '\0';
   }

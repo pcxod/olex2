@@ -5065,8 +5065,7 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
         if (vertices.Count() < 3 || triags.IsEmpty()) {
           Error.ProcessingError(__OlxSrcInfo, "no triangles in the obj file");
         }
-        // -f=file: one packed RGB per face line, overrides the mtl (Olex2
-        // colours a per-face property through its own scale this way)
+        // -f=file: one packed RGB per face line, overrides the mtl
         olxstr colour_fn = Options.FindValue('f');
         if (!colour_fn.IsEmpty() && TEFile::Exists(colour_fn)) {
           TStrList cl = TEFile::ReadLines(colour_fn);
@@ -5141,10 +5140,9 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
           center += vertices[i];
         }
         center /= vertices.Count();
-        /* one normal per vertex, the average of its faces: marching cubes
+        /* one normal per vertex, the average of its faces; marching cubes
         writes every triangle with its own three vertices and no vn, so the
-        vertices are merged by coordinate first; a normal per face gave the
-        terraced look of the coloured surfaces
+        vertices are merged by coordinate first
         */
         TArrayList<vec3f> &normals = *(new TArrayList<vec3f>(triags.Count() * 3));
         TArrayList<vec3f> &data = *(new TArrayList<vec3f>(triags.Count() * 3));
@@ -5207,6 +5205,33 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
         }
         uo->SetVertices(&data);
         uo->SetNormals(&normals);
+        /* old: one normal per face (faceted shading) and a new object on
+        every call, even for an existing name
+        TArrayList<vec3f> &normals = *(new TArrayList<vec3f>(triags.Count()));
+        TArrayList<vec3f> &data = *(new TArrayList<vec3f>(triags.Count() * 3));
+        for (size_t i = 0; i < triags.Count(); i++) {
+          vec3f tc;
+          for (int j = 0; j < 3; j++) {
+            data[3 * i + j] = vertices[triags[i][j]];
+            tc += vertices[triags[i][j]];
+          }
+          tc /= 3;
+          vec3f n = (vertices[triags[i][0]] - vertices[triags[i][1]]).XProdVec(
+            (vertices[triags[i][2]] - vertices[triags[i][1]])).Normalise();
+          if ((tc - center).DotProd(n) < 0) {
+            n *= -1;
+          }
+          else {
+            olx_swap(data[3 * i], data[3 * i + 2]);
+          }
+          normals[i] = n;
+        }
+        TDUserObj* uo = new TDUserObj(FXApp->GetRenderer(), sgloTriangles,
+          Cmds[1]);
+        uo->SetVertices(&data);
+        uo->SetNormals(&normals);
+        FXApp->AddObjectToCreate(uo);
+        */
         /* -t=alpha, 0..1: a see-through surface. The colour drives the
         material (sglmColorMat), so the alpha has to go into the colours -
         the obj's mtl and the colour file come through OLX_RGB, which leaves

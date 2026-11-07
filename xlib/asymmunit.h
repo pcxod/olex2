@@ -177,10 +177,9 @@ public:
   //creates a new residue
   TResidue& NewResidue(const olxstr& RClass, int number,
     int alias, olxch chainId);
-  /* always creates one, registering it only if the number is free. For copying
-  a residue list verbatim: NewResidue renames an empty residue of the same
-  number instead of adding, which loses a mutation site, the residues being
-  created before their atoms
+  /* always creates one, registering it only if the number is free: copying a
+  residue list, NewResidue would rename the still empty residue of the same
+  number and lose a mutation site
   */
   TResidue& AddResidue(const olxstr& RClass, int number,
     int alias, olxch chainId);

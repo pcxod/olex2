@@ -11,9 +11,7 @@
 namespace test {
   void DataItemTests(OlxTests& t) {
     t.description = __FUNC__;
-    /* DeleteByName used to pass a field index to DeleteItemByIndex, which
-    throws on a leaf item and removes an unrelated item otherwise
-    */
+    // a field of a leaf item, which has no item of that index
     {
       TDataItem di(0, "root");
       di.SetFieldValue("scope.a", "1");

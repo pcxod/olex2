@@ -201,20 +201,19 @@ int main(int argc, char **argv) {
   by initpy.py under base/cctbx.
   */
   setenv("PYTHONHOME", (base + "/python").c_str(), 1);
-  // C's measurements: one BLAS thread is fastest on every ABI, the OpenMP
-  // loops of smtbx take all cores. Affinity off: libomp's topology probe
-  // aborts under ndk_translation and binding buys nothing on big.LITTLE
+  // one BLAS thread is fastest on every ABI, the OpenMP loops of smtbx take
+  // all cores. Affinity off: libomp's topology probe aborts under
+  // ndk_translation and binding buys nothing on big.LITTLE
   setenv("OPENBLAS_NUM_THREADS", "1", 0);
   setenv("KMP_AFFINITY", "disabled", 0);
-  // FLINT's trials: the adapter's default of cores - 1 leaves the 8th of 8
-  // trials for a second round on the 8-core tablet (52.6 -> 46.5 s on water);
-  // the GUI thread only polls meanwhile
+  // FLINT's trials: the adapter's default of cores - 1 leaves the last of 8
+  // trials for a second round on 8 cores; the GUI thread only polls meanwhile
   setenv("SMTBX_SOLVE_THREADS",
     std::to_string(sysconf(_SC_NPROCESSORS_CONF)).c_str(), 0);
-  // Samsung's hotplug keeps cores 4-7 offline at idle, so Python's
-  // cpu_count() (online cores) says 4 on the 8-core tablet and the
-  // NoSpherA2 CPU list and refinement thread defaults follow it.
-  // Python 3.13 reads this at start-up instead
+  /* hotplug keeps cores offline at idle, so Python's cpu_count() (online
+  cores) undercounts and the NoSpherA2 CPU list and refinement thread defaults
+  follow it. Python 3.13+ reads this at start-up instead
+  */
   setenv("PYTHON_CPU_COUNT",
     std::to_string(sysconf(_SC_NPROCESSORS_CONF)).c_str(), 0);
   /* NoSpherA2 is a PIE executable packaged as libNoSpherA2.so so that it is
@@ -241,8 +240,8 @@ int main(int argc, char **argv) {
   other new syscalls sigsys.c turns into ENOSYS). Inherited by the child
   */
   setenv("GLIBC_TUNABLES", "glibc.pthread.rseq=0", 0);
-  /* SALTED models stay out of the APK: assets are extracted, so the 844 MB
-  combo model would be stored twice. Each volume's
+  /* SALTED models stay out of the APK: assets are extracted, so a model
+  would be stored twice. Each volume's
   Android/data/<package>/files/salted (created here, fillable over USB, no
   permission needed) is registered once as a model folder; the last phil
   assignment wins and the GUI's add/remove edits the list from then on
@@ -271,9 +270,8 @@ int main(int argc, char **argv) {
   }
   // argv[0] is the .so path, /data/app/~~<base64>==/..., and TBasicApp
   // reads any argument holding '=' as an option: Olex2 gets its base dir
-  // from OLEX2_DIR anyway. No file picker before S4: with no
-  // applicationArguments open the bundled sucrose (mainform.cpp loads
-  // argv[1] when the file exists)
+  // from OLEX2_DIR anyway. With no applicationArguments open the bundled
+  // sucrose (mainform.cpp loads argv[1] when the file exists)
   std::string exe = base + "/olex2",
     sample = base + "/sample_data/sucrose/sucrose.res";
   argv[0] = exe.data();

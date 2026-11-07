@@ -14,17 +14,13 @@
 #include "glmaterial.h"
 #include "cartoon_geom.h"
 
-/* one polymer chain as a compiled display list. sgloCommandList and not
-sgloTriangles: IsCompilable() covers only the quadric types, so a triangle
-primitive re-emits every vertex through olx_gl on every frame - hundreds of
-thousands of calls at protein scale. One object per chain rather than per
-residue, the list being the unit of both drawing and rebuilding
+/* one polymer chain as one compiled display list, the unit of drawing and
+rebuilding. sgloCommandList, not sgloTriangles: IsCompilable() covers only the
+quadric types, so a triangle primitive re-emits every vertex on every frame
 */
 BeginGxlNamespace()
 
-/* How a chain is coloured. Applied per residue except for ccChain, which is
-one colour for the whole segment.
-*/
+// how a chain is coloured: per residue, except ccChain, one for the segment
 const short
   ccChain = 0,        // one colour per chain
   ccIndex = 1,        // rainbow along the chain, N terminus blue
@@ -34,17 +30,15 @@ const short
   ccCharge = 5,       // acidic, basic or neutral
   ccResidue = 6;      // one colour per amino acid
 
-/* What to do with everything the backbone trace did not claim: waters, ions,
-sugars, ligands, and anything with no RESI at all.
+/* what to do with everything the backbone trace did not claim: waters, ions,
+sugars, ligands, and anything with no RESI at all
 */
 const short
   cnpHide = 0,        // the cartoon on its own
   cnpShow = 1,        // all of it, as atoms and bonds in the current style
   cnpNoWater = 2;     // ligands and metals, but not the waters
 
-/* The colours each mode uses, shared so that the key drawn in the legend is
-the same code that colours the ribbon rather than a copy of it that can drift.
-*/
+// the colours each mode uses, shared by the ribbon and the legend key
 namespace cartoon_colour {
   // one per chain, cycled; keyed on the chain letter by the caller
   uint32_t Chain(size_t index);
@@ -57,11 +51,9 @@ namespace cartoon_colour {
   uint32_t Residue(size_t index);
   // xlib::protein::ss_*
   uint32_t Secondary(short ss);
-  /* the ribbon's material for one colour, built here so the legend key and the
-  ribbon cannot drift - an unlit swatch reads as a different colour. Colour
-  material off: the ribbon's list emits a glColor per residue, a swatch has
-  nothing to emit one. The ambient stays dark; at full colour it saturates to
-  white under these lights
+  /* the ribbon's material for one colour, shared with the legend key. Colour
+  material off: the ribbon's list emits a glColor per residue. The ambient stays
+  dark; at full colour it saturates to white under these lights
   */
   TGlMaterial RibbonMaterial(uint32_t colour);
 }
@@ -75,17 +67,16 @@ class TXCartoon : public AGDrawObject {
   */
   TArrayList<uint32_t> residue_colours;
   /* TResidue ids, in the same order, so recolouring and the residue subset
-  work can reach the model without re-running the topology.
+  reach the model without re-running the topology
   */
   TArrayList<size_t> residue_ids;
-  /* TCAtom ids of the backbone this ribbon stands for, four per residue -
-  N, CA, C, O - InvalidIndex where a role was not filled. A residue showing its
-  sidechain must not draw the backbone as sticks too, inside its own ribbon.
-  Ids because the classification is topological, not by label
+  /* TCAtom ids (topological, not by label) of the backbone this ribbon stands
+  for, N, CA, C, O per residue, InvalidIndex where unfilled; a residue showing
+  its sidechain must not also draw these as sticks inside its ribbon
   */
   TArrayList<size_t> backbone_atom_ids;
-  /* CA of each residue, in order. The ribbon is one mesh with no per-residue
-  objects, so a click and a residue's share of the centre resolve against this
+  /* CA of each residue, in order; the ribbon has no per-residue objects, so
+  clicks and the centre resolve against this
   */
   TArrayList<vec3d> residue_ca;
   // the selecting pass's stand-in for the ribbon; see DrawPickProxy
@@ -107,10 +98,7 @@ class TXCartoon : public AGDrawObject {
   // the driver rejected the list, so nothing of this chain will be drawn
   mutable bool list_failed;
   olxch chain_id;
-  /* which matrix generated this copy, 0 for the asymmetric unit's own. A
-  generated copy is its own segment and sits elsewhere, which a click has to
-  distinguish
-  */
+  // the matrix that generated this copy, 0 for the asymmetric unit's own
   uint32_t matrix_id;
   void EmitList(TGlPrimitive &p) const;
   void EmitTriangles(size_t from, size_t to) const;
@@ -142,9 +130,7 @@ public:
   uint32_t GetMatrixId() const { return matrix_id; }
   size_t TriangleCount() const { return mesh.TriangleCount(); }
 
-  /* Four per residue, in the order of GetResidueIds: N, CA, C, O, with
-  InvalidIndex where a role was not filled.
-  */
+  // N, CA, C, O per residue in GetResidueIds order, InvalidIndex where unfilled
   const TArrayList<size_t>& GetBackboneAtomIds() const {
     return backbone_atom_ids;
   }
@@ -164,17 +150,15 @@ public:
   const TArrayList<short>& GetResidueSS() const { return residue_ss; }
   const TArrayList<vec3d>& GetResidueCA() const { return residue_ca; }
   /* which residue a line passes closest to, InvalidIndex if none within
-  tolerance. Against the CA rather than the mesh: consecutive CA are 3.8 A
-  apart and the ribbon about 2 A wide, so the nearest CA is the residue under
-  the cursor unless the view is edge-on, at a dot product per residue. dir need
-  not be normalised; dist is how far along the line, for comparing chains
+  tolerance. Against the CA, not the mesh: CA are 3.8 A apart and the ribbon
+  ~2 A wide, so the nearest CA is the one under the cursor unless edge-on. dir
+  need not be normalised; dist is how far along the line, for comparing chains
   */
   size_t HitResidue(const vec3d &from, const vec3d &dir, double &dist,
     double tolerance = 2.5) const;
   /* what the selecting pass sees: a tube of pick_slices sides and pick_radius
-  along the CA trace. Coarse on purpose - it only says which chain, HitResidue
-  settles the residue - so it is emitted per click rather than held as a second
-  list. More slices if clicks near a wide ribbon's edge feel unreliable
+  along the CA trace, emitted per click. Coarse on purpose: it only picks the
+  chain, HitResidue the residue
   */
   void DrawPickProxy() const;
   /* which residue is nearest a point on the projection plane, InvalidIndex if
@@ -183,14 +167,10 @@ public:
   */
   size_t HitResidueProjected(double px, double py, double &q,
     double tolerance = 1.0) const;
-  /* logs the residues competing for a click and the depth Project gives them.
-  Temporary, to settle which way round that depth runs
-  */
+  // logs the residues competing for a click and their Project depth (debug)
   void ReportHitCandidates(double px, double py, size_t chosen) const;
-  /* mouse-down only claims the event; the selection happens on release, and
-  only if the button came up where it went down - otherwise every drag starting
-  on a ribbon selects as well as rotating. TGlMouse's own fallback does the
-  same, gated on IsClick
+  /* mouse-down only claims the event; release selects, and only if it is a
+  click, so a drag starting on a ribbon just rotates (as TGlMouse's IsClick)
   */
   virtual bool OnMouseDown(const IOlxObject *sender, const TMouseData &d);
   virtual bool OnMouseUp(const IOlxObject *sender, const TMouseData &d);
@@ -198,10 +178,8 @@ public:
   void SetPickSlices(int v) { pick_slices = v; }
   double GetPickRadius() const { return pick_radius; }
   void SetPickRadius(double v) { pick_radius = v; }
-  /* toggles one residue in the selection, returning true when the state
-  changed so the caller can skip a rebuild. Kept here rather than in the
-  renderer's selection group: a group holds whole objects, and to the renderer
-  this chain is one - a click on a turn of a helix never meant all of it
+  /* toggles one residue in the selection, true when the state changed. Kept
+  here, not in the renderer's selection group, which holds whole chains
   */
   bool ToggleResidue(size_t i);
   // true when there was something to clear
@@ -217,9 +195,8 @@ public:
   bool HasVisibleResidues() const;
   bool DidListFail() const { return list_failed; }
 
-  /* reads and discards every pending GL error, returning the count. GL latches
-  them and this is the only place in Olex2 that reads them, so an error raised
-  anywhere earlier is waiting to be blamed on whatever checks first
+  /* reads and discards every pending GL error, returning the count; GL latches
+  them and nothing else in Olex2 reads them, so earlier errors wait here
   */
   static size_t DrainGlErrors();
 };

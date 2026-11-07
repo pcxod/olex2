@@ -2221,6 +2221,22 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
     }
     for (size_t i = 0; i < au.AtomCount(); i++) {
       TCAtom &a = au.GetAtom(i);
+      /* old: every N with an H, and the first H of an NH2
+      if (a.IsDeleted() || a.GetType() != iNitrogenZ) {
+        continue;
+      }
+      TCAtom *h_atom = 0;
+      for (size_t j = 0; j < a.AttachedSiteCount(); j++) {
+        TCAtom &aa = a.GetAttachedAtom(j);
+        if (!aa.IsDeleted() && aa.GetType() == iHydrogenZ) {
+          h_atom = &aa;
+          break;
+        }
+      }
+      if (h_atom == 0) {
+        continue;
+      }
+      */
       if (a.IsDeleted() || a.GetType() != iNitrogenZ || !a.IsRingAtom()) {
         continue;
       }
@@ -4692,10 +4708,12 @@ void XLibMacros::funHKLSrc(const TStrObjList& Params, TMacroData &E) {
     if (TEFile::Exists(fn) && !TEFile::IsDir(fn)) {  // check the format...
       static TEFile::FileID fid;
       TEFile::FileID tfid = TEFile::GetFileID(fn);
-      // an .hklm fails the HKL line test by design; renaming it would lose the satellites
+      // an .hklm fails the HKL line test; renaming it would lose the satellites
       if (tfid != fid && !fn.EndsWith(".hkl.fcf") && !THklFile::IsHklmFile(fn)) {
         fid = tfid;
         TEFile f(fn, "rb");
+        // old: renamed free format hkl files to .hkl.fcf
+        // if (!THklFile::IsHKLFileLine(f.ReadLine())) {
         olxstr l = f.ReadLine();
         if (!THklFile::IsHKLFileLine(l) && !THklFile::IsFreeHKLLine(l)) {
           f.Close();
@@ -5465,11 +5483,33 @@ void CifMerge_EmbeddData(TCif &Cif, bool insert_res, bool insert_hkl,
   if (insert_hkl) {
     olxstr hkl_src = xapp.XFile().LocateHklFile();
     if (TEFile::Exists(hkl_src)) {
-      /* The loop is rendered once and kept while the hkl content is the same:
-      later merges skip parsing the file and building and freeing ~5 cells per
-      reflection (~1 s for 37k reflections on an A53). Only into a temporary
-      TCif - a loaded CIF keeps real rows for anything that reads them.
-      ponytail: the last hkl only, one copy of its loop text in memory.
+      /* old: parsed the hkl file and built the loop cells on every merge
+      THklFile hkl;
+      hkl.LoadFromFile(hkl_src, false);
+      cetTable* t;
+      if (hkl_fcf_format) {
+        Cif.Remove("_refln");
+        t = THklFile::ExperimentalToFCF(hkl.RefList(), Cif);
+      }
+      else {
+        Cif.Remove("_diffrn_refln");
+        t = THklFile::ExperimentalToCIF(hkl.RefList(), Cif);
+      }
+      if (use_md5) {
+        olxstr_buf bf;
+        for (size_t i = 0; i < t->RowCount(); i++) {
+          for (size_t j = 0; j < t->ColCount(); j++) {
+            bf << (*t)[i][j]->GetStringValue();
+          }
+        }
+        Cif.SetParam("_olex2_hkl_file_MD5",
+          MD5::Digest(olxcstr(olxstr(bf).DeleteChars(' '))), false);
+      }
+      */
+      /* the loop is rendered once and kept while the hkl content is the same,
+      so later merges skip parsing and building the cells. Only into a temporary
+      TCif: a loaded CIF keeps real rows for anything that reads them. Only the
+      last hkl is cached, one copy of its loop text
       */
       static olxstr cache_key;
       static TStrList cache_cols;
@@ -9565,8 +9605,7 @@ void XLibMacros::macUpdateAfix(TStrObjList& Cmds, const TParamList& Options,
     if (d < 0) {
       continue;
     }
-    // X-H distances only: a riding group with a non-H member (BF4 F atoms in
-    // AFIX 3 on B, C in AFIX 3 on S) keeps its geometry
+    // X-H distances only: a riding group with a non-H member keeps its geometry
     bool all_h = true;
     for (size_t ai = 0; ai < ag.Count(); ai++) {
       if (ag[ai].GetType() != iHydrogenZ) {

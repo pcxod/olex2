@@ -119,12 +119,10 @@
 #endif
 
 namespace {
-  /* SaveVFS serializes on the caller and writes the file here: global.odb is
-  3.5 MB and run_skin flushes it on every structure load (25-50 ms per changed
-  flush on an A53 written inline, 22-26 ms on the main thread now). One write
-  at a time; SaveVFS, LoadVFS and exit wait for it. The worker touches only
-  its job: olxstr reference counts are not atomic and exceptions are not
-  logged (AutoLog is off) */
+  /* SaveVFS serializes on the caller and writes the file here, one write at a
+  time; SaveVFS, LoadVFS and exit wait for it. The worker touches only its
+  job: olxstr reference counts are not atomic and AutoLog is off
+  */
   struct VFSJob {
     TEMemoryStream data;
     olxstr fn;
@@ -1414,8 +1412,7 @@ void TMainForm::StartupInit() {
     FGlCanvas->XApp(FXApp);
   }
 #ifdef __ANDROID__
-  // 10 pt reads as ~13 px glyphs on a 224 dpi tablet; only a fresh install
-  // sees this, an existing last.osp keeps its stored <Fonts>
+  // 10 pt is too small on a tablet; an existing last.osp keeps its <Fonts>
   wxFont Font(14, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
 #else
   wxFont Font(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);//|wxFONTFLAG_ANTIALIASED);
@@ -2099,10 +2096,10 @@ bool TMainForm::Dispatch(int MsgId, short MsgSubId, const IOlxObject *Sender,
         TimePerFrame = FXApp->Draw();
       }
 #ifdef __ANDROID__
-      /* Qt composites only from its event loop, so a long python job (solve,
-         refine - these run silent) left the screen frozen on the last frame,
-         dialog included; paint/size events only - no taps reach the GUI
-         mid-job. At most ~5 times a second */
+      /* Qt composites only from its event loop, so a long silent python job
+      froze the screen; UI events only (no taps reach the GUI mid-job), at
+      most every 200 ms
+      */
       static uint64_t last_yield = 0;
       if (TETime::msNow() - last_yield > 200 && wxEventLoopBase::GetActive()) {
         wxEventLoopBase::GetActive()->YieldFor(wxEVT_CATEGORY_UI);
@@ -2833,6 +2830,19 @@ void TMainForm::OnResize() {
   FGlCanvas->GetClientSize(&w, &h);
   w = olx_round(w*sf);
   h = olx_round(h*sf);
+  /* old: scaled w and h before SetSize, which takes window units, so the
+  canvas came out sf times too large on a HiDPI screen
+  w = static_cast<int>(w*sf);
+  h = static_cast<int>(h*sf);
+  if (CmdLineVisible) {
+    FCmdLine->WI.SetWidth(w);
+    FCmdLine->WI.SetLeft(l);
+    FCmdLine->WI.SetTop(h - FCmdLine->WI.GetHeight());
+  }
+  ...
+  FGlCanvas->SetSize(l, 0, w, h - (CmdLineVisible ? FCmdLine->WI.GetHeight() : 0));
+  FGlCanvas->GetClientSize(&w, &h);
+  */
   FXApp->GetRenderer().Resize(0, 0, w, h, 1);
   FGlConsole->Resize(0, dheight, w, h - dheight);
   if (FInfoBox->IsCreated()) {
@@ -4096,13 +4106,19 @@ void TMainForm::SaveVFS(short persistenceId) {
     }
     vfs_writer.Join(); // the file is briefly missing while a write renames it
     // one segment sized from the last save: default 1 KB segments cost
-    // thousands of mallocs, most of a 30 ms serialization on an A53
+    // thousands of mallocs
     std::unique_ptr<VFSJob> job(new VFSJob(TEFile::Exists(dbFN)
       ? (size_t)TEFile::FileLength(dbFN) + 65536 : DefBufferSize));
     job->fn = olxstr(dbFN.raw_str(), dbFN.Length()); // own buffer
     TFileHandlerManager::SaveToStream(job->data, persistenceId);
     vfs_writer.Start(job.release());
     saved.Add(dbFN) = gen;
+    /* old: serialized and written inline on every call, even when unchanged
+    TEFile dbf(dbFN + ".tmp", "wb");
+    TFileHandlerManager::SaveToStream(dbf, persistenceId);
+    dbf.Close();
+    TEFile::Rename(dbFN + ".tmp", dbFN);
+    */
   }
   catch (const TExceptionBase &e) {
     TBasicApp::NewLogEntry(logInfo) << "Failed to save VFS: " << e;

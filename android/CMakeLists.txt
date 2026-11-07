@@ -14,8 +14,7 @@ if (NOT ANDROID)
   message(FATAL_ERROR "android/ is the Android build; desktop builds use the root CMakeLists.txt")
 endif ()
 
-# OFF gives the plain NDK Release build (-O3 -DNDEBUG), the baseline the
-# tuned numbers in README.md are measured against
+# OFF gives the plain NDK Release build (-O3 -DNDEBUG)
 option(OLX_TUNE "per-ABI code generation and ThinLTO" ON)
 if (OLX_TUNE)
   include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/abi_flags.cmake")
@@ -66,8 +65,8 @@ target_include_directories(olex2 PRIVATE
 target_compile_definitions(olex2 PRIVATE __WXWIDGETS__ _UNICODE)
 # armv7: Android <= 8.1's libm exports libgcc's unwinder and precedes Qt5Core
 # in our DT_NEEDED, so an imported _Unwind_Resume or __aeabi_unwind_cpp_pr*
-# bound there and every C++ exception aborted (SM-T585). The NDK's libunwind
-# goes first, before any .so can satisfy those symbols
+# binds there and every C++ exception aborts. The NDK's libunwind goes first,
+# before any .so can satisfy those symbols
 set(_olx_unwind "")
 if (ANDROID_ABI STREQUAL "armeabi-v7a")
   file(GLOB _olx_unwind
@@ -81,9 +80,9 @@ target_link_libraries(olex2 PRIVATE ${_olx_unwind}
   ${_olx_qt_libs} android log)
 # keep gl4es's gl* symbols inside libolex2: Qt's own GLES calls must not bind to them
 target_link_options(olex2 PRIVATE "LINKER:--exclude-libs,ALL")
-# 3606 of the 5392 PLT slots (armv7) were calls to libolex2's own functions;
-# nothing loaded ahead of it defines any of them, so binding them locally only
-# turns indirect calls into direct ones
+# most PLT slots are calls to libolex2's own functions; nothing loaded ahead
+# of it defines any of them, so binding them locally only turns indirect
+# calls into direct ones
 target_link_options(olex2 PRIVATE "LINKER:-Bsymbolic-functions")
 # stripped here: build.gradle keeps gradle's llvm-strip off every .so, because
 # it breaks the patchelf'ed payload libs (segment offsets lose their alignment)
@@ -124,7 +123,7 @@ if (OLX_PYTHON)
   set(_triple_armeabi-v7a arm-linux-androideabi)
   set(_triple_x86 i686-linux-android)
   set(_triple_x86_64 x86_64-linux-android)
-  # updates stay off on Android, so no _OPENSSL (see c6cb2350)
+  # updates stay off on Android, so no _OPENSSL
   target_compile_definitions(olex2 PRIVATE _PYTHON)
   if (NOT OLX_PYTHON_INCLUDE)
     set(OLX_PYTHON_INCLUDE "${payload}/python/include/python${OLX_PYTHON_VERSION}")
@@ -144,8 +143,7 @@ if (OLX_QT EQUAL 5)
   configure_file(qt5/AndroidManifest.xml "${pkg}/AndroidManifest.xml" COPYONLY)
   configure_file(qt5/build.gradle "${pkg}/build.gradle" COPYONLY)
   file(COPY qt5/src DESTINATION "${pkg}")
-  # Qt 5.15.2's own wrapper is Gradle 5.6.4: Qt 6.11.1's (9.3.1) instead, kept outside C:/Qt since the
-  # 6.12.0 update removed 6.11.1 (9 Oct 2026; 6.12.0 ships 9.5.1)
+  # Qt 5.15.2's own wrapper is Gradle 5.6.4, which needs JDK <= 11
   set(OLX_GRADLE_WRAPPER "D:/Android/gradle-wrapper-9.3.1" CACHE PATH
     "gradlew, gradlew.bat and gradle/wrapper of a Gradle that runs on JDK 17")
   file(COPY "${OLX_GRADLE_WRAPPER}/gradlew" "${OLX_GRADLE_WRAPPER}/gradlew.bat"

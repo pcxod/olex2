@@ -11,8 +11,9 @@ import android.os.IBinder;
 
 /* Foreground service while Olex2 is in the background: the process moves from
 cached (adj 900+) to perceptible (adj 200), so the low-memory killer takes the
-cached apps first and a reopen is a 0.2 s resume, not a 9 s cold start
-(Python, cctbx, GUI). Started and stopped by OlexApplication. */
+cached apps first and a reopen resumes instead of cold-starting Python, cctbx
+and the GUI. Started and stopped by OlexApplication
+*/
 public class KeepAlive extends Service {
     static final String CHANNEL = "olex2_keepalive";
 

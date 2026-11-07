@@ -13,7 +13,7 @@ for t in arm-none-linux-gnueabihf aarch64-none-linux-gnu; do
 done
 [ -d tc/x86-i686--glibc--stable-2026.08-1 ] || tar -C tc -xf $SRC/x86-i686--glibc--stable-2026.08-1.tar.xz
 [ -d OpenBLAS-0.3.28 ] || tar -xzf $SRC/OpenBLAS-0.3.28.tar.gz
-# the release tag as a plain tree (never build from the working copy, see the pTB release-build note)
+# the release tag as a plain tree, never the working copy
 if [ ! -d ptb-src ]; then
   mkdir ptb-src
   git -c safe.directory='*' -C /mnt/d/git/ptb archive v3.11-NoSpherA2 source | tar -x -C ptb-src
@@ -22,7 +22,7 @@ fi
 for abi in "$@"; do
   AF=""
   case $abi in
-    # armv7ve = hardware sdiv/udiv; -mfpu=neon as before, so no FMA and the same results
+    # armv7ve = hardware sdiv/udiv; -mfpu=neon, so no FMA and the same results
     armeabi-v7a) P=$W/tc/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-linux-gnueabihf/bin/arm-none-linux-gnueabihf-
                  OB="TARGET=ARMV7"; AF=" -march=armv7ve -mfpu=neon" ;;
     arm64-v8a)   P=$W/tc/arm-gnu-toolchain-14.2.rel1-x86_64-aarch64-none-linux-gnu/bin/aarch64-none-linux-gnu-

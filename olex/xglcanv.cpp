@@ -241,6 +241,12 @@ void TGlCanvas::OnMouseUp(wxMouseEvent& me)  {
     ShowContextMenu(FMX, FMY, G);
     return;
   }
+  /* old: a second OnMouseUp with the same arguments, after the first one
+  above had already returned false
+  else if (FParent->OnMouseUp(me.m_x, me.m_y, Fl, up)) {
+    FXApp->ResetMouseState(me.m_x, me.m_y);
+  }
+  */
   FXApp->Draw();
   FXApp->ResetMouseState(me.m_x, me.m_y, Fl, MouseButton);
   MouseButton = 0;
@@ -265,6 +271,7 @@ void TGlCanvas::OnMouseMove(wxMouseEvent& me) {
     */
     wxWindow::Refresh();
 #else
+    // old: FXApp->Draw(); - one draw per motion event, DrawLater merges them
     DrawLater();
 #endif
   }

@@ -7,32 +7,16 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-/* Does a compiled OpenGL display list of a protein-sized triangle count still
-rotate?
-
-This is the question the cartoon architecture stands on, and it is a property of
-the driver rather than of Olex2: a compatibility-profile driver may compile a
-display list into an internal vertex buffer, or may replay it as immediate mode,
-and the two differ by orders of magnitude. It needs no model, no lattice and no
-Olex2, so it is answered here instead of inside the application.
-
-The geometry is the real one: gxlib/cartoon_geom.cpp is compiled in and the
-triangles come from BuildTube, emitted exactly as TXCartoon::EmitList emits
-them, one glBegin for the whole chain and one list per chain.
-
-Two things this measures that Olex2's own fps function cannot:
-  - VSync is turned off, so the result is a frame time rather than an
-    observation censored at the refresh rate.
-  - An empty scene is measured in the same run as the control, so the window,
-    driver and compositor overhead is subtracted rather than assumed.
-
+/* frame time of protein-sized cartoon display lists: a driver may compile a
+list into a vertex buffer or replay it as immediate mode. The triangles come
+from gxlib/cartoon_geom.cpp, emitted as TXCartoon::EmitList does, one list per
+chain. VSync is off, and the first row, an empty scene, is the window and
+driver overhead
   cl /O2 /EHsc /I..\..\sdl /I..\..\xlib /I..\..\gxlib cartoon_bench.cpp
     ..\..\gxlib\cartoon_geom.cpp sdl.lib opengl32.lib gdi32.lib user32.lib
 */
 
-/* cartoon_geom.h comes first on purpose: the sdl string headers below it do
-not survive being included after windows.h.
-*/
+// cartoon_geom.h first: the sdl string headers break after windows.h
 #include "cartoon_geom.h"
 
 #include <windows.h>
@@ -41,12 +25,8 @@ not survive being included after windows.h.
 
 typedef BOOL (WINAPI *PFNWGLSWAPINTERVALEXT)(int);
 
-/* Ask a hybrid-graphics laptop for the discrete adapter.
-
-Without these the driver hands out the integrated GPU, and on this machine the
-two differ by more than an order of magnitude at protein triangle counts. Both
-vendors document an exported symbol as the mechanism; it has to be exported
-from the executable itself, not from a library it links.
+/* ask a hybrid-graphics laptop for the discrete GPU; the symbols must be
+exported from the executable itself
 */
 extern "C" {
   __declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
@@ -54,9 +34,8 @@ extern "C" {
 }
 
 //.............................................................................
-/* The same bundle of ideal alpha helices TGXApp::CreateTestCartoon builds: a
-grid rather than one long chain, so the object stays compact on screen. A long
-thin rod would be mostly clipped by the driver and would flatter the result.
+/* the bundle of ideal alpha helices TGXApp::CreateTestCartoon builds: a grid,
+not one long rod the driver would mostly clip
 */
 static void BuildBundle(size_t n_residues,
   TTypeList<xlib::protein::ChainSegment> &out)
@@ -110,10 +89,7 @@ static void BuildScene(size_t n_residues, Scene &s) {
   vec3f mn(1e9f, 1e9f, 1e9f), mx(-1e9f, -1e9f, -1e9f);
   for (size_t i = 0; i < segments.Count(); i++) {
     gxlib::cartoon::Mesh m;
-    /* The shipped path, secondary structure included: the bundle is built from
-    ideal alpha helices, so this measures ribbons rather than plain tube, which
-    is roughly twice the triangles per residue.
-    */
+    // the shipped path with secondary structure: ribbons, not plain tube
     TArrayList<short> ss;
     xlib::protein::AssignSecondaryStructure(segments[i], ss);
     gxlib::cartoon::BuildCartoon(segments[i], ss, p, m);

@@ -41,11 +41,9 @@ struct Mesh {
   size_t VertexCount() const { return vertices.Count(); }
 };
 
-/* cross-section sizes per secondary structure, in A, as semi-axes - the ribbon
-is twice as wide as width. The section is a superellipse |x/w|^e + |y/h|^e = 1
-of width across the ribbon and thickness; a coil sets them equal and is a round
-tube, which is why one builder covers both representations. The point count is
-fixed across the three types so a chain stays one continuous surface
+/* cross-section semi-axes per secondary structure, in A: a superellipse
+|x/w|^e + |y/h|^e = 1, a coil being w = h. The point count is the same for all
+three types so a chain stays one continuous surface
 */
 struct CartoonParams {
   float coil_radius;
@@ -53,17 +51,14 @@ struct CartoonParams {
   float strand_width, strand_thickness;
   // widest point of the arrowhead, and the point it tapers to
   float arrow_width, arrow_tip;
-  /* superellipse exponent of the flat sections. 2 is an ellipse, which comes
-  to an edge thin enough that the ribbon reads as much thinner than its
-  thickness; 4 keeps most of the thickness out to the edge, as every other
-  viewer draws it. The coil is always 2, being round
+  /* superellipse exponent of the flat sections: 2, an ellipse, thins the edge
+  so the ribbon looks thinner than it is, 4 keeps the thickness out to the edge.
+  the coil is always 2
   */
   float edge;
   size_t steps_per_residue;
   size_t slices;
-  /* every residue as coil, whatever it was assigned - the plain CA trace, and
-  the honest one when the assignment is not to be trusted
-  */
+  // every residue as coil whatever it was assigned: the plain CA trace
   bool trace_only;
   CartoonParams()
     : coil_radius(0.30f),
@@ -80,7 +75,7 @@ struct CartoonParams {
   }
 };
 
-/* The plain CA trace: a tube of circular cross-section along the chain. */
+// the plain CA trace: a tube of circular cross-section along the chain
 struct TubeParams {
   float radius;
   size_t steps_per_residue;
@@ -93,11 +88,9 @@ struct TubeParams {
   }
 };
 
-/* the direction the ribbon lies flat along, from the chain step
-A = CA(i+1) - CA(i) and the carbonyl B = O(i) - CA(i). Carson and Bugg (1986)
-give D = (A x B) x A, the part of B perpendicular to A. A x B is the surface
-normal, and using it turns the ribbon ninety degrees - a helix then shows its
-edge. Zero when the two are parallel or either is degenerate
+/* the ribbon's flat direction D = (A x B) x A (Carson and Bugg 1986) from the
+chain step A = CA(i+1) - CA(i) and carbonyl B = O(i) - CA(i); not A x B, the
+normal. zero when A and B are parallel or either is degenerate
 */
 vec3f RibbonWidthDirection(const vec3f &chain_step, const vec3f &carbonyl);
 
@@ -109,15 +102,11 @@ failing. Appends, so several segments share one buffer
 void BuildCartoon(const xlib::protein::ChainSegment &seg,
   const TArrayList<short> &ss, const CartoonParams &p, Mesh &m);
 
-/* The trace on its own. The same builder with every residue coil, so there is
-one implementation of the spline, the frame and the stitching.
-*/
+// the trace on its own: BuildCartoon with every residue coil
 void BuildTube(const xlib::protein::ChainSegment &seg, const TubeParams &p,
   Mesh &m);
 
-/* blue to cyan to green to yellow to red, t clamped to [0,1] - the usual ramp
-for a scalar along a chain, as Coot and PyMOL draw it. OLX_RGBA, 0xAABBGGRR
-*/
+// blue, cyan, green, yellow, red, t clamped to [0,1]; OLX_RGBA, 0xAABBGGRR
 uint32_t RainbowColour(double t);
 
 } // namespace cartoon

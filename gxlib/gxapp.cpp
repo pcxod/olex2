@@ -301,9 +301,8 @@ TGXApp::TGXApp(const olxstr &FileName, AGlScene *scene)
   CartoonHidesAtoms = true;
   CartoonTraceOnly = false;
   CartoonColourMode = ccChain;
-  /* hiding what is not traced keeps the ordered waters off the ribbon, but it
-  also takes the ligands, metals and sugars - an antibody loses its glycans
-  with nothing on screen to say so. 'cartoon -n=nowater' is the middle ground
+  /* hiding what is not traced would also take the ligands, metals and sugars;
+  'cartoon -n=nowater' hides only the waters
   */
   CartoonNonProtein = cnpShow;
   CartoonFocusSidechains = false;
@@ -541,10 +540,8 @@ void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
   TStopWatch sw(__FUNC__);
   sw.start("Initialising");
   const vec3d glCenter = GlRenderer->GetBasis().GetCenter();
-  /* The mesh has the coordinates baked in, so it cannot outlive the model. The
-  hidden-atom record is dropped rather than acted on: every atom is about to be
-  destroyed and recreated with fresh visibility, and CreateCartoons below
-  re-hides whatever the new trace claims.
+  /* the mesh has the coordinates baked in; the hidden-atom record is dropped,
+  not acted on, since every atom is recreated and CreateCartoons re-hides
   */
   ClearCartoons();
   CartoonHiddenAtoms.Clear();
@@ -653,9 +650,8 @@ void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
   for (size_t i = 0; i < Rings.Count(); i++) {
     Rings[i].Create();
   }
-  /* above this a structure is a polymer, and several thousand balls and sticks
-  is not a usable display - so the cartoon is the default, until the user says
-  otherwise and their choice stands for the session. 0 switches it off
+  /* the cartoon is the default above this residue count until the user sets it
+  for the session; 0 switches the default off
   */
   if (!CartoonUserSet && !CartoonsVisible) {
     const size_t threshold = TBasicApp::GetOptions()
@@ -680,11 +676,8 @@ void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
   if (!is_polymer) {
     is_polymer = HasPolymerBackbone();
   }
-  /* whether the model has a backbone is a question about the model; whether a
-  cartoon is on screen is one about the display. Answering the first with the
-  second is wrong both ways - a small molecule loaded after a protein came back
-  with CGLS-J and protein restraints, and a protein with the cartoon off would
-  be reported as not a polymer
+  /* asked of the model, not of whether a cartoon is on screen, which is wrong
+  both for a small molecule after a protein and for a protein with it off
   */
   SuggestPolymerRefinement(is_polymer);
 
@@ -773,11 +766,8 @@ void TGXApp::CenterView(bool calcZoom) {
     vec3d::UpdateMinMax(a.crd(), miN, maX);
     weight += 1;
   }
-  /* the cartoon hides every atom it traces, so the loop above cannot see the
-  protein: the weight comes out zero and nothing is centred, or the waters and
-  ligands that remain take the centre and the model turns about a point outside
-  itself. Each chain contributes its centre weighted by its residue count, as
-  the per-atom sum would have done
+  /* the cartoon hides the atoms it traces, so the loop above misses them; each
+  chain adds its centre weighted by its atom count, as the per-atom sum would
   */
   {
     const TAsymmUnit &rau = XFile().GetAsymmUnit();
@@ -793,9 +783,8 @@ void TGXApp::CenterView(bool calcZoom) {
           continue;
         }
         const TResidue &r = rau.GetResidue(ids[j]);
-        /* the standard count first, the model's own only for a name outside
-        the twenty: a residue with an unbuilt sidechain should carry the weight
-        of the residue it is, or the centre creeps towards the ordered parts
+        /* the standard count, so an unbuilt sidechain still carries its weight;
+        the model's own count only for a non-standard residue
         */
         size_t n = xlib::protein::ResidueAtomCount(r.GetClassName());
         if (n == 0) {
@@ -1775,8 +1764,7 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IOlxObject* Sender,
       StoreLabels();
       ClearLines();
       ClearAngles();
-      // named residues of the file being replaced, and residue ids are not
-      // stable across a load
+      // residue ids are not stable across a load
       CartoonSidechains.Clear();
       LoadingFile = true;
     }
@@ -4104,6 +4092,10 @@ void TGXApp::UpdateLabels()  {
 void TGXApp::Update() {
   Draw();
 #ifdef __WXWIDGETS__
+  /* old: dispatched from any thread; Update() is reached from Python worker
+  threads too, and only the main thread may run the event loop
+  if (wxTheApp->Pending()) {
+  */
   if (wxIsMainThread() && wxTheApp->Pending()) {
     wxTheApp->Dispatch();
   }
@@ -4115,9 +4107,9 @@ uint64_t TGXApp::Draw() {
     return 0;
   }
 #ifdef __WXWIDGETS__
-  // Python prints from worker threads (concurrent.futures) reach here via
-  // runPrintText -> Update(); wxQt aborts on a GL context made current off
-  // the main thread
+  /* Python prints from worker threads reach here via runPrintText -> Update();
+  wxQt aborts on a GL context made current off the main thread
+  */
   if (!wxIsMainThread()) {
     return 0;
   }
@@ -5517,10 +5509,8 @@ public:
 };
 
 bool TGXApp::GetVisibleAtomBounds(vec3d& mn, vec3d& mx, double inc) {
-  /* The fractional box the visible atoms occupy, padded by the furthest a
-  mask built from them could reach. Same atoms BuildSceneMask uses, so the box
-  is guaranteed to contain that mask - the point being to know the extent
-  before spending anything on the map.
+  /* fractional box of the visible atoms, padded by the reach of a mask built
+  from them; same atoms as BuildSceneMask, so the box contains that mask
   */
   mn = vec3d(100);
   mx = vec3d(-100);
@@ -6357,10 +6347,8 @@ void TGXApp::SelectAll(bool Select) {
     }
   }
   if (!Select) {
-    /* The ribbon's residues are not in the renderer's selection group - it
-    holds whole objects and a chain is one of them - so clearing the selection
-    has to reach them separately, or 'sel -u' would leave residues highlighted
-    with nothing to un-highlight them.
+    /* ribbon residues are not in the renderer's selection group, which holds
+    whole chains, so they are cleared separately
     */
     for (size_t i = 0; i < Cartoons.Count(); i++) {
       if (Cartoons[i]->ClearResidueSelection()) {
@@ -6536,10 +6524,7 @@ void TGXApp::CreateRings(bool force, bool create) {
 }
 //..............................................................................
 namespace {
-  /* Water, by name where the file gives one and by shape where it does not.
-  A residue of a single oxygen is a water whatever it is called, and a file that
-  has been through a refinement often calls them nothing in particular.
-  */
+  // water by name, or by shape: a residue of a single oxygen, whatever its name
   bool IsWaterResidue(const TAsymmUnit &au, size_t resi_id) {
     if (resi_id == InvalidIndex || resi_id >= au.ResidueCount()) {
       return false;
@@ -6566,9 +6551,8 @@ namespace {
     return heavy == 1 && oxygen_only;
   }
 
-  /* mean Ueq over the residue's non-hydrogen atoms. GetUiso() is kept equal to
-  the ellipsoid's Ueq, so one accessor covers both. Hydrogens ride and are
-  usually tied to the parent, and including them flattens the contrast
+  /* mean Ueq over the non-hydrogen atoms (GetUiso() equals the ellipsoid's
+  Ueq); riding hydrogens would flatten the contrast
   */
   bool ResidueMeanUeq(const TAsymmUnit &au, size_t resi_id, double &out) {
     if (resi_id == InvalidIndex || resi_id >= au.ResidueCount()) {
@@ -6594,16 +6578,13 @@ namespace {
     return true;
   }
 
-  /* Returns 0 when the segment produced no geometry, so a chain of one residue
-  or a degenerate trace costs nothing but is not an error.
-  */
+  // 0 when the segment produced no geometry, which is not an error
   TXCartoon *NewCartoonSegment(TGlRenderer &r,
     const xlib::protein::ChainSegment &seg, const cartoon::CartoonParams &p,
     size_t index)
   {
-    /* The collection name must be unique per segment: a shared collection that
-    already carries a primitive is left alone by Create(), which is what makes
-    the atom collections cheap and would here silently draw one chain twice.
+    /* unique per segment: Create() leaves a collection that already carries a
+    primitive alone, which would draw one chain twice
     */
     olxstr cn = olxstr("Cartoon-") << seg.chain_id << '-' << index;
     olx_object_ptr<TXCartoon> c = new TXCartoon(r, cn);
@@ -6612,10 +6593,8 @@ namespace {
     if (c->TriangleCount() == 0) {
       return 0;
     }
-    /* Deliberately not created here. The colours and the focus have to be
-    settled first, or Create() emits the display list once and the colouring
-    pass immediately emits it again - which is twice the work and, when
-    something goes wrong, twice the entries in the log for one chain.
+    /* not created here: colours and focus come first, or the display list is
+    emitted twice
     */
     return c.release();
   }
@@ -6623,10 +6602,8 @@ namespace {
 //..............................................................................
 bool TGXApp::HasPolymerBackbone() {
   const TAsymmUnit &au = XFile().GetAsymmUnit();
-  /* Residue 0 is everything outside a RESI, so one residue means none, and a
-  model with no residues cannot have a backbone the classifier would find.
-  This is what keeps the cost off every small molecule, since the question is
-  asked on every model change and not only on load.
+  /* residue 0 is everything outside a RESI, so one residue means none; keeps
+  the cost off small molecules, as this runs on every model change
   */
   if (au.ResidueCount() <= 1) {
     return false;
@@ -6645,8 +6622,7 @@ bool TGXApp::HasPolymerBackbone() {
   }
   TTypeList<xlib::protein::ChainSegment> segments;
   xlib::protein::ExtractSegments(au, atoms, segments);
-  // the same two-residue minimum the cartoon uses: one residue on its own is
-  // not a chain, and nothing can be interpolated along it
+  // the same two-residue minimum the cartoon uses
   for (size_t i = 0; i < segments.Count(); i++) {
     if (segments[i].residues.Count() >= 2) {
       return true;
@@ -6687,11 +6663,7 @@ size_t TGXApp::CreateCartoons() {
     if (segments[i].residues.Count() < 2) {
       continue;
     }
-    /* Keyed on the chain, not on how many segments have been built so far. A
-    chain broken in two is two segments but one chain: indexing by segment gave
-    the two halves different colours while the legend, which keys on the chain
-    letter, listed one row for them - four rows against five coloured objects.
-    */
+    // keyed on the chain, so both halves of a broken chain share its colour
     size_t ci = chain_order.IndexOf(segments[i].chain_id);
     if (ci == InvalidIndex) {
       ci = chain_order.Count();
@@ -6719,10 +6691,8 @@ size_t TGXApp::CreateCartoons() {
   sw.start("Colouring");
   ApplyCartoonColours(false);
   sw.start("Compiling the display lists");
-  /* GL latches errors until they are read, and nothing else in Olex2 ever
-  reads them, so anything already pending would be attributed to the first
-  chain compiled below. Cleared here, and reported, because a pending error
-  means something else went wrong earlier and nobody noticed.
+  /* GL latches errors until read and nothing else reads them, so pending ones
+  are drained and reported here rather than blamed on the first chain
   */
   const size_t pending = TXCartoon::DrainGlErrors();
   if (pending != 0) {
@@ -6732,10 +6702,8 @@ size_t TGXApp::CreateCartoons() {
   for (size_t i = 0; i < Cartoons.Count(); i++) {
     Cartoons[i]->Create();
   }
-  /* Nothing may hide the atoms unless there is something to show instead.
-  A driver that refuses a list of this size would otherwise leave an empty
-  window, which reads as the program being broken rather than as a limit having
-  been hit.
+  /* atoms are hidden only when the cartoon replacing them compiled, or a driver
+  refusing the list would leave an empty window
   */
   size_t failed = 0;
   for (size_t i = 0; i < Cartoons.Count(); i++) {
@@ -6787,10 +6755,8 @@ void TGXApp::ApplyCartoonColours(bool rebuild) {
     return;
   }
   const TAsymmUnit &au = XFile().GetAsymmUnit();
-  /* Ueq is ramped over the range actually present in the traced residues, not
-  over a fixed scale: the useful contrast in a well-ordered structure sits in a
-  much narrower band than in a poorly ordered one, and a fixed scale would show
-  either all blue or all red depending on which it was.
+  /* Ueq is ramped over the range present in the traced residues; a fixed scale
+  would show a well- or poorly-ordered structure all blue or all red
   */
   double u_min = 0, u_max = 0;
   bool have_u = false;
@@ -6820,9 +6786,7 @@ void TGXApp::ApplyCartoonColours(bool rebuild) {
     const TArrayList<size_t> &ids = c.GetResidueIds();
     const size_t rc = c.ResidueCount();
     if (CartoonColourMode == ccChain) {
-      /* Keyed on the chain letter rather than on the segment index, so a chain
-      broken into several segments stays one colour.
-      */
+      // keyed on the chain letter, so a broken chain stays one colour
       const olxch ch = c.GetChainId();
       const size_t ci = (ch >= 'A' && ch <= 'Z') ? size_t(ch - 'A') : i;
       c.SetColour(cartoon_colour::Chain(ci));
@@ -6971,9 +6935,8 @@ size_t TGXApp::GetCartoonSelectedAtoms(TSAtomPList &out) {
   if (n == 0) {
     return 0;
   }
-  /* By residue id over all atoms rather than by walking the residues: a
-  symmetry-generated copy has its own TXAtom sharing the model atom, and both
-  copies of a residue picked on a ribbon belong in the seed.
+  /* by residue id over all atoms, so symmetry copies of a picked residue,
+  which share the model atom, are in the seed too
   */
   AtomIterator ai(*this);
   while (ai.HasNext()) {
@@ -6998,10 +6961,7 @@ short TGXApp::CartoonColourModeFromName(const olxstr &name) {
   {
     return ccIndex;
   }
-  /* Three axes where there used to be one "type". A residue is acidic and
-  hydrophilic at the same time, so asking which it is has no answer; asking
-  each separately does.
-  */
+  // polarity and charge are separate axes: a residue can be acidic and polar
   if (name.Equalsi("polarity") || name.Equalsi("solvent") ||
     name.Equalsi("hydrophobicity"))
   {
@@ -7026,10 +6986,8 @@ void TGXApp::HideTracedAtoms() {
   for (size_t i = 0; i < traced.Count(); i++) {
     traced[i] = false;
   }
-  /* Which atoms the ribbons stand for, so a residue can show its sidechain
-  without the backbone appearing twice - once as the ribbon and once as sticks
-  inside it - and which of those are the CA, which is where a sidechain joins
-  what the ribbon draws.
+  /* the atoms the ribbons stand for, so a shown sidechain does not repeat the
+  backbone as sticks, and the CA where a sidechain joins the ribbon
   */
   TArrayList<bool> backbone(au.AtomCount()), alpha(au.AtomCount());
   for (size_t i = 0; i < backbone.Count(); i++) {
@@ -7060,9 +7018,7 @@ void TGXApp::HidePolymerAtoms(const TArrayList<bool> &traced,
   const TArrayList<bool> &backbone, const TArrayList<bool> &alpha)
 {
   const TAsymmUnit &au = XFile().GetAsymmUnit();
-  /* Whether a residue is water is asked once per residue rather than once per
-  atom: a protein brings hundreds of them and the test walks the residue.
-  */
+  // once per residue, not per atom: the test walks the residue
   TArrayList<bool> water;
   if (CartoonNonProtein == cnpNoWater) {
     water.SetCount(au.ResidueCount() + 1);
@@ -7084,10 +7040,8 @@ void TGXApp::HidePolymerAtoms(const TArrayList<bool> &traced,
       hide = true;                      // outside the substructure view
     }
     else if (rid < traced.Count() && traced[rid]) {
-      /* the ribbon is a picture of the backbone, so drawing those atoms as
-      sticks puts a second copy inside it. What it says nothing about is the
-      sidechain, so that is what an asked-for residue gets. The CA comes with
-      it, backbone though it is, or the sticks float beside the ribbon
+      /* the ribbon already draws the backbone, so an asked-for residue gets
+      its sidechain plus the CA, or the sticks float beside the ribbon
       */
       const bool sidechain = (in_focus && CartoonFocusSidechains) ||
         (rid < CartoonSidechains.Count() && CartoonSidechains[rid]);
@@ -7101,8 +7055,7 @@ void TGXApp::HidePolymerAtoms(const TArrayList<bool> &traced,
       }
     }
     else if (in_focus) {
-      // untraced inside the focus: a ligand or a water the user asked to see,
-      // and no ribbon is standing in for it
+      // untraced inside the focus: a ligand or water the user asked to see
       hide = false;
     }
     else if (CartoonNonProtein == cnpHide) {
@@ -7119,10 +7072,8 @@ void TGXApp::HidePolymerAtoms(const TArrayList<bool> &traced,
       CartoonHiddenAtoms.Add(xa);
     }
   }
-  /* An H goes where its atom goes. The amide H of a residue showing its
-  sidechain is no backbone slot, so it survives the pass above while its N is
-  drawn by the ribbon - and floats beside it, once per residue after HADD.
-  Same rule as SyncAtomAndBondVisiblity: kept if any neighbour is visible.
+  /* an H follows its atom, e.g. the amide H whose N the ribbon draws; as in
+  SyncAtomAndBondVisiblity, kept if any neighbour is visible
   */
   ai.Reset();
   while (ai.HasNext()) {
@@ -7143,9 +7094,8 @@ void TGXApp::HidePolymerAtoms(const TArrayList<bool> &traced,
       CartoonHiddenAtoms.Add(xa);
     }
   }
-  /* Bonds are not hidden by hiding their atoms, so the same rule is applied
-  here rather than through ShowResi, which ends in UpdateConnectivity and
-  rebuilds lattice connectivity for the whole file.
+  /* bonds are not hidden with their atoms; done here rather than through
+  ShowResi, whose UpdateConnectivity rebuilds the whole lattice
   */
   BondIterator bi = GetBonds();
   while (bi.HasNext()) {
@@ -7184,8 +7134,9 @@ size_t TGXApp::SetCartoonFocus(const TSAtomPList &seed, double radius) {
       CartoonFocus[rid] = true;
     }
   }
-  // whole residues rather than atoms, the cartoon being indexed by residue: one
-  // joins the focus if any of its atoms is within the radius of any seed atom
+  /* the cartoon is indexed by residue: a residue joins the focus if any of its
+  atoms is within the radius of any seed atom
+  */
   if (radius > 0) {
     const double r2 = radius*radius;
     AtomIterator ai = GetAtoms();
@@ -7253,9 +7204,8 @@ bool TGXApp::ResolveResidues(const olxstr &spec, TSizeList &out) const {
   int from = 0, to = 0;
   const bool every = (nums == '*');
   if (!every) {
-    /* '45-60', or '45' on its own. Residue numbers are not negative in any
-    file Olex2 reads, so a hyphen after the first character is a range and not
-    a sign.
+    /* '45-60' or '45'; residue numbers are never negative, so a hyphen after
+    the first character is a range
     */
     const size_t di = nums.FirstIndexOf('-', 1);
     const olxstr a = (di == InvalidIndex) ? nums : nums.SubStringTo(di);
@@ -7282,10 +7232,8 @@ bool TGXApp::ResolveResidues(const olxstr &spec, TSizeList &out) const {
     out.Add(r.GetId());
     any = true;
   }
-  /* A bare letter is only a chain if the model has one: otherwise it is an
-  element or an atom name, and the atom grammar should have it. An explicit
-  'A:45' is unambiguous even when it names nothing, and saying so is more use
-  than a failure from the atom parser about a label it never saw.
+  /* a bare letter is a chain only if the model has one, else it goes to the
+  atom grammar; an explicit 'A:45' is claimed even when it names nothing
   */
   return any || ci != InvalidIndex || !every;
 }
@@ -7338,10 +7286,7 @@ void TGXApp::SetCartoonFocusSidechains(bool v) {
 }
 //..............................................................................
 void TGXApp::RefreshCartoonAtoms() {
-  /* Only what is drawn as atoms changed, so the mesh, the secondary structure
-  and the chain topology are all still valid: re-running CreateCartoons here
-  would rebuild every one of them to change a visibility flag.
-  */
+  // only atom visibility changed: the mesh and topology stay, no CreateCartoons
   if (!CartoonsVisible || Cartoons.IsEmpty()) {
     return;
   }
@@ -7378,11 +7323,8 @@ size_t TGXApp::SetAtomFocus(const TSAtomPList &seed, double radius,
     }
     (wanted ? in_range : rest).Add(xa);
   }
-  /* the sphere says what is interesting, not where a molecule ends - a radius
-  through a ring leaves half a ring. What it touched is completed to its unit:
-  an atom in a residue to the residue, one in none to its fragment. Residues by
-  id, so every symmetry copy returns; fragments by network, so only the one
-  touched does
+  /* completes what the sphere touched: residues by id, so every symmetry copy
+  returns, atoms outside a residue by network, so only the touched one does
   */
   if (whole && !in_range.IsEmpty()) {
     const TAsymmUnit &au = XFile().GetAsymmUnit();
@@ -7414,10 +7356,7 @@ size_t TGXApp::SetAtomFocus(const TSAtomPList &seed, double radius,
     rest.Pack();
   }
   FocusHiddenAtoms.AddAll(rest);
-  /* a hydrogen follows its parent whether or not the sphere reached it: a cut
-  C-H leaves a bond to nothing, which reads as a modelling problem. Redundant
-  when completing to whole units, but not when that is off
-  */
+  // a hydrogen follows its parent whether or not the sphere reached it
   {
     BondIterator bi = GetBonds();
     while (bi.HasNext()) {
@@ -7438,10 +7377,7 @@ size_t TGXApp::SetAtomFocus(const TSAtomPList &seed, double radius,
   for (size_t i = 0; i < FocusHiddenAtoms.Count(); i++) {
     FocusHiddenAtoms[i]->SetVisible(false);
   }
-  TXAtomPList &keep = in_range;
-  /* Bonds are not hidden by hiding their atoms, and a bond leaving the focus
-  has to go with it or it hangs in the air.
-  */
+  // bonds are not hidden with their atoms
   BondIterator bi = GetBonds();
   while (bi.HasNext()) {
     TXBond &xb = bi.Next();
@@ -7453,7 +7389,7 @@ size_t TGXApp::SetAtomFocus(const TSAtomPList &seed, double radius,
   AtomFocusActive = true;
   RemaskGrid();
   CenterView(true);
-  return keep.Count();
+  return in_range.Count();
 }
 //..............................................................................
 void TGXApp::ClearAtomFocus() {
@@ -7475,10 +7411,7 @@ void TGXApp::ClearAtomFocus() {
 size_t TGXApp::SetFocus(const TSAtomPList &seed, double radius, bool whole) {
   if (CartoonsVisible && !Cartoons.IsEmpty()) {
     ClearAtomFocus();
-    /* The cartoon path completes to whole residues already - a residue joins
-    if any of its atoms is in range, and arrives with its sidechain - so there
-    is nothing for `whole` to add there.
-    */
+    // the cartoon path is whole residues already, whole has nothing to add
     return SetCartoonFocus(seed, radius);
   }
   ClearCartoonFocus();
@@ -7491,10 +7424,7 @@ void TGXApp::ClearFocus() {
 }
 //..............................................................................
 void TGXApp::RemaskGrid() {
-  /* A loaded map is masked to the visible atoms, so the substructure view
-  restricts the density as well without a separate mechanism. Doing nothing
-  when no map is loaded keeps this off the normal path.
-  */
+  // a loaded map is masked to the visible atoms, so the focus clips it too
   if (XGrid().IsEmpty()) {
     return;
   }
@@ -7548,10 +7478,8 @@ void TGXApp::SetCartoonHidesAtoms(bool v) {
 }
 //..............................................................................
 size_t TGXApp::CreateTestCartoon(size_t n_residues) {
-  /* synthetic geometry for the question the architecture stands on: whether a
-  compiled list of this many triangles still rotates. No model needed, so it
-  runs on any GPU. A bundle of helices on a grid rather than one long chain -
-  a thin rod would be mostly clipped and would flatter the result
+  /* synthetic helices on a grid, no model needed, to test whether a list of
+  this many triangles still rotates; one long rod would be mostly clipped
   */
   ClearCartoons();
   CartoonsVisible = true;
@@ -7589,9 +7517,7 @@ size_t TGXApp::CreateTestCartoon(size_t n_residues) {
   TBasicApp::NewLogEntry(logInfo) << "Cartoon test: " << Cartoons.Count() <<
     " chains, " << residues << " residues, " << triangles <<
     " triangles, built in " << (TETime::msNow() - started) << " ms";
-  /* TGlRenderer::AddObject only folds an object into the scene bounds while
-  the scene is being built, and this runs against a finished one.
-  */
+  // AddObject only updates the scene bounds while the scene is being built
   vec3d mn, mx;
   bool have = false;
   for (size_t i = 0; i < Cartoons.Count(); i++) {
@@ -7620,10 +7546,8 @@ void TGXApp::SuggestPolymerRefinement(bool is_polymer) {
   if (op == 0) {
     return;
   }
-  /* CreateObjects runs on every model change, so this fires repeatedly - the
-  python side is idempotent and leaves a touched setting alone, which is why
-  the judgement lives there. The negative case is told too: the answer is
-  stored with the structure and would otherwise stand for ever
+  /* fires on every model change; the python side is idempotent and leaves a
+  touched setting alone. the negative is sent too, as the answer is stored
   */
   op->processMacro(is_polymer ? "spy.on_polymer_loaded()"
     : "spy.on_polymer_absent()");
@@ -7631,18 +7555,13 @@ void TGXApp::SuggestPolymerRefinement(bool is_polymer) {
 //..............................................................................
 void TGXApp::ClearCartoons() {
   for (size_t i = 0; i < Cartoons.Count(); i++) {
-    /* the renderer's reference has to go before the object, or FGObjects holds
-    a dangling pointer the next repaint walks into. The selection group is a
-    second one that RemoveObject does not touch, and ~AGDrawObject is empty, so
-    an object never leaves a group it is in - TXCartoon is not selectable now,
-    but this costs one comparison and prevents a crash with an empty log
+    /* the renderer's references go before the object; the selection group is
+    one RemoveObject does not touch and ~AGDrawObject does not leave
     */
     GetRenderer().Deselect(*Cartoons[i]);
     GetRenderer().RemoveObject(*Cartoons[i]);
-    /* the collection may be gone: a new file destroys every collection while
-    this list survives, and HasPrimitives only tests the pointer for null.
-    Looking the name up again is what tells the difference; following the stale
-    pointer crashes inside RemoveObject on the next load
+    /* a new file destroys every collection while this list survives and
+    HasPrimitives only tests for null, so the name is looked up again
     */
     if (!Cartoons[i]->HasPrimitives()) {
       continue;
@@ -7652,11 +7571,8 @@ void TGXApp::ClearCartoons() {
     if (gpc == 0 || gpc != &Cartoons[i]->GetPrimitives()) {
       continue;
     }
-    /* the collection and its primitive are left alone on purpose. Destroying
-    them looks like the fix for the list leak, but ClearPrimitives frees
-    primitives the renderer still holds in its material groups and they go a
-    second time. Reuse needs no freeing: keyed by chain, the next build
-    re-emits into the same list id and none is leaked
+    /* the collection and primitive stay: ClearPrimitives would free primitives
+    the renderer's material groups still hold; the next build reuses the list id
     */
     Cartoons[i]->GetPrimitives().RemoveObject(*Cartoons[i]);
   }
@@ -7676,7 +7592,7 @@ void TGXApp::SetCartoonsVisible(bool v) {
   else {
     ClearCartoons();
     RestorePolymerAtoms();
-    // the key goes with it; the colouring path refreshes it when it comes back
+    // the key goes with it
     if (AtomLegend().IsVisible()) {
       AtomLegend().Update();
     }

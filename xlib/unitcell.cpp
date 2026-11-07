@@ -265,10 +265,10 @@ void TUnitCell::FindSymmEq() const {
     for (size_t i = 0; i < ACA.Count(); i++) {
       ACA[i]->SortAttachedSites();
     }
-    // gathered once, rather than rebuilt inside every atom's update
     TCAtomPList conn_atoms;
     ConnInfo::CollectConnAtoms(GetLattice().GetAsymmUnit(), conn_atoms);
     for (size_t i = 0; i < ACA.Count(); i++) {
+      // old: ACA[i]->UpdateAttachedSites(); - collected the conn atoms per atom
       ACA[i]->UpdateAttachedSites(conn_atoms);
     }
   }

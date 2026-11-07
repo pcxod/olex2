@@ -401,8 +401,7 @@ public:
     return cnt;
   }
   /* a PDB entry code as the RCSB writes it: four characters starting with a
-  digit, or pdb_ and eight. Here rather than beside a caller so the console and
-  the GUI cannot drift apart
+  digit, or pdb_ and eight
   */
   static bool IsPdbEntryCode(const olxstr &s);
   static void Export(class TLibrary& lib);

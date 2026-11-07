@@ -42,9 +42,7 @@ public:
   */
   virtual void SaveToFile(const olxstr& fileName);
   virtual void LoadFromFile(const olxstr& fileName);
-  /* how the bytes were read - reported if the file then fails to parse, as
-  the parser can only say what it did not find
-  */
+  // how the bytes were read, reported if the file then fails to parse
   enum {
     enc_bytes,  // as stored, in the platform's narrow encoding
     enc_utf8,

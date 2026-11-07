@@ -136,6 +136,8 @@ protected:  // functions below are unsafe to use if wchar_t size is unknown!!
         out << (uint8_t)input[i];
       }
       else if (input[i] < 0x800) {  // 110xxxxx 10xxxxxx
+        // old: (uint8_t)((UTF8_MASKBYTE | (input[i] >> n)) & UTF8_MASKBITS) for
+        // each continuation byte, the & cleared its 10xxxxxx marker bit
         out << (uint8_t)(UTF8_MASK2BYTES | (input[i] >> 6))
         << (uint8_t)(UTF8_MASKBYTE | (input[i] & UTF8_MASKBITS));
       }
@@ -204,6 +206,8 @@ protected:  // functions below are unsafe to use if wchar_t size is unknown!!
         out << (uint8_t)input[i];
       }
       else if (input[i] < 0x800) {  // 110xxxxx 10xxxxxx
+        // old: (uint8_t)((UTF8_MASKBYTE | (input[i] >> n)) & UTF8_MASKBITS) for
+        // each continuation byte, the & cleared its 10xxxxxx marker bit
         out << (uint8_t)(UTF8_MASK2BYTES | (input[i] >> 6))
           << (uint8_t)(UTF8_MASKBYTE | (input[i] & UTF8_MASKBITS));
       }

@@ -1076,18 +1076,64 @@ const TRefList& RefinementModel::GetReflections() const {
   }
 }
 //.............................................................................
-// Non-dispersive F(000) = sum f0(0), the number of electrons in the cell: the
-// value Fourier inversion (maps, masks) needs and the one the IUCr dictionary
-// means (dictionary.iucr.org/F(000)). f' and f'' stay out; the old code added
-// them and, worse, summed |f0 + f' + i f''| per element instead of taking the
-// modulus of the complex sum.
+/* old: summed |f0 + f' + i f''| per element, not the modulus of the sum
+double RefinementModel::CalcF000(const ContentList* cont_, Logging logging) const {
+  const ContentList& cont = cont_ == 0 ? GetUserContent() : *cont_;
+  double r_e = expl.GetRadiationEnergy();
+  bool compute_fp_fdp = r_e <= 30000;
+  double F000 = 0;
+  size_t skipped_fp_fdp = 0;
+  for (size_t i = 0; i < cont.Count(); i++) {
+    XScatterer* xs = FindSfacData(cont[i].element->GetChargedLabel(cont[i].charge));
+    compd f0 = round(cont[i].element->gaussians->calc_sq(0));
+    bool processed = false;
+    if (xs != 0) {
+      if (xs->IsSet(XScatterer::setGaussian) &&
+        xs->IsSet(XScatterer::setDispersion))
+      {
+        F000 += cont[i].count * xs->calc_sq_anomalous(0).mod();
+        processed = true;
+      }
+      else if (xs->IsSet(XScatterer::setDispersion)) {
+        f0 += xs->GetFpFdp();
+        F000 += cont[i].count * f0.mod();
+        processed = true;
+      }
+    }
+    if (!processed) {
+      try {
+        if (compute_fp_fdp) {
+          f0 += cont[i].element->CalcFpFdp(r_e);
+          f0.Re() -= cont[i].element->z;
+        }
+        else {
+          skipped_fp_fdp++;
+        }
+      }
+      catch (...) {
+        TBasicApp::NewLogEntry(logging) << "Failed to calculated DISP for " <<
+          cont[i].element->symbol;
+      }
+      F000 += cont[i].count * f0.mod();
+    }
+  }
+  if (!compute_fp_fdp && skipped_fp_fdp > 0) {
+    TBasicApp::NewLogEntry(logWarning) <<
+      "No anomaloud dispersion data available for this wavelength";
+  }
+  return F000;
+}
+*/
+/* non-dispersive F(000) = sum f0(0), the electrons in the cell: what Fourier
+inversion (maps, masks) needs and what the IUCr dictionary defines; f' and f''
+stay out
+*/
 double RefinementModel::CalcF000(const ContentList* cont_, Logging logging) const {
   const ContentList& cont = cont_ == 0 ? GetUserContent() : *cont_;
   double F000 = 0;
   for (size_t i = 0; i < cont.Count(); i++) {
     XScatterer* xs = FindSfacData(cont[i].element->GetChargedLabel(cont[i].charge));
-    // full SFAC Gaussians first: a peak 'Q' in SFAC/UNIT has no tabulated
-    // ones (COD 2018650)
+    // SFAC Gaussians first: a 'Q' in SFAC/UNIT has no tabulated ones
     if (xs != 0 && xs->IsSet(XScatterer::setGaussian)) {
       F000 += cont[i].count * xs->calc_sq(0);
       continue;
@@ -2703,8 +2749,29 @@ double RefinementModel::CalcCompletenessTo2Theta(double tt, bool Laue) {
     completeness_cache.Add(key, 0);
     return 0;
   }
-  // only the distinct standardised indices count: sorting plain indices is
-  // several times faster than sorting reflection pointers
+  /* old: standardised the reflections in place and sorted the pointers
+  for (size_t i = 0; i < refs.Count(); i++) {
+    refs[i]->Standardise(info_ex);
+  }
+  QuickSorter::SortSF(refs, &TReflection::Compare);
+  size_t u_cnt = 0;
+  for (size_t i=0; i < refs.Count(); i++) {
+    TReflection &r = *refs[i];
+    bool skip = omits.Contains(r.GetHkl());
+    while (++i < refs.Count() && r.CompareTo(*refs[i]) == 0) {
+      ;
+    }
+    i--;
+    if (skip || r.IsAbsent()) {
+      continue;
+    }
+    double qd = r.ToCart(h2c).QLength();
+    if (qd <= min_ds_sq) {
+      u_cnt++;
+    }
+  }
+  */
+  // only the distinct standardised indices count, sorted as plain indices
   std::vector<vec3i> uniq(refs.Count());
   for (size_t i = 0; i < refs.Count(); i++) {
     uniq[i] = TReflection::Standardise(refs[i]->GetHkl(), info_ex);

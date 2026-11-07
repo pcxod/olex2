@@ -38,7 +38,7 @@ struct ProteinAtom {
   {}
 };
 
-/* Indices into the atom list passed to FindBackbone, or InvalidIndex. */
+// indices into the atom list passed to FindBackbone, or InvalidIndex
 struct BackboneRoles {
   size_t n, ca, c, o;
   BackboneRoles()
@@ -63,7 +63,7 @@ because one list would have to choose - aspartate is acidic and hydrophilic,
 and offering those as alternatives answers neither question
 */
 
-/* Whether the sidechain prefers the protein's interior or the solvent. */
+// whether the sidechain prefers the protein's interior or the solvent
 enum ResiduePolarity {
   rpUnknown = 0,
   rpLipophilic,
@@ -75,7 +75,7 @@ read as unknown, which is worse than a defensible call
 */
 ResiduePolarity ClassifyPolarity(const olxstr &class_name);
 
-/* Acid/base character at neutral pH. */
+// acid/base character at neutral pH
 enum ResidueCharge {
   rcUnknown = 0,
   rcAcidic,
@@ -94,14 +94,14 @@ CYX and CSO, HID/HIE/HIP, ASH, GLH, LYN, and MSE to methionine
 */
 size_t ResidueIndex(const olxstr &class_name);
 size_t StandardResidueCount();
-/* The three-letter code for an index from ResidueIndex, or an empty string. */
+// the three-letter code for an index from ResidueIndex, or an empty string
 olxstr StandardResidueName(size_t index);
 
 /* non-hydrogen atom count of a standard amino acid from its RESI class name,
 0 when the name is not known. For weighting a residue drawn as ribbon: the
 model centre averages atom positions, so a chain replaced by a ribbon has to
-carry the weight its atoms would have, and tryptophan is 3.5x glycine. Zero is
-a real answer - the caller then counts the residue's atoms in the model
+carry the weight its atoms would have. Zero is a real answer - the caller
+then counts the residue's atoms in the model
 */
 size_t ResidueAtomCount(const olxstr &class_name);
 
@@ -115,7 +115,7 @@ and FMT are covered as the anions they are in a protein crystal
 bool ResidueHydrogens(const olxstr &class_name, const olxstr &atom_name,
   int &h, int &heavy);
 
-/* A residue reduced to what a backbone trace needs. */
+// a residue reduced to what a backbone trace needs
 struct BackboneResidue {
   int number;
   // TResidue id, so a per-residue display mask can index back to the model
@@ -155,14 +155,13 @@ extern const double default_break_distance;
 
 /* whether two residues adjacent in numbering are one continuous piece of
 backbone. The limit widens across a numbered gap rather than the gap breaking
-the chain: one residue missing leaves its neighbours 7.6 A apart, and at a 5%
-failure rate over 574 residues that is thirty spurious breaks. Only over a few
-residues - beyond that a ribbon across the gap is an invention
+the chain: one residue missing leaves its neighbours 7.6 A apart. Only over
+a few residues - beyond that a ribbon across the gap is an invention
 */
 bool IsContinuous(const BackboneResidue &prev, const BackboneResidue &next,
   double break_distance = default_break_distance);
 
-/* Secondary structure of one residue. */
+// secondary structure of one residue
 const short
   ss_coil = 0,
   ss_helix = 1,

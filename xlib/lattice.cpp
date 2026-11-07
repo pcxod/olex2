@@ -2460,9 +2460,7 @@ bool TLattice::_ResidueHAdd(AConstraintGenerator& cg, TSAtom& atom,
     return false;
   }
   const TResidue& r = au.GetResidue(ca.GetResiId());
-  /* a water bonded to a residue is the solvent of another conformer that the
-  model keeps in part 0, 0.5 A from 5D8V Arg 33's minor NH2
-  */
+  // a water bonded to a residue is another conformer's solvent kept in part 0
   TAtomEnvi AE(envi);
   for (size_t i = envi.Count(); i > 0; i--) {
     TCAtom& a = envi.GetCAtom(i - 1);

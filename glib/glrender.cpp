@@ -63,10 +63,11 @@ bool AGOSettings::Exit(const IOlxObject *, const IOlxObject *, TActionQueue *) {
 GLuint TGlRenderer::TGlListManager::NewList() {
   if (Pos >= Lists.Count()*Inc) {
     GLuint s = olx_gl::genLists(Inc);
-    /* glGenLists reports failure with 0, not with an error constant - those
-    come from glGetError and are not in the same space as a list name. Tested
-    against those, a failure passed as a valid base of 0 and every glNewList
-    then raised GL_INVALID_VALUE, with nothing in the log
+    /* old: glGenLists returns 0 on failure, GL_INVALID_* come from glGetError,
+    so this let a failure through as list base 0
+    if (s == GL_INVALID_VALUE || s == GL_INVALID_OPERATION) {
+      throw TFunctionFailedException(__OlxSourceInfo, "glGenLists");
+    }
     */
     if (s == 0) {
       throw TFunctionFailedException(__OlxSourceInfo,

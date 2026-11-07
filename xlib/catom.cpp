@@ -677,6 +677,9 @@ int TCAtomComparator::Compare(const TCAtom& a1, const TCAtom& a2) {
 //..............................................................................
 //..............................................................................
 //..............................................................................
+/* old, in each GetFullLabel: "_$" << (rm.UsedSymmIndex(*Matrix) + 1) and
+'$' << (rm.UsedSymmIndex(*Matrix) + 1); index+1 is not the EQIV name past $9
+*/
 olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm) const {
   olxstr name = Atom->GetResiLabel(true);
   if (Atom->GetResiId() == 0) {

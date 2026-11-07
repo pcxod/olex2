@@ -85,7 +85,8 @@ public:
 
   static const TMemoryBlock* FindMemoryBlock(const olxstr& bn);
   /* changes whenever persistent content may have changed: a saved db file
-  whose generation is still current would be written byte-identical */
+  whose generation is still current would be written byte-identical
+  */
   static uint64_t& Generation() {
     static uint64_t g = 0;
     return g;

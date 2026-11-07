@@ -15,15 +15,14 @@
 
 /* Wiener weights for the coefficients of a difference (residual) map.
  dF = (Fo - |Fc|) e^{i phi} carries the model error S plus the measurement
- noise. Deposited sigmas understate that noise about 2.5-fold at low angle; the
- refined WGHT does not, sigma_w(Fo^2) = 1/sqrt(w), sigma_w(F) = sigma_w(Fo^2)/2F.
+ noise. Deposited sigmas understate that noise at low angle; the refined WGHT
+ does not, sigma_w(Fo^2) = 1/sqrt(w), sigma_w(F) = sigma_w(Fo^2)/2F.
  Per sin(theta)/lambda shell the signal is what the residual holds beyond it,
    S = max(<|dF|^2 - sigma_w(F)^2>, 0),   c = S / (S + sigma_w(F)^2),
  so high-angle shells, which are noise only, drop out and the low-angle ones
  with the bonding and lone-pair density stay. S uses no model, only the data
  and the weights, so the filter cannot paint in what an aspherical model
- expects. On 121 COD structures the valence signal in the IAM residual map
- rose from 0.6 to 1.2 times the noise.
+ expects.
  Shells hold equal counts; their edges are numpy.quantile (linear) values and
  a reflection goes to shell searchsorted(edges, stl), so a Python check gives
  the same weights to rounding.

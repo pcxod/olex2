@@ -735,6 +735,37 @@ TSAtomPList::const_list_type TXApp::FindSAtoms(const IStrList& toks_,
         TAsymmUnit& au = XFile().GetAsymmUnit();
         objects.atoms.ForEach(ACollectionItem::TagSetter(-1));
         au.GetAtoms().ForEach(ACollectionItem::TagSetter(-1));
+        /* old: one tag per CAtom, so of C1 C1_$3 only the last was found
+        for (size_t i = 0; i < ag.Count(); i++) {
+          ag[i].GetAtom()->SetTag(i);
+        }
+        TArrayList<TSAtom*> satoms(ag.Count(), olx_list_init::zero());
+        for (size_t i = 0; i < objects.atoms.Count(); i++) {
+          TSAtom& sa = objects.atoms[i];
+          if (sa.CAtom().GetTag() == -1 || !sa.CAtom().IsAvailable()) {
+            continue;
+          }
+          // get an atom from the asymm unit
+          if (ag[sa.CAtom().GetTag()].GetMatrix() == 0)
+          {
+            if (sa.IsAUAtom()) {
+              satoms[sa.CAtom().GetTag()] = &sa;
+            }
+          }
+          else {
+            if (sa.IsGenerator(*ag[sa.CAtom().GetTag()].GetMatrix())) {
+              satoms[sa.CAtom().GetTag()] = &sa;
+            }
+          }
+        }
+        res.SetCapacity(ag.Count());
+        for (size_t i = 0; i < ag.Count(); i++) {
+          TSAtom* a = satoms[ag[i].GetAtom()->GetTag()];
+          if (a != 0) {
+            res << a;
+          }
+        }
+        */
         /* one CAtom can come with several matrices (C1 C1_$3): the tag is its
         first reference, next[] chains the others
         */

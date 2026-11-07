@@ -710,13 +710,20 @@ TAG_HANDLER_PROC(tag) {
     CreatedWindow = Box;
     if (tag.HasParam(wxT("ITEMS"))) {
       olxstr Items = ExpandMacroShortcuts(tag.GetParam(wxT("ITEMS")), macro_map);
-      // ITEMS was already expanded once by htmlprep; a '(' in a plain list
-      // (IAM(FLAT).tscb) parses as a call here and fails - keep the list then
+      /* ITEMS was already expanded once by htmlprep; a '(' in a plain list
+      (IAM(FLAT).tscb) parses as a call here and fails - keep the list then
+      */
       const olxstr raw = Items;
       if (!op->processFunction(Items, SrcInfo, true)) {
         Items = raw;
       }
       Box->SetItemsFrom(Items);
+      /* old: used whatever a failed expansion left, and appended to what the
+      (now possibly reused) box held
+      op->processFunction(Items, SrcInfo, true);
+      TStrList SL(Items, ';');
+      Box->AddItems(SL);
+      */
     }
     else {
       Box->Clear();
@@ -1044,6 +1051,7 @@ TAG_HANDLER_PROC(tag) {
       if (!op->processFunction(items, SrcInfo, true)) {
         items = raw;
       }
+      // old: op->processFunction(items, SrcInfo, true); - the result was ignored
       itemsList.Strtok(items, ';');
     }
     TListBox *List = new TListBox(html);

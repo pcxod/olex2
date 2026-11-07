@@ -313,6 +313,7 @@ void ConnInfo::ToInsList(TStrList& ins) const {
           throw TFunctionFailedException(__OlxSourceInfo,
             "Undefined EQIV in BIND");
         }
+        // old: str << "_$" << (si + 1); - index+1 is not the EQIV name
         str << '_' << rm.GetUsedSymmName(si);
       }
     }
@@ -328,6 +329,7 @@ void ConnInfo::ToInsList(TStrList& ins) const {
           throw TFunctionFailedException(__OlxSourceInfo,
             "Undefined EQIV in FREE");
         }
+        // old: str << "_$" << (si + 1); - index+1 is not the EQIV name
         str << '_' << rm.GetUsedSymmName(si);
       }
     }
@@ -772,6 +774,11 @@ void ConnInfo::Compile(const TCAtom& a, const TCAtomPList& conn_atoms,
   BondInfoList& toCreate, BondInfoList& toDelete, smatd_list& ml)
 {
   const TUnitCell& uc = a.GetParent()->GetLattice().GetUnitCell();
+  /* old: scanned every atom of the unit for each atom
+  const TAsymmUnit& au = *a.GetParent();
+  for (size_t i=0; i < au.AtomCount(); i++) {
+    TCAtom& ca = au.GetAtom(i);
+  */
   for (size_t i=0; i < conn_atoms.Count(); i++) {
     TCAtom& ca = *conn_atoms[i];
     if (ca.IsDeleted()) {

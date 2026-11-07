@@ -11,12 +11,8 @@
 
 namespace test {
 
-/* The mesh generator is deliberately free of OpenGL, which is what makes these
-cases possible at all: the shipped code runs here rather than a copy of it, with
-no graphics context and no model.
-
-The properties checked are the ones that have actually gone wrong: appending to
-a shared mesh, the per-residue index table, and the triangle winding.
+/* the mesh generator is free of OpenGL, so the shipped code runs here with no
+graphics context and no model
 */
 namespace cartoon_test_data {
   using namespace xlib::protein;
@@ -53,9 +49,8 @@ void CartoonTubeTest(OlxTests &t) {
     }
   }
 
-  /* A straight trace is its own Catmull-Rom spline, so every vertex must sit
-  exactly the tube radius from the x axis. This catches a frame that collapses
-  or a radius applied to the wrong vector.
+  /* a straight trace is its own Catmull-Rom spline, so every vertex sits
+  exactly the tube radius from the x axis
   */
   {
     Mesh m;
@@ -83,9 +78,8 @@ void CartoonTubeTest(OlxTests &t) {
     }
   }
 
-  /* The winding must put the outward face at the front. It is invisible while
-  the material is opaque, because culling is only enabled for transparent ones,
-  so nothing in the GUI would report it until the cartoon is made transparent.
+  /* the winding must put the outward face at the front; culling is on only for
+  transparent materials, so an opaque cartoon hides a wrong winding
   */
   {
     Mesh m;
@@ -105,10 +99,7 @@ void CartoonTubeTest(OlxTests &t) {
     }
   }
 
-  /* Several chains share one mesh, so BuildTube appends. An earlier version
-  cleared the triangle list on entry and silently dropped every chain but the
-  last.
-  */
+  // several chains share one mesh, so BuildTube appends rather than clears
   {
     Mesh one, both;
     BuildTube(cartoon_test_data::StraightSegment(5), p, one);
@@ -139,8 +130,8 @@ void CartoonTubeTest(OlxTests &t) {
     }
   }
 
-  /* The per-residue table is what a residue subset will index through, so it
-  must cover the triangles exactly once, in order, with a closing sentinel.
+  /* a residue subset indexes through the per-residue table, so it covers the
+  triangles exactly once, in order, with a closing sentinel
   */
   {
     Mesh m;
@@ -221,18 +212,15 @@ void CartoonColourTest(OlxTests &t) {
   }
 }
 //.............................................................................
-/* The ribbon plane. This is the one line of the geometry that cannot be checked
-by looking at a wireframe or a triangle count: get it wrong and the surface is
-still closed, still smooth and still the right length, but every helix is turned
-through ninety degrees and reads as a lumpy tube. It shipped wrong once.
+/* the ribbon plane: wrong, the surface is still closed and smooth but every
+helix is turned through ninety degrees and reads as a lumpy tube
 */
 void CartoonRibbonPlaneTest(OlxTests &t) {
   using namespace gxlib::cartoon;
   t.description = __FUNC__;
 
-  /* One residue of an ideal alpha helix about the z axis: the chain step is
-  mostly tangential, and the carbonyl points along the axis toward the C
-  terminus, which is what makes the ribbon lie flat facing outwards.
+  /* one residue of an ideal alpha helix about the z axis: the chain step is
+  mostly tangential and the carbonyl points along the axis toward the C terminus
   */
   const double turn = 100*M_PI/180, radius = 2.3, rise = 1.5;
   const vec3f ca((float)radius, 0, 0);
@@ -252,9 +240,8 @@ void CartoonRibbonPlaneTest(OlxTests &t) {
     throw TFunctionFailedException(__OlxSourceInfo,
       "the ribbon direction is not perpendicular to the chain");
   }
-  /* And it must lie along the helix axis, not radially. The surface normal is
-  the radial one; swapping the two is the ninety-degree error, and it is the
-  only assertion here that would have caught it.
+  /* and along the helix axis, not radially: the surface normal is the radial
+  one, and swapping the two is the ninety-degree error
   */
   if (olx_abs(d[2]) < 0.7f) {
     throw TFunctionFailedException(__OlxSourceInfo,
@@ -293,8 +280,7 @@ float RingExtent(const gxlib::cartoon::Mesh &m, size_t slices, size_t ring,
 }
 //.............................................................................
 /* a strand must end in an arrowhead: wider than the strand at the shoulder and
-tapering to the tip. It used to stop a step short, at the coil radius, so the
-arrow merged into the coil after it and no head was visible
+tapering to the tip, not stopping a step short at the coil radius
 */
 void CartoonArrowheadTest(OlxTests &t) {
   t.description = __FUNC__;
@@ -353,8 +339,8 @@ void CartoonArrowheadTest(OlxTests &t) {
   }
 }
 //.............................................................................
-/* the flat sections must keep their thickness out to the edge. An ellipse comes
-to a knife edge and reads as much thinner than its nominal thickness
+/* the flat sections must keep their thickness out to the edge; an ellipse comes
+to a knife edge and reads as much thinner than it is
 */
 void CartoonSectionTest(OlxTests &t) {
   t.description = __FUNC__;
@@ -412,8 +398,8 @@ void CartoonSectionTest(OlxTests &t) {
   }
 }
 //.............................................................................
-/* every strand of a sheet ends in its own arrowhead, not just the one that
-ends the chain. A hairpin has two: one into the turn and one at the end
+/* every strand of a sheet ends in its own arrowhead, not just the last one; a
+hairpin has two, one into the turn and one at the end
 */
 void CartoonSheetArrowTest(OlxTests &t) {
   t.description = __FUNC__;
@@ -461,7 +447,7 @@ void CartoonSheetArrowTest(OlxTests &t) {
   Mesh m;
   BuildCartoon(seg, ss, p, m);
   /* one shoulder per strand: a ring wider than the strand whose predecessor
-  was not. The arrowhead is the only thing that widens the ribbon
+  was not, only the arrowhead widening the ribbon
   */
   const size_t rings = m.vertices.Count()/p.slices;
   const float flare = 2*(p.strand_width + p.arrow_width)/2;

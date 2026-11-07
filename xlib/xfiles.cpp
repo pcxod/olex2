@@ -269,6 +269,7 @@ void TBasicCFile::LoadFromFile(const olxstr& _fn) {
   TXFile::NameArg file_n(_fn);
   TEFile::CheckFileExists(__OlxSourceInfo, file_n.file_name);
   short enc = enc_bytes;
+  // old: TStrList L = TEFile::ReadLines(file_n.file_name); - a BOM, UTF-16 or CR only file read as empty
   TStrList L = ReadLines(file_n.file_name, &enc);
   if (L.IsEmpty()) {
     throw TEmptyFileException(__OlxSourceInfo, _fn);
@@ -279,9 +280,8 @@ void TBasicCFile::LoadFromFile(const olxstr& _fn) {
   }
   catch (const TExceptionBase& exc) {
     FileName.SetLength(0);
-    /* the parser can only report what it did not find, so say how the bytes
-    were read - a file that was misread gives a puzzling message otherwise
-    */
+    // old: throw TFunctionFailedException(__OlxSourceInfo, exc);
+    // the parser only reports what it did not find, so say how the bytes were read
     throw TFunctionFailedException(__OlxSourceInfo, exc,
       olxstr("read as ") << EncodingName(enc) << ", " << L.Count() <<
       " line(s)");

@@ -96,8 +96,8 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner {
   // have to manage memory ourselves - base class is used
   AGDObjList LooseObjects;
   AGDObjList ObjectsToCreate;
-  /* One per polymer chain segment. Memory is managed here rather than by a
-  TTypeList so that gxapp.h need not pull in the cartoon geometry headers.
+  /* one per polymer chain segment, a TPtrList so that gxapp.h need not pull in
+  the cartoon geometry headers
   */
   TPtrList<class TXCartoon> Cartoons;
   bool CartoonsVisible;
@@ -111,17 +111,13 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner {
   short CartoonColourMode;
   // what happens to everything the trace did not claim
   short CartoonNonProtein;
-  /* Set once the user has said anything about the cartoon, which stops the
-  large-structure default from overriding a decision they already made.
-  */
+  // set by any user cartoon command, so the large-structure default stays off
   bool CartoonUserSet;
   /* the substructure view, one entry per residue id, empty for all. Also
   restricts a map, since BuildSceneMask reads the visible atoms
   */
   TArrayList<bool> CartoonFocus;
-  /* The Ueq range the ramp was stretched over, so the legend can label its
-  colour bar with the numbers it actually means rather than a fixed scale.
-  */
+  // the Ueq range the ramp was stretched over, for the legend labels
   double CartoonUeqMin, CartoonUeqMax;
   bool CartoonUeqValid;
   TPtrList<class TXAtom> CartoonHiddenAtoms;
@@ -144,7 +140,7 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner {
     const TArrayList<bool> &alpha_atoms);
   /* applies the atom visibility rules to the cartoons as they stand. Separate
   from CreateCartoons: a sidechain set, the non-protein rule or a focus change
-  none of the topology, the assignment or the mesh
+  touches none of the topology, the assignment or the mesh
   */
   void HideTracedAtoms();
   // re-applies them after a change to what is shown, cartoon permitting
@@ -423,8 +419,8 @@ public:
   bool DoesCartoonHideAtoms() const { return CartoonHidesAtoms; }
   void SetCartoonHidesAtoms(bool v);
   bool IsCartoonTraceOnly() const { return CartoonTraceOnly; }
-  /* Changes the shape rather than the colour, so this rebuilds the geometry.
-  Secondary structure is still assigned, and can still be coloured by.
+  /* rebuilds the geometry; secondary structure is still assigned and can still
+  be coloured by
   */
   void SetCartoonTraceOnly(bool v);
   /* restricts the display to the residues of these atoms plus every residue
@@ -451,13 +447,9 @@ public:
   bool GetCartoonFocusSidechains() const { return CartoonFocusSidechains; }
   void SetCartoonFocusSidechains(bool v);
   /* restricts the display to these atoms and their surroundings, returning how
-  many units survived - residues when a cartoon is drawn, atoms otherwise. It
-  turns on the cartoon, not on whether the file has residues: with a ribbon up
-  the residue is the unit the display is made of
-  */
-  /* whole completes what the radius touched to its unit - the residue, or the
-  connected fragment for an atom without one - so nothing is cut in half. No
-  effect on the cartoon path, which is whole residues already
+  many units survived - residues when a cartoon is drawn, atoms otherwise. whole
+  completes what the radius touched to its residue, or to the connected
+  fragment for an atom without one; the cartoon path is whole residues already
   */
   size_t SetFocus(const TSAtomPList &seed, double radius, bool whole = true);
   void ClearFocus();
@@ -466,22 +458,17 @@ public:
   void SetCartoonNonProtein(short v);
   static short CartoonNonProteinFromName(const olxstr &name);
   short GetCartoonColourMode() const { return CartoonColourMode; }
-  /* The Ueq range the current colouring is stretched over. False when nothing
-  was coloured by Ueq, in which case the values are meaningless.
-  */
+  // false when nothing was coloured by Ueq, the values then meaningless
   bool GetCartoonUeqRange(double &mn, double &mx) const {
     mn = CartoonUeqMin;
     mx = CartoonUeqMax;
     return CartoonUeqValid;
   }
-  /* The chains the cartoon drew, in the order their colours were assigned, for
-  the legend. Each entry is a chain id and the colour it was given.
-  */
+  // chain id and colour of each drawn chain, in assignment order, for the legend
   void GetCartoonChainKey(TArrayList<olx_pair_t<olxch, uint32_t> > &out) const;
   /* the amino acids the traced chains contain, as protein::ResidueIndex and
   colour in index order, InvalidIndex last if anything unrecognised was traced.
-  Only those present - a fixed key of twenty rows would be taller than the
-  window and mostly things not to look for
+  Only those present, so the key fits the window
   */
   void GetCartoonResidueKey(TArrayList<olx_pair_t<size_t, uint32_t> > &out);
   /* every atom of every residue clicked on a ribbon, hidden ones included -
@@ -489,12 +476,9 @@ public:
   empty. Returns how many residues they came from
   */
   size_t GetCartoonSelectedAtoms(TSAtomPList &out);
-  /* Recolours in place: the geometry is untouched and only the display list is
-  re-emitted, so this is cheap enough to drive from a control.
-  */
+  // recolours in place: only the display lists are re-emitted
   void SetCartoonColourMode(short v);
-  /* The mode names the macro accepts, or -1 when the name is not one of them.
-  */
+  // -1 for a name the macro does not accept
   static short CartoonColourModeFromName(const olxstr &name);
   //..............................................................................
   // changes the graphics quality

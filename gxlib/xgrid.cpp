@@ -93,6 +93,9 @@ void TXGrid::TLegend::SetData(unsigned char *rgb,
       *tex, 0, width, height, 0, format, rgb);
   }
   else {
+    /* old: the legend box size, not the texture's
+      GetCollectionName(), 0, Width, Height, 0,
+    */
     TextureId = Parent.GetTextureManager().Add2DTexture(
       GetCollectionName(), 0, width, height, 0,
       format, rgb);
@@ -250,8 +253,11 @@ bool TXGrid::TLegend::Orient(TGlPrimitive& P) {
   else {
     TGlFont &glf = Parent.GetScene().GetFont(~0, true);
     double Scale = Parent.GetScale();
+    /* old: the first label only, but a "-" makes the lower ones wider
+    double tw = glf.TextWidth(text[0]) * Scale *
+    */
     double tw = 0;
-    for (size_t i = 0; i < text.Count(); i++) {  // the widest label, a "-" makes the lower ones longer
+    for (size_t i = 0; i < text.Count(); i++) {
       tw = olx_max(tw, (double)glf.TextWidth(text[i]));
     }
     tw *= Scale *
@@ -462,8 +468,7 @@ void TXGrid::Create(const olxstr& cName) {
   glpN = &GPC.NewPrimitive("-Surface", sgloQuads);
   glpN->SetProperties(GS.GetMaterial("-Surface",
     TGlMaterial("85;1.000,0.000,0.000,0.850;3632300160;1.000,1.000,1.000,0.500;36")));
-  // shells cut open by the mask show their inside: give it a darker front
-  // colour instead of the black that a front-only material leaves there
+  // shells cut open by the mask show their inside: a darker back colour, not black
   for (TGlPrimitive* p : { glpP, glpN }) {
     TGlMaterial m = p->GetProperties();
     if ((m.GetFlags() & sglmAmbientB) == 0) {
@@ -1304,6 +1309,9 @@ void TXGrid::RescaleSurface(bool collect_only) {
           else {
             for (int j = 0; j < 3; j++) {
               olx_gl::normal(norms[trians[i][j]]);
+              /* old: vertex before color, so each colour went to the next vertex
+              olx_gl::vertex(verts[trians[i][j]]);
+              */
               if (ColorData != 0) {
                 olx_gl::color(colors[li][trians[i][j]]);
               }
@@ -1316,6 +1324,9 @@ void TXGrid::RescaleSurface(bool collect_only) {
         for (size_t i = 0; i < trians.Count(); i++) {
           for (int j = 0; j < 3; j++) {
             olx_gl::normal(norms[trians[i][j]]);
+            /* old: vertex before color, so each colour went to the next vertex
+            olx_gl::vertex(verts[trians[i][j]]);
+            */
             if (ColorData != 0) {
               olx_gl::color(colors[li][trians[i][j]]);
             }
@@ -1330,11 +1341,169 @@ void TXGrid::RescaleSurface(bool collect_only) {
       }
     }
   }
+  /* old: transformed (and mask-tested) every triangle corner, though a vertex
+  is shared by several triangles; now each vertex once per cell replica, same
+  arithmetic, same coordinates. it also sent the colour after its vertex
+  else if (Mask != 0) {
+    vec3d pts[3];
+    for (size_t li = 0; li < triangles.Count(); li++) {
+      const TArrayList<vec3f>& verts = vertices[li];
+      const TArrayList<vec3f>& norms = normals[li];
+      const TArrayList<IsoTriangle>& trians = triangles[li];
+      TTypeList<vec3f> *va = (li == 0 ? &cp_vertices : &cn_vertices);
+      if (!collect_only) {
+        olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
+        olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
+        olx_gl::begin(GL_TRIANGLES);
+      }
+      for (int x = -1; x <= 1; x++) {
+        for (int y = -1; y <= 1; y++) {
+          for (int z = -1; z <= 1; z++) {
+            for (size_t i = 0; i < trians.Count(); i++) {
+              bool draw = true;
+              for (int j = 0; j < 3; j++) {
+                pts[j] = verts[trians[i][j]];
+                pts[j][0] = pts[j][0] / MaxX + x;
+                pts[j][1] = pts[j][1] / MaxY + y;
+                pts[j][2] = pts[j][2] / MaxZ + z;
+                if (!Mask->Get(pts[j])) {
+                  draw = false;
+                  break;
+                }
+                au.CellToCartesian(pts[j]);
+              }
+              if (!draw) {
+                continue;
+              }
+              if (collect_only) {
+                for (int j = 0; j < 3; j++) {
+                  va->AddCopy(pts[j]);
+                }
+              }
+              else {
+                for (int j = 0; j < 3; j++) {
+                  olx_gl::normal(norms[trians[i][j]]);
+                  olx_gl::vertex(pts[j]);
+                  if (ColorData != 0) {
+                    olx_gl::color(colors[li][trians[i][j]]);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      if (!collect_only) {
+        olx_gl::end();
+        olx_gl::polygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        olx_gl::endList();
+      }
+    }
+  }
   else {
-    /* a vertex is shared by ~6 triangles: transform (and mask-test) every
-    vertex once per cell replica instead of once per triangle corner. The
-    arithmetic is the same as before, so the coordinates are identical
-    */
+    if (Extended) {
+      vec3d pts[3]; // ext drawing
+      for (size_t li = 0; li < triangles.Count(); li++) {
+        const TArrayList<vec3f>& verts = vertices[li];
+        const TArrayList<vec3f>& norms = normals[li];
+        const TArrayList<IsoTriangle>& trians = triangles[li];
+        TTypeList<vec3f> *va = (li == 0 ? &cp_vertices : &cn_vertices);
+        if (!collect_only) {
+          olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
+          olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
+          olx_gl::begin(GL_TRIANGLES);
+        }
+        for (float x = ExtMin[0]; x < ExtMax[0]; x++) {
+          for (float y = ExtMin[1]; y < ExtMax[1]; y++) {
+            for (float z = ExtMin[2]; z < ExtMax[2]; z++) {
+              for (size_t i = 0; i < trians.Count(); i++) {
+                bool draw = true;
+                for (int j = 0; j < 3; j++) {
+                  pts[j] = verts[trians[i][j]];
+                  pts[j][0] = pts[j][0] / MaxX + x;
+                  pts[j][1] = pts[j][1] / MaxY + y;
+                  pts[j][2] = pts[j][2] / MaxZ + z;
+                  if (pts[j][0] > ExtMax[0] || pts[j][1] > ExtMax[1] ||
+                    pts[j][2] > ExtMax[2])
+                  {
+                    draw = false;
+                    break;
+                  }
+                  au.CellToCartesian(pts[j]);
+                }
+                if (!draw) {
+                  continue;
+                }
+                if (collect_only) {
+                  for (int j = 0; j < 3; j++) {
+                    va->AddCopy(pts[j]);
+                  }
+                }
+                else {
+                  for (int j = 0; j < 3; j++) {
+                    olx_gl::normal(norms[trians[i].pointID[j]]);
+                    olx_gl::vertex(pts[j]);
+                    if (ColorData != 0) {
+                      olx_gl::color(colors[li][trians[i][j]]);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        if (!collect_only) {
+          olx_gl::end();
+          olx_gl::polygonMode(GL_FRONT_AND_BACK, GL_FILL);
+          olx_gl::endList();
+        }
+      }
+    }
+    else {
+      vec3d pts[3];
+      for (size_t li = 0; li < triangles.Count(); li++) {
+        const TArrayList<vec3f>& verts = vertices[li];
+        const TArrayList<vec3f>& norms = normals[li];
+        const TArrayList<IsoTriangle>& trians = triangles[li];
+        TTypeList<vec3f> *va = (li == 0 ? &cp_vertices : &cn_vertices);
+        if (!collect_only) {
+          olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
+          olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
+          olx_gl::begin(GL_TRIANGLES);
+        }
+        for (size_t i = 0; i < trians.Count(); i++) {
+          for (int j = 0; j < 3; j++) {
+            pts[j] = verts[trians[i][j]];
+            pts[j][0] = pts[j][0] / MaxX;
+            pts[j][1] = pts[j][1] / MaxY;
+            pts[j][2] = pts[j][2] / MaxZ;
+            au.CellToCartesian(pts[j]);
+          }
+          if (collect_only) {
+            for (int j = 0; j < 3; j++) {
+              va->AddCopy(pts[j]);
+            }
+          }
+          else {
+            for (int j = 0; j < 3; j++) {
+              olx_gl::normal(norms[trians[i][j]]);
+              olx_gl::vertex(pts[j]);  // cell drawing
+              if (ColorData != 0) {
+                olx_gl::color(colors[li][trians[i][j]]);
+              }
+            }
+          }
+        }
+        if (!collect_only) {
+          olx_gl::end();
+          olx_gl::polygonMode(GL_FRONT_AND_BACK, GL_FILL);
+          olx_gl::endList();
+        }
+      }
+    }
+  }
+  */
+  else {
     TArrayList<vec3d> cart;
     TArrayList<bool> inside;
     for (size_t li = 0; li < triangles.Count(); li++) {

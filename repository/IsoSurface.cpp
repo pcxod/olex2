@@ -318,6 +318,7 @@ const int CIsoSurface::m_triTable[256][16] = {
 //..............................................................................
 CIsoSurface::CIsoSurface(array_3d<float>& points, const array_3d<int>* data)
   : Points(points),
+  // old: ZSlice(points.width*points.height), - only sized AllTriangles
   PointData(data)
 {
   m_tIsoLevel = 0;
@@ -326,9 +327,10 @@ CIsoSurface::CIsoSurface(array_3d<float>& points, const array_3d<int>* data)
 //..............................................................................
 void CIsoSurface::GenerateSurface(float tIsoLevel) {
   DeleteSurface();
+  // old: AllTriangles.SetCapacity(ZSlice);
   m_tIsoLevel = tIsoLevel;
   if (Points.width < 2 || Points.height < 2 || Points.depth < 2) {
-    Normals.Clear();  // the old path ran CalculateNormals on 0 vertices
+    Normals.Clear();  // no voxel: an empty surface
     m_bValidSurface = true;
     return;
   }
@@ -351,12 +353,35 @@ void CIsoSurface::GenerateSurface(float tIsoLevel) {
     for (size_t y = 0; y < Points.height - 1; y++) {
       const float *r00 = D[x][y], *r01 = D[x][y + 1],
         *r11 = D[x + 1][y + 1], *r10 = D[x + 1][y];
-      /* corners of the z face of the voxel: bits 1,2,4,8; the z+1 face gives
-      16,32,64,128 and becomes the z face of the next voxel. For a positive
-      level 'inside' is above it, otherwise below it - as before.
+      /* the z face of the voxel gives bits 1,2,4,8, the z+1 face 16,32,64,128
+      and becomes the z face of the next voxel
       */
       unsigned int face = Classify(r00[0], r01[0], r11[0], r10[0]);
       for (size_t z = 0; z < Points.depth - 1; z++) {
+        /* old: all 8 corners compared per voxel, the shared face twice
+        // Calculate table lookup index from those vertices which are below the isolevel.
+        unsigned int tableIndex = 0;
+        if (m_tIsoLevel > 0) {
+          if (D[x][y][z] > m_tIsoLevel)        tableIndex |= 1;
+          if (D[x][y + 1][z] > m_tIsoLevel)      tableIndex |= 2;
+          if (D[x + 1][y + 1][z] > m_tIsoLevel)    tableIndex |= 4;
+          if (D[x + 1][y][z] > m_tIsoLevel)      tableIndex |= 8;
+          if (D[x][y][z + 1] > m_tIsoLevel)      tableIndex |= 16;
+          if (D[x][y + 1][z + 1] > m_tIsoLevel)    tableIndex |= 32;
+          if (D[x + 1][y + 1][z + 1] > m_tIsoLevel)  tableIndex |= 64;
+          if (D[x + 1][y][z + 1] > m_tIsoLevel)    tableIndex |= 128;
+        }
+        else {
+          if (D[x][y][z] < m_tIsoLevel)        tableIndex |= 1;
+          if (D[x][y + 1][z] < m_tIsoLevel)      tableIndex |= 2;
+          if (D[x + 1][y + 1][z] < m_tIsoLevel)    tableIndex |= 4;
+          if (D[x + 1][y][z] < m_tIsoLevel)      tableIndex |= 8;
+          if (D[x][y][z + 1] < m_tIsoLevel)      tableIndex |= 16;
+          if (D[x][y + 1][z + 1] < m_tIsoLevel)    tableIndex |= 32;
+          if (D[x + 1][y + 1][z + 1] < m_tIsoLevel)  tableIndex |= 64;
+          if (D[x + 1][y][z + 1] < m_tIsoLevel)    tableIndex |= 128;
+        }
+        */
         const size_t z1 = z + 1;
         const unsigned int next = Classify(r00[z1], r01[z1], r11[z1], r10[z1]);
         const unsigned int tableIndex = face | (next << 4);
@@ -384,6 +409,18 @@ void CIsoSurface::GenerateSurface(float tIsoLevel) {
           if (eid & 16)  AddSurfacePoint(x, y, z, 4);
           if (eid & 128) AddSurfacePoint(x, y, z, 7);
         }
+        /* old: triangles as encoded T4DIndex keys, renamed after the scan
+        for (unsigned int i = 0; m_triTable[tableIndex][i] != -1; i += 3) {
+          IsoTriangle triangle;
+          triangle[0] =
+            T4DIndex::encode(x, y, z, m_triTable[tableIndex][i]);
+          triangle[1] =
+            T4DIndex::encode(x, y, z, m_triTable[tableIndex][i + 1]);
+          triangle[2] =
+            T4DIndex::encode(x, y, z, m_triTable[tableIndex][i + 2]);
+          AllTriangles.Add(triangle);
+        }
+        */
         for (unsigned int i = 0; m_triTable[tableIndex][i] != -1; i++) {
           int ox = (int)x, oy = (int)y, oz = (int)z, slot;
           EdgeOwner(m_triTable[tableIndex][i], ox, oy, oz, slot);
@@ -420,6 +457,7 @@ void CIsoSurface::GenerateSurface(float tIsoLevel) {
   for (int i = 0; i < 3; i++) {
     planes[i].Release();
   }
+  // old: RenameVerticesAndTriangles();
   CalculateNormals();
   m_bValidSurface = true;
 }
@@ -430,6 +468,7 @@ void CIsoSurface::DeleteSurface()  {
   Vertices.Clear();
   VertexData.Clear();
   Triangles.Clear();
+  // old: AllTriangles.Clear(); IsoPoints.Clear();
   pending[0].clear();
   pending[1].clear();
   new_vertices.clear();
@@ -496,6 +535,36 @@ void CIsoSurface::ResolveSlab(size_t x) {
     new_triangles.push_back(ta[2]);
   }
 }
+/* old: vertices numbered and triangles renamed in one pass after the scan
+void CIsoSurface::RenameVerticesAndTriangles() {
+  IsoPoints.GetVertices(Vertices, PointData == 0 ? 0 : &VertexData);
+  Triangles.SetCapacity(AllTriangles.Count());
+  for (size_t i = 0; i < AllTriangles.Count(); i++) {
+    IsoTriangle& ta = AllTriangles[i];
+    ta[0] = IsoPoints.Get(ta[0]).newID;
+    ta[1] = IsoPoints.Get(ta[1]).newID;
+    ta[2] = IsoPoints.Get(ta[2]).newID;
+    const vec3f& v1 = Vertices[ta[0]];
+    const vec3f& v2 = Vertices[ta[1]];
+    const vec3f& v3 = Vertices[ta[2]];
+    float d = v1.QDistanceTo(v2);
+    if (d == 0) {
+      continue;
+    }
+    else {
+      if ((d = v1.QDistanceTo(v3)) == 0) {
+        continue;
+      }
+      else if ((d = v2.QDistanceTo(v3)) == 0) {
+        continue;
+      }
+    }
+    Triangles.Add(ta);
+  }
+  IsoPoints.Clear();
+  AllTriangles.Clear();
+}
+*/
 //..............................................................................
 void CIsoSurface::AddSurfacePoint(unsigned int nX, unsigned int nY,
   unsigned int nZ, unsigned int nEdgeNo)
@@ -571,7 +640,24 @@ void CIsoSurface::AddSurfacePoint(unsigned int nX, unsigned int nY,
   float val2 = Points[v2x][v2y][v2z];
   int p_data2 = PointData != 0 ? PointData->data[v2x][v2y][v2z] : -1;
   /* the snapping only guards the division: an absolute 0.01 put every vertex
-  on a grid point for maps whose levels are of that order (an MO at 0.05 a.u.)
+  on a grid point for maps whose levels are of that order
+  */
+  /* old: absolute 0.01 snapping, vertices into the T4DIndex
+  if (olx_abs(m_tIsoLevel - val1) < 0.01f) {
+    IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v1x, (float)v1y, (float)v1z, p_data1);
+  }
+  else if (olx_abs(m_tIsoLevel - val2) < 0.01f) {
+    IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v2x, (float)v2y, (float)v2z, p_data2);
+  }
+  else if (olx_abs(val1 - val2) < 0.01f) {
+    IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v1x, (float)v1y, (float)v1z, p_data1);
+  }
+  else {
+    const float mu = (m_tIsoLevel - val1) / (val2 - val1);
+    IsoPoints.Add(nX, nY, nZ, nEdgeNo, (float)v1x + mu*(v2x - v1x),
+      (float)v1y + mu*(v2y - v1y), (float)v1z + mu*(v2z - v1z),
+      p_data1 == -1 ? p_data2 : p_data1);
+  }
   */
   const float eps = 1e-6f;
   vec3f crd;
@@ -620,9 +706,20 @@ void CIsoSurface::CalculateNormals() {
     Normals[Triangles[i][2]] += normal;
   }
 
+  /* old: face normals only, which facet small surfaces
+  // Normalize normals.
+  for (size_t i = 0; i < Normals.Count(); i++) {
+    if (Normals[i].QLength() > 1e-6f) {
+      Normals[i].Normalise();
+      //Normals[i] *= -1;
+    }
+    else
+      Normals[i][2] = 1;
+  }
+  */
   /* shade with the density gradient (central differences, trilinear at the
   vertex): face normals facet surfaces only a few grid cells across. The sign
-  follows the face normals, which carry the triangle winding.
+  follows the face normals, which carry the triangle winding
   */
   const int w = (int)Points.width, h = (int)Points.height,
     d = (int)Points.depth;

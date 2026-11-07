@@ -125,16 +125,16 @@ void GXLibMacros::Export(TLibrary& lib) {
     "t-temporary: not saved in the atom style, undone by 'ads def' or a reload",
     fpAny^(fpNone),
     "Changes atom draw style [sph,elp,ort,std,def - back to the saved style]");
-  /* EASTER EGG / JOKE CODE - nothing serious. Deliberately left without
-  descriptions: boo/unboo - Halloween skin on/off, eggy/uneggy - Easter skin
-  on/off, hohoho/unhohoho - Christmas skin on/off */
+  /* joke code, left without descriptions on purpose: boo/unboo Halloween,
+  eggy/uneggy Easter, hohoho/unhohoho Christmas skin on/off
+  */
   gxlib_InitMacro(Boo, EmptyString(), fpNone, EmptyString());
   gxlib_InitMacro(Unboo, EmptyString(), fpNone, EmptyString());
   gxlib_InitMacro(Eggy, EmptyString(), fpNone, EmptyString());
   gxlib_InitMacro(Uneggy, EmptyString(), fpNone, EmptyString());
   gxlib_InitMacro(Hohoho, EmptyString(), fpNone, EmptyString());
   gxlib_InitMacro(Unhohoho, EmptyString(), fpNone, EmptyString());
-  // joke code, nothing serious: 'order 66' plays a little space-fight movie
+  // joke code: 'order 66' plays a little space-fight movie
   gxlib_InitMacro(Order, EmptyString(), fpOne | psFileLoaded, EmptyString());
   gxlib_InitMacro(Cartoon,
     "c-colour mode: chain, rainbow (along the chain, N terminus blue),"
@@ -1001,10 +1001,8 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
 // init map
   const vec3i dim(au.GetAxes()*resolution);
   TArray3D<float> map(0, dim[0]-1, 0, dim[1]-1, 0, dim[2]-1);
-  /* the map is only shown where the mask allows, so summing the rest of the
-  cell is thrown away - on a protein, nearly all of it. Sum the box the mask
-  can cover instead. The mask itself is built below, since it also clips the
-  display; only its extent is needed here
+  /* the map is only shown where the mask allows, so only the box the mask can
+  cover is summed; the mask itself is built below, only its extent is needed
   */
   vec3s box_from(0, 0, 0), box_to(dim[0]-1, dim[1]-1, dim[2]-1);
   bool boxed = false;
@@ -1027,9 +1025,8 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
     // points outside the box are never summed, and zero reads as no density
     map.FastInitWith(0);
     mi = BVFourier::CalcEDM(P1SF, map.Data, vol, box_from, box_to);
-    /* that sigma is over the box, which is far denser than the cell, so every
-    contour quoted in sigma would be wrong. The coarse full map costs a
-    fraction of a percent of what was just saved
+    /* the box sigma is far higher than the cell one and would shift every
+    contour quoted in sigma, so sigma comes from a coarse full-cell map
     */
     st.start("Cell sigma");
     mi.sigma = BVFourier::CellSigma<float>(P1SF, vol, au.GetAxes());
@@ -1272,9 +1269,8 @@ void GXLibMacros::macADS(TStrObjList &Cmds, const TParamList &Options,
   }
   Cmds.Delete(0);
   TXAtomPList Atoms = app.FindXAtoms(Cmds, false, false);
-  /* -t and def leave the stored styles alone: the style is shared by every
-  atom of the collection and saved with the structure, so a temporary change
-  written there outlives its purpose and reaches atoms it was never meant for
+  /* -t and def leave the stored styles alone: the style is shared by the whole
+  collection and saved with the structure
   */
   if (ads == 0 || Options.GetBoolOption('t')) {
     if (Atoms.IsEmpty()) {
@@ -1296,13 +1292,13 @@ void GXLibMacros::macADS(TStrObjList &Cmds, const TParamList &Options,
   app.SetAtomDrawingStyle(ads, Atoms.IsEmpty() ? 0 : &Atoms);
 }
 //.............................................................................
-/* EASTER EGG / JOKE CODE - nothing serious, these only switch a cosmetic
-skin. The 'un' versions switch back to the normal atoms, but only their own
-skin, so 'unboo' does not hatch the eggs */
+/* joke code, a cosmetic skin; the 'un' versions only switch off their own
+skin, so 'unboo' does not hatch the eggs
+*/
 void GXLibMacros::SetFunSkin(short skin, bool on) {
   short &current = TXAtom::FunSkin();
   if (on) {
-    // the joke shapes cost ~2x a normal atom to draw, keep big scenes snappy
+    // the joke shapes are dearer to draw than normal atoms
     const size_t max_atoms = 1000;
     size_t visible = 0;
     TGXApp::AtomIterator ai = app.GetAtoms();
@@ -1336,13 +1332,9 @@ void GXLibMacros::macUneggy(TStrObjList &, const TParamList &, TMacroData &) {
   SetFunSkin(TXAtom::funSkinEaster, false);
 }
 //.............................................................................
-/* =============================================================================
-  EASTER EGG / JOKE CODE - nothing serious here!
-  'hohoho': a garland hangs along the top of the view, like the decorated
-  mantelpiece over a fireplace in the films - pine swags with red bows, baubles
-  and stockings. Drawn in screen pixels on top of everything, only while the
-  Christmas skin is on, never selected and never printed.
-============================================================================= */
+/* joke code, 'hohoho': a garland along the top of the view, drawn in screen
+pixels over everything while the Christmas skin is on; never selected or printed
+*/
 namespace xmas {
 uint32_t hash(uint32_t x) {
   x ^= x >> 16; x *= 0x7feb352du;
@@ -1540,13 +1532,13 @@ public:
     disc(x + w / 2 + 1.6*u, top - len - 0.8*u, 0.8*u, 12);  // toe
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);  // the cuff
     quad(x - w / 2 - 0.4*u, top - 1.6*u, x + w / 2 + 0.4*u, top + 0.2*u);
-    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);  // heel and toe patches
+    // heel patch, same white
     disc(x - w / 2 + 0.6*u, top - len - 0.9*u, 0.6*u, 10);
   }
 };
 }  // namespace xmas
 //.............................................................................
-// EASTER EGG / JOKE CODE - nothing serious: Santa hats and a garland
+// joke code: Santa hats and a garland
 void GXLibMacros::macHohoho(TStrObjList &, const TParamList &, TMacroData &) {
   /* the garland is created once and kept: the app recreates it with the
   scene and deletes it on exit; it draws nothing unless the skin is on
@@ -1564,16 +1556,10 @@ void GXLibMacros::macUnhohoho(TStrObjList &, const TParamList &, TMacroData &) {
   SetFunSkin(TXAtom::funSkinChristmas, false);
 }
 //.............................................................................
-/* =============================================================================
-  EASTER EGG / JOKE CODE - nothing serious here!
-  'order 66': three star-destroyer shaped ball-and-stick 'molecules' jump in
-  from hyperspace, shoot green lasers at the visible atoms and jump out again.
-  A temporary draw object plays for a few seconds and is then removed. It
-  never touches the model, the styles or anything that is saved.
-  Directions: for a model vector v the screen coordinates are v*B (B - the
-  scene basis matrix), so columns of B are screen right/up/towards-viewer in
-  model space - the same convention as the EXYZ separation code in TXAtom.
-============================================================================= */
+/* joke code, 'order 66': a temporary draw object that never touches the model,
+the styles or anything saved. screen = v*B, so the columns of B are screen
+right/up/towards-viewer in model space, as in the EXYZ code of TXAtom
+*/
 namespace order66 {
 const double
   t_in = 0.9,       // hyperspace arrival, s
@@ -1923,7 +1909,7 @@ public:
 };
 }  // namespace order66
 //.............................................................................
-// EASTER EGG / JOKE CODE - nothing serious, a purely cosmetic movie
+// joke code, a purely cosmetic movie
 void GXLibMacros::macOrder(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
@@ -1948,9 +1934,9 @@ void GXLibMacros::macOrder(TStrObjList &Cmds, const TParamList &Options,
     TGlRenderer &r = app.GetRenderer();
     order66::TShow *show = new order66::TShow(r, targets);
     const olxstr name = show->GetCollectionName();
-    /* afterwards everything must be exactly as before: the model and the view
-    were never touched, the GL state is restored by the object itself, so only
-    the temporary object has to go - also when something throws on the way */
+    /* the model and view are never touched and the object restores the GL
+    state itself, so only the temporary object has to go, also on a throw
+    */
     struct Cleanup {
       TGlRenderer &r;
       order66::TShow *show;
@@ -1969,7 +1955,7 @@ void GXLibMacros::macOrder(TStrObjList &Cmds, const TParamList &Options,
     } cleanup = { r, show, name, running };
     running = true;
     show->Create();
-    // capped at ~30 fps, so the gag does not spin the CPU/GPU flat out
+    // frame-rate cap, so the gag does not spin the CPU/GPU flat out
     const uint64_t start = TETime::msNow(), frame_ms = 33;
     double t = 0;
     while (t < order66::TShow::Duration()) {
@@ -1984,11 +1970,9 @@ void GXLibMacros::macOrder(TStrObjList &Cmds, const TParamList &Options,
   app.Draw(); // the plain scene again
 }
 //.............................................................................
-/* centre what is on the screen and scale to fit. An isolated stretch sits
-wherever it was in the whole molecule, commonly off the edge of the view. Reads
-the visible objects only, so leaving the focus frames the structure again
-without a second path. Not 'center -z': that takes its centre from FindXAtoms,
-which returns hidden atoms too
+/* centres and scales to the visible objects only, so leaving the focus frames
+the whole structure again; not 'center -z', whose FindXAtoms returns hidden
+atoms too
 */
 static void FrameVisible(TGXApp &app) {
   vec3d miv(100, 100, 100), mav(-100, -100, -100), miv_, mav_;
@@ -2015,9 +1999,7 @@ static void FrameVisible(TGXApp &app) {
 void GXLibMacros::macIsolate(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
-  // the view follows the focus unless asked not to: a user stepping through
-  // residues one at a time wants the view to keep up, but one comparing two
-  // regions by eye does not want the camera moving under them
+  // -nc keeps the camera still, e.g. to compare two regions by eye
   const bool frame = !Options.GetBoolOption("nc");
   if (!Cmds.IsEmpty() &&
     (Cmds[0].Equalsi("off") || Cmds[0].Equalsi("clear")))
@@ -2038,12 +2020,11 @@ void GXLibMacros::macIsolate(TStrObjList &Cmds, const TParamList &Options,
     app.Draw();
     return;
   }
-  // a radius of zero is the seed alone, legal but rarely what is meant
+  // a radius of zero is the seed alone
   const double radius = Options.FindValue('r', "5").ToDouble();
   TXAtomPList seed = app.FindXAtoms(Cmds, false, false);
   TSAtomPList satoms(seed, StaticCastAccessor<TSAtom>());
-  // residues clicked on a ribbon are not in the renderer's selection group, so
-  // 'sel' does not find them and the cartoon has to be asked directly
+  // residues clicked on a ribbon are not in the selection group, ask the cartoon
   if (satoms.IsEmpty()) {
     app.GetCartoonSelectedAtoms(satoms);
   }
@@ -2132,9 +2113,7 @@ void GXLibMacros::macCartoon(TStrObjList &Cmds, const TParamList &Options,
       return;
     }
   }
-  /* a colour or visibility option on its own adjusts what is drawn rather
-  than toggling it off, which is what a bound control needs
-  */
+  // an option on its own adjusts what is drawn rather than toggling it
   const bool only_options = Cmds.IsEmpty() &&
     (mode >= 0 || trace >= 0 || nonprot >= 0 || Options.Contains('a') ||
       Options.Contains("sc"));
@@ -2168,9 +2147,7 @@ void GXLibMacros::macCartoon(TStrObjList &Cmds, const TParamList &Options,
     app.SetCartoonColourMode(mode);
   }
   app.SetCartoonsVisible(v);
-  /* after the cartoon exists - with no ribbon there is nothing for a sidechain
-  to be shown instead of, and 'cartoon on -sc=A:45-60' is one command
-  */
+  // after the cartoon exists, so 'cartoon on -sc=A:45-60' is one command
   if (Options.Contains("sc")) {
     const olxstr sc = Options.FindValue("sc");
     if (sc.Equalsi("off") || sc.Equalsi("none") || sc.Equalsi("clear")) {
@@ -2181,8 +2158,7 @@ void GXLibMacros::macCartoon(TStrObjList &Cmds, const TParamList &Options,
       app.SetAllCartoonSidechains();
     }
     else if (sc.IsEmpty() || sc.Equalsi("focus") || sc.Equalsi("isolate")) {
-      // the bare option means the isolated residues, that being the set a
-      // user working through a structure is looking at anyway
+      // the bare option means the isolated residues
       app.SetCartoonFocusSidechains(true);
       if (!app.HasFocus()) {
         TBasicApp::NewLogEntry(logInfo) << "Cartoon: sidechains will show for"
@@ -2190,7 +2166,7 @@ void GXLibMacros::macCartoon(TStrObjList &Cmds, const TParamList &Options,
       }
     }
     else {
-      // a list is as good as one name, in either separator
+      // comma or space separated list
       TStrList names;
       TStrList toks(sc, ',');
       for (size_t i = 0; i < toks.Count(); i++) {
@@ -2217,8 +2193,7 @@ void GXLibMacros::macCartoon(TStrObjList &Cmds, const TParamList &Options,
             e.GetException()->GetError());
           return;
         }
-        // an atom names the residue it belongs to: half a sidechain is not
-        // something anyone means to ask for
+        // an atom names its whole residue
         for (size_t i = 0; i < sel.Count(); i++) {
           resi.Add(sel[i]->CAtom().GetResiId());
         }

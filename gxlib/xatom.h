@@ -154,11 +154,8 @@ public:
     }
   }
   bool Orient(TGlPrimitive& P);
-  /* EASTER EGG / JOKE CODE - nothing serious, purely cosmetic, see the hidden
-  'boo' macro. Never saved, never touches the model or the styles.
-    funSkinHalloween: H atoms as ghosts, heavier atoms as jack-o'-lanterns
-    funSkinEaster: H atoms as painted eggs, heavier atoms get bunny ears
-    funSkinChristmas: H atoms wear Santa hats, a garland hangs over the view
+  /* joke code, cosmetic skins of the hidden boo/eggy/hohoho macros; never
+  saved, never touches the model or the styles
   */
   enum { funSkinNone = 0, funSkinHalloween, funSkinEaster, funSkinChristmas };
   static short &FunSkin() {

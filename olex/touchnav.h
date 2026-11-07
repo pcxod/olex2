@@ -13,15 +13,10 @@
 #include "wx/event.h"
 #include <functional>
 
-/* Maps wx touch gestures onto the TGlMouse view paths shared with the mouse
-handlers. One-finger drag (rotate), tap (select) and double tap arrive as the
-mouse events the platform synthesises and take the existing mouse path.
-Gestures handled here:
-  pinch           -> TGlMouse::ZoomView(zoom at start * factor)
-  two-finger pan  -> TGlMouse::MoveView(dx, -dy)
-  two-finger twist-> TGlMouse::RotateViewZ(clockwise degrees)
-  long press      -> OnContextMenu(x, y)
-The On* handlers return true when the view changed (caller redraws).
+/* maps wx touch gestures onto the TGlMouse view paths: pinch zooms, two-finger
+pan moves, twist rotates about z, long press opens the context menu. One-finger
+drag, tap and double tap come as synthesised mouse events and take the mouse
+path. The On* handlers return true when the view changed
 */
 class TTouchNav {
   TGlMouse *Mouse;

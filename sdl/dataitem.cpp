@@ -254,8 +254,7 @@ bool TDataItem::DeleteByName(const olxstr& name) {
         }
         return false;
       }
-      // a field index, so it indexes Fields - deleting the item of that index
-      // throws on a leaf item and removes an unrelated child otherwise
+      // old: root->DeleteFieldByIndex(ii); - left the later fields' indices stale
       root->DeleteFieldByIndex(ii, true);
       return true;
     }

@@ -308,9 +308,9 @@ bool TGlXApp::OnInit() {
   Bind(OLX_COMMAND_EVT, &TGlXApp::OnCmd, this);
   Bind(wxEVT_IDLE, &TGlXApp::OnIdle, this);
 #ifdef __ANDROID__
-  /* nothing in Olex2 handles wxUpdateUIEvent, but wxQt updates menus from
-  idle (wxUSE_IDLEMENUUPDATES) and walks every window and menu item for them
-  after each 15 ms timer tick: ~10% of an A53 core while idle */
+  /* nothing in Olex2 handles wxUpdateUIEvent, but wxQt walks every window
+  and menu item for them on each idle timer tick (wxUSE_IDLEMENUUPDATES)
+  */
   wxUpdateUIEvent::SetUpdateInterval(-1);
 #endif
   Bind(wxEVT_CHAR, &TGlXApp::OnChar, this);

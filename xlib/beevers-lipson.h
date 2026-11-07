@@ -37,11 +37,10 @@ public:
       F, map, vol, vec3s(0, 0, 0), vec3s(d[0] - 1, d[1] - 1, d[2] - 1));
   }
 
-  /* as above, for the grid points from..to inclusive. The summation is
-  separable, so restricting each axis costs proportionally less and the values
-  inside the box are the ones the whole map would have had. Points outside are
-  not written - the caller initialises them. The returned sigma is over the
-  points computed, not the cell; use CellSigma to quote a level in sigma
+  /* as above, for the grid points from..to inclusive: the summation is
+  separable, so a box costs proportionally less and holds the full map's values.
+  Points outside are not written. The sigma is over the box; CellSigma gives
+  the cell's
   */
   template <class FloatT>
   static MapInfo CalcEDM(const TArrayList<SFUtil::StructureFactor>& F,
@@ -51,11 +50,9 @@ public:
       F, map, vol, from, to);
   }
 
-  /* sigma over the whole cell, from a coarse full map: a boxed map is far
-  denser than the cell and cannot be contoured on its own sigma. Parseval from
-  the structure factors comes out 1.17x too large against a converged map, so
-  the P1 expanded list does not relate to the full sphere as plainly as it
-  looks; a coarse grid is within 1.5% and costs almost nothing
+  /* sigma over the whole cell from a coarse full map, for contouring a boxed
+  map. Parseval over the P1 expanded list does not give it reliably, a coarse
+  grid is cheap
   */
   template <class FloatT>
   static double CellSigma(const TArrayList<SFUtil::StructureFactor>& F,
@@ -164,6 +161,11 @@ public:
         mi.maxVal = tasks[i].maxVal;
       }
     }
+    /* old: over the whole cell, which a box is not
+    // sum should be ~0, but just in case...
+    double map_mean = sum / dim.Prod();
+    mi.sigma = sqrt(sq_sum / dim.Prod() - map_mean*map_mean);
+    */
     // over the points computed, which is the whole cell unless boxed
     const double n_pt = (double)(to[0] - from[0] + 1) *
       (to[1] - from[1] + 1) * (to[2] - from[2] + 1);
@@ -291,9 +293,7 @@ public:
     int minInd;
     double sum, sq_sum, vol;
     double maxVal, minVal;
-    /* takes the box for signature compatibility with the EDM task - a
-    Patterson is always wanted over the whole cell, so it is not used
-    */
+    // unused: shares the EDM task's signature, a Patterson is always full cell
     const vec3s &from, &to;
     TCalcPattTask(FloatT*** _map, const vec3s& _dim, double _volume,
       const SFList& _F, const vec3i& _min, const vec3i& _max,

@@ -7,9 +7,8 @@
 * the root folder.                                                            *
 ******************************************************************************/
 /* Feeds synthesised wx gesture events through TTouchNav into a real
-TGlRenderer/TGlMouse (no window, no GL context) and checks the view. Also
-checks the refactored mouse handlers still give the original numbers.
-Exit code = number of failed checks.
+TGlRenderer/TGlMouse (no window, no GL context) and checks the view and the
+mouse handlers. Exit code = number of failed checks
 */
 #include "touchnav.h"
 #include "glrender.h"
@@ -65,7 +64,7 @@ static wxRotateGestureEvent rot(double a, bool s = false, bool e = false) {
 
 int main(int argc, char *argv[]) {
   TBasicApp app(TBasicApp::GuessBaseDir(argv[0]));
-  // ponytail: renderer is leaked - its dtor frees GL lists, there is no context
+  // leaked: the dtor frees GL lists and there is no context
   TGlRenderer &R = *new TGlRenderer(new TStubScene(), 400, 300);
   TGlMouse m(&R, 0);
   TTouchNav nav;

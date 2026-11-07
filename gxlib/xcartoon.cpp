@@ -18,12 +18,12 @@
 #include "gxapp.h"
 #include "residue.h"
 
-// the member definitions below resolve through the header's using-directive,
-// but a free function has to be put in the namespace explicitly
+// free functions need the namespace explicitly, the members get it from the header
 BeginGxlNamespace()
 namespace cartoon_colour {
-  // clear of the background and of the CPK colours, so sidechain sticks drawn
-  // over the ribbon stay readable. OLX_RGBA packs as 0xAABBGGRR
+  /* clear of the background and the CPK colours, so sidechain sticks over the
+  ribbon stay readable; OLX_RGBA packs as 0xAABBGGRR
+  */
   static const uint32_t chain_colours[] = {
     0xffcc9966, 0xff6699cc, 0xff66cc99, 0xff9966cc,
     0xff99cccc, 0xffcc6699, 0xff99cc66, 0xffcccc66
@@ -35,8 +35,7 @@ namespace cartoon_colour {
   uint32_t Chain(size_t index) {
     return chain_colours[index % ChainCount()];
   }
-  // warm for the interior, cool for the solvent, as hydrophobicity figures are
-  // drawn elsewhere
+  // warm for the interior, cool for the solvent
   uint32_t Polarity(short p) {
     using namespace xlib::protein;
     switch (p) {
@@ -55,9 +54,8 @@ namespace cartoon_colour {
       default:        return 0xff909090;   // unknown, mid grey
     }
   }
-  /* One per amino acid, in the alphabetical order xlib::protein indexes them.
-  Chosen for separation rather than for meaning; none is dark, the ribbon's
-  ambient term being dark enough to take a dark diffuse colour to near black.
+  /* one per amino acid, in xlib::protein's alphabetical order, chosen for
+  separation; none is dark, the dark ambient would take it to near black
   */
   static const uint32_t residue_colours[] = {
     0xff4b19e6, 0xff4bb43c, 0xff19e1ff, 0xffc88200, 0xff3082f5,
@@ -80,8 +78,7 @@ namespace cartoon_colour {
     TGlMaterial m;
     m.SetFlags(sglmAmbientF | sglmDiffuseF | sglmSpecularF | sglmShininessF |
       sglmAmbientB | sglmDiffuseB | sglmSpecularB | sglmShininessB);
-    // only the diffuse carries the colour: raising the ambient to it as well
-    // saturates the ribbon to white under this scene's lights
+    // only the diffuse carries the colour; a coloured ambient saturates to white
     m.AmbientF = 0xff202020;
     m.DiffuseF = colour;
     m.SpecularF = 0xff909090;
@@ -98,24 +95,20 @@ EndGxlNamespace()
 //.............................................................................
 TXCartoon::TXCartoon(TGlRenderer &R, const olxstr &collectionName)
   : AGDrawObject(R, collectionName),
-    // OLX_RGBA packs as 0xAABBGGRR, so this is a muted steel blue
-    colour(0xffcc9966),
+    colour(0xffcc9966),  // 0xAABBGGRR: muted steel blue
     list(0),
     min_dim(0), max_dim(0),
     has_dims(false),
     list_failed(false),
-    // wider than the coil tube, narrower than a helix ribbon: the middle of any
-    // secondary structure is hit, only the outer edge of a wide ribbon missed
+    // wider than the coil tube, narrower than a helix ribbon
     pick_slices(6),
     pick_radius(1.6),
     chain_id(' '),
     matrix_id(0)
 {
-  /* clicks still arrive - SelectObject maps the picking colour back without
-  consulting either flag. What selectable would add is the whole chain entering
-  the selection group, 140 residues at once, and a freed pointer left there on
-  every rebuild since ~AGDrawObject is empty and RemoveObject touches only
-  FGObjects. TGlGroup::Add refuses a non-selectable object
+  /* clicks still arrive, SelectObject ignores both flags. Selectable would put
+  the whole chain in the selection group and leave a freed pointer there on
+  every rebuild (~AGDrawObject is empty, RemoveObject touches only FGObjects)
   */
   SetSelectable(false);
   SetGroupable(false);
@@ -187,21 +180,17 @@ size_t TXCartoon::DrainGlErrors() {
 }
 //.............................................................................
 void TXCartoon::EmitList(TGlPrimitive &p) const {
-  // so that what is read afterwards is this list's doing and nothing else's
+  // so the error read afterwards is this list's own
   DrainGlErrors();
   list_failed = false;
   const size_t rc = ResidueCount();
   const bool per_residue = (residue_colours.Count() == rc && rc != 0);
   p.StartList();
   olx_gl::colorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-  // one begin/end for the whole chain: a colour change between glBegin and
-  // glEnd is legal, so the per-residue modes stay a single primitive
+  // one begin/end for the chain: glColor is legal between glBegin and glEnd
   const bool subset = (residue_visible.Count() == rc && rc != 0);
   const bool selected = (residue_selected.Count() == rc && rc != 0);
-  /* The renderer's own selection colour, and its ambient rather than its
-  diffuse: the selection group is drawn semi-transparent with both set, and it
-  is the ambient that carries the green: the diffuse is red (glgroup.cpp:44-45).
-  */
+  // the renderer's selection colour: its ambient carries the green, the diffuse is red
   const uint32_t sel_colour =
     Parent.GetSelection().GetGlM().AmbientF.GetRGB() | 0xff000000;
   olx_gl::begin(GL_TRIANGLES);
@@ -223,7 +212,7 @@ void TXCartoon::EmitList(TGlPrimitive &p) const {
       if (per_residue || selected) {
         const uint32_t c = (selected && residue_selected[i])
           ? sel_colour : (per_residue ? residue_colours[i] : colour);
-        // a run of same-coloured residues is the common case, so do not repeat
+        // only on a change; runs of one colour are the common case
         if (!any_emitted || c != emitted) {
           EmitColour(c);
           emitted = c;
@@ -239,10 +228,8 @@ void TXCartoon::EmitList(TGlPrimitive &p) const {
   }
   olx_gl::end();
   p.EndList();
-  /* A list that fails to compile draws nothing, which is indistinguishable from
-  a fault in the geometry unless it is reported. GL_INVALID_VALUE means the list
-  id was rejected - a renderer problem - while a size problem gives
-  GL_OUT_OF_MEMORY.
+  /* a list that fails to compile draws nothing, so report it: GL_INVALID_VALUE
+  is a rejected list id (renderer), GL_OUT_OF_MEMORY a size problem
   */
   const GLenum err = glGetError();
   if (err != GL_NO_ERROR) {
@@ -270,11 +257,7 @@ void TXCartoon::Create(const olxstr &cName) {
   }
   GPC->AddObject(*this);
   if (GPC->PrimitiveCount() != 0) {
-    /* A collection left over from a previous model still carries a list built
-    from that model's coordinates. Re-emitting into it is both correct and
-    cheaper than allocating another one: taking it as it stands would draw the
-    old structure.
-    */
+    // a collection left from a previous model holds its old list: re-emit into it
     list = &GPC->GetPrimitive(0);
     if (!mesh.triangles.IsEmpty()) {
       EmitList(*list);
@@ -285,12 +268,11 @@ void TXCartoon::Create(const olxstr &cName) {
     return;
   }
   TGraphicsStyle &GS = GPC->GetStyle();
-  // the mesh must not reach the style file - TDUserObj writes every vertex as
-  // text - so the geometry is regenerated from the model instead
+  // not saved: TDUserObj would write every vertex as text; the model rebuilds it
   GS.SetSaveable(false);
 
   TGlMaterial m = cartoon_colour::RibbonMaterial(colour);
-  // the list emits a glColor per residue, which is what this lets through
+  // lets the list's per-residue glColor through
   m.SetColorMaterial(true);
 
   list = &GPC->NewPrimitive("Cartoon", sgloCommandList);
@@ -323,8 +305,7 @@ size_t TXCartoon::HitResidue(const vec3d &from, const vec3d &dir, double &dist,
     if (q > t2) {
       continue;
     }
-    // nearest along the line, not nearest to it: where the chain doubles back
-    // two residues fall within the tolerance and the front one was clicked
+    // nearest along the line: where the chain doubles back the front one wins
     if (best == InvalidIndex || t < best_q) {
       best = i;
       best_q = t;
@@ -362,9 +343,8 @@ size_t TXCartoon::HitResidueProjected(double px, double py, double &q,
 {
   const bool subset = (residue_visible.Count() == residue_ca.Count());
   const double t2 = tolerance*tolerance;
-  /* nearest CA on the projection plane. Where a chain doubles back the front
-  stretch is the one clicked, but Project()'s third component is in projection
-  units and its sign convention is not established, so depth is only reported
+  /* nearest CA on the projection plane; depth is not used, the sign of
+  Project()'s third component is not established
   */
   size_t best = InvalidIndex;
   double best_q = 0;
@@ -390,8 +370,7 @@ size_t TXCartoon::HitResidueProjected(double px, double py, double &q,
 }
 //.............................................................................
 void TXCartoon::ReportHitCandidates(double px, double py, size_t chosen) const {
-  // the residues competing for one click and the depth Project reports, so that
-  // the sign and scale of that third component can be established from real use
+  // debug log to settle the sign and scale of Project()'s depth
   const bool subset = (residue_visible.Count() == residue_ca.Count());
   TArrayList<olx_pair_t<double, size_t> > cand;
   for (size_t i = 0; i < residue_ca.Count(); i++) {
@@ -450,10 +429,8 @@ size_t TXCartoon::SelectedResidueCount() const {
 }
 //.............................................................................
 bool TXCartoon::OnMouseDown(const IOlxObject *, const TMouseData &) {
-  /* Claimed, but nothing is decided yet - see OnMouseUp. Returning true keeps
-  the default handling off this object; the drag that may follow still rotates
-  the scene, because OnMouseMove is not overridden and the renderer's own
-  handlers pick it up.
+  /* claimed, decided in OnMouseUp; keeps the default handling off, a drag
+  still rotates since OnMouseMove is not overridden
   */
   return true;
 }
@@ -463,23 +440,19 @@ bool TXCartoon::OnMouseUp(const IOlxObject *, const TMouseData &d) {
   if (d.GlMouse != 0 && !d.GlMouse->IsClick(d)) {
     return true;
   }
-  // pixels to the plane Project() returns, as the legend does it; screen y runs
-  // down and the plane's up, hence the subtraction
+  // pixels to Project()'s plane; screen y runs down, the plane's up
   const double s = Parent.GetScale();
   const double px = (d.DownX - Parent.GetWidth() / 2.0)*s;
   const double py = (Parent.GetHeight() / 2.0 - d.DownY)*s;
   double q = 0;
-  /* No tolerance: the renderer has already resolved this chain as the object
-  under the cursor, so the nearest of its residues is the answer whatever the
-  distance. A finite limit can only reject it, leaving the click to fall through
-  to the default and select the whole chain.
+  /* no tolerance: the renderer already picked this chain, so its nearest
+  residue is the answer; a limit would let the click fall through to the chain
   */
   const size_t i = HitResidueProjected(px, py, q, 1e30);
   if (i == InvalidIndex || i >= residue_ids.Count()) {
     return false;
   }
-  // every click toggles and nothing is cleared, as clicking behaves elsewhere
-  // in Olex2; 'sel -u' and 'isolate off' clear it
+  // a click toggles, nothing is cleared; 'sel -u' and 'isolate off' clear
   if (ToggleResidue(i)) {
     Rebuild();
   }
@@ -492,19 +465,18 @@ bool TXCartoon::OnMouseUp(const IOlxObject *, const TMouseData &d) {
     label << r.GetClassName() << ' ' << r.GetNumber();
   }
   else {
-    // no RESI behind it, so the position in the trace is all there is to name
+    // no RESI behind it: name it by its position in the trace
     label << "residue " << (i + 1);
   }
   const bool now = (i < residue_selected.Count() && residue_selected[i]);
-  // the identity is not id 0 but the encoded 0x808080: matrix index 0 with a
-  // zero translation biased by 128
+  // the identity encodes as 0x808080: matrix 0, zero translation biased by 128
   const bool generated = (matrix_id != 0 && matrix_id != 0x808080);
   TBasicApp::NewLogEntry(logInfo) << "Cartoon: " <<
     (now ? "selected " : "deselected ") << label <<
     (generated ? (olxstr(" [symmetry copy, matrix ") << matrix_id << ']')
       : EmptyString());
   ReportHitCandidates(px, py, i);
-  // from the release, as TGlMouse's own selection fallback does (glmouse.cpp:98)
+  // from the release, as TGlMouse's own selection fallback does
   Parent.Draw();
   // consumed, so the default handling does not select the whole chain
   return true;
@@ -552,11 +524,9 @@ void TXCartoon::DrawPickProxy() const {
 }
 //.............................................................................
 bool TXCartoon::Orient(TGlPrimitive &P) {
-  /* picking reads back one colour per object, so the compiled list must not
-  run - it emits a glColor per residue, which would decode as another object. A
-  coarse tube along the CA trace instead: no colour changes, cheap enough to
-  re-emit per click, fat enough that a ribbon edge registers. Drawn even though
-  the object is not selectable, this pass being what identifies the chain
+  /* picking reads one colour per object and the list's per-residue glColor would
+  decode as other objects, so a plain tube along the CA trace instead; drawn
+  though not selectable, this pass is what identifies the chain
   */
   if (Parent.IsSelecting()) {
     DrawPickProxy();

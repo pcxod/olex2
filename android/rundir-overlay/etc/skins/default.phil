@@ -1,22 +1,17 @@
-#############################################################
-# Android tablet skin (SM-T585: 1920x1200, 240 dpi, touch)  #
-# Loaded by deal_with_gui_phil() on top of gui.params when  #
-# gui.skin.name = default. Upstream has no default.phil, so #
-# this file exists only in the Android rundir overlay.      #
-# Sizes: touch target >= 48 px, body text ~17 px.           #
-#############################################################
+# Android tablet skin (1920x1200, 240 dpi, touch), loaded by
+# deal_with_gui_phil() on top of gui.params when gui.skin.name = default;
+# only the Android rundir overlay has it. Body text ~17 px
 
 gui {
 
-  # Fixed font step: the ClientWidth-keyed steps gave '0' at 480 px and
-  # would give '+1' at 720 px; one deterministic size is easier to tune.
+  # one fixed font step: the ClientWidth-keyed steps change with the panel width
   font_size_steps = 0
   font_size_rel_size = '0'
 
-  # Panel ~29 % of 1920 (Florian: 720 too wide, 480 too narrow); applied on
-  # every start by the export_parameters patch in gui_tablet_patches.py.
+  # ~29 % of 1920, applied on every start by the export_parameters patch in
+  # gui_tablet_patches.py
   htmlpanelwidth = 550
-  # 21 + the 16 px wxQt scrollbar the generated images did not allow for.
+  # 21 + the 16 px wxQt scrollbar the generated images did not allow for
   htmlpanelwidth_margin_adjust = 36
 
   skin {

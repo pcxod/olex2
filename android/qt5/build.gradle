@@ -76,8 +76,8 @@ android {
         // test APKs: release build, signed with the SDK debug key
         release {
             signingConfig = signingConfigs.debug
-            // run-as for the logs on the tablet (TABLET-CHECKLIST.md); only
-            // the small Java loader runs slower, the native code is the same
+            // run-as for the logs and env.txt on the device; only the small
+            // Java loader runs slower, the native code is the same
             debuggable = true
         }
     }

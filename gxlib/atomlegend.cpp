@@ -14,10 +14,8 @@
 #include "eset.h"
 
 namespace {
-  /* a swatch drawn the way the ribbon is: the material from the cartoon
-  itself, colour material on, the colour through glColor. Reproduced rather
-  than re-derived - working out what the lights should do to a colour and
-  building a material to match is how the ribbon ended up white
+  /* a swatch drawn the way the ribbon is: the cartoon's own material, colour
+  material on, the colour through glColor; copied, not re-derived from the lights
   */
   TGlMaterial SwatchMaterial(uint32_t cl) {
     TGlMaterial m = gxlib::cartoon_colour::RibbonMaterial(cl);
@@ -30,9 +28,8 @@ namespace {
       (float)OLX_GetBValue(cl) / 255,
       (float)OLX_GetAValue(cl) / 255);
   }
-  /* a short length of ribbon with one twist, in the unit box the sphere swatch
-  occupies. The twist is what makes it read as a ribbon rather than a bar at
-  this size, and it shows both faces
+  /* a short ribbon with one twist, in the sphere swatch's unit box; the twist
+  makes it read as a ribbon rather than a bar and shows both faces
   */
   void DrawRibbonSwatch(uint32_t cl) {
     const int n = 14;
@@ -240,10 +237,7 @@ void TAtomLegend::Update() {
   row_colours.Clear();
   // no ribbon rows unless AddCartoonKey says otherwise, so every row is a ball
   first_ribbon_row = InvalidIndex;
-  /* not "no elements, no legend": with the cartoon hiding everything it traced
-  there may be no visible atom at all, and returning here left the cartoon key
-  unbuilt. The element block is skipped, the cartoon key is not
-  */
+  // the cartoon may hide every atom; skip the element rows, still build its key
   if (elm_set.IsEmpty()) {
     AddCartoonKey();
     text.Strtok(caption, '\n');
@@ -321,9 +315,8 @@ void TAtomLegend::AddCartoonKey() {
   using namespace xlib::protein;
   const short mode = app.GetCartoonColourMode();
 
-  /* appended to the lists the element key uses, so it inherits the dragging,
-  the saved position and the reset. Rows are drawn top-down in the order added,
-  one swatch and one label each
+  /* appended to the element key's lists, so it inherits dragging, saved position
+  and reset; rows draw top-down in the order added, one swatch and label each
   */
   if (mode == ccChain) {
     TArrayList<olx_pair_t<olxch, uint32_t> > chains;
@@ -367,10 +360,8 @@ void TAtomLegend::AddCartoonKey() {
     }
   }
   else if (mode == ccIndex || mode == ccUeq) {
-    /* a colour bar as a column of swatches down the legend's own rows rather
-    than a separate gradient object: discrete, but at this many steps it reads
-    as a bar and costs no new primitive or draggable. The scale runs high at
-    the top, as colour bars are drawn, so the ramp is walked backwards
+    /* a colour bar as a column of swatches in the legend's own rows, no new
+    primitive or draggable; high at the top, so the ramp is walked backwards
     */
     const size_t steps = 9;
     double u_min = 0, u_max = 0;
@@ -379,10 +370,7 @@ void TAtomLegend::AddCartoonKey() {
     for (size_t i = 0; i < steps; i++) {
       const double t = double(steps - 1 - i)/(steps - 1);
       materials.Add(SwatchMaterial(gxlib::cartoon::RainbowColour(t)));
-      /* labelled at the ends and the middle only - every step is unreadable at
-      this row height, and the rest still line up, text and swatches coming
-      from the same row index
-      */
+      // labels at the ends and middle only; empty rows keep text and swatch aligned
       if (mode == ccUeq) {
         if (!have_u) {
           text.Add(i == 0 ? olxstr("Ueq high")
@@ -401,9 +389,8 @@ void TAtomLegend::AddCartoonKey() {
       }
     }
   }
-  /* taken back off the materials rather than threaded through every branch
-  above, the diffuse term being where SwatchMaterial put it. Alpha forced
-  opaque: GetRGB drops it, and zero would draw nothing
+  /* read back from the diffuse term SwatchMaterial set; alpha forced opaque,
+  GetRGB drops it and zero would draw nothing
   */
   for (size_t i = first_ribbon_row; i < materials.Count(); i++) {
     row_colours.Add(materials[i].DiffuseF.GetRGB() | 0xff000000);

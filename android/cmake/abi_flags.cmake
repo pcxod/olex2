@@ -16,9 +16,8 @@ elseif (ANDROID_ABI STREQUAL "x86")
   set(_olx_abi_flags -mssse3)           # the x86 ABI guarantee
 elseif (ANDROID_ABI STREQUAL "armeabi-v7a")
   # armv7ve: hardware sdiv/udiv instead of __aeabi_idiv calls, exact, so
-  # results do not change. Drops Cortex-A5/A8/A9 and Scorpion (SIGILL there),
-  # accepted 9 Oct 2026. Thumb-2 + NEON; not neon-vfpv4, FMA would change
-  # rounding.
+  # results do not change. Drops Cortex-A5/A8/A9 and Scorpion (SIGILL there).
+  # Thumb-2 + NEON; not neon-vfpv4, FMA would change rounding
   set(_olx_abi_flags -march=armv7ve -mthumb -mfpu=neon)
 else ()
   set(_olx_abi_flags)                   # arm64-v8a: armv8-a baseline

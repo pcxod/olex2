@@ -36,9 +36,7 @@ namespace {
     return (l > 1e-6f) ? v/l : fallback;
   }
 
-  /* One cross-section along the chain: where it is, which way the chain runs,
-  which way the ribbon lies flat, and how big it is there.
-  */
+  // one cross-section: centre, chain direction, flat direction and size
   struct Sample {
     vec3f c, tangent, side;
     float w, h, e;
@@ -50,10 +48,8 @@ namespace {
     return (v < 0) ? -a : a;
   }
 
-  /* emits the rings and triangles for a run of samples. The winding puts the
-  outward face counter-clockwise; backwards is invisible while the material is
-  opaque, culling being on only for transparent ones, but it lights from
-  GL_BACK
+  /* emits the rings and triangles for a run of samples, outward faces counter-
+  clockwise: reversed winding is not culled while opaque but lights from GL_BACK
   */
   void StitchSamples(const TTypeList<Sample> &samples, size_t slices, Mesh &m) {
     if (samples.Count() < 2 || slices < 3) {
@@ -114,9 +110,8 @@ namespace {
 //.............................................................................
 uint32_t RainbowColour(double t) {
   t = olx_max(0.0, olx_min(1.0, t));
-  /* four linear legs through blue, cyan, green, yellow, red. Linear in RGB
-  rather than a hue sweep, which passes through magenta and stops the ends
-  being distinguishable
+  /* linear in RGB through blue, cyan, green, yellow, red: a hue sweep passes
+  through magenta and makes the ends indistinguishable
   */
   double r, g, b;
   const double s = t*4;
@@ -161,10 +156,9 @@ void BuildCartoon(const xlib::protein::ChainSegment &seg,
     ss[i] = (ss_in.Count() == rc && !p.trace_only) ? ss_in[i] : ss_coil;
   }
 
-  /* per-residue ribbon direction after Carson and Bugg: the peptide plane is
-  spanned by the chain direction and the carbonyl. Successive normals are
-  flipped to agree with the previous one, which prevents the 180 degree twists
-  along a strand. No carbonyl oxygen falls back to a frame carried along
+  /* per-residue ribbon direction after Carson and Bugg, flipped to agree with
+  the previous one to avoid 180 degree twists along a strand; without a carbonyl
+  O the previous direction is carried along
   */
   TArrayList<vec3f> side(rc);
   vec3f carried;
@@ -215,10 +209,7 @@ void BuildCartoon(const xlib::protein::ChainSegment &seg,
       }
     }
   }
-  /* a strand running to the end of the segment has its head on the last
-  residue, which owns no stretch - the arrow would simply not be drawn. Move it
-  onto the stretch before, which is where it is drawn anyway
-  */
+  // the last residue owns no stretch, so its head moves to the stretch before
   if (rc >= 2 && head[rc-1]) {
     head[rc-1] = shoulder[rc-1] = false;
     head[rc-2] = true;
@@ -238,9 +229,8 @@ void BuildCartoon(const xlib::protein::ChainSegment &seg,
     const vec3f p0 = (i == 0) ? (p1*2.0f - p2) : vec3f(seg.residues[i-1].ca);
     const vec3f p3 = (i + 2 < rc) ? vec3f(seg.residues[i+2].ca)
       : (p2*2.0f - p1);
-    /* the final pair contributes the closing sample as well, and so does an
-    arrowhead - without it the taper stops a step short, at the coil radius,
-    and the point is never drawn: the arrow merges into the coil it precedes
+    /* the final pair and an arrowhead also emit the closing sample, else the
+    taper stops a step short and the point is never drawn
     */
     const size_t n = (i + 2 == rc || head[i]) ? steps + 1 : steps;
 
@@ -289,9 +279,8 @@ void BuildCartoon(const xlib::protein::ChainSegment &seg,
 
   StitchSamples(samples, slices, m);
 
-  /* per-residue triangle offsets, so a subset maps to a contiguous range. n
-  samples make n-1 stretches, so the last residue owns none - the sample count
-  would put its offset past the sentinel
+  /* per-residue triangle offsets, a subset being a contiguous range; n samples
+  make n-1 stretches, so the last residue owns none and must not pass the sentinel
   */
   for (size_t i = 0; i < rc; i++) {
     m.residue_triangle_offset.Add(

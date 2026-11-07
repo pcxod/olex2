@@ -175,11 +175,10 @@ struct CIPCompare {
   cut-off - hundreds in 3D frameworks at ~1.5 kB of stack each; deeper pairs tie
   */
   static const int MaxCIPLevel = 64;
-  /* every pair re-ranks the siblings it reaches with this same comparison, so
-  symmetry-equivalent (tied) branches of a framework cost exponential time and
-  memory within the cut-off (>1e6 expansions, GBs). In 800 COD structures
-  organic centres decided within 3e3, one Mn cluster took 3e5; past the budget
-  the pair ties (not chiral) */
+  /* every pair re-ranks the siblings it reaches with this comparison, so tied
+  (symmetry-equivalent) branches cost exponential time and memory within the
+  cut-off; past this budget the pair ties (not chiral)
+  */
   static const size_t MaxCIPExpansions = 100000;
   mutable size_t expansions;
   olxstr_buf* bf;

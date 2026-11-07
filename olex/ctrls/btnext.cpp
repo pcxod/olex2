@@ -260,12 +260,11 @@ void TImgButton::MouseMoveEvent(wxMouseEvent& event) {
   }
 }
 //..............................................................................
-// ponytail: process-wide caches so a page rebuild (every tab click) stops
-// re-decoding unchanged button PNGs and re-converting them to bitmaps. An image
-// hit needs byte-identical file content and a bitmap is keyed by the image data
-// it was made from (pinned, so the pointer cannot be reused), so the result is
-// what the uncached path makes. Wiped whole past a few thousand entries; never
-// destroyed (wx objects must not outlive the GUI in a static destructor).
+/* process-wide caches, so a page rebuild does not re-decode unchanged button
+images. An image hit needs byte-identical file content, a bitmap is keyed by
+the image data it was made from (pinned, so the pointer cannot be reused).
+Wiped whole when full; never destroyed, wx objects must not outlive the GUI
+*/
 namespace {
   struct ImgCacheEntry { wxMemoryBuffer bytes; wxImage img; };
   struct BmpCacheEntry { wxImage pin; wxBitmap bmp; };
@@ -328,6 +327,8 @@ void TImgButton::SetImages(const olxstr& src, int w, int h) {
     }
     else {
       wxLogNull bl;
+      // old: decoded straight from the stream on every page build, no cache
+      // img = new wxImage(*(fsFile->GetStream()), wxBITMAP_TYPE_ANY);
       wxMemoryInputStream mis(data, len);
       img = new wxImage(mis, wxBITMAP_TYPE_ANY);
       if (!img->IsOk()) {

@@ -144,9 +144,8 @@ protected:
       Instance->PlaneCacheValid = false;
     }
   }
-  /* 2D map modes: Orient resampled the plane, refilled and uploaded the
-  texture and rebuilt the legend on every redraw. These are kept as long as
-  nothing they depend on changes; DataVersion is bumped by everything that
+  /* 2D map modes: the resampled plane, texture and legend are kept until
+  something they depend on changes; DataVersion is bumped by everything that
   alters the map values (raw writes through Data() end with AdjustMap)
   */
   struct PlaneKey {

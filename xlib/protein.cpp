@@ -54,8 +54,7 @@ namespace {
   const int max_bridge_residues = 3;
 
   /* finds the CA of a residue the classifier rejected, from its traced
-  neighbours. One unplaced residue splits a chain, so a 5% failure rate over
-  574 residues costs thirty spurious breaks rather than 5% coverage
+  neighbours: one unplaced residue splits a chain
   */
   size_t RecoverCA(const TTypeList<ProteinAtom> &atoms,
     const vec3d *prev_ca, const vec3d *next_ca)
@@ -525,11 +524,9 @@ void AssignSecondaryStructure(const ChainSegment &seg, TArrayList<short> &out) {
   SmoothRuns(out, ss_helix, 4);
   SmoothRuns(out, ss_strand, 3);
 
-  /* a strand is only a strand if it is in a sheet. The descriptors above see
-  the same local shape in an extended loop, and on their own report 5% strand
-  in haemoglobin, which has no sheet, and run ubiquitin's strands past their
-  ends. What separates the real ones is a partner about 5 A away, from
-  elsewhere in the chain - the one place the assignment is not local
+  /* a strand is only a strand if it is in a sheet: the descriptors above see
+  the same local shape in an extended loop. A real one has a partner about 5 A
+  away from elsewhere in the chain - the one place the assignment is not local
   */
   const double max_pairing = 5.6, max_pairing_sq = max_pairing*max_pairing;
   const size_t min_separation = 4;

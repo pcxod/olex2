@@ -29,10 +29,8 @@ private:
   // to be used inernally for locating atoms in the tables
   ConstPtrList<TCAtom> FindAtoms(const TStrList& names);
   bool has_duplicate_labels;
-  /* the macromolecular dictionary: same STAR syntax and parser, but other data
-  names (_cell.length_a) and orthogonal coordinates. A mode rather than its own
-  loader - these files are named .cif and arrive here anyway, and the data
-  provider keeps every block, so writing back preserves what we do not model
+  /* the macromolecular dictionary: same STAR syntax and parser, other data
+  names (_cell.length_a) and orthogonal coordinates
   */
   bool is_mmcif;
 protected:
@@ -44,9 +42,7 @@ protected:
     return LoopFromDef(dp, TStrList(col_names, ','));
   }
   void _LoadCurrent();
-  /* builds the asymmetric unit from the mmCIF categories. Separate from
-  _LoadCurrent because the two share no data name that matters here
-  */
+  // builds the asymmetric unit from the mmCIF categories
   void _LoadCurrentMM();
   // one residue per chain, sequence number and insertion code; 0 if none
   TResidue *MMResidue(const olxstr &comp_id, const olxstr &seq_id,
@@ -71,10 +67,8 @@ public:
   }
   // valid after loading; the CIF written on ACTA has to follow it
   bool IsMMCif() const { return is_mmcif; }
-  /* the macromolecular name for a core one, empty if there is none. Not a
-  punctuation rule - _refine_ls_R_factor_gt is _refine.ls_R_factor_R_work - so
-  it is a table, and anything absent stays unresolved rather than being mapped
-  to something that merely looks right
+  /* the macromolecular name for a core one, empty if there is none: a table,
+  _refine_ls_R_factor_gt being _refine.ls_R_factor_R_work
   */
   static olxstr MMEquivalentOf(const olxstr &core_name);
   /* Saves the data to a file and returns true if successful and false in the

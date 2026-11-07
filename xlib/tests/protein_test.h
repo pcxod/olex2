@@ -11,13 +11,8 @@
 
 namespace test {
 
-/* The backbone classifier is exercised directly, on geometry built here, so
-these cases document what it must survive rather than what one test file
-happens to contain.
-
-The measured behaviour on real structures, for reference: 100% of residues in
-crambin (1EJG), ubiquitin and the 8015 residues of GroEL (1AON); 94% in
-haemoglobin (4HHB), where the remainder has no N-CA-C=O candidate at all.
+/* the backbone classifier is exercised directly, on geometry built here, so
+these cases document what it must survive
 */
 namespace protein_test_data {
   using namespace xlib::protein;
@@ -359,13 +354,9 @@ void SecondaryStructureTest(OlxTests &t) {
     }
   }
 
-  /* The negative control: a wide, gently curving arc at peptide spacing. It is
-  neither helix nor strand and must come out coil.
-
-  The first version of this case was a planar zigzag at 3.9 A steps, which the
-  assignment called strand - correctly. That is strand geometry: its CA(i) to
-  CA(i+2) distance is 7.4 A against the ideal 6.7. A negative control has to be
-  something genuinely unlike both, not something merely built by hand.
+  /* the negative control: a wide, gently curving arc at peptide spacing,
+  neither helix nor strand, must come out coil. A planar zigzag would not do,
+  it is strand geometry
   */
   {
     ChainSegment arc;

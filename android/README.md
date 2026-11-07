@@ -5,25 +5,19 @@ and the HTML GUI) as an Android APK. It is not a Qt rewrite. wxWidgets runs on
 its Qt port (wxQt), so Qt is only the platform layer below wx. No Olex2 code
 uses Qt directly.
 
-> **Status (7 Oct 2026): stage S1 runs.** Four APKs (arm64-v8a, armeabi-v7a,
-> x86_64, x86) build without Python. On the emulators Olex2 starts, loads the
-> bundled sucrose, renders it, and selects, rotates and zooms by touch; see
-> [Results](#results-s1-emulators). Lines marked [U] are unverified.
-
 ## What is here
 
 | File | Role |
 |---|---|
-| `CMakeLists.txt` | One `qt_add_executable(olex2)` over the same source globs as the root build, minus unirun and the Windows-only `fsindex`/`zip`/`unzip`. Stage S1 has no `_PYTHON`, `_OPENSSL` or cctbx. |
+| `CMakeLists.txt` | One `qt_add_executable(olex2)` over the same source globs as the root build, minus unirun and the Windows-only `fsindex`/`zip`/`unzip`. `OLX_PYTHON` (default ON) embeds CPython with cctbx and NoSpherA2 from the per-ABI payload in `OLX_STAGE`; no `_OPENSSL`. `OLX_QT=5` is the legacy line (Qt 5.15.2, NDK r21e, minSdk 21, `legacy-*` presets, packaged by `build_legacy.ps1`). |
 | `CMakePresets.json` | One preset per ABI: `android-arm64`, `android-armv7`, `android-x86_64`, `android-x86`. Release (`-O3 -DNDEBUG`), Qt 6.11.1 Android kits, NDK 27.2.12479018, API 28, 6 jobs, build trees in `D:/Android/build/olex2-<preset>`. One APK per ABI, no fat APK. |
-| `cmake/abi_flags.cmake` | Per-ABI code generation (`OLX_TUNE`, default ON, also adds ThinLTO): x86_64 `-march=x86-64-v2`, x86 `-mssse3`, armeabi-v7a `-march=armv7ve -mthumb -mfpu=neon` (hardware divide; no Cortex-A5/A8/A9 or Scorpion since 9 Oct 2026; no VFPv4, FMA would change rounding), arm64-v8a the armv8-a baseline. Anything else beyond needs runtime dispatch. `build_deps.py` applies the same file to the dependencies. |
+| `cmake/abi_flags.cmake` | Per-ABI code generation (`OLX_TUNE`, default ON, also adds ThinLTO): x86_64 `-march=x86-64-v2`, x86 `-mssse3`, armeabi-v7a `-march=armv7ve -mthumb -mfpu=neon` (hardware divide, so no Cortex-A5/A8/A9 or Scorpion; no VFPv4, FMA would change rounding), arm64-v8a the armv8-a baseline. Anything else beyond needs runtime dispatch. `build_deps.py` applies the same file to the dependencies. |
 | `build_deps.py` | Builds the GUI base libraries per ABI into `D:/Android/prefix/<abi>`: wxWidgets 3.3.3 (wxQt, static, GL on), gl4es 1.1.6 (`libGL.a`) and ptitSeb GLU (`libGLU.a`), with `patches/<name>/*.patch` applied. |
 | `cmake/deps.cmake` | Imports those prebuilt libraries (`OLX_ANDROID_PREFIX`) as `gl4es_gl`, `olx_glu` and `wxWidgets::*`. wx does not export `wxBUILD_DEBUG_LEVEL`; the file looks for `wxTheAssertHandler` in the wx archive and sets `wxDEBUG_LEVEL=0` when it is missing, or Olex2 fails to link (`undefined symbol: wxOnAssert`). |
 | `tests/glprobe` | Small wx GL test APK: fixed-function drawing through gl4es in a `wxGLCanvas`, and a log of every touch and gesture event. |
 | `src/android_main.cpp` | `main()`. It copies Java's environment (`Os.environ`) into the native one, extracts `assets/olex2` once per content stamp, sets the `OLEX2_*` environment, then calls `wxEntry`. `olex/xglapp.cpp` uses `IMPLEMENT_APP_NO_MAIN` on Android. The copy matters under a native bridge (an ARM APK on an x86 emulator or Chromebook): Qt's loader sets `QT_PLUGIN_PATH` and friends in the host libc only, and Qt then aborts with "Could not find the Qt platform plugin". |
 | `AndroidManifest.xml` | `org.olex2.android`, landscape, `extractNativeLibs`, INTERNET, GLES 2. |
 | `assemble_assets.py` | Copies an allowlist of files from an installed rundir (read only) plus `rundir-overlay/`. It refuses keys, AC7 files, binaries and Python. `--stale <file>` deletes that file when the content stamp changes; the build uses it so androiddeployqt repackages after an asset change. |
-| `rundir-overlay/custom.xld` | Replaces the `reap` macro: the stock one calls `spy.*`, and without Python every load ends in an error. Remove it when Python arrives (S2). |
 | `rundir-overlay/android.options` | Android defaults, copied to `<config>/.options` on the first start: no GL selection, no multisampling, no stereo, a 12 px tap threshold, `gl_touch=true`. |
 
 Touch input is shared with the desktop build. `olex/touchnav.cpp` maps wx
@@ -43,7 +37,7 @@ elsewhere. The desktop test is `tests/touch` (ctest `touch_gestures`).
 
 ## Requirements (download and install yourself)
 
-Already on FLOWOFFICE:
+Expected at these paths:
 
 - Qt 6.11.1 `android_arm64_v8a`, `android_armv7`, `android_x86_64`, `android_x86` and `mingw_64` (host tools) under `C:/Qt/6.11.1`.
 - CMake 3.30 and Ninja under `C:/Qt/Tools`.
@@ -62,13 +56,12 @@ Unpacked under `D:/Android/src` (`--src`) and built by `build_deps.py`:
 | ptitSeb GLU 2fed2bda | https://github.com/ptitSeb/GLU/archive/2fed2bda.tar.gz | `8a016d32fc1fed742f10ba8e4bc32151598f6273a0dbabec15ba47c44151c879` | SGI Free B |
 
 ```bash
-cd D:\git\olex2-android; python android/build_deps.py
+cd D:\git\olex2; python android/build_deps.py
 ```
 
 Without `--abi` it builds all four ABIs. wx is built with
-`wxBUILD_DEBUG_LEVEL=0` (no asserts). The 64-bit prefixes on FLOWOFFICE
-still date from before that change (debug level 1); `deps.cmake` copes with
-both, but rebuild them for consistency and speed.
+`wxBUILD_DEBUG_LEVEL=0` (no asserts); `deps.cmake` also accepts a debug-level-1
+prefix.
 
 Each tree is copied once to `D:/Android/build/<name>-src` and patched there
 (stamp `.olx-patched`; delete it to re-patch). Everything is static, so the
@@ -103,11 +96,11 @@ during two-finger gestures finger 0 also produces left down/up.
 Run these in PowerShell. Replace `x86_64` with `arm64`, `armv7` or `x86`.
 
 ```bash
-cd D:\git\olex2-android\android; $env:JAVA_HOME = 'D:/Android/jdk17'; cmake --preset android-x86_64
+cd D:\git\olex2\android; $env:JAVA_HOME = 'D:/Android/jdk17'; cmake --preset android-x86_64
 ```
 
 ```bash
-cd D:\git\olex2-android\android; $env:JAVA_HOME = 'D:/Android/jdk17'; cmake --build --preset android-x86_64
+cd D:\git\olex2\android; $env:JAVA_HOME = 'D:/Android/jdk17'; cmake --build --preset android-x86_64
 ```
 
 The code is a Release build; the package is debug-signed
@@ -115,16 +108,16 @@ The code is a Release build; the package is debug-signed
 `D:/Android/build/olex2-android-x86_64/android-build/build/outputs/apk/debug/android-build-debug.apk`.
 Gradle strips the `.so` files. `-DOLX_TUNE=OFF` gives the untuned baseline.
 
-The incremental packager leaves holes in a repackaged APK (72 MB instead of
-60 MB). For a release-size APK delete
+The incremental packager leaves holes in a repackaged APK. For a
+release-size APK delete
 `android-build/build/outputs/apk/debug/android-build-debug.apk` and
 `android-build/olex2.apk` in the build tree, then build again.
 
 Assets come from `-DOLEX2_RUNDIR=<path>`, default `D:/devel/rundir-py3`. That
-directory is only read. A dry run copies about 529 files (31 MB):
+directory is only read. The self-test checks the allowlist and the patches:
 
 ```bash
-python D:\git\olex2-android\android\assemble_assets.py --self-test
+python D:\git\olex2\android\assemble_assets.py --self-test
 ```
 
 ## Emulator (x86_64)
@@ -136,7 +129,7 @@ $env:ANDROID_AVD_HOME = 'D:/Android/avd'; $env:ANDROID_SDK_ROOT = 'D:/Android/sd
 ```
 
 ```bash
-D:\Android\sdk\platform-tools\adb.exe install -r D:\git\olex2-android\build\android-x86_64\android-build\build\outputs\apk\debug\android-build-debug.apk
+D:\Android\sdk\platform-tools\adb.exe install -r D:\Android\build\olex2-android-x86_64\android-build\build\outputs\apk\debug\android-build-debug.apk
 ```
 
 ```bash
@@ -154,49 +147,22 @@ D:\Android\sdk\platform-tools\adb.exe devices
 ```
 
 ```bash
-D:\Android\sdk\platform-tools\adb.exe install -r D:\git\olex2-android\build\android-arm64\android-build\build\outputs\apk\debug\android-build-debug.apk
+D:\Android\sdk\platform-tools\adb.exe install -r D:\Android\build\olex2-android-arm64\android-build\build\outputs\apk\debug\android-build-debug.apk
 ```
 
 The first start extracts the GUI files to the app's private files directory,
 `files/olex2`. Later starts extract again only when the asset stamp changes.
 The log tag is `olex2`.
 
-## Results (S1, emulators)
+## Known open points
 
-Debug-signed, release-compiled APKs, clean-packaged. Start-up is `am start`
-to the `<pid>.ready` file `TMainForm::StartupInit` writes (first start
-extracts the assets). Frame time is `1000 / fps()`, each `fps()` the mean of
-10 draws of sucrose, read by an xld macro (`user_onstartup` in
-`<config>/custom.xld`) because `adb input` keystrokes do not reach Olex2.
-Emulator numbers on FLOWOFFICE and the Mac; real hardware will differ.
-
-| APK | Size | Device | First start | Warm start (n = 5) | Frame time (n = 5) | Touch |
-|---|---|---|---|---|---|---|
-| x86_64 tuned | 60 MB | olex2_tablet, native | 4.8 s | 4.3-5.7 s | 28.8 ms (34.7 fps) | tap select, double tap, drag rotate, pinch, twist, long-press menu |
-| x86_64 `OLX_TUNE=OFF` | 61 MB | olex2_tablet, native | 6.2 s | 4.4-5.4 s | 31.6 ms (31.7 fps) | not repeated |
-| arm64-v8a | 59 MB | olex2_tablet, ndk_translation | 9.6 s | 8.6-11.7 s | 41-44 ms | tap select, double tap clear |
-| arm64-v8a | 59 MB | Mac `olex2_tablet_arm64`, native (Apple Silicon) | 2.8 s | 1.6-1.8 s | 9.4-9.7 ms (103-106 fps; first sample 12.7 ms) | start-up screenshot only |
-| x86 | 62 MB | olex2_arm32, native | 4.3 s | 3.3-3.6 s | 27-45 ms (mean 30.8 fps) | tap select, drag rotate, long-press menu; no `uinput` on API 30, so no pinch |
-| armeabi-v7a | 54 MB | olex2_arm32, ndk_translation | 10.1 s | 9.5-9.7 s | - | crashes in the translator, see below |
-
-Tuning gains about 3 fps (9 %, 95 % interval about +-1.1 fps) on x86_64.
-
-## Known open points (S1)
-
-- armeabi-v7a is untested on hardware. Under the API-30 x86 image's
-  ndk_translation it dies about 0.1 s after start-up, tuned or untuned:
-  `CHECK failed` in `ndk_translation/base/mmap_posix.cc` (an mmap for its own
-  translation tables fails) or a SIGSEGV inside `ExecuteGuest`, never in the
-  guest code. A 32-bit translator process runs out of address space; a real
-  ARMv7 device runs the code natively.
+- armeabi-v7a dies about 0.1 s after start-up under the API-30 x86 image's
+  ndk_translation: `CHECK failed` in `ndk_translation/base/mmap_posix.cc` or a
+  SIGSEGV inside `ExecuteGuest`, never in the guest code. The 32-bit translator
+  runs out of address space; a real ARMv7 device runs the code natively.
 - On some starts the HTML panel comes up on the right instead of the left,
   which moves the molecule on screen.
-
-- wxQt on Android is not an officially supported wx target [U]. The first
-  experiment is wx's `samples/opengl/cube`, built with these presets.
-- Olex2 without `_PYTHON` has never been built [U]. The panel GUI is generated
-  partly by Python. S1 aims for the 3-D view and the macro console; Python
-  (CPython for Android) comes in S2.
+- wxQt on Android is not an officially supported wx target.
 - A wxQt top-level frame on Android stays at 400x250 DIP unless `Maximize()`d.
 - After a resize Qt recreates the canvas FBO and leaves texture 0 bound on the
   active unit; `gl4es_resyncState` does not restore texture bindings.

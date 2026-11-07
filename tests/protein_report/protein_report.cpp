@@ -7,17 +7,8 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-/* What the cartoon makes of a structure, without opening the GUI.
-
-Runs the shipped topology and secondary-structure code over a file and prints
-the chain segments it found and the assignment along each one. That is the only
-way to check the assignment against a known fold - ubiquitin's five-stranded
-sheet, crambin's two - as data rather than by eye, and it is how a regression in
-either would be noticed.
-
-It runs the real functions from xlib/protein.h, not a copy, so what it reports
-is what the ribbon will draw.
-
+/* prints the chain segments and secondary structure xlib/protein.h finds in a
+file, so an assignment can be checked against a known fold without the GUI
   cl /O2 /EHsc /I..\..\sdl /I..\..\xlib protein_report.cpp
     sdl.lib xlib-np.lib Iphlpapi.lib
 
@@ -35,10 +26,7 @@ is what the ribbon will draw.
 //.............................................................................
 static void Report(TXApp &xapp, const olxstr &fn) {
   printf("\n%s\n", olxcstr(TEFile::ExtractFileName(fn)).c_str());
-  /* Timed in two halves on purpose. The question this answers is whether a
-  large structure is slow to open because of the display or because of the
-  model, and only splitting it can say.
-  */
+  // timed in two halves: file and lattice, then topology
   const uint64_t t0 = TETime::msNow();
   xapp.XFile().LoadFromFile(fn);
   const uint64_t t1 = TETime::msNow();
@@ -73,10 +61,7 @@ static void Report(TXApp &xapp, const olxstr &fn) {
     printf("  chain %c  %u residues, %d to %d\n",
       (char)seg.chain_id, (unsigned)seg.residues.Count(),
       seg.residues[0].number, seg.residues.GetLast().number);
-    /* H helix, E strand, dash coil: the one-letter alphabet every viewer of a
-    DSSP output already reads, so the string can be compared by eye with a
-    deposited assignment.
-    */
+    // H helix, E strand, - coil, as in DSSP
     olxcstr line;
     for (size_t j = 0; j < ss.Count(); j++) {
       line << (ss[j] == xlib::protein::ss_helix ? 'H'

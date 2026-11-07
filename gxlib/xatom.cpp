@@ -404,14 +404,10 @@ struct PolyFacesSorter {
   }
 };
 //..............................................................................
-/* =============================================================================
-  EASTER EGG / JOKE CODE - nothing serious here!
-  Seasonal skins toggled by the hidden 'boo' macro. Purely cosmetic: no effect
-  on the model, the styles, the saved files or any of the scientific output.
-  'boo off' brings back the normal atoms.
-  Shapes are built around the origin with radius ~1, +z towards the viewer and
-  +y up (OrientFunSkin billboards them).
-============================================================================= */
+/* joke code, seasonal skins of the hidden boo/eggy/hohoho macros, cosmetic only.
+shapes are built around the origin with radius ~1, +z towards the viewer and +y
+up (OrientFunSkin billboards them)
+*/
 namespace {
 GLUquadric *fun_quadric() {
   static GLUquadric *q = 0;
@@ -624,7 +620,7 @@ void draw_santa_hat() {
 }
 }  // namespace
 //..............................................................................
-// joke code, see the comment above - nothing serious
+// joke code, see the comment above
 bool TXAtom::OrientFunSkin(TGlPrimitive& GlP, double scale) {
   const bool hydrogen = GetType().z == 1,
     easter = (FunSkin() == funSkinEaster),
@@ -804,7 +800,7 @@ bool TXAtom::Orient(TGlPrimitive& GlP) {
   else if ((FRadius & darIsotH) != 0)
     scale *= defs.GetTelpProb();
 
-  // EASTER EGG / JOKE CODE ('boo' macro) - nothing serious
+  // joke code, the boo/eggy/hohoho skins
   if (FunSkin() != funSkinNone && GetType().z >= 1 &&
     OrientFunSkin(GlP, scale))
   {

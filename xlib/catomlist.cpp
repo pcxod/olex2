@@ -117,6 +117,15 @@ olxstr ExplicitCAtomRef::GetExpression(TResidue *r) const {
     rv << '_' << atom->GetParent()->GetResidue(atom->GetResiId()).GetNumberStr();
   }
   if (matrix != 0) {
+    /* old: index+1 is not the EQIV name past $9
+    if (use_resi) {
+      rv << '$';
+    }
+    else {
+      rv << "_$";
+    }
+    rv << (atom->GetParent()->GetRefMod()->UsedSymmIndex(*matrix)+1);
+    */
     if (!use_resi) {
       rv << '_';
     }
@@ -379,10 +388,8 @@ void ImplicitCAtomRef::InitRef(const RefinementModel& rm,
   }
   else {
     olxstr rn = Name.SubStringFrom(idx + 1);
-    /* FindResidue takes a bare number or chain:number, and IsNumber() is false
-    for the second - so a chain qualified reference was looked up as a residue
-    class name instead, and dropped
-    */
+    // old: if (rn.IsNumber()) { - sent chain:number to the class name lookup
+    // FindResidue takes a bare number or chain:number
     const size_t ci = rn.IndexOf(':');
     const bool by_number = (ci == InvalidIndex)
       ? rn.IsNumber()
@@ -1145,7 +1152,7 @@ void AtomRefList::SortExplicitRefs() {
     return;
   }
   /* IsExplicit only rules out implicit atoms: a 'C6 < C2' range is a
-  ListAtomRef, which the cast below turns into a null atom (COD 4089043)
+  ListAtomRef, which the cast below turns into a null atom
   */
   ConvertToExplicit();
   QuickSorter::Sort(refs, ComplexComparator::Make(
