@@ -370,7 +370,10 @@ size_t TXCartoon::HitResidueProjected(double px, double py, double &q,
 }
 //.............................................................................
 void TXCartoon::ReportHitCandidates(double px, double py, size_t chosen) const {
-  // debug log to settle the sign and scale of Project()'s depth
+  // debug log of the nearest residues to a click; 'verbose true' shows it
+  if (!TBasicApp::GetLog().IsVerbose()) {
+    return;
+  }
   const bool subset = (residue_visible.Count() == residue_ca.Count());
   TArrayList<olx_pair_t<double, size_t> > cand;
   for (size_t i = 0; i < residue_ca.Count(); i++) {
@@ -392,7 +395,7 @@ void TXCartoon::ReportHitCandidates(double px, double py, size_t chosen) const {
       olxstr::FormatFloat(2, sqrt(cand[i].a)) << '/' <<
       olxstr::FormatFloat(1, p[2]);
   }
-  TBasicApp::NewLogEntry(logInfo) << line;
+  TBasicApp::NewLogEntry(logVerbose) << line;
 }
 //.............................................................................
 bool TXCartoon::ToggleResidue(size_t i) {

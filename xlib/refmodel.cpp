@@ -2749,7 +2749,7 @@ double RefinementModel::CalcCompletenessTo2Theta(double tt, bool Laue) {
     completeness_cache.Add(key, 0);
     return 0;
   }
-  /* old: standardised the reflections in place and sorted the pointers
+  /* old: standardised the local FilterHkl copy in place and sorted the pointers
   for (size_t i = 0; i < refs.Count(); i++) {
     refs[i]->Standardise(info_ex);
   }

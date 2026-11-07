@@ -241,8 +241,8 @@ void TGlCanvas::OnMouseUp(wxMouseEvent& me)  {
     ShowContextMenu(FMX, FMY, G);
     return;
   }
-  /* old: a second OnMouseUp with the same arguments, after the first one
-  above had already returned false
+  /* old: a second TMainForm::OnMouseUp; it always returns false and only
+  re-stores the same mouse position, so the branch body never ran
   else if (FParent->OnMouseUp(me.m_x, me.m_y, Fl, up)) {
     FXApp->ResetMouseState(me.m_x, me.m_y);
   }

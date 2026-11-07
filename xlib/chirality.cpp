@@ -177,7 +177,8 @@ struct CIPCompare {
   static const int MaxCIPLevel = 64;
   /* every pair re-ranks the siblings it reaches with this comparison, so tied
   (symmetry-equivalent) branches cost exponential time and memory within the
-  cut-off; past this budget the pair ties (not chiral)
+  cut-off; past this budget the pair ties (not chiral). Set at radius^2 225,
+  where organic centres decide within 2.6e3; a larger radius only adds ties
   */
   static const size_t MaxCIPExpansions = 100000;
   mutable size_t expansions;

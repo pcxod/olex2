@@ -229,8 +229,15 @@ protected:  // functions below are unsafe to use if wchar_t size is unknown!!
           << (uint8_t)(UTF8_MASKBYTE | ((input[i] >> 6) & UTF8_MASKBITS))
           << (uint8_t)(UTF8_MASKBYTE | (input[i] & UTF8_MASKBITS));
       }
-      else if (input[i] < 0x8000000) {  // 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+      /* old: the bound 0x8000000 dropped 0x8000000-0x7fffffff, and the lead
+      byte had four continuation bytes instead of five (no >> 24)
+      else if (input[i] < 0x8000000) {
         out << (uint8_t)(UTF8_MASK6BYTES | (input[i] >> 30))
+          << (uint8_t)(UTF8_MASKBYTE | ((input[i] >> 18) & UTF8_MASKBITS))
+      */
+      else if (input[i] < 0x80000000) {  // 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+        out << (uint8_t)(UTF8_MASK6BYTES | (input[i] >> 30))
+          << (uint8_t)(UTF8_MASKBYTE | ((input[i] >> 24) & UTF8_MASKBITS))
           << (uint8_t)(UTF8_MASKBYTE | ((input[i] >> 18) & UTF8_MASKBITS))
           << (uint8_t)(UTF8_MASKBYTE | ((input[i] >> 12) & UTF8_MASKBITS))
           << (uint8_t)(UTF8_MASKBYTE | ((input[i] >> 6) & UTF8_MASKBITS))
