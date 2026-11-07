@@ -167,8 +167,6 @@ public:
   */
   size_t HitResidueProjected(double px, double py, double &q,
     double tolerance = 1.0) const;
-  // logs the residues competing for a click and their Project depth (debug)
-  void ReportHitCandidates(double px, double py, size_t chosen) const;
   /* mouse-down only claims the event; release selects, and only if it is a
   click, so a drag starting on a ribbon just rotates (as TGlMouse's IsClick)
   */

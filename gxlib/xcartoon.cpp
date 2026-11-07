@@ -369,35 +369,6 @@ size_t TXCartoon::HitResidueProjected(double px, double py, double &q,
   return best;
 }
 //.............................................................................
-void TXCartoon::ReportHitCandidates(double px, double py, size_t chosen) const {
-  // debug log of the nearest residues to a click; 'verbose true' shows it
-  if (!TBasicApp::GetLog().IsVerbose()) {
-    return;
-  }
-  const bool subset = (residue_visible.Count() == residue_ca.Count());
-  TArrayList<olx_pair_t<double, size_t> > cand;
-  for (size_t i = 0; i < residue_ca.Count(); i++) {
-    if (subset && !residue_visible[i]) {
-      continue;
-    }
-    const vec3d p = Parent.Project(residue_ca[i]);
-    const double dx = p[0] - px, dy = p[1] - py;
-    cand.Add(olx_pair_t<double, size_t>(dx*dx + dy*dy, i));
-  }
-  QuickSorter::Sort(cand, ComplexComparator::Make(
-    FunctionAccessor::MakeConst(&olx_pair_t<double, size_t>::GetA),
-    TPrimitiveComparator()));
-  olxstr line = "Cartoon: candidates for this click (2D distance, depth) -";
-  for (size_t i = 0; i < olx_min(cand.Count(), (size_t)4); i++) {
-    const size_t ri = cand[i].b;
-    const vec3d p = Parent.Project(residue_ca[ri]);
-    line << ' ' << (ri == chosen ? '*' : ' ') << '#' << ri << ':' <<
-      olxstr::FormatFloat(2, sqrt(cand[i].a)) << '/' <<
-      olxstr::FormatFloat(1, p[2]);
-  }
-  TBasicApp::NewLogEntry(logVerbose) << line;
-}
-//.............................................................................
 bool TXCartoon::ToggleResidue(size_t i) {
   const size_t rc = ResidueCount();
   if (i >= rc) {
@@ -478,7 +449,6 @@ bool TXCartoon::OnMouseUp(const IOlxObject *, const TMouseData &d) {
     (now ? "selected " : "deselected ") << label <<
     (generated ? (olxstr(" [symmetry copy, matrix ") << matrix_id << ']')
       : EmptyString());
-  ReportHitCandidates(px, py, i);
   // from the release, as TGlMouse's own selection fallback does
   Parent.Draw();
   // consumed, so the default handling does not select the whole chain
