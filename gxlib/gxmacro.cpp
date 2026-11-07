@@ -36,6 +36,7 @@
 #include "listalg.h"
 #include "xangle.h"
 #include "refutil.h"
+#include "etime.h"
 
 #define gxlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.Register(\
@@ -90,6 +91,9 @@ void GXLibMacros::Export(TLibrary& lib) {
     "obs-calculates observed map&;"
     "calc-calculates calculated map&;"
     "fcfmc-calculates FCF Fc-Fc map&;"
+    "wiener-Wiener-filters the Fo-Fc part of a -diff or -tomc map: each"
+    " resolution shell is weighted by its residual power above the noise the"
+    " refinement weights imply&;"
     "scale-scale to use for difference maps, [external], external-forced, sigma,"
     " shelx. External may be replace with shelx if the two differ too much.&;"
     "anom_only-Create Fc Map only using anomalous dispersion scattering factor,"
@@ -117,8 +121,66 @@ void GXLibMacros::Export(TLibrary& lib) {
     "Changes how the atoms are drawn [sfil - sphere packing, pers - static "
     "radii, isot - radii proportional to Ueq, isoth - as isot, but applied to "
     "H atoms as well]");
-  gxlib_InitMacro(ADS, EmptyString(), fpAny^(fpNone),
-    "Changes atom draw style [sph,elp,std]");
+  gxlib_InitMacro(ADS,
+    "t-temporary: not saved in the atom style, undone by 'ads def' or a reload",
+    fpAny^(fpNone),
+    "Changes atom draw style [sph,elp,ort,std,def - back to the saved style]");
+  /* joke code, left without descriptions on purpose: boo/unboo Halloween,
+  eggy/uneggy Easter, hohoho/unhohoho Christmas skin on/off
+  */
+  gxlib_InitMacro(Boo, EmptyString(), fpNone, EmptyString());
+  gxlib_InitMacro(Unboo, EmptyString(), fpNone, EmptyString());
+  gxlib_InitMacro(Eggy, EmptyString(), fpNone, EmptyString());
+  gxlib_InitMacro(Uneggy, EmptyString(), fpNone, EmptyString());
+  gxlib_InitMacro(Hohoho, EmptyString(), fpNone, EmptyString());
+  gxlib_InitMacro(Unhohoho, EmptyString(), fpNone, EmptyString());
+  // joke code: 'order 66' plays a little space-fight movie
+  gxlib_InitMacro(Order, EmptyString(), fpOne | psFileLoaded, EmptyString());
+  gxlib_InitMacro(Cartoon,
+    "c-colour mode: chain, rainbow (along the chain, N terminus blue),"
+    " polarity (lipophilic or hydrophilic), charge (acidic, basic or neutral),"
+    " residue (one colour per amino acid), ueq (mean residue Ueq) or ss"
+    " (secondary structure)&;"
+    "a-keep the traced atoms visible instead of leaving only the cartoon"
+    " and the things it does not trace&;"
+    "r-representation: cartoon (helix ribbons and strand arrows) or trace"
+    " (a plain tube along the backbone, ignoring secondary structure)&;"
+    "n-everything the trace did not claim: hide (the default), show, or"
+    " nowater (ligands, sugars and metals but not the waters)&;"
+    "sc-residues to draw the sidechains of, the backbone staying with the"
+    " ribbon: atom or residue names ('A:45-60', 'CB_12 CB_13'), all, focus"
+    " (whatever 'isolate' leaves showing, which is also what the bare option"
+    " means), or off"
+    ,
+    fpAny,
+    "Draws the polymer backbone as a cartoon: 'cartoon on', 'cartoon off' or"
+    " 'cartoon' to toggle. Clicking a ribbon selects that residue, and clicking"
+    " it again deselects it; 'isolate' then shows just those residues and their"
+    " surroundings. Sugars, ligands, metals and waters are not traced"
+    " and stay drawn as atoms and bonds in whatever style is set. 'cartoon"
+    " test N' replaces it with N residues of synthetic helix, for measuring"
+    " the display list at a scale no available structure reaches");
+  gxlib_InitMacro(Isolate,
+    "r-radius in A around the chosen atoms [5]&;"
+    "c-cut: keep only what is inside the radius, instead of completing every"
+    " residue and molecule it reaches&;"
+    "nc-do not move the view; by default it centres and scales to whatever is"
+    " left showing, and back to the whole structure on leaving",
+    fpAny,
+    "Shows only the chosen atoms and what surrounds them, and hides the rest:"
+    " 'isolate sel -r=5' for the selection, 'isolate C1 C2' for named atoms, or"
+    " 'isolate' on its own for whatever is selected, residues clicked on a"
+    " cartoon included. A loaded map is masked to the same region."
+    "\nWhatever the radius reaches is completed to the unit it belongs to, so"
+    " molecules are never cut in half: an atom that has a residue brings its"
+    " residue, an atom that has none - a solvent, a ligand, or any atom of a"
+    " small-molecule structure - brings its whole connected molecule. '-c'"
+    " keeps the bare sphere instead."
+    "\nWith a cartoon on the screen the unit is always the residue, and a"
+    " residue arrives with its sidechain."
+    "\n'isolate off' leaves the view again, and so does a second bare"
+    " 'isolate', which is what makes it work as a single key. 'fmol' and 'uniq'"
+    " also leave it, since they decide what is visible themselves");
   gxlib_InitMacro(AZoom, EmptyString(), fpAny^fpNone,
     "Modifies given atoms [all] radius. The first argument is the new radius "
     "in %");
@@ -210,7 +272,9 @@ void GXLibMacros::Export(TLibrary& lib) {
     "n-just sets current view normal to the line without creating the object"
     " or the collection name to put the bond to&;"
     "f-consider input in fractional coordinates vs Cartesian&;"
-    "e-adds esd to the value",
+    "e-adds esd to the value&;"
+    "r-radius of the line&;"
+    "l-label text shown instead of the length, an empty value hides the label",
     fpAny,
     "Creates a line or best line for provided atoms");
   gxlib_InitMacro(Angle,
@@ -429,8 +493,9 @@ void GXLibMacros::Export(TLibrary& lib) {
   gxlib_InitMacro(Legend,
     "r-reset the position, r-for right, b-for bottom; could take absolute"
     " position like 10,12 and with relative - margin, like -r=10 or -r=r,10",
-    fpNone | fpOne,
-    "Shows/hides atom legend");
+    fpNone | fpOne | fpTwo,
+    "Shows/hides atom legend. An optional second argument sets a caption shown"
+    " below the keys; an empty one removes it");
   gxlib_InitMacro(AdjustStyle,
     "a-apply to atoms [true]&;"
     "b-apply to bonds[true]&;",
@@ -885,11 +950,29 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
     TBasicApp::NewLogEntry() << "wR2 = " << olxstr::FormatFloat(4, rstat.wR2);
     return;
   }
+  const bool wiener = Options.GetBoolOption("wiener");
+  if (wiener && mapType != SFUtil::MapType::Diff &&
+    mapType != SFUtil::MapType::TwoObs_Calc)
+  {
+    E.ProcessingError(__OlxSrcInfo, "-wiener needs -diff or -tomc");
+    return;
+  }
+  TArrayList<compd> Fc;
   olxstr err = SFUtil::GetSF(refs, F, mapType, src,
-    scale, &scale_value, SFUtil::FPMerge::Merge, anom_only);
+    scale, &scale_value, SFUtil::FPMerge::Merge, anom_only,
+    SFUtil::EXTIDest::Fc, wiener ? &Fc : 0);
   if (!err.IsEmpty()) {
     E.ProcessingError(__OlxSrcInfo, err);
     return;
+  }
+  if (wiener) {
+    if (Fc.Count() != F.Count()) {
+      E.ProcessingError(__OlxSrcInfo, "F arrays mismatch");
+      return;
+    }
+    // an fcf holds Fo^2 on the Fc scale already
+    SFUtil::WienerFilter(refs, F, Fc,
+      src == SFUtil::SFOrigin::Fcf ? 1.0 : olx_sqr(scale_value), mapType);
   }
   if (Options.GetBoolOption("fcfmc")) {
     if (src != SFUtil::SFOrigin::Fcf || mapType != SFUtil::MapType::Calc) {
@@ -918,8 +1001,44 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
 // init map
   const vec3i dim(au.GetAxes()*resolution);
   TArray3D<float> map(0, dim[0]-1, 0, dim[1]-1, 0, dim[2]-1);
+  /* the map is only shown where the mask allows, so only the box the mask can
+  cover is summed; the mask itself is built below, only its extent is needed
+  */
+  vec3s box_from(0, 0, 0), box_to(dim[0]-1, dim[1]-1, dim[2]-1);
+  bool boxed = false;
+  if (Options.Contains("m")) {
+    vec3d mn, mx;
+    if (app.GetVisibleAtomBounds(mn, mx, maskInc)) {
+      for (int i = 0; i < 3; i++) {
+        // a whole grid step of slack, so the mask cannot reach past the box
+        int lo = (int)floor(mn[i] * dim[i]) - 1,
+          hi = (int)ceil(mx[i] * dim[i]) + 1;
+        box_from[i] = (size_t)olx_max(0, lo);
+        box_to[i] = (size_t)olx_min(dim[i] - 1, hi);
+      }
+      boxed = (box_to - box_from + vec3s(1, 1, 1)).Prod() <
+        (size_t)dim.Prod();
+    }
+  }
   st.start("Calcuating ED map");
-  mi = BVFourier::CalcEDM(P1SF, map.Data, vol);
+  if (boxed) {
+    // points outside the box are never summed, and zero reads as no density
+    map.FastInitWith(0);
+    mi = BVFourier::CalcEDM(P1SF, map.Data, vol, box_from, box_to);
+    /* the box sigma is far higher than the cell one and would shift every
+    contour quoted in sigma, so sigma comes from a coarse full-cell map
+    */
+    st.start("Cell sigma");
+    mi.sigma = BVFourier::CellSigma<float>(P1SF, vol, au.GetAxes());
+    const vec3s bd = box_to - box_from + vec3s(1, 1, 1);
+    TBasicApp::NewLogEntry() << "Map computed for " << bd[0] << 'x' << bd[1]
+      << 'x' << bd[2] << " of " << dim[0] << 'x' << dim[1] << 'x' << dim[2]
+      << " points (" << olxstr::FormatFloat(1,
+        100.0*bd.Prod() / dim.Prod()) << "% of the cell), the rest is masked";
+  }
+  else {
+    mi = BVFourier::CalcEDM(P1SF, map.Data, vol);
+  }
   ///////////////////////////////////////////////////////////////////////////////
   st.start("Map operations");
   app.XGrid().InitGrid(dim);
@@ -1140,14 +1259,962 @@ void GXLibMacros::macADS(TStrObjList &Cmds, const TParamList &Options,
   else if (Cmds[0].Equalsi("std")) {
     ads = adsStandalone;
   }
+  else if (Cmds[0].Equalsi("def")) {  // back to the style each atom has stored
+    ads = 0;
+  }
   if (ads == -1) {
     Error.ProcessingError(__OlxSrcInfo,
-      "unknown atom type (elp/sph/ort/std) supported only");
+      "unknown atom type (elp/sph/ort/std/def) supported only");
     return;
   }
   Cmds.Delete(0);
   TXAtomPList Atoms = app.FindXAtoms(Cmds, false, false);
+  /* -t and def leave the stored styles alone: the style is shared by the whole
+  collection and saved with the structure
+  */
+  if (ads == 0 || Options.GetBoolOption('t')) {
+    if (Atoms.IsEmpty()) {
+      TGXApp::AtomIterator ai = app.GetAtoms();
+      while (ai.HasNext()) {
+        Atoms.Add(ai.Next());
+      }
+    }
+    for (size_t i = 0; i < Atoms.Count(); i++) {
+      if (ads == 0) {
+        Atoms[i]->RestoreDrawStyle();
+      }
+      else {
+        Atoms[i]->DrawStyle(ads, false);
+      }
+    }
+    return;
+  }
   app.SetAtomDrawingStyle(ads, Atoms.IsEmpty() ? 0 : &Atoms);
+}
+//.............................................................................
+/* joke code, a cosmetic skin; the 'un' versions only switch off their own
+skin, so 'unboo' does not hatch the eggs
+*/
+void GXLibMacros::SetFunSkin(short skin, bool on) {
+  short &current = TXAtom::FunSkin();
+  if (on) {
+    // the joke shapes are dearer to draw than normal atoms
+    const size_t max_atoms = 1000;
+    size_t visible = 0;
+    TGXApp::AtomIterator ai = app.GetAtoms();
+    while (ai.HasNext()) {
+      if (ai.Next().IsVisible()) {
+        visible++;
+      }
+    }
+    if (visible > max_atoms) {
+      TBasicApp::NewLogEntry() << "Too many atoms for this joke (" << visible
+        << " > " << max_atoms << ")";
+      return;
+    }
+    current = skin;
+  }
+  else if (current == skin) {
+    current = TXAtom::funSkinNone;
+  }
+  app.Draw();
+}
+void GXLibMacros::macBoo(TStrObjList &, const TParamList &, TMacroData &) {
+  SetFunSkin(TXAtom::funSkinHalloween, true);
+}
+void GXLibMacros::macUnboo(TStrObjList &, const TParamList &, TMacroData &) {
+  SetFunSkin(TXAtom::funSkinHalloween, false);
+}
+void GXLibMacros::macEggy(TStrObjList &, const TParamList &, TMacroData &) {
+  SetFunSkin(TXAtom::funSkinEaster, true);
+}
+void GXLibMacros::macUneggy(TStrObjList &, const TParamList &, TMacroData &) {
+  SetFunSkin(TXAtom::funSkinEaster, false);
+}
+//.............................................................................
+/* joke code, 'hohoho': a garland along the top of the view, drawn in screen
+pixels over everything while the Christmas skin is on; never selected or printed
+*/
+namespace xmas {
+uint32_t hash(uint32_t x) {
+  x ^= x >> 16; x *= 0x7feb352du;
+  x ^= x >> 15; x *= 0x846ca68bu;
+  return x ^ (x >> 16);
+}
+
+void disc(double x, double y, double r, int seg = 16) {
+  olx_gl::begin(GL_TRIANGLE_FAN);
+  olx_gl::vertex(x, y, 0.0);
+  for (int i = 0; i <= seg; i++) {
+    const double a = 2 * M_PI*i / seg;
+    olx_gl::vertex(x + r*cos(a), y + r*sin(a), 0.0);
+  }
+  olx_gl::end();
+}
+
+void quad(double x0, double y0, double x1, double y1) {
+  olx_gl::begin(GL_QUADS);
+  olx_gl::vertex(x0, y0, 0.0);
+  olx_gl::vertex(x1, y0, 0.0);
+  olx_gl::vertex(x1, y1, 0.0);
+  olx_gl::vertex(x0, y1, 0.0);
+  olx_gl::end();
+}
+
+class TMantel : public AGDrawObject {
+public:
+  TMantel(TGlRenderer &r) : AGDrawObject(r, "XmasMantel") {
+    SetSelectable(false);
+    SetPrintable(false);
+  }
+  void Create(const olxstr &cName = EmptyString()) {
+    if (!cName.IsEmpty()) {
+      SetCollectionName(cName);
+    }
+    TGPCollection &gpc = Parent.FindOrCreateCollection(GetCollectionName());
+    gpc.AddObject(*this);
+    if (gpc.PrimitiveCount() != 0) {
+      return;
+    }
+    // translucent + identity: drawn last, over everything else
+    TGlPrimitive &glp = gpc.NewPrimitive("Mantel", sgloMacro);
+    TGlMaterial glm;
+    glm.SetFlags(sglmAmbientF | sglmDiffuseF | sglmTransparent |
+      sglmIdentityDraw);
+    glm.AmbientF = 0x7f7f7f;
+    glm.DiffuseF = 0x7f7f7f;
+    glp.SetProperties(glm);
+  }
+  bool GetDimensions(vec3d &, vec3d &) { return false; }
+
+  bool Orient(TGlPrimitive &) {
+    if (Parent.IsSelecting() ||
+      TXAtom::FunSkin() != TXAtom::funSkinChristmas)
+    {
+      return true;
+    }
+    GLint vp[4];
+    glGetIntegerv(GL_VIEWPORT, vp);
+    const double W = vp[2], H = vp[3];
+    if (W < 100 || H < 100) {
+      return true;
+    }
+    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_LIGHTING_BIT |
+      GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_LINE_BIT |
+      GL_TRANSFORM_BIT);
+    olx_gl::disable(GL_LIGHTING);
+    olx_gl::disable(GL_DEPTH_TEST);
+    olx_gl::disable(GL_CULL_FACE);
+    olx_gl::disable(GL_FOG);
+    olx_gl::disable(GL_TEXTURE_2D);
+    olx_gl::enable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glMatrixMode(GL_PROJECTION);
+    olx_gl::pushMatrix();
+    glLoadIdentity();
+    glOrtho(0, W, 0, H, -1, 1);
+    glMatrixMode(GL_MODELVIEW);
+    olx_gl::pushMatrix();
+    glLoadIdentity();
+    Draw(W, H);
+    olx_gl::popMatrix();
+    glMatrixMode(GL_PROJECTION);
+    olx_gl::popMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopAttrib();
+    return true;
+  }
+
+  // pixel coordinates, y up; everything scales with the view height
+  static void Draw(double W, double H) {
+    const double u = olx_max(4.0, H / 90);  // a 'unit', ~1% of the height
+    const double top = H - 1.5*u, sag = 4.5*u;
+    const int swags = olx_max(3, (int)(W / (22 * u)));
+    const double sw = W / swags;
+    // hanging things first, so the garland covers their strings
+    for (int i = 0; i < swags; i++) {
+      const double cx = (i + 0.5)*sw, cy = top - sag;
+      if (i % 2 == 0) {
+        Bauble(cx, cy - 1.5*u, u, i);
+      }
+      else {
+        Stocking(cx, cy - 0.5*u, u, i);
+      }
+    }
+    // the pine swags: clusters of needles along a sagging curve
+    for (int i = 0; i < swags; i++) {
+      const int n = (int)(sw / (0.9*u)) + 1;
+      for (int j = 0; j <= n; j++) {
+        const double t = double(j) / n;
+        const double x = (i + t)*sw, y = top - sag * 4 * t*(1 - t);
+        for (int k = 0; k < 3; k++) {
+          const uint32_t h = hash(uint32_t(i * 7919 + j * 31 + k));
+          const double dx = ((h & 0xff) / 255.0 - 0.5)*1.2*u,
+            dy = (((h >> 8) & 0xff) / 255.0 - 0.5)*1.2*u;
+          const float g = 0.28f + 0.22f*((h >> 16) & 0xff) / 255.0f;
+          glColor4f(0.05f, g, 0.12f, 1.0f);
+          disc(x + dx, y + dy, (1.1 + 0.4*((h >> 24) & 0xf) / 15.0)*u, 10);
+        }
+        // a few lights in the garland
+        if ((hash(uint32_t(i * 131 + j)) % 5) == 0) {
+          static const float lc[][3] = {
+            { 1.0f, 0.85f, 0.2f }, { 1.0f, 0.2f, 0.2f }, { 0.3f, 0.6f, 1.0f }
+          };
+          const float *c = lc[hash(uint32_t(j + i)) % 3];
+          glColor4f(c[0], c[1], c[2], 0.35f);
+          disc(x, y - 0.3*u, 0.8*u, 10);
+          glColor4f(c[0], c[1], c[2], 1.0f);
+          disc(x, y - 0.3*u, 0.35*u, 8);
+        }
+      }
+    }
+    // red bows where the swags meet
+    for (int i = 0; i <= swags; i++) {
+      Bow(i*sw, top, u);
+    }
+  }
+
+  static void Bow(double x, double y, double u) {
+    glColor4f(0.8f, 0.04f, 0.06f, 1.0f);
+    olx_gl::begin(GL_TRIANGLES);
+    for (int s = -1; s <= 1; s += 2) {
+      olx_gl::vertex(x, y, 0.0);  // loops
+      olx_gl::vertex(x + s*2.4*u, y + 1.3*u, 0.0);
+      olx_gl::vertex(x + s*2.4*u, y - 1.3*u, 0.0);
+      olx_gl::vertex(x, y, 0.0);  // tails
+      olx_gl::vertex(x + s*0.5*u, y - 3.2*u, 0.0);
+      olx_gl::vertex(x + s*1.4*u, y - 2.8*u, 0.0);
+    }
+    olx_gl::end();
+    glColor4f(0.6f, 0.02f, 0.04f, 1.0f);
+    disc(x, y, 0.7*u, 10);
+  }
+
+  static void Bauble(double x, double y, double u, int i) {
+    static const float bc[][3] = {
+      { 0.85f, 0.08f, 0.1f }, { 0.95f, 0.75f, 0.15f },
+      { 0.15f, 0.35f, 0.85f }, { 0.75f, 0.78f, 0.82f }
+    };
+    const float *c = bc[(i / 2) % 4];
+    const double r = 1.8*u, cy = y - 2.5*u - r;
+    glColor4f(0.7f, 0.6f, 0.3f, 1.0f);  // string
+    glLineWidth(1);
+    olx_gl::begin(GL_LINES);
+    olx_gl::vertex(x, y + 2 * u, 0.0);
+    olx_gl::vertex(x, cy + r, 0.0);
+    olx_gl::end();
+    glColor4f(0.85f, 0.7f, 0.25f, 1.0f);  // cap
+    quad(x - 0.45*u, cy + r - 0.2*u, x + 0.45*u, cy + r + 0.6*u);
+    glColor4f(c[0] * 0.6f, c[1] * 0.6f, c[2] * 0.6f, 1.0f);
+    disc(x, cy, r, 24);
+    glColor4f(c[0], c[1], c[2], 1.0f);
+    disc(x - 0.2*r, cy + 0.2*r, 0.78*r, 24);
+    glColor4f(1.0f, 1.0f, 1.0f, 0.75f);  // shine
+    disc(x - 0.4*r, cy + 0.4*r, 0.2*r, 10);
+  }
+
+  static void Stocking(double x, double y, double u, int i) {
+    const bool green = (i / 2) % 2 == 1;
+    const double w = 2.6*u, len = 5.5*u, top = y - 0.8*u;
+    glColor4f(0.7f, 0.6f, 0.3f, 1.0f);  // hanging loop
+    olx_gl::begin(GL_LINES);
+    olx_gl::vertex(x, y + 1.5*u, 0.0);
+    olx_gl::vertex(x, top, 0.0);
+    olx_gl::end();
+    if (green) {
+      glColor4f(0.1f, 0.5f, 0.2f, 1.0f);
+    }
+    else {
+      glColor4f(0.8f, 0.05f, 0.08f, 1.0f);
+    }
+    quad(x - w / 2, top - len, x + w / 2, top);  // leg
+    quad(x - w / 2, top - len - 1.6*u, x + w / 2 + 1.6*u, top - len);  // foot
+    disc(x + w / 2 + 1.6*u, top - len - 0.8*u, 0.8*u, 12);  // toe
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);  // the cuff
+    quad(x - w / 2 - 0.4*u, top - 1.6*u, x + w / 2 + 0.4*u, top + 0.2*u);
+    // heel patch, same white
+    disc(x - w / 2 + 0.6*u, top - len - 0.9*u, 0.6*u, 10);
+  }
+};
+}  // namespace xmas
+//.............................................................................
+// joke code: Santa hats and a garland
+void GXLibMacros::macHohoho(TStrObjList &, const TParamList &, TMacroData &) {
+  /* the garland is created once and kept: the app recreates it with the
+  scene and deletes it on exit; it draws nothing unless the skin is on
+  */
+  static bool mantel = false;
+  if (!mantel) {
+    AGDrawObject *m = new xmas::TMantel(app.GetRenderer());
+    app.AddObjectToCreate(m);
+    m->Create();
+    mantel = true;
+  }
+  SetFunSkin(TXAtom::funSkinChristmas, true);
+}
+void GXLibMacros::macUnhohoho(TStrObjList &, const TParamList &, TMacroData &) {
+  SetFunSkin(TXAtom::funSkinChristmas, false);
+}
+//.............................................................................
+/* joke code, 'order 66': a temporary draw object that never touches the model,
+the styles or anything saved. screen = v*B, so the columns of B are screen
+right/up/towards-viewer in model space, as in the EXYZ code of TXAtom
+*/
+namespace order66 {
+const double
+  t_in = 0.9,       // hyperspace arrival, s
+  t_fire0 = 1.4,    // shooting window
+  t_fire1 = 5.2,
+  t_turn0 = 5.4,    // turning around
+  t_turn1 = 6.3,
+  t_out = 0.7,      // hyperspace departure
+  ship_delay = 0.3, // stagger between the ships
+  flash_t = 0.4;    // laser impact flash
+const int ship_count = 3;
+
+void material(float r, float g, float b, float e = 0) {
+  const float d[4] = { r, g, b, 1 }, em[4] = { r*e, g*e, b*e, 1 },
+    s[4] = { 0.4f, 0.4f, 0.4f, 1 };
+  olx_gl::material(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, d);
+  olx_gl::material(GL_FRONT_AND_BACK, GL_EMISSION, em);
+  olx_gl::material(GL_FRONT_AND_BACK, GL_SPECULAR, s);
+  olx_gl::material(GL_FRONT_AND_BACK, GL_SHININESS, 40.0f);
+}
+
+void ball(GLUquadric *q, const vec3d &p, double r, int slices = 10) {
+  olx_gl::pushMatrix();
+  olx_gl::translate(p);
+  gluSphere(q, r, slices, slices*2/3);
+  olx_gl::popMatrix();
+}
+
+void stick(GLUquadric *q, const vec3d &a, const vec3d &b, double r) {
+  vec3d d = b - a;
+  const double l = d.Length();
+  if (l < 1e-6) {
+    return;
+  }
+  d /= l;
+  olx_gl::pushMatrix();
+  olx_gl::translate(a);
+  // gluCylinder runs along +z
+  vec3d ax = vec3d(0, 0, 1).XProdVec(d);
+  const double ang = acos(olx_max(-1.0, olx_min(1.0, d[2])))*180/M_PI;
+  if (ax.QLength() < 1e-12) {
+    ax = vec3d(1, 0, 0);
+  }
+  olx_gl::rotate(ang, ax);
+  gluCylinder(q, r, r, l, 6, 1);
+  olx_gl::popMatrix();
+}
+
+struct Shot {
+  int ship, gun;
+  size_t target;
+  double t0;
+};
+
+class TShow : public AGDrawObject {
+  TTypeList<vec3d> targets;
+  vec3d centre, right, up, toward;
+  double R, L, a, time;
+  // the ship 'molecule' in local coordinates: +x - nose, +y - top deck
+  TTypeList<vec3d> hull, deck, engines;
+  TTypeList<olx_pair_t<size_t, size_t> > bonds;
+  TTypeList<Shot> shots;
+  vec3d P[ship_count], F[ship_count], U[ship_count], W[ship_count];
+  GLUquadric *quadric;
+  uint32_t seed;
+  double rnd() {
+    seed = seed * 1664525u + 1013904223u;
+    return (seed >> 8) / double(1 << 24);
+  }
+public:
+  TShow(TGlRenderer &r, const TTypeList<vec3d> &atoms)
+    : AGDrawObject(r, "Order66"), time(0), quadric(0), seed(66)
+  {
+    SetSelectable(false);
+    targets = atoms;
+    const mat3d &B = r.GetBasis().GetMatrix();
+    right = vec3d(B[0][0], B[1][0], B[2][0]);
+    up = vec3d(B[0][1], B[1][1], B[2][1]);
+    toward = vec3d(B[0][2], B[1][2], B[2][2]);
+    centre = -r.GetBasis().GetCenter();
+    R = 3;
+    if (!targets.IsEmpty()) {
+      centre.Null();
+      for (size_t i = 0; i < targets.Count(); i++) {
+        centre += targets[i];
+      }
+      centre /= targets.Count();
+      for (size_t i = 0; i < targets.Count(); i++) {
+        R = olx_max(R, targets[i].DistanceTo(centre) + 1);
+      }
+    }
+    else {
+      targets.AddCopy(centre);
+    }
+    L = olx_max(4.0, 0.6*R);
+    a = L / 7;
+    BuildShip();
+    const double angles[ship_count] = { 150, 30, 270 };
+    for (int i = 0; i < ship_count; i++) {
+      const double ang = angles[i] * M_PI / 180;
+      P[i] = centre + (right*cos(ang) + up*sin(ang))*(R + 0.8*L) +
+        toward*(0.2*R);
+      F[i] = (centre - P[i]).Normalise();
+      U[i] = (toward - F[i] * toward.DotProd(F[i])).Normalise();
+      W[i] = F[i].XProdVec(U[i]);
+    }
+    // the shooting schedule, each ship alternates between its deck guns
+    for (int s = 0; s < ship_count; s++) {
+      int gun = 0;
+      for (double t = t_fire0 + s*ship_delay + 0.1*rnd();
+        t < t_fire1 + s*ship_delay; t += 0.12 + 0.12*rnd())
+      {
+        Shot &sh = shots.AddNew();
+        sh.ship = s;
+        sh.gun = (gun++) % (int)deck.Count();
+        sh.target = (size_t)(rnd()*targets.Count()) % targets.Count();
+        sh.t0 = t;
+      }
+    }
+  }
+  ~TShow() {
+    if (quadric != 0) {
+      gluDeleteQuadric(quadric);
+    }
+  }
+  static double Duration() {
+    return t_turn1 + t_out + (ship_count - 1)*ship_delay + 0.3;
+  }
+  void SetTime(double t) { time = t; }
+
+  void BuildShip() {
+    // flat triangular wedge of 'atoms', one bond length apart
+    for (int i = 0; i <= 6; i++) {
+      for (int j = 0; j <= i; j++) {
+        hull.AddCopy(vec3d(L/2 - i*a, 0, (j - i/2.0)*a));
+      }
+    }
+    // a raised spine and the bridge tower towards the stern
+    for (int i = 2; i <= 6; i++) {
+      hull.AddCopy(vec3d(L/2 - i*a, 0.55*a, 0));
+    }
+    hull.AddCopy(vec3d(L/2 - 5.5*a, 1.2*a, 0));
+    hull.AddCopy(vec3d(L/2 - 5.5*a, 1.8*a, -0.45*a));
+    hull.AddCopy(vec3d(L/2 - 5.5*a, 1.8*a, 0.45*a));
+    for (size_t i = 0; i < hull.Count(); i++) {
+      for (size_t j = i + 1; j < hull.Count(); j++) {
+        if (hull[i].DistanceTo(hull[j]) < 1.2*a) {
+          bonds.AddNew(i, j);
+        }
+      }
+    }
+    for (int i = 0; i < 4; i++) { // gun turrets along the deck
+      deck.AddCopy(vec3d(L/2 - (2.5 + i)*a, 0.35*a, (i % 2 ? 1 : -1)*0.8*a));
+    }
+    for (int i = -1; i <= 1; i++) {
+      engines.AddCopy(vec3d(L/2 - 6.6*a, 0, i*a));
+    }
+  }
+
+  // ship placement at time t; returns false while it is not on screen
+  bool ShipFrame(int s, double t, vec3d &pos, vec3d &f, vec3d &w,
+    double &stretch, double &jump) const
+  {
+    t -= s*ship_delay;
+    pos = P[s];
+    f = F[s];
+    w = W[s];
+    stretch = 1;
+    jump = 0;
+    const double far_d = 8 * R;
+    if (t < 0) {
+      return false;
+    }
+    if (t < t_in) { // arrival: decelerate out of hyperspace
+      const double u = 1 - t / t_in;
+      pos -= f*(far_d*u*u*u);
+      stretch = 1 + 10 * u*u;
+      jump = u;
+      return true;
+    }
+    if (t > t_turn0) { // turn around about the ship's 'up' axis
+      const double th = M_PI*olx_min(1.0, (t - t_turn0) / (t_turn1 - t_turn0));
+      const double sm = (1 - cos(th)) / 2 * M_PI;
+      f = F[s] * cos(sm) + W[s] * sin(sm);
+      w = f.XProdVec(U[s]);
+    }
+    if (t > t_turn1) { // departure: accelerate into hyperspace
+      const double v = (t - t_turn1) / t_out;
+      if (v > 1) {
+        return false;
+      }
+      pos += f*(far_d*v*v*v);
+      stretch = 1 + 10 * v*v;
+      jump = v;
+    }
+    else { // a gentle bob while in combat
+      pos += U[s] * (0.1*a*sin(2.5*t + s));
+    }
+    return true;
+  }
+
+  static void Frame(const vec3d &pos, const vec3d &f, const vec3d &u,
+    const vec3d &w, double stretch)
+  {
+    // column-major: images of the local x, y, z axes and the origin
+    const double m[16] = {
+      f[0]*stretch, f[1]*stretch, f[2]*stretch, 0,
+      u[0], u[1], u[2], 0,
+      w[0], w[1], w[2], 0,
+      pos[0], pos[1], pos[2], 1 };
+    olx_gl::orient(m);
+  }
+
+  vec3d ToWorld(int s, const vec3d &l) const {
+    vec3d pos, f, w;
+    double st, j;
+    ShipFrame(s, time, pos, f, w, st, j);
+    return pos + f*(l[0] * st) + U[s] * l[1] + w*l[2];
+  }
+
+  void Create(const olxstr &cName = EmptyString()) {
+    if (!cName.IsEmpty()) {
+      SetCollectionName(cName);
+    }
+    TGPCollection &gpc = Parent.FindOrCreateCollection(GetCollectionName());
+    gpc.AddObject(*this);
+    if (gpc.PrimitiveCount() != 0) {
+      return;
+    }
+    TGlPrimitive &glp = gpc.NewPrimitive("Show", sgloMacro);
+    TGlMaterial glm;
+    glm.SetFlags(sglmAmbientF | sglmDiffuseF);
+    glm.AmbientF = 0x7f7f7f;
+    glm.DiffuseF = 0x7f7f7f;
+    glp.SetProperties(glm);
+  }
+
+  bool GetDimensions(vec3d &, vec3d &) { return false; }
+
+  bool Orient(TGlPrimitive &) {
+    if (Parent.IsSelecting()) {
+      return true;
+    }
+    if (quadric == 0) {
+      quadric = gluNewQuadric();
+      gluQuadricNormals(quadric, GLU_SMOOTH);
+    }
+    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_LIGHTING_BIT |
+      GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_LINE_BIT);
+    // ships
+    for (int s = 0; s < ship_count; s++) {
+      vec3d pos, f, w;
+      double stretch, jump;
+      if (!ShipFrame(s, time, pos, f, w, stretch, jump)) {
+        continue;
+      }
+      olx_gl::pushMatrix();
+      Frame(pos, f, U[s], w, stretch);
+      material(0.78f, 0.8f, 0.84f);
+      for (size_t i = 0; i < hull.Count(); i++) {
+        ball(quadric, hull[i], 0.28*a);
+      }
+      material(0.55f, 0.57f, 0.62f);
+      for (size_t i = 0; i < bonds.Count(); i++) {
+        stick(quadric, hull[bonds[i].a], hull[bonds[i].b], 0.08*a);
+      }
+      material(0.35f, 0.35f, 0.4f);
+      for (size_t i = 0; i < deck.Count(); i++) {
+        ball(quadric, deck[i], 0.18*a, 8);
+      }
+      material(0.4f, 0.7f, 1.0f, 1.0f);
+      for (size_t i = 0; i < engines.Count(); i++) {
+        ball(quadric, engines[i], 0.42*a);
+      }
+      olx_gl::popMatrix();
+    }
+    // glowing effects: no lighting, additive blending, no depth writes
+    olx_gl::disable(GL_LIGHTING);
+    olx_gl::enable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    glDepthMask(GL_FALSE);
+    for (int s = 0; s < ship_count; s++) { // hyperspace streaks and flashes
+      vec3d pos, f, w;
+      double stretch, jump;
+      if (!ShipFrame(s, time, pos, f, w, stretch, jump) || jump <= 0) {
+        continue;
+      }
+      glLineWidth(2);
+      olx_gl::begin(GL_LINES);
+      for (int i = -2; i <= 2; i++) {
+        for (int j = 0; j <= 1; j++) {
+          const vec3d o = pos + w*(i*0.6*a) + U[s] * (j*0.8*a - 0.2*a);
+          glColor4f(0.8f, 0.9f, 1.0f, (float)(0.8*jump));
+          olx_gl::vertex(o);
+          glColor4f(0.3f, 0.5f, 1.0f, 0.0f);
+          olx_gl::vertex(o - f*(L*olx_min(4.0, stretch*1.5)));
+        }
+      }
+      olx_gl::end();
+      if (jump < 0.25) { // the bright flash at the jump point
+        glColor4f(0.85f, 0.92f, 1.0f, (float)(0.7*(1 - jump*4)));
+        ball(quadric, pos, L*(0.1 + 0.6*jump), 12);
+      }
+    }
+    const double bolt_v = olx_max(10.0, 2.5*R), bolt_l = 0.15*R + 0.5;
+    for (size_t i = 0; i < shots.Count(); i++) { // laser bolts and hits
+      const Shot &sh = shots[i];
+      if (time < sh.t0) {
+        continue;
+      }
+      // the bolt starts where the gun was when it fired
+      const double keep = time;
+      time = sh.t0;
+      const vec3d from = ToWorld(sh.ship, deck[sh.gun]);
+      time = keep;
+      const vec3d &to = targets[sh.target];
+      const double dist = from.DistanceTo(to), t_hit = sh.t0 + dist / bolt_v;
+      if (time < t_hit) {
+        const vec3d dir = (to - from) / dist;
+        const double head = (time - sh.t0)*bolt_v;
+        const vec3d h = from + dir*head,
+          tail = from + dir*olx_max(0.0, head - bolt_l);
+        glLineWidth(6);
+        glColor4f(0.1f, 1.0f, 0.2f, 0.35f);
+        olx_gl::begin(GL_LINES);
+        olx_gl::vertex(tail);
+        olx_gl::vertex(h);
+        olx_gl::end();
+        glLineWidth(2);
+        glColor4f(0.8f, 1.0f, 0.8f, 1.0f);
+        olx_gl::begin(GL_LINES);
+        olx_gl::vertex(tail);
+        olx_gl::vertex(h);
+        olx_gl::end();
+      }
+      else if (time < t_hit + flash_t) {
+        const double u = (time - t_hit) / flash_t;
+        glColor4f(1.0f, 0.55f, 0.1f, (float)(0.9*(1 - u)));
+        ball(quadric, to, 0.3 + 0.9*u, 12);
+        glColor4f(1.0f, 0.95f, 0.6f, (float)(1 - u));
+        ball(quadric, to, 0.15 + 0.4*u, 10);
+      }
+    }
+    glPopAttrib();
+    return true;
+  }
+};
+}  // namespace order66
+//.............................................................................
+// joke code, a purely cosmetic movie
+void GXLibMacros::macOrder(TStrObjList &Cmds, const TParamList &Options,
+  TMacroData &Error)
+{
+  if (!Cmds[0].Equals("66")) {
+    Error.ProcessingError(__OlxSrcInfo, "these are not the orders you are "
+      "looking for");
+    return;
+  }
+  static bool running = false;
+  if (running) {
+    return;
+  }
+  {
+    TTypeList<vec3d> targets;
+    TGXApp::AtomIterator ai = app.GetAtoms();
+    while (ai.HasNext()) {
+      TXAtom &a = ai.Next();
+      if (a.IsVisible()) {
+        targets.AddCopy(a.crd());
+      }
+    }
+    TGlRenderer &r = app.GetRenderer();
+    order66::TShow *show = new order66::TShow(r, targets);
+    const olxstr name = show->GetCollectionName();
+    /* the model and view are never touched and the object restores the GL
+    state itself, so only the temporary object has to go, also on a throw
+    */
+    struct Cleanup {
+      TGlRenderer &r;
+      order66::TShow *show;
+      const olxstr &name;
+      bool &running;
+      ~Cleanup() {
+        // a reload in the meantime may have cleared the scene already
+        r.RemoveObject(*show);
+        TGPCollection *gpc = r.FindCollection(name);
+        if (gpc != 0) {
+          r.RemoveCollection(*gpc);
+        }
+        delete show;
+        running = false;
+      }
+    } cleanup = { r, show, name, running };
+    running = true;
+    show->Create();
+    // frame-rate cap, so the gag does not spin the CPU/GPU flat out
+    const uint64_t start = TETime::msNow(), frame_ms = 33;
+    double t = 0;
+    while (t < order66::TShow::Duration()) {
+      const uint64_t frame_start = TETime::msNow();
+      show->SetTime(t);
+      app.Update(); // draws and keeps the window responsive
+      const uint64_t spent = TETime::msNow() - frame_start;
+      olx_sleep(spent < frame_ms ? (int)(frame_ms - spent) : 1);
+      t = (TETime::msNow() - start) / 1000.0;
+    }
+  }
+  app.Draw(); // the plain scene again
+}
+//.............................................................................
+/* centres and scales to the visible objects only, so leaving the focus frames
+the whole structure again; not 'center -z', whose FindXAtoms returns hidden
+atoms too
+*/
+static void FrameVisible(TGXApp &app) {
+  vec3d miv(100, 100, 100), mav(-100, -100, -100), miv_, mav_;
+  bool any = false;
+  for (size_t i = 0; i < app.GetRenderer().ObjectCount(); i++) {
+    AGDrawObject &o = app.GetRenderer().GetObject(i);
+    if (!o.IsVisible()) {
+      continue;
+    }
+    if (o.GetDimensions(mav_, miv_)) {
+      vec3d::UpdateMinMax(miv_, miv, mav);
+      vec3d::UpdateMinMax(mav_, miv, mav);
+      any = true;
+    }
+  }
+  if (!any) {
+    return;
+  }
+  const double sd = olx_max(mav.DistanceTo(miv), 1.0);
+  app.GetRenderer().GetBasis().SetZoom(app.GetExtraZoom()/sd);
+  app.GetRenderer().GetBasis().SetCenter(-(miv + mav)/2);
+}
+//.............................................................................
+void GXLibMacros::macIsolate(TStrObjList &Cmds, const TParamList &Options,
+  TMacroData &Error)
+{
+  // -nc keeps the camera still, e.g. to compare two regions by eye
+  const bool frame = !Options.GetBoolOption("nc");
+  if (!Cmds.IsEmpty() &&
+    (Cmds[0].Equalsi("off") || Cmds[0].Equalsi("clear")))
+  {
+    app.ClearFocus();
+    if (frame) {
+      FrameVisible(app);
+    }
+    app.Draw();
+    return;
+  }
+  // a bare 'isolate' while isolated leaves again, so one key does both
+  if (Cmds.IsEmpty() && app.HasFocus()) {
+    app.ClearFocus();
+    if (frame) {
+      FrameVisible(app);
+    }
+    app.Draw();
+    return;
+  }
+  // a radius of zero is the seed alone
+  const double radius = Options.FindValue('r', "5").ToDouble();
+  TXAtomPList seed = app.FindXAtoms(Cmds, false, false);
+  TSAtomPList satoms(seed, StaticCastAccessor<TSAtom>());
+  // residues clicked on a ribbon are not in the selection group, ask the cartoon
+  if (satoms.IsEmpty()) {
+    app.GetCartoonSelectedAtoms(satoms);
+  }
+  if (satoms.IsEmpty()) {
+    Error.ProcessingError(__OlxSrcInfo,
+      "nothing to isolate: click some residues on the ribbon, select some"
+      " atoms, or name them");
+    return;
+  }
+  const bool by_residue = app.AreCartoonsVisible() &&
+    !app.GetCartoons().IsEmpty();
+  // -c keeps the bare sphere, cutting through molecules where it falls
+  const size_t n = app.SetFocus(satoms, radius, !Options.GetBoolOption('c'));
+  if (n == 0) {
+    TBasicApp::NewLogEntry(logInfo) << "Isolate: nothing left to show";
+    app.ClearFocus();
+    app.Draw();
+    return;
+  }
+  TBasicApp::NewLogEntry(logInfo) << "Isolate: " << n <<
+    (by_residue ? " residue(s)" : " atom(s)") << " from " << satoms.Count() <<
+    " atom(s)" <<
+    (radius > 0 ? (olxstr(" within ") << radius << " A") : EmptyString()) <<
+    ". 'isolate off' to leave it";
+  if (frame) {
+    FrameVisible(app);
+  }
+  app.Draw();
+}
+//.............................................................................
+void GXLibMacros::macCartoon(TStrObjList &Cmds, const TParamList &Options,
+  TMacroData &Error)
+{
+  if (!Cmds.IsEmpty() && Cmds[0].Equalsi("test")) {
+    size_t n = 5000;
+    if (Cmds.Count() > 1) {
+      if (!Cmds[1].IsNumber()) {
+        Error.ProcessingError(__OlxSrcInfo, "a residue count is expected");
+        return;
+      }
+      n = Cmds[1].ToSizeT();
+    }
+    if (n == 0) {
+      Error.ProcessingError(__OlxSrcInfo, "a residue count is expected");
+      return;
+    }
+    app.CreateTestCartoon(n);
+    app.Draw();
+    return;
+  }
+  short mode = -1;
+  olxstr cm = Options.FindValue('c');
+  if (!cm.IsEmpty()) {
+    mode = TGXApp::CartoonColourModeFromName(cm);
+    if (mode < 0) {
+      Error.ProcessingError(__OlxSrcInfo,
+        olxstr("unknown colour mode '") << cm <<
+        "', expected chain/rainbow/polarity/charge/residue/ueq/ss");
+      return;
+    }
+  }
+  short nonprot = -1;
+  olxstr np = Options.FindValue('n');
+  if (!np.IsEmpty()) {
+    nonprot = TGXApp::CartoonNonProteinFromName(np);
+    if (nonprot < 0) {
+      Error.ProcessingError(__OlxSrcInfo,
+        olxstr("unknown value '") << np <<
+        "', expected hide, show or nowater");
+      return;
+    }
+  }
+  short trace = -1;
+  olxstr rep = Options.FindValue('r');
+  if (!rep.IsEmpty()) {
+    if (rep.Equalsi("trace") || rep.Equalsi("tube")) {
+      trace = 1;
+    }
+    else if (rep.Equalsi("cartoon") || rep.Equalsi("ribbon")) {
+      trace = 0;
+    }
+    else {
+      Error.ProcessingError(__OlxSrcInfo,
+        olxstr("unknown representation '") << rep <<
+        "', expected cartoon or trace");
+      return;
+    }
+  }
+  // an option on its own adjusts what is drawn rather than toggling it
+  const bool only_options = Cmds.IsEmpty() &&
+    (mode >= 0 || trace >= 0 || nonprot >= 0 || Options.Contains('a') ||
+      Options.Contains("sc"));
+  bool v = only_options ? app.AreCartoonsVisible() : !app.AreCartoonsVisible();
+  if (!Cmds.IsEmpty()) {
+    if (Cmds[0].Equalsi("on")) {
+      v = true;
+    }
+    else if (Cmds[0].Equalsi("off")) {
+      v = false;
+    }
+    else if (!Cmds[0].Equalsi("toggle")) {
+      Error.ProcessingError(__OlxSrcInfo, "on/off/toggle/test expected");
+      return;
+    }
+  }
+  if (Options.Contains('a')) {
+    app.SetCartoonHidesAtoms(false);
+  }
+  else if (!only_options) {
+    app.SetCartoonHidesAtoms(true);
+  }
+  if (nonprot >= 0) {
+    app.SetCartoonNonProtein(nonprot);
+  }
+  if (trace >= 0) {
+    app.SetCartoonTraceOnly(trace != 0);
+  }
+  if (mode >= 0) {
+    // harmless before the first build: recolouring an empty list does nothing
+    app.SetCartoonColourMode(mode);
+  }
+  app.SetCartoonsVisible(v);
+  // after the cartoon exists, so 'cartoon on -sc=A:45-60' is one command
+  if (Options.Contains("sc")) {
+    const olxstr sc = Options.FindValue("sc");
+    if (sc.Equalsi("off") || sc.Equalsi("none") || sc.Equalsi("clear")) {
+      app.ClearCartoonSidechains();
+      app.SetCartoonFocusSidechains(false);
+    }
+    else if (sc.Equalsi("all")) {
+      app.SetAllCartoonSidechains();
+    }
+    else if (sc.IsEmpty() || sc.Equalsi("focus") || sc.Equalsi("isolate")) {
+      // the bare option means the isolated residues
+      app.SetCartoonFocusSidechains(true);
+      if (!app.HasFocus()) {
+        TBasicApp::NewLogEntry(logInfo) << "Cartoon: sidechains will show for"
+          " whatever 'isolate' leaves on screen";
+      }
+    }
+    else {
+      // comma or space separated list
+      TStrList names;
+      TStrList toks(sc, ',');
+      for (size_t i = 0; i < toks.Count(); i++) {
+        names.Strtok(toks[i], ' ');
+      }
+      /* residue notation first, the atom grammar for the rest: 'A:45-60'
+      against 'THR', 'CB_45' and 'sel'
+      */
+      TSizeList resi;
+      TStrList atom_names;
+      for (size_t i = 0; i < names.Count(); i++) {
+        if (!app.ResolveResidues(names[i], resi)) {
+          atom_names.Add(names[i]);
+        }
+      }
+      if (!atom_names.IsEmpty()) {
+        TXAtomPList sel;
+        try {
+          sel = app.FindXAtoms(atom_names, false, false);
+        }
+        catch (const TExceptionBase &e) {
+          Error.ProcessingError(__OlxSrcInfo,
+            olxstr("cannot resolve '") << sc << "': " <<
+            e.GetException()->GetError());
+          return;
+        }
+        // an atom names its whole residue
+        for (size_t i = 0; i < sel.Count(); i++) {
+          resi.Add(sel[i]->CAtom().GetResiId());
+        }
+      }
+      if (resi.IsEmpty()) {
+        Error.ProcessingError(__OlxSrcInfo,
+          olxstr("nothing named by '") << sc <<
+          "': expected residues ('A:45-60', 'A', '*'), a residue class"
+          " ('THR'), atoms ('CB_45') or 'sel'");
+        return;
+      }
+      const size_t n = app.SetCartoonSidechains(resi);
+      TBasicApp::NewLogEntry(logInfo) << "Cartoon: sidechains shown for " << n
+        << " residue(s). 'cartoon -sc=off' to put them back in the ribbon";
+    }
+  }
+  if (v && app.GetCartoons().IsEmpty()) {
+    TBasicApp::NewLogEntry(logInfo) << "Cartoon: no polymer backbone found."
+      " A cartoon needs residues, which come from RESI records";
+  }
+  app.Draw();
 }
 //.............................................................................
 void GXLibMacros::macAZoom(TStrObjList &Cmds, const TParamList &Options,
@@ -2116,11 +3183,20 @@ void GXLibMacros::macLine(TStrObjList &Cmds, const TParamList &Options,
     app.GetRenderer().GetBasis().OrientNormal(to - from);
   }
   else {
-    if (Options.GetBoolOption('e') && Atoms.Count() == 2) {
-      app.AddLine(name, *Atoms[0], *Atoms[1]);
+    TXLine* l = (Options.GetBoolOption('e') && Atoms.Count() == 2)
+      ? app.AddLine(name, *Atoms[0], *Atoms[1])
+      : app.AddLine(name, from, to);
+    if (l != 0 && Options.Contains('r')) {
+      l->SetRadius(Options.FindValue('r').ToDouble());
     }
-    else {
-      app.AddLine(name, from, to);
+    if (l != 0 && Options.Contains('l')) {
+      olxstr lbl = Options.FindValue('l');
+      if (lbl.IsEmpty()) {
+        l->GetGlLabel().SetVisible(false);
+      }
+      else {
+        l->GetGlLabel().SetLabel(lbl);
+      }
     }
   }
   app.Draw();
@@ -2290,6 +3366,10 @@ void GXLibMacros::macCent(TStrObjList &Cmds, const TParamList &Options,
 void GXLibMacros::macUniq(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
+  /* 'uniq' sets visibility from the fragments and 'isolate' from a radius -
+  two owners of one flag, and whichever ran last would look ignored
+  */
+  app.ClearFocus();
   TXAtomPList Atoms = app.FindXAtoms(Cmds, false, true);
   if (Atoms.IsEmpty()) {
     olex2::IOlex2Processor::GetInstance()->processMacro("fmol");
@@ -2328,6 +3408,8 @@ void GXLibMacros::macGroup(TStrObjList &Cmds, const TParamList &Options,
 void GXLibMacros::macFmol(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &Error)
 {
+  // showing everything is the opposite of isolating, so it ends it
+  app.ClearFocus();
   app.AllVisible(true);
   app.CenterView();
   app.GetRenderer().GetBasis().SetZoom(
@@ -5996,6 +7078,10 @@ void GXLibMacros::macLegend(TStrObjList &Cmds, const TParamList &Options,
   bool v = !app.AtomLegend().IsVisible();
   if (!Cmds.IsEmpty()) {
     v = Cmds[0].ToBool();
+  }
+  if (Cmds.Count() == 2) {
+    app.AtomLegend().SetCaption(Cmds[1]);
+    app.AtomLegend().Update();
   }
   app.AtomLegend().SetVisible(v);
 }

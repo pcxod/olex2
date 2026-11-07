@@ -513,6 +513,10 @@ bool TCAtom::AttachSite(TCAtom* atom, const smatd& matrix) {
   return true;
 }
 //..............................................................................
+void TCAtom::SortAttachedSites() {
+  QuickSorter::Sort(AttachedSites, TComparableComparator());
+}
+//..............................................................................
 bool TCAtom::AttachSiteI(TCAtom* atom, const smatd& matrix) {
   for (size_t i = 0; i < AttachedSitesI.Count(); i++) {
     if (AttachedSitesI[i].atom == atom) {
@@ -531,6 +535,12 @@ bool TCAtom::AttachSiteI(TCAtom* atom, const smatd& matrix) {
 }
 //..............................................................................
 void TCAtom::UpdateAttachedSites() {
+  TCAtomPList conn_atoms;
+  ConnInfo::CollectConnAtoms(*GetParent(), conn_atoms);
+  UpdateAttachedSites(conn_atoms);
+}
+//..............................................................................
+void TCAtom::UpdateAttachedSites(const TCAtomPList& conn_atoms) {
   // check if any symm eqivs were removed
   bool removed = false;
   for (size_t i = 0; i < AttachedSites.Count(); i++) {
@@ -548,7 +558,7 @@ void TCAtom::UpdateAttachedSites() {
   // end of the removed eqivs test
   smatd_list ml;
   BondInfoList toCreate, toDelete;
-  ConnInfo::Compile(*this, toCreate, toDelete, ml);
+  ConnInfo::Compile(*this, conn_atoms, toCreate, toDelete, ml);
   smatd I;
   I.I().SetId(0);
   for (size_t i = 0; i < toCreate.Count(); i++) {
@@ -667,16 +677,19 @@ int TCAtomComparator::Compare(const TCAtom& a1, const TCAtom& a2) {
 //..............................................................................
 //..............................................................................
 //..............................................................................
+/* old, in each GetFullLabel: "_$" << (rm.UsedSymmIndex(*Matrix) + 1) and
+'$' << (rm.UsedSymmIndex(*Matrix) + 1); index+1 is not the EQIV name past $9
+*/
 olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm) const {
   olxstr name = Atom->GetResiLabel(true);
   if (Atom->GetResiId() == 0) {
     if (Matrix != 0) {
-      name << "_$" << (rm.UsedSymmIndex(*Matrix) + 1);
+      name << '_' << rm.UsedSymmName(*Matrix);
     }
   }
   else {  // it is however shown that shelx just IGNORES $EQIV in this notation...
     if (Matrix != 0) {
-      name << '$' << (rm.UsedSymmIndex(*Matrix) + 1);
+      name << rm.UsedSymmName(*Matrix);
     }
   }
   return name;
@@ -689,13 +702,13 @@ olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm,
   TResidue &r = Atom->GetParent()->GetResidue(Atom->GetResiId());
   if( Atom->GetResiId() == 0 || r.GetNumber() == resiId) {
     if (Matrix != 0) {
-      name << "_$" << (rm.UsedSymmIndex(*Matrix) + 1);
+      name << '_' << rm.UsedSymmName(*Matrix);
     }
   }
   else {  // it is however shown that shelx just IGNORES $EQIV in this notation...
     name << '_' << r.GetNumberStr();
     if (Matrix != 0) {
-      name << '$' << (rm.UsedSymmIndex(*Matrix) + 1);
+      name << rm.UsedSymmName(*Matrix);
     }
   }
   return name;
@@ -715,13 +728,13 @@ olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm,
         Atom->GetResiId()).GetNumber() == resiName.ToInt()))
     {
       if (Matrix != 0) {
-        name << "_$" << (rm.UsedSymmIndex(*Matrix) + 1);
+        name << '_' << rm.UsedSymmName(*Matrix);
       }
     }
     else {  // it is however shown that shelx just IGNORES $EQIV in this notation...
       name << '_' << Atom->GetParent()->GetResidue(Atom->GetResiId()).GetNumber();
       if (Matrix != 0) {
-        name << '$' << (rm.UsedSymmIndex(*Matrix) + 1);
+        name << rm.UsedSymmName(*Matrix);
       }
     }
   }
@@ -731,13 +744,13 @@ olxstr TGroupCAtom::GetFullLabel(const RefinementModel& rm,
         Atom->GetResiId()).GetClassName().Equalsi(resiName)))
     {
       if (Matrix != 0) {
-        name << "_$" << (rm.UsedSymmIndex(*Matrix) + 1);
+        name << '_' << rm.UsedSymmName(*Matrix);
       }
     }
     else {  // it is however shown that shelx just IGNORES $EQIV in this notation...
       name << '_' << Atom->GetParent()->GetResidue(Atom->GetResiId()).GetNumber();
       if (Matrix != 0) {
-        name << '$' << (rm.UsedSymmIndex(*Matrix) + 1);
+        name << rm.UsedSymmName(*Matrix);
       }
     }
   }

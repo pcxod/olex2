@@ -53,6 +53,18 @@ namespace ctrl_ext  {
     void ClearActionQueues() {
       Actions.Clear();
     }
+    /* empties the queues but keeps them, the members referencing them stay
+    valid: for a control the html page reuses
+    */
+    void ResetActionQueues() {
+      for (size_t i = 0; i < Actions.Count(); i++) {
+        Actions[i].Clear();
+        ActionQueue *q = dynamic_cast<ActionQueue *>(&Actions[i]);
+        if (q != 0) {
+          q->data.SetLength(0);
+        }
+      }
+    }
   protected:
     // use this to do any required substitutions
     virtual olxstr GetActionQueueData(const ActionQueue &q) const {

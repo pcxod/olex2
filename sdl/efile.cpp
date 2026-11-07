@@ -78,7 +78,12 @@
   #include <utime.h>
 
   #define OLXSTR(A) A.ToMBStr().c_str()  //have to make it thread safe
-  #ifndef __MAC__  // could not find these on MAC...
+  #if defined(__ANDROID__) && __ANDROID_API__ < 24
+    // bionic has fseeko64/ftello64 from API 24; off_t is 64-bit on LP64
+    // and 32-bit (2 GB files) on armeabi-v7a/x86 below that
+    #define ftell ftello
+    #define fseek fseeko
+  #elif !defined(__MAC__)  // could not find these on MAC...
     #define ftell ftello64
     #define fseek fseeko64
   #endif

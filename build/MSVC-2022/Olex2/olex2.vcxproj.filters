@@ -132,6 +132,9 @@
     <ClCompile Include="..\..\..\olex\xglcanv.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\olex\touchnav.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\..\olex\xpprocs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -294,6 +297,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\olex\xglcanv.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\olex\touchnav.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\olex\ctrls\btnext.h">

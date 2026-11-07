@@ -22,6 +22,7 @@
 #include "tests/bond_eq_test.h"
 #include "tests/alg_test.h"
 #include "tests/container_test.h"
+#include "tests/dataitem_test.h"
 #include "tests/sort_test.h"
 #include "tests/encoding_test.h"
 #include "tests/roman_test.h"
@@ -47,6 +48,9 @@
 #include "tests/ptr_test.h"
 #include "tests/binding_test.h"
 #include "tests/hashed_test.h"
+#include "tests/protein_test.h"
+#include "tests/mmcif_test.h"
+#include "../gxlib/tests/cartoon_test.h"
 
 class Listener : public AActionHandler {
 public:
@@ -75,6 +79,7 @@ int main(int argc, char* argv[]) {
   tests.Add(&test::exparse::ExparseTests);
   tests.Add(&test::StringTests);
   tests.Add(&test::ContainerTests);
+  tests.Add(&test::DataItemTests);
   tests.Add(&test::HashingTests).
     Add(&test::EncodingTests);
   tests.Add(new test::CriticalSectionTest(true), &test::CriticalSectionTest::DoTest).
@@ -106,6 +111,9 @@ int main(int argc, char* argv[]) {
   tests.Add(&test::PtrTests);
   tests.Add(&test::BindingTests);
   tests.Add(&test::TensorTransform);
+  tests.Add(&test::ProteinTests);
+  tests.Add(&test::CartoonTests);
+  tests.Add(&test::MMCifTests);
 
   tests.run();
   if( argc > 1 )  {

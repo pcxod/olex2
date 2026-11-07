@@ -1,0 +1,306 @@
+/******************************************************************************
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
+*                                                                             *
+* This file is part of the OlexSys Development Framework.                     *
+*                                                                             *
+* This source file is distributed under the terms of the licence located in   *
+* the root folder.                                                            *
+******************************************************************************/
+
+#include "cartoon_geom.h"
+
+BeginGxlNamespace()
+
+namespace cartoon {
+
+namespace {
+  vec3f CatmullRom(const vec3f &p0, const vec3f &p1,
+    const vec3f &p2, const vec3f &p3, float t)
+  {
+    const float t2 = t*t, t3 = t2*t;
+    return (p1*2.0f
+      + (p2 - p0)*t
+      + (p0*2.0f - p1*5.0f + p2*4.0f - p3)*t2
+      + (p1*3.0f - p0 - p2*3.0f + p3)*t3) * 0.5f;
+  }
+
+  vec3f AnyPerpendicular(const vec3f &v) {
+    vec3f a = (olx_abs(v[0]) < olx_abs(v[2])) ? vec3f(1, 0, 0) : vec3f(0, 0, 1);
+    vec3f r = v.XProdVec(a);
+    const float l = r.Length();
+    return (l > 1e-6f) ? r/l : vec3f(0, 1, 0);
+  }
+
+  vec3f Normalised(const vec3f &v, const vec3f &fallback) {
+    const float l = v.Length();
+    return (l > 1e-6f) ? v/l : fallback;
+  }
+
+  // one cross-section: centre, chain direction, flat direction and size
+  struct Sample {
+    vec3f c, tangent, side;
+    float w, h, e;
+  };
+
+  // signed |v|^p, the superellipse parametrisation
+  float SPow(float v, float p) {
+    const float a = powf(olx_abs(v), p);
+    return (v < 0) ? -a : a;
+  }
+
+  /* emits the rings and triangles for a run of samples, outward faces counter-
+  clockwise: reversed winding is not culled while opaque but lights from GL_BACK
+  */
+  void StitchSamples(const TTypeList<Sample> &samples, size_t slices, Mesh &m) {
+    if (samples.Count() < 2 || slices < 3) {
+      return;
+    }
+    TArrayList<float> cs(slices), sn(slices);
+    for (size_t i = 0; i < slices; i++) {
+      const double a = 2*M_PI*double(i)/double(slices);
+      cs[i] = float(cos(a));
+      sn[i] = float(sin(a));
+    }
+    const size_t base_vertex = m.vertices.Count();
+    for (size_t i = 0; i < samples.Count(); i++) {
+      const Sample &s = samples[i];
+      const vec3f up = s.tangent.XProdVec(s.side);
+      const float e = olx_max(2.0f, s.e), ip = 2/e;
+      for (size_t k = 0; k < slices; k++) {
+        const float u = SPow(cs[k], ip), v = SPow(sn[k], ip);
+        m.vertices.AddCopy(s.c + s.side*(s.w*u) + up*(s.h*v));
+        /* gradient of |x/w|^e + |y/h|^e, which for e=2 is the (h cos, w sin)
+        of an ellipse - swapped, not the point direction, which would light a
+        flat ribbon as though it were round
+        */
+        m.normals.AddCopy(Normalised(
+          s.side*(SPow(u, e - 1)*s.h) + up*(SPow(v, e - 1)*s.w), s.side));
+      }
+    }
+    for (size_t r = 0; r + 1 < samples.Count(); r++) {
+      const size_t r1 = base_vertex + r*slices, r2 = r1 + slices;
+      for (size_t k = 0; k < slices; k++) {
+        const size_t k2 = (k + 1) % slices;
+        m.triangles.AddNew(r1 + k, r2 + k2, r2 + k);
+        m.triangles.AddNew(r1 + k, r1 + k2, r2 + k2);
+      }
+    }
+  }
+
+  // cross-section size of a residue, before the arrowhead is applied
+  void SizeOf(short ss, const CartoonParams &p, float &w, float &h, float &e) {
+    using namespace xlib::protein;
+    if (ss == ss_helix) {
+      w = p.helix_width;
+      h = p.helix_thickness;
+      e = p.edge;
+    }
+    else if (ss == ss_strand) {
+      w = p.strand_width;
+      h = p.strand_thickness;
+      e = p.edge;
+    }
+    else {
+      w = h = p.coil_radius;
+      e = 2;
+    }
+  }
+}
+
+//.............................................................................
+uint32_t RainbowColour(double t) {
+  t = olx_max(0.0, olx_min(1.0, t));
+  /* linear in RGB through blue, cyan, green, yellow, red: a hue sweep passes
+  through magenta and makes the ends indistinguishable
+  */
+  double r, g, b;
+  const double s = t*4;
+  if (s < 1) { r = 0; g = s; b = 1; }
+  else if (s < 2) { r = 0; g = 1; b = 2 - s; }
+  else if (s < 3) { r = s - 2; g = 1; b = 0; }
+  else { r = 1; g = 4 - s; b = 0; }
+  /* the OLX_RGBA packing written out rather than included - gldefs.h is in
+  glib, and this builds without the graphics layer for the test binary
+  */
+  return (uint32_t)(255*r + 0.5)
+    | ((uint32_t)(255*g + 0.5) << 8)
+    | ((uint32_t)(255*b + 0.5) << 16)
+    | 0xff000000u;
+}
+//.............................................................................
+vec3f RibbonWidthDirection(const vec3f &chain_step, const vec3f &carbonyl) {
+  const float al = chain_step.Length();
+  if (al < 1e-6f) {
+    return vec3f(0, 0, 0);
+  }
+  const vec3f a = chain_step/al;
+  const vec3f d = carbonyl - a*carbonyl.DotProd(a);
+  const float dl = d.Length();
+  return (dl > 1e-6f) ? d/dl : vec3f(0, 0, 0);
+}
+//.............................................................................
+void BuildCartoon(const xlib::protein::ChainSegment &seg,
+  const TArrayList<short> &ss_in, const CartoonParams &p, Mesh &m)
+{
+  using namespace xlib::protein;
+  const size_t rc = seg.residues.Count();
+  if (rc < 2 || p.slices < 3) {
+    return;
+  }
+  const size_t steps = olx_max(size_t(1), p.steps_per_residue);
+  const size_t slices = p.slices;
+  const size_t base_triangle = m.triangles.Count();
+
+  TArrayList<short> ss(rc);
+  for (size_t i = 0; i < rc; i++) {
+    ss[i] = (ss_in.Count() == rc && !p.trace_only) ? ss_in[i] : ss_coil;
+  }
+
+  /* per-residue ribbon direction after Carson and Bugg, flipped to agree with
+  the previous one to avoid 180 degree twists along a strand; without a carbonyl
+  O the previous direction is carried along
+  */
+  TArrayList<vec3f> side(rc);
+  vec3f carried;
+  bool have_carried = false;
+  for (size_t i = 0; i < rc; i++) {
+    const vec3f ca(seg.residues[i].ca);
+    const vec3f next(seg.residues[i + 1 < rc ? i + 1 : i].ca);
+    const vec3f prev(seg.residues[i > 0 ? i - 1 : i].ca);
+    vec3f dir = (i + 1 < rc) ? (next - ca) : (ca - prev);
+    dir = Normalised(dir, vec3f(0, 0, 1));
+    vec3f s;
+    if (seg.residues[i].has_o) {
+      s = RibbonWidthDirection(dir, vec3f(seg.residues[i].o) - ca);
+      if (s.QLength() < 1e-8f) {
+        s = have_carried ? carried : AnyPerpendicular(dir);
+      }
+    }
+    else if (have_carried) {
+      s = carried;
+    }
+    else {
+      s = AnyPerpendicular(dir);
+    }
+    // orthogonalise against the local chain direction, then agree with the last
+    s = Normalised(s - dir*s.DotProd(dir),
+      have_carried ? carried : AnyPerpendicular(dir));
+    if (have_carried && s.DotProd(carried) < 0) {
+      s = -s;
+    }
+    side[i] = s;
+    carried = s;
+    have_carried = true;
+  }
+
+  /* arrowheads: the head takes the last residue of a strand run and the
+  shoulder is a step, two samples at one point at strand and arrow width -
+  which is the flat face
+  */
+  TArrayList<bool> head(rc), shoulder(rc);
+  for (size_t i = 0; i < rc; i++) {
+    head[i] = shoulder[i] = false;
+  }
+  for (size_t i = 0; i < rc; i++) {
+    if (ss[i] == ss_strand && (i + 1 == rc || ss[i+1] != ss_strand)) {
+      head[i] = true;
+      if (i > 0 && ss[i-1] == ss_strand) {
+        shoulder[i] = true;
+      }
+    }
+  }
+  // the last residue owns no stretch, so its head moves to the stretch before
+  if (rc >= 2 && head[rc-1]) {
+    head[rc-1] = shoulder[rc-1] = false;
+    head[rc-2] = true;
+    shoulder[rc-2] = (rc >= 3 && ss[rc-3] == ss_strand);
+  }
+
+  TTypeList<Sample> samples;
+  TArrayList<size_t> residue_first_sample(rc);
+  for (size_t i = 0; i < rc; i++) {
+    residue_first_sample[i] = samples.Count();
+  }
+
+  for (size_t i = 0; i + 1 < rc; i++) {
+    residue_first_sample[i] = samples.Count();
+    const vec3f p1(seg.residues[i].ca);
+    const vec3f p2(seg.residues[i+1].ca);
+    const vec3f p0 = (i == 0) ? (p1*2.0f - p2) : vec3f(seg.residues[i-1].ca);
+    const vec3f p3 = (i + 2 < rc) ? vec3f(seg.residues[i+2].ca)
+      : (p2*2.0f - p1);
+    /* the final pair and an arrowhead also emit the closing sample, else the
+    taper stops a step short and the point is never drawn
+    */
+    const size_t n = (i + 2 == rc || head[i]) ? steps + 1 : steps;
+
+    float w0, h0, e0, w1, h1, e1;
+    SizeOf(ss[i], p, w0, h0, e0);
+    SizeOf(ss[i+1], p, w1, h1, e1);
+    if (head[i]) {
+      w0 = p.arrow_width;
+      w1 = p.arrow_tip;
+      h1 = h0;
+      // the head is flat to its point, whatever follows it
+      e1 = e0;
+    }
+    else if (head[i+1]) {
+      // the next residue is the head, so this stretch ends at the shoulder
+      w1 = p.strand_width;
+    }
+
+    for (size_t s = 0; s < n; s++) {
+      const float t = float(s)/float(steps);
+      Sample smp;
+      smp.c = CatmullRom(p0, p1, p2, p3, t);
+      vec3f tangent = CatmullRom(p0, p1, p2, p3, olx_min(1.0f, t + 0.01f))
+        - CatmullRom(p0, p1, p2, p3, olx_max(0.0f, t - 0.01f));
+      const float tl = tangent.Length();
+      if (tl < 1e-6f) {
+        continue;
+      }
+      smp.tangent = tangent/tl;
+      const vec3f sd = side[i]*(1 - t) + side[i+1]*t;
+      smp.side = Normalised(sd - smp.tangent*sd.DotProd(smp.tangent),
+        AnyPerpendicular(smp.tangent));
+      smp.w = w0 + (w1 - w0)*t;
+      smp.h = h0 + (h1 - h0)*t;
+      smp.e = e0 + (e1 - e0)*t;
+      if (s == 0 && shoulder[i]) {
+        // the flat face: the same point at the width the strand had
+        Sample flat = smp;
+        flat.w = p.strand_width;
+        samples.AddCopy(flat);
+      }
+      samples.AddCopy(smp);
+    }
+  }
+  residue_first_sample[rc-1] = samples.IsEmpty() ? 0 : samples.Count() - 1;
+
+  StitchSamples(samples, slices, m);
+
+  /* per-residue triangle offsets, a subset being a contiguous range; n samples
+  make n-1 stretches, so the last residue owns none and must not pass the sentinel
+  */
+  for (size_t i = 0; i < rc; i++) {
+    m.residue_triangle_offset.Add(
+      base_triangle + residue_first_sample[i]*slices*2);
+  }
+  m.residue_triangle_offset.Add(m.triangles.Count());
+}
+//.............................................................................
+void BuildTube(const xlib::protein::ChainSegment &seg, const TubeParams &tp,
+  Mesh &m)
+{
+  CartoonParams p;
+  p.coil_radius = tp.radius;
+  p.steps_per_residue = tp.steps_per_residue;
+  p.slices = tp.slices;
+  p.trace_only = true;
+  BuildCartoon(seg, TArrayList<short>(), p, m);
+}
+//.............................................................................
+
+} // namespace cartoon
+
+EndGxlNamespace()

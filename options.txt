@@ -3,6 +3,7 @@ aromatic_rings [false]	specifies if the aromatic rings are to be automatically c
 aromatic_rings_def [C5,C6,NC5,SC4,N2C3,NCNC2]	aromatic ring definitions
 mouse_invert_zoom [false]	specifies if the mouse zooming operation to be inverted
 mouse_click_threshold [2]	specifies the rectangular area size where the mouse click is recognised
+gl_touch [false, true on Android]	enables touch gestures in the 3D view: pinch zooms, two-finger pan translates, two-finger twist rotates around Z, long press opens the context menu, double tap on the background centres the model instead of deselecting. One-finger drag and tap work as the left mouse button
 hbond_min_angle [120]	the minimal angle for H-bonds to exist
 preserve_invalid_ins [false]	if invalid instructions are preserved vs being deleted
 q_peak_min_alpha [0]	minimum value for the Q-peak transparency (0-0.75)

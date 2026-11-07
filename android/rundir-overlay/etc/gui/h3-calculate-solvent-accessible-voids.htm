@@ -1,0 +1,51 @@
+<!-- #include tool-h3 gui\blocks\tool-h3.htm;image=#image;colspan=1;1; -->
+
+<tr bgcolor="$GetVar(HtmlTableBgColour)">
+<!-- #include tool-column gui\blocks\tool-first-column.htm;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+  <td width="25%">%Probe%/&Aring</td>
+  <td width="25%">
+    <font size="$GetVar('HtmlFontSizeControls')">
+    <input
+      type="text"
+      name = "SET_SNUM_CALCSOLV_PROBE"
+      width="95%"
+      height="GetVar('HtmlInputHeight')"
+      valign="center"
+      bgcolor="GetVar('HtmlTableBgColour')"
+      fgcolor="GetVar('HtmlFontColour')"
+      value="spy.GetParam('snum.calcsolv.probe')"
+      onchange="spy.SetParam('snum.calcsolv.probe',html.GetValue('~name~'))"
+    >
+    </font>
+  </td>
+  <td width="25%">%Grid%/&Aring</td>
+  <td width="25%">
+    <font size="$GetVar('HtmlFontSizeControls')">
+    <input
+      type="text"
+      name = "SET_SNUM_CALCSOLV_GRID"
+      width="95%"
+      height="GetVar('HtmlInputHeight')"
+      valign="center"
+      bgcolor="GetVar('HtmlTableBgColour')"
+      fgcolor="GetVar('HtmlFontColour')"
+      value="spy.GetParam('snum.calcsolv.grid')"
+      onchange="spy.SetParam('snum.calcsolv.grid',html.GetValue('~name~'))"
+    >
+    </font>
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<tr bgcolor="$GetVar(HtmlTableBgColour)">
+<!-- #include tool-column gui\blocks\tool-first-column.htm;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+  <td width="50%"> </td>
+  $+
+  html.Snippet(GetVar(default_link),
+    "name=MAKE_ACCESSIBLE_VOID_MAP",
+    "value='\$spy.gui.maps.getActionString(Info,MAKE_ACCESSIBLE_VOID_MAP)'",
+    "onclick=spy.CalcSolv()>>spy.gui.maps.getActionString(Void,MAKE_ACCESSIBLE_VOID_MAP)",
+    )
+  $-
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->

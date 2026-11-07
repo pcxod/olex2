@@ -24,13 +24,24 @@ struct ListJoiner {
     a.Add(i);
   }
 
+  // a plain == is ambiguous for olx_pair_t; the member call picks one
+  template <typename item_t>
+  static bool are_equal(const item_t& a, const item_t& b) {
+    /* old: an address test first; a and b always come from different lists,
+    so it never fired
+    return static_cast<const void*>(&a) == static_cast<const void*>(&b) ? true : a.operator==(b);
+    */
+    return a.operator==(b);
+  }
+
   template<class list_t>
   static void merge_lists(list_t& a, const list_t& b) {
     size_t a_sz = a.Count();
     for (size_t i = 0; i < b.Count(); i++) {
       bool uniq = true;
       for (size_t j = 0; j < a_sz; j++) {
-        if (b[i] == a[j]) {
+        // old: if (b[i] == a[j]) {
+        if (are_equal(b[i], a[j])) {
           uniq = false;
           break;
         }

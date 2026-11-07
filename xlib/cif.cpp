@@ -25,7 +25,7 @@ using namespace exparse::parser_util;
 using namespace cif_dp;
 
 TCif::TCif()
-  : block_index(InvalidIndex), has_duplicate_labels(false)
+  : block_index(InvalidIndex), has_duplicate_labels(false), is_mmcif(false)
 {}
 //..............................................................................
 TCif::~TCif()
@@ -41,23 +41,83 @@ void TCif::Clear() {
   MatrixMap.Clear();
 }
 //..............................................................................
+/* the loop holding a column, found by the column: cetTable names a loop after
+the common prefix trimmed to the last underscore, so _atom_site.* is _atom
+*/
+static cif_dp::cetTable *FindMMLoop(cif_dp::CifBlock &cb, const olxstr &col) {
+  for (size_t i = 0; i < cb.table_map.Count(); i++) {
+    cif_dp::cetTable *t = cb.table_map.GetValue(i);
+    if (t != 0 && t->ColIndex(col) != InvalidIndex) {
+      return t;
+    }
+  }
+  return 0;
+}
+//..............................................................................
+olxstr TCif::MMEquivalentOf(const olxstr &core_name) {
+  /* only the names Olex2 reads back from a loaded file; the R factors are
+  named after the work and free sets, _refine.ls_R_factor_R_free has no core one
+  */
+  static const char *map[][2] = {
+    {"_refine_ls_R_factor_gt", "_refine.ls_R_factor_R_work"},
+    {"_refine_ls_R_factor_all", "_refine.ls_R_factor_obs"},
+    {"_refine_ls_wR_factor_ref", "_refine.ls_wR_factor_R_work"},
+    {"_refine_ls_wR_factor_gt", "_refine.ls_wR_factor_R_work"},
+    {"_refine_ls_goodness_of_fit_ref", "_refine.ls_goodness_of_fit_all"},
+    {"_refine_ls_number_reflns", "_refine.ls_number_reflns_obs"},
+    {"_refine_ls_number_parameters", "_refine.ls_number_parameters"},
+    {"_refine_ls_number_restraints", "_refine.ls_number_restraints"},
+    {"_reflns_number_total", "_reflns.number_obs"},
+    {"_reflns_number_gt", "_reflns.number_obs"},
+    {"_reflns_d_resolution_high", "_reflns.d_resolution_high"},
+    {"_reflns_d_resolution_low", "_reflns.d_resolution_low"},
+    {"_cell_length_a", "_cell.length_a"},
+    {"_cell_length_b", "_cell.length_b"},
+    {"_cell_length_c", "_cell.length_c"},
+    {"_cell_angle_alpha", "_cell.angle_alpha"},
+    {"_cell_angle_beta", "_cell.angle_beta"},
+    {"_cell_angle_gamma", "_cell.angle_gamma"},
+    {"_cell_volume", "_cell.volume"},
+    {"_cell_formula_units_Z", "_cell.Z_PDB"},
+    {"_symmetry_space_group_name_H-M", "_symmetry.space_group_name_H-M"},
+    {"_space_group_name_H-M_alt", "_symmetry.space_group_name_H-M"},
+    {"_symmetry_Int_Tables_number", "_symmetry.Int_Tables_number"}
+  };
+  for (size_t i = 0; i < sizeof(map)/sizeof(map[0]); i++) {
+    if (core_name.Equalsi(map[i][0])) {
+      return olxstr(map[i][1]);
+    }
+  }
+  return EmptyString();
+}
+//..............................................................................
 void TCif::LoadFromStrings(const TStrList& Strings) {
   block_index = InvalidIndex;
+  is_mmcif = false;
   data_provider.LoadFromStrings(Strings);
   for (size_t i=0; i < data_provider.Count(); i++) {
     CifBlock& cb = data_provider[i];
-    if (!cb.param_map.HasKey("_cell_length_a")) {
+    // the dictionary, decided per block on the cell spelling
+    const bool mm = cb.param_map.HasKey("_cell.length_a");
+    if (!mm && !cb.param_map.HasKey("_cell_length_a")) {
       continue;
     }
     bool valid = false;
-    for (size_t j = 0; j < cb.table_map.Count(); j++) {
-      if (cb.table_map.GetKey(j).StartsFrom("_atom_site")) {
-        valid = true;
-        break;
+    if (mm) {
+      // by the column, the loop name is trimmed to _atom
+      valid = FindMMLoop(cb, "_atom_site.Cartn_x") != 0;
+    }
+    else {
+      for (size_t j = 0; j < cb.table_map.Count(); j++) {
+        if (cb.table_map.GetKey(j).StartsFrom("_atom_site")) {
+          valid = true;
+          break;
+        }
       }
     }
     if (valid) {
       block_index = i;
+      is_mmcif = mm;
       break;
     }
   }
@@ -69,6 +129,16 @@ void TCif::_LoadCurrent() {
   if (data_provider.Count() == 0) {
     throw TInvalidArgumentException(__OlxSourceInfo,
       "Empty/Invalid CIF");
+  }
+  /* from the block about to be loaded: SetCurrentBlock can move to another
+  block, and a file may hold blocks of either dictionary
+  */
+  if (block_index != InvalidIndex && block_index < data_provider.Count()) {
+    is_mmcif = data_provider[block_index].param_map.HasKey("_cell.length_a");
+  }
+  if (is_mmcif) {
+    _LoadCurrentMM();
+    return;
   }
   if (block_index == InvalidIndex) {
     if (data_provider.Count() == 0) {
@@ -135,6 +205,431 @@ void TCif::_LoadCurrent() {
     }
   }
   Initialize();
+}
+//..............................................................................
+TResidue *TCif::MMResidue(const olxstr &comp_id, const olxstr &seq_id,
+  const olxstr &chain_id, const olxstr &ins_code)
+{
+  if (!seq_id.IsInt()) {
+    return 0;   // water and ligands in some files carry '.' here
+  }
+  const int num = seq_id.ToInt();
+  const olxch chain = chain_id.IsEmpty() ? olxch(' ') : chain_id.CharAt(0);
+  // by chain and number: FindResidue(int) searches the no-chain bucket only
+  TResidue *r = GetAsymmUnit().FindResidue(chain, num);
+  if (!ins_code.IsEmpty() && ins_code != '?' && ins_code != '.') {
+    /* 52 and 52A are different residues and the registry is keyed on an int,
+    so the insertion code folds into the key, as both number and alias: with
+    the true number as alias NewResidue would find 52 from 52A
+    */
+    const int coded = num*100 +
+      (int)(olxstr::o_toupper(ins_code.CharAt(0)) - 'A' + 1);
+    r = GetAsymmUnit().FindResidue(chain, coded);
+    if (r == 0) {
+      r = &GetAsymmUnit().NewResidue(comp_id, coded, coded, chain);
+    }
+    return r;
+  }
+  /* by class as well: a mutation site is two residues on one number, and
+  NewResidue finds or creates the one this atom belongs to
+  */
+  if (r == 0 || !r->GetClassName().Equalsi(comp_id)) {
+    r = &GetAsymmUnit().NewResidue(comp_id, num, num, chain);
+  }
+  return r;
+}
+//..............................................................................
+/* deposited hydrogens ride on the nearest heavy atom of their own residue and
+part, with the AFIX the pivot's H count and bonding call for. HAdd skips an atom
+that has any H, so one left free here stays free and wanders off. An H riding on
+nothing, or a count no AFIX fits, is dropped for HAdd to put back
+*/
+static void MMRideHydrogens(TAsymmUnit& au, RefinementModel& rm) {
+  struct Group {
+    TCAtom* pivot;
+    int part;
+    TCAtomPList hs;
+  };
+  size_t riding = 0, dropped = 0;
+  for (size_t ri = 0; ri < au.ResidueCount(); ri++) {
+    TResidue& r = au.GetResidue(ri);
+    TTypeList<Group> groups;
+    for (size_t i = 0; i < r.Count(); i++) {
+      TCAtom& h = r[i];
+      if (h.IsDeleted() || h.GetType() != iHydrogenZ) {
+        continue;
+      }
+      TCAtom* pivot = 0;
+      double best = 0;
+      for (size_t j = 0; j < r.Count(); j++) {
+        TCAtom& p = r[j];
+        if (p.IsDeleted() || p.GetType() == iHydrogenZ ||
+          (h.GetPart() != 0 && p.GetPart() != 0 && p.GetPart() != h.GetPart()))
+        {
+          continue;
+        }
+        const double d = au.Orthogonalise(p.ccrd() - h.ccrd()).Length(),
+          lim = (p.GetType() == iSulphurZ || p.GetType() == iSeleniumZ) ? 1.55
+          : 1.35;
+        if (d < lim && (pivot == 0 || d < best)) {
+          pivot = &p;
+          best = d;
+        }
+      }
+      if (pivot == 0) {
+        h.SetDeleted(true);
+        dropped++;
+        continue;
+      }
+      Group* g = 0;
+      for (size_t j = 0; j < groups.Count() && g == 0; j++) {
+        if (groups[j].pivot == pivot && groups[j].part == h.GetPart()) {
+          g = &groups[j];
+        }
+      }
+      if (g == 0) {
+        g = &groups.AddNew();
+        g->pivot = pivot;
+        g->part = h.GetPart();
+      }
+      g->hs.Add(h);
+    }
+    for (size_t gi = 0; gi < groups.Count(); gi++) {
+      Group& g = groups[gi];
+      TCAtom& p = *g.pivot;
+      /* heavy neighbours in this and the adjacent residues, a backbone N being
+      bonded to the C before it. Conformers of one atom share its name here and
+      count once
+      */
+      TStrList seen;
+      for (size_t rj = (ri == 0 ? 0 : ri - 1);
+        rj < olx_min(ri + 2, au.ResidueCount()); rj++)
+      {
+        TResidue& nr = au.GetResidue(rj);
+        for (size_t j = 0; j < nr.Count(); j++) {
+          TCAtom& a = nr[j];
+          if (&a == &p || a.IsDeleted() || a.GetType() == iHydrogenZ ||
+            (g.part != 0 && a.GetPart() != 0 && a.GetPart() != g.part) ||
+            (p.GetPart() != 0 && a.GetPart() != 0 && a.GetPart() != p.GetPart()))
+          {
+            continue;
+          }
+          const double d = au.Orthogonalise(a.ccrd() - p.ccrd()).Length();
+          if (d < a.GetType().r_bonding + p.GetType().r_bonding + 0.5) {
+            const olxstr key = olxstr(rj) << ':' << a.GetLabel();
+            if (seen.IndexOf(key) == InvalidIndex) {
+              seen.Add(key);
+            }
+          }
+        }
+      }
+      const size_t nh = g.hs.Count(), nb = seen.Count();
+      const short z = p.GetType().z;
+      int afix = 0;
+      if (z == iCarbonZ || z == iNitrogenZ) {
+        if (nh == 3 && nb == 1) afix = 137;
+        else if (nh == 2 && nb == 2) afix = 23;
+        // an NH2 on one neighbour is planar, so not an N-terminus missing an H
+        else if (nh == 2 && nb == 1 && !p.GetLabel().Equalsi("N")) afix = 93;
+        else if (nh == 1 && nb == 3) afix = 13;
+        else if (nh == 1 && nb == 2) afix = 43;
+        else if (nh == 1 && nb == 1 && z == iCarbonZ) afix = 163;
+      }
+      else if (z == iOxygenZ || z == iSulphurZ || z == iSeleniumZ) {
+        if (nh == 1 && nb == 1) afix = 147;
+        // water: a rigid group that keeps the deposited orientation
+        else if (nh == 2 && nb == 0 && z == iOxygenZ) afix = 6;
+      }
+      if (afix == 0) {
+        for (size_t i = 0; i < nh; i++) {
+          g.hs[i]->SetDeleted(true);
+        }
+        dropped += nh;
+        continue;
+      }
+      TAfixGroup& ag = rm.AfixGroups.New(&p, afix);
+      for (size_t i = 0; i < nh; i++) {
+        TCAtom& h = *g.hs[i];
+        ag.AddDependent(h);
+        h.AssignEllp(0);
+        h.SetUisoOwner(&p);
+        h.SetUisoScale((z == iOxygenZ || (afix == 137 && z == iCarbonZ))
+          ? 1.5 : 1.2);
+      }
+      riding += nh;
+    }
+  }
+  if (riding + dropped > 0) {
+    TBasicApp::NewLogEntry(logInfo) << "mmCIF: " << riding <<
+      " deposited H riding on their pivots, " << dropped << " dropped - "
+      "no heavy atom of their residue to ride on, or a count no AFIX fits";
+  }
+}
+//..............................................................................
+void TCif::_LoadCurrentMM() {
+  // InvalidIndex means choose one, as for every file opened without a block
+  if (block_index == InvalidIndex) {
+    for (size_t i = 0; i < data_provider.Count(); i++) {
+      if (data_provider[i].param_map.HasKey("_cell.length_a") &&
+        FindMMLoop(data_provider[i], "_atom_site.Cartn_x") != 0)
+      {
+        block_index = i;
+        break;
+      }
+    }
+    if (block_index == InvalidIndex) {
+      return;
+    }
+  }
+  CifBlock& cif_data = data_provider[block_index];
+  Clear();
+  Title = "OLEX2: imported from mmCIF";
+  //..........................................................................
+  // cell, which the block test above has already found
+  {
+    const char *names[6] = { "_cell.length_a", "_cell.length_b",
+      "_cell.length_c", "_cell.angle_alpha", "_cell.angle_beta",
+      "_cell.angle_gamma" };
+    double v[6];
+    for (int i = 0; i < 6; i++) {
+      cetString *e = dynamic_cast<cetString *>(cif_data.param_map.Find(names[i], 0));
+      if (e == 0) {
+        throw TFunctionFailedException(__OlxSourceInfo,
+          olxstr("mmCIF is missing ") << names[i]);
+      }
+      v[i] = e->GetStringValue().ToDouble();
+    }
+    GetAsymmUnit().GetAxes() = vec3d(v[0], v[1], v[2]);
+    GetAsymmUnit().GetAngles() = vec3d(v[3], v[4], v[5]);
+    GetAsymmUnit().InitMatrices();
+  }
+  //..........................................................................
+  /* space group by name: _symmetry.space_group_name_H-M as the PDB writes it,
+  or the newer _space_group.name_H-M_alt
+  */
+  {
+    const char *names[2] = { "_symmetry.space_group_name_H-M",
+      "_space_group.name_H-M_alt" };
+    for (int i = 0; i < 2; i++) {
+      ICifEntry *e = cif_data.param_map.Find(names[i], 0);
+      if (e == 0) {
+        continue;
+      }
+      olxstr sg_name = e->GetStringValue().Trim('\'').Trim('"').TrimWhiteChars();
+      if (sg_name.IsEmpty() || sg_name == '?') {
+        continue;
+      }
+      TSymmLib &sl = TSymmLib::GetInstance();
+      TSpaceGroup *sg = sl.FindGroupByName(sg_name);
+      if (sg == 0) {
+        /* the PDB spaces its names out, 'P 1 21 1' for 'P21': match the full
+        name as TPdb does, then with the spaces taken out ('C 1 2/c 1')
+        */
+        olxstr packed = olxstr(sg_name).DeleteChars(' ');
+        for (size_t j = 0; j < sl.SGCount(); j++) {
+          if (sl.GetGroup(j).GetFullName() == sg_name ||
+            olxstr(sl.GetGroup(j).GetFullName()).DeleteChars(' ') == packed)
+          {
+            sg = &sl.GetGroup(j);
+            break;
+          }
+        }
+      }
+      if (sg != 0) {
+        GetAsymmUnit().ChangeSpaceGroup(*sg);
+        break;
+      }
+      TBasicApp::NewLogEntry(logError) << "mmCIF: unrecognised space group '"
+        << sg_name << '\'';
+    }
+  }
+  //..........................................................................
+  /* the experiment. mmCIF spells these with a dot and the ordinary CIF branch
+  looks only for the underscore forms, so without this a synchrotron dataset
+  keeps the Mo Ka default and refines with the wrong dispersion corrections
+  */
+  {
+    const char *wl[2] = { "_diffrn_radiation_wavelength.wavelength",
+      "_diffrn_source.pdbx_wavelength" };
+    for (int i = 0; i < 2; i++) {
+      ICifEntry *e = cif_data.param_map.Find(wl[i], 0);
+      if (e == 0) {
+        continue;
+      }
+      olxstr v = e->GetStringValue().TrimWhiteChars();
+      if (v.IsNumber()) {
+        GetRM().expl.SetRadiation(v.ToDouble());
+        break;
+      }
+    }
+    ICifEntry *t = cif_data.param_map.Find("_diffrn.ambient_temp", 0);
+    if (t != 0) {
+      olxstr v = t->GetStringValue().TrimWhiteChars();
+      if (v.IsNumber()) {
+        TEValueD t_v(v);
+        t_v.V() -= 273.15;
+        GetRM().expl.SetTempValue(t_v);
+      }
+    }
+  }
+  //..........................................................................
+  // the atoms
+  cetTable *at = FindMMLoop(cif_data, "_atom_site.Cartn_x");
+  if (at == 0) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      "mmCIF has no _atom_site loop with coordinates");
+  }
+  const size_t i_symbol = at->ColIndex("_atom_site.type_symbol"),
+    i_label = at->ColIndex("_atom_site.label_atom_id"),
+    i_alt = at->ColIndex("_atom_site.label_alt_id"),
+    i_comp = at->ColIndex("_atom_site.auth_comp_id"),
+    i_comp_l = at->ColIndex("_atom_site.label_comp_id"),
+    i_seq = at->ColIndex("_atom_site.auth_seq_id"),
+    i_seq_l = at->ColIndex("_atom_site.label_seq_id"),
+    i_chain = at->ColIndex("_atom_site.auth_asym_id"),
+    i_chain_l = at->ColIndex("_atom_site.label_asym_id"),
+    i_ins = at->ColIndex("_atom_site.pdbx_PDB_ins_code"),
+    i_x = at->ColIndex("_atom_site.Cartn_x"),
+    i_y = at->ColIndex("_atom_site.Cartn_y"),
+    i_z = at->ColIndex("_atom_site.Cartn_z"),
+    i_occu = at->ColIndex("_atom_site.occupancy"),
+    i_b = at->ColIndex("_atom_site.B_iso_or_equiv"),
+    i_id = at->ColIndex("_atom_site.id"),
+    i_model = at->ColIndex("_atom_site.pdbx_PDB_model_num");
+  if (i_x == InvalidIndex || i_y == InvalidIndex || i_z == InvalidIndex) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      "mmCIF _atom_site loop has no coordinates");
+  }
+  /* auth_* is the published residue numbering, label_* the internal entity
+  one: auth first, per column
+  */
+  const size_t c_comp = (i_comp != InvalidIndex) ? i_comp : i_comp_l,
+    c_seq = (i_seq != InvalidIndex) ? i_seq : i_seq_l,
+    c_chain = (i_chain != InvalidIndex) ? i_chain : i_chain_l;
+  // only the first model: an NMR ensemble holds every model's atoms in one loop
+  olxstr first_model;
+  olxstr_dict<size_t, true> id_map;
+  size_t skipped_models = 0;
+  for (size_t i = 0; i < at->RowCount(); i++) {
+    const CifRow &row = (*at)[i];
+    if (i_model != InvalidIndex) {
+      const olxstr m = row[i_model]->GetStringValue();
+      if (first_model.IsEmpty()) {
+        first_model = m;
+      }
+      else if (m != first_model) {
+        skipped_models++;
+        continue;
+      }
+    }
+    TResidue *resi = 0;
+    if (c_seq != InvalidIndex) {
+      resi = MMResidue(
+        c_comp == InvalidIndex ? EmptyString() : row[c_comp]->GetStringValue(),
+        row[c_seq]->GetStringValue(),
+        c_chain == InvalidIndex ? EmptyString() : row[c_chain]->GetStringValue(),
+        i_ins == InvalidIndex ? EmptyString() : row[i_ins]->GetStringValue());
+    }
+    TCAtom &ca = GetAsymmUnit().NewAtom(resi);
+    // orthogonal angstroems here, unlike the core dictionary
+    ca.ccrd() = GetAsymmUnit().Fractionalise(vec3d(
+      row[i_x]->GetStringValue().ToDouble(),
+      row[i_y]->GetStringValue().ToDouble(),
+      row[i_z]->GetStringValue().ToDouble()));
+    if (i_occu != InvalidIndex) {
+      const olxstr o = row[i_occu]->GetStringValue();
+      if (o.IsNumber()) {
+        ca.SetOccu(o.ToDouble());
+      }
+    }
+    /* a deposited occupancy is fixed: without the reference SetParam frees it
+    and the sof refines against the ADP it correlates with, and diverges
+    */
+    GetRM().Vars.FixParam(ca, catom_var_name_Sof);
+    if (i_b != InvalidIndex) {
+      const olxstr b = row[i_b]->GetStringValue();
+      if (b.IsNumber()) {
+        ca.SetUiso(b.ToDouble() / (8 * olx_sqr(M_PI)));
+      }
+    }
+    // an alternate location is a disorder part, '.' is in every part: part 0
+    if (i_alt != InvalidIndex) {
+      const olxstr alt = row[i_alt]->GetStringValue();
+      if (!alt.IsEmpty() && alt != '.' && alt != '?') {
+        ca.SetPart((int)(olxstr::o_toupper(alt.CharAt(0)) - 'A' + 1));
+      }
+    }
+    const cm_Element *type = 0;
+    if (i_symbol != InvalidIndex) {
+      type = XElementLib::FindBySymbol(
+        row[i_symbol]->GetStringValue().TrimWhiteChars());
+    }
+    olxstr name = (i_label == InvalidIndex) ? olxstr('Q')
+      : row[i_label]->GetStringValue().Trim('"').TrimWhiteChars();
+    ca.SetLabel(name, type == 0);
+    if (type != 0) {
+      ca.SetType(*type);
+    }
+    if (i_id != InvalidIndex) {
+      id_map.Add(row[i_id]->GetStringValue(), ca.GetId());
+    }
+  }
+  if (skipped_models > 0) {
+    TBasicApp::NewLogEntry(logInfo) << "mmCIF: model " << first_model <<
+      " loaded, " << skipped_models << " atom(s) of further models ignored";
+  }
+  //..........................................................................
+  // ADPs keyed on the atom_site id: the loop need not list every atom
+  cetTable *ap = FindMMLoop(cif_data, "_atom_site_anisotrop.U[1][1]");
+  if (ap != 0) {
+    const size_t a_id = ap->ColIndex("_atom_site_anisotrop.id");
+    const char *u_names[6] = {
+      "_atom_site_anisotrop.U[1][1]", "_atom_site_anisotrop.U[2][2]",
+      "_atom_site_anisotrop.U[3][3]", "_atom_site_anisotrop.U[2][3]",
+      "_atom_site_anisotrop.U[1][3]", "_atom_site_anisotrop.U[1][2]" };
+    size_t u_idx[6];
+    bool have_all = (a_id != InvalidIndex);
+    for (int j = 0; j < 6; j++) {
+      u_idx[j] = ap->ColIndex(u_names[j]);
+      if (u_idx[j] == InvalidIndex) {
+        have_all = false;
+      }
+    }
+    if (have_all) {
+      evecd QE(6);
+      size_t npd = 0;
+      for (size_t i = 0; i < ap->RowCount(); i++) {
+        const CifRow &row = (*ap)[i];
+        const size_t ai = id_map.Find(row[a_id]->GetStringValue(), InvalidIndex);
+        if (ai == InvalidIndex) {
+          continue;      // an atom of a model that was not loaded
+        }
+        for (int j = 0; j < 6; j++) {
+          QE[j] = row[u_idx[j]]->GetStringValue().ToDouble();
+        }
+        TCAtom &ca = GetAsymmUnit().GetAtom(ai);
+        // U in angstroems squared and on the cartesian axes, as PDB ANISOU is,
+        // so no factor of 10^4 and no transformation - cf. TPdb
+        ca.UpdateEllp(QE);
+        if (ca.GetEllipsoid() != 0 && ca.GetEllipsoid()->IsNPD()) {
+          npd++;
+        }
+        ca.SetUiso((QE[0] + QE[1] + QE[2]) / 3);
+      }
+      if (npd > 0) {
+        TBasicApp::NewLogEntry(logError) << "mmCIF: " << npd <<
+          " non positive definite ellipsoid(s)";
+      }
+    }
+  }
+  {
+    cetString *z = dynamic_cast<cetString *>(
+      cif_data.param_map.Find("_cell.Z_PDB", 0));
+    if (z != 0 && z->GetStringValue().IsNumber()) {
+      GetAsymmUnit().SetZ(z->GetStringValue().ToDouble());
+    }
+  }
+  MMRideHydrogens(GetAsymmUnit(), GetRM());
 }
 //..............................................................................
 void TCif::SaveToStrings(TStrList& Strings) {

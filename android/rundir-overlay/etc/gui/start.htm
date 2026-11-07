@@ -1,0 +1,139 @@
+<!-- #include tool-top gui\blocks\tool-top.htm;image=#image;onclick=#onclick;1; -->
+
+<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='OPEN';help_ext=Open-A-Structure;1; -->
+
+<td>
+<font size="+2">Welcome to Olex2!</font>
+</td>
+
+    $+
+    html.Snippet(GetVar(default_link),
+    "value=ChangeLog",
+    "onclick=spy.internal.get_server_content(changelog, md, defaultURL)",
+    "td1=<td width='25%'>"
+    )$-
+
+
+    $+
+    html.Snippet(GetVar(default_link),
+    "value=Open",
+    "onclick=reap",
+    "td1=<td width='25%'>"
+    )$-
+
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='SAMPLE_STRUCTURES';help_ext=Sample_Structures;1 -->
+
+    $+
+    html.Snippet(GetVar(default_link),
+    "value=Sucrose",
+    "onclick=schedule(0, reap GetVar(sample_dir)/sucrose/sucrose)",
+    "hint=A small organic structure to get started with",
+    "td1=<td width='33%'>"
+    )$-
+
+    $+
+    html.Snippet(GetVar(default_link),
+    "value=THPP",
+    "onclick=schedule(0, reap GetVar(sample_dir)/THPP/thpp)",
+    "hint=Simple disorder in a ring",
+    "td1=<td width='33%'>"
+    )$-
+
+    $+
+    html.Snippet(GetVar(default_link),
+    "value=Co110",
+    "onclick=schedule(0, reap GetVar(sample_dir)/Co110/Co110)",
+    "hint=A simple coordination complex",
+    "td1=<td width='33%'>"
+    )$-
+
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- #include tool-row gui\blocks\tool-row.htm;name='SAMPLE_STRUCTURES_2';1 -->
+
+    $+
+    html.Snippet(GetVar(default_link),
+    "value=ZP2",
+    "onclick=reap GetVar(sample_dir)/ZP2/ZP2",
+    "hint=A Z'=2 structure",
+    "td1=<td width='33%'>"
+    )$-
+
+    $+
+    html.Snippet(GetVar(default_link),
+    "value=Water",
+    "onclick=reap GetVar(sample_dir)/water/water",
+    "hint=Two binding modes for water ligands and water solvent",
+    "td1=<td width='33%'>"
+    )$-
+
+    $+
+    html.Snippet(GetVar(default_link),
+    "value=Malbac",
+    "onclick=if File.Exists(GetVar(sample_dir)/malbac/malbac.res) then 'reap GetVar(sample_dir)/malbac/malbac.res' else 'reap GetVar(sample_dir)/malbac/malbac.cif'",
+    "hint=Toluene disordered across a symmetry element",
+    "td1=<td width='33%'>"
+    )$-
+
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- #include tool-row gui\blocks\tool-row.htm;name='SAMPLE_STRUCTURES_3';1 -->
+
+    $+
+    html.Snippet(GetVar(default_link),
+    "value=Timmy",
+    "onclick=if File.Exists(GetVar(sample_dir)/timmy/timmy.res) then 'reap GetVar(sample_dir)/timmy/timmy.res' else 'reap GetVar(sample_dir)/timmy/timmy.cif'",
+    "hint=Calcium tartrate, a continuous solid",
+    "td1=<td width='33%'>"
+    )$-
+
+    $+
+    html.Snippet(GetVar(default_link),
+    "value=ED",
+    "bgcolor=GetVar(ed_fg)",
+    "fgcolor=GetVar(ed_bg)",
+    "onclick=spy.internal.get_structure_from_url(TyrosineED.zip)",
+    "td1=<td width='33%'>"
+    )$-
+
+    $+
+    html.Snippet(GetVar(default_link),
+    "value=More...",
+    "onclick=spy.internal.get_server_content()",
+    "hint=More examples",
+    "td1=<td width='33%'>"
+    )$-
+
+
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+
+<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='DOCUMENTATION';help_ext=Documentation;1 -->
+
+    $+
+    html.Snippet(GetVar(default_link),
+    "value=Online Manual",
+    "onclick=shell 'https://www.olexsys.org/olex2/docs/'",
+    "td1=<td width='33%'>"
+    )$-
+
+    $+
+    html.Snippet(GetVar(default_link),
+    "value=Commands PDF",
+    "onclick=shell BaseDir()/etc/documentation/Commands.pdf",
+    "td1=<td width='33%'>"
+    )$-
+
+    $+
+    html.Snippet(GetVar(default_link),
+    "value=Guzei Manual",
+    "onclick=shell https://uwmadison.app.box.com/s/2qq12zzw893vc3n1rspefv9h9p6gw83k",
+    "td1=<td width='33%'>"
+    )$-
+
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+
+<!-- #include tool-footer gui\blocks\tool-footer.htm;colspan=2;1; -->

@@ -1,0 +1,99 @@
+<!-- #include tool-top gui\blocks\tool-top.htm;image=#image;onclick=#onclick;1; -->
+
+<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='Peanut_1';help_ext=Anomalous-Dispersion;1 -->
+  <td width="20%" align='left'>
+    <b>Type </b>
+  </td>
+  <td width="30%" align="'center'"> $+
+    html.Snippet("gui/snippets/input-combo",
+    "name=Type@Peanut",
+    "items='rmsd;msd'",
+    "value=GetVar('Peanut_type','rmsd')",
+    "onchange=SetVar('Peanut_type',html.GetValue('~name~'))>>spy.Peanut.show_MSDS()")
+  $-
+  </td>
+  <td width="20%" align='left'>
+    <b>Quality </b>
+  </td>
+  <td width='30%' align='left'>
+    <font size="$GetVar('HtmlFontSizeControls')">
+    <input
+      type="spin"
+      name="SET_quality@Peanut"
+      width="100%"
+      height="GetVar(HtmlSpinHeight)"
+      max='7'
+      min='1'
+      bgcolor="spy.GetParam(gui.html.input_bg_colour)"
+      value="$GetVar(Peanut_quality, 5)"
+      onchange="SetVar('Peanut_quality',html.GetValue('~name~'))>>spy.Peanut.show_MSDS()"
+    >
+    </font>
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+<!-- #include tool-row gui\blocks\tool-row.htm;name='Peanut_1b';1; -->
+  <td width="20%" align='left'>
+    <b>Scale </b>
+  </td>
+  <td width="30%" align='center'>
+    $+
+      html.Snippet("gui/snippets/input-text",
+      "name=scale@Peanut",
+      "value=GetVar('Peanut_scale','1.0')",
+      "onchange=SetVar('Peanut_scale', html.GetValue('~name~'))>>spy.Peanut.show_MSDS()")
+    $-
+  </td>
+  <td width="20%" align='left'>
+    <b>Anharmonic </b>
+  </td>
+  <td width="30%" align="'center'"> $+
+    html.Snippet("gui/snippets/input-combo",
+    "name=Anharm@Peanut",
+    "items='all;anh;none'",
+    "value=GetVar('Peanut_anh','all')",
+    "onchange=SetVar('Peanut_anh',html.GetValue('~name~'))>>spy.Peanut.show_MSDS()")
+  $-
+  </td>
+
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='Peanut_2';help_ext=Anomalous-Dispersion;1 -->
+  $+
+    html.Snippet("gui/snippets/gui-link-button",
+    "value='Show Peanuts'",
+    "onclick=spy.Peanut.show_MSDS()",
+    "bgcolor=GetVar(HtmlTableRowBgColour)",
+    "td1=<td width='50%' align='center'>",
+    )
+  $-
+  $+
+    html.Snippet("gui/snippets/gui-link-button",
+    "value='Hide Peanuts'",
+    "onclick=spy.Peanut.remove_MSDS()",
+    "bgcolor=GetVar(HtmlTableRowBgColour)",
+    "td1=<td width='50%' align='center'>",
+    )
+  $-
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+<!-- #include tool-row gui\blocks\tool-row.htm;name='Peanut_2b';1; -->
+  $+
+    html.Snippet("gui/snippets/gui-link-button",
+    "value='Show Diff'",
+    "onclick=spy.Peanut.show_diff()",
+    "bgcolor=GetVar(HtmlTableRowBgColour)",
+    "td1=<td width='50%' align='center'>",
+    )
+  $-
+  $+
+    html.Snippet("gui/snippets/gui-link-button",
+    "value='Hide Diff'",
+    "onclick=spy.Peanut.hide_diff()",
+    "bgcolor=GetVar(HtmlTableRowBgColour)",
+    "td1=<td width='50%' align='center'>",
+    )
+  $-
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- #include tool-footer gui\blocks\tool-footer.htm;colspan=2;1; -->
+
+<!-- %Anom Disp% -->

@@ -46,7 +46,12 @@ TGlConsole::TGlConsole(TGlRenderer& R, const olxstr& collectionName) :
   FTxtPos = ~0;
   FMaxLines = 1000;
   ScrollDirectionUp = true;
+#ifdef __ANDROID__
+  // the text over the view is costly per frame on mobile GPUs
+  FLinesToShow = 6;
+#else
   FLinesToShow = ~0;
+#endif
   FCmdPos = ~0;
   FCursor = new TGlCursor(R, "Cursor");
   SetToDelete(false);

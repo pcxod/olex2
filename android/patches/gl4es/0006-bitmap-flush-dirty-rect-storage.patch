@@ -1,0 +1,70 @@
+diff --git a/src/gl/raster.c b/src/gl/raster.c
+--- a/src/gl/raster.c
++++ b/src/gl/raster.c
+@@ -315,31 +315,33 @@ void bitmap_flush() {
+ 	} else {
+ 		gl4es_glBindTexture(GL_TEXTURE_2D, glstate->raster.bm_texture);
+ 	}
+-	if (glstate->raster.bm_tnwidth < glstate->raster.bm_width || glstate->raster.bm_tnheight < glstate->raster.bm_height) {
+-		glstate->raster.bm_tnwidth = (hardext.npot)?glstate->raster.bm_width:npot(glstate->raster.bm_width);
+-		glstate->raster.bm_tnheight = (hardext.npot)?glstate->raster.bm_height:npot(glstate->raster.bm_height);
+-		gl4es_glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glstate->raster.bm_tnwidth, glstate->raster.bm_tnheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+-	}
+ 	int sx = glstate->raster.bm_x1;
+ 	int ex = glstate->raster.bm_x2-glstate->raster.bm_x1;
+ 	int sy = glstate->raster.bm_y1;
+ 	int ey = glstate->raster.bm_y2-glstate->raster.bm_y1;
+-	if(sx==0 && sy==0 && ex==glstate->raster.bm_width && ey==glstate->raster.bm_height) {
+-		gl4es_glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, glstate->raster.bm_width, glstate->raster.bm_height, GL_RGBA, GL_UNSIGNED_BYTE, glstate->raster.bitmap);
+-	} else {
+-		int alloc = 4*ex*ey;
+-		gl4es_scratch(alloc);
+-		for (int i=0; i<ey; i++)
+-			memcpy((char*)glstate->scratch+4*i*ex, (char*)glstate->raster.bitmap+4*(sx+(sy+i)*glstate->raster.bm_width), ex*4);
+-		gl4es_glTexSubImage2D(GL_TEXTURE_2D, 0, sx, sy, ex, ey, GL_RGBA, GL_UNSIGNED_BYTE, glstate->scratch);
+-	}
++	// Only the dirty rect goes up, into fresh storage sized to it. A
++	// TexSubImage into the viewport-sized texture the GPU was still reading
++	// made Mali copy the whole texture on every flush (~11 % of a frame).
++	// The rect is zeroed as it is copied, so glBitmap needs no full memset.
++	gl4es_scratch(4*ex*ey);
++	for (int i=0; i<ey; i++) {
++		char *row = (char*)glstate->raster.bitmap+4*(sx+(sy+i)*glstate->raster.bm_width);
++		memcpy((char*)glstate->scratch+4*i*ex, row, ex*4);
++		memset(row, 0, ex*4);
++	}
++	glstate->raster.bm_tnwidth = (hardext.npot)?ex:npot(ex);
++	glstate->raster.bm_tnheight = (hardext.npot)?ey:npot(ey);
++	int exact = glstate->raster.bm_tnwidth==ex && glstate->raster.bm_tnheight==ey;
++	gl4es_glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, glstate->raster.bm_tnwidth, glstate->raster.bm_tnheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, exact?glstate->scratch:NULL);
++	if (!exact)
++		gl4es_glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ex, ey, GL_RGBA, GL_UNSIGNED_BYTE, glstate->scratch);
+ 
+ 	gl4es_blitTexture(
+-		glstate->raster.bm_texture, 
+-		sx, sy,
++		glstate->raster.bm_texture,
++		0, 0,
+ 		ex, ey,
+ 		glstate->raster.bm_tnwidth , glstate->raster.bm_tnheight,
+-		1.f, 1.f, 
++		1.f, 1.f,
+ 		0, 0,	//vp is default here
+ 		sx, sy,
+ 		BLIT_ALPHA
+@@ -433,10 +435,13 @@ void APIENTRY_GL4ES gl4es_glBitmap(GLsizei width, GLsizei height, GLfloat xorig,
+ 			free(glstate->raster.bitmap);
+ 		glstate->raster.bm_alloc = glstate->raster.viewport.width*glstate->raster.viewport.height*4;
+ 		glstate->raster.bitmap = (GLubyte*)malloc(glstate->raster.bm_alloc);
++		glstate->raster.bm_width = 0;	// force the clear below
+ 	}
+-	// clear buffer if needed
++	// clear buffer if needed: bitmap_flush zeroes what it drew, so only a
++	// new buffer or a new viewport size needs the full memset
+ 	if(!glstate->raster.bm_drawing) {
+-		memset(glstate->raster.bitmap, 0, glstate->raster.viewport.width*glstate->raster.viewport.height*4);
++		if(glstate->raster.bm_width != glstate->raster.viewport.width || glstate->raster.bm_height != glstate->raster.viewport.height)
++			memset(glstate->raster.bitmap, 0, glstate->raster.viewport.width*glstate->raster.viewport.height*4);
+ 		glstate->raster.bm_width = glstate->raster.viewport.width;
+ 		glstate->raster.bm_height = glstate->raster.viewport.height;
+ 		glstate->raster.bm_x1 = glstate->raster.bm_width;

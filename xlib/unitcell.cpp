@@ -223,7 +223,6 @@ void TUnitCell::UpdateEllipsoids() {
   }
 }
 //..............................................................................
-//..............................................................................
 void TUnitCell::FindSymmEq() const {
   volatile TStopWatch sw(__FUNC__);
   TStrList report;
@@ -262,8 +261,15 @@ void TUnitCell::FindSymmEq() const {
       BondsSymmEqTaskFactory::build(ACA, Matrices);
     searchTask->InitEquiv();
     OlxListTask::Run(*searchTask, ACA.Count(), tQuadraticTask, 100);
+    // the threads append in scheduling order, and compaq/grow follow it
     for (size_t i = 0; i < ACA.Count(); i++) {
-      ACA[i]->UpdateAttachedSites();
+      ACA[i]->SortAttachedSites();
+    }
+    TCAtomPList conn_atoms;
+    ConnInfo::CollectConnAtoms(GetLattice().GetAsymmUnit(), conn_atoms);
+    for (size_t i = 0; i < ACA.Count(); i++) {
+      // old: ACA[i]->UpdateAttachedSites(); - collected the conn atoms per atom
+      ACA[i]->UpdateAttachedSites(conn_atoms);
     }
   }
   RefinementModel *rm = GetLattice().GetAsymmUnit().GetRefMod();

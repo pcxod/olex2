@@ -25,6 +25,18 @@ public:
   DefMacro(Mask)
   DefMacro(ARad)
   DefMacro(ADS)
+  // joke code: cosmetic Halloween/Easter/Christmas skins
+  DefMacro(Boo)
+  DefMacro(Unboo)
+  DefMacro(Eggy)
+  DefMacro(Uneggy)
+  DefMacro(Hohoho)
+  DefMacro(Unhohoho)
+  DefMacro(Order)
+  void SetFunSkin(short skin, bool on);
+  DefMacro(Cartoon)
+  // not 'focus': TMainForm::macFocus owns that name (window/keyboard focus)
+  DefMacro(Isolate)
   DefMacro(AZoom)
   DefMacro(BRad)
   DefMacro(TelpV)

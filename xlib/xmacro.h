@@ -195,6 +195,7 @@ public:
   static DefFunc(BaseDir)
   static DefFunc(DataDir)
   static DefFunc(HKLSrc)
+  static DefFunc(HKLM)
 
   static DefFunc(LSM)
   static DefFunc(SSM)
@@ -399,6 +400,10 @@ public:
     va_end(argptr);
     return cnt;
   }
+  /* a PDB entry code as the RCSB writes it: four characters starting with a
+  digit, or pdb_ and eight
+  */
+  static bool IsPdbEntryCode(const olxstr &s);
   static void Export(class TLibrary& lib);
 
   static TActionQList &Actions() {

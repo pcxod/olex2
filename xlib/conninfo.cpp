@@ -313,7 +313,8 @@ void ConnInfo::ToInsList(TStrList& ins) const {
           throw TFunctionFailedException(__OlxSourceInfo,
             "Undefined EQIV in BIND");
         }
-        str << "_$" << (si + 1);
+        // old: str << "_$" << (si + 1); - index+1 is not the EQIV name
+        str << '_' << rm.GetUsedSymmName(si);
       }
     }
     for (size_t j = 0; j < aci.BondsToRemove.Count(); j++) {
@@ -328,7 +329,8 @@ void ConnInfo::ToInsList(TStrList& ins) const {
           throw TFunctionFailedException(__OlxSourceInfo,
             "Undefined EQIV in FREE");
         }
-        str << "_$" << (si + 1);
+        // old: str << "_$" << (si + 1); - index+1 is not the EQIV name
+        str << '_' << rm.GetUsedSymmName(si);
       }
     }
   }
@@ -745,13 +747,40 @@ void ConnInfo::RemBond(TCAtom& a1, TCAtom& a2, const smatd* eqiv1,
   }
 }
 //........................................................................
+void ConnInfo::CollectConnAtoms(const TAsymmUnit& au, TCAtomPList& out) {
+  out.Clear();
+  for (size_t i = 0; i < au.AtomCount(); i++) {
+    TCAtom& ca = au.GetAtom(i);
+    if (ca.IsDeleted()) {
+      continue;
+    }
+    const CXConnInfo& ci = ca.GetConnInfo();
+    if (!ci.BondsToCreate.IsEmpty() || !ci.BondsToRemove.IsEmpty()) {
+      out.Add(ca);
+    }
+  }
+}
+//........................................................................
 void ConnInfo::Compile(const TCAtom& a, BondInfoList& toCreate,
   BondInfoList& toDelete, smatd_list& ml)
 {
-  const TAsymmUnit& au = *a.GetParent();
+  // a caller in a loop should collect once and use the overload
+  TCAtomPList conn_atoms;
+  CollectConnAtoms(*a.GetParent(), conn_atoms);
+  Compile(a, conn_atoms, toCreate, toDelete, ml);
+}
+//........................................................................
+void ConnInfo::Compile(const TCAtom& a, const TCAtomPList& conn_atoms,
+  BondInfoList& toCreate, BondInfoList& toDelete, smatd_list& ml)
+{
   const TUnitCell& uc = a.GetParent()->GetLattice().GetUnitCell();
+  /* old: scanned every atom of the unit for each atom
+  const TAsymmUnit& au = *a.GetParent();
   for (size_t i=0; i < au.AtomCount(); i++) {
     TCAtom& ca = au.GetAtom(i);
+  */
+  for (size_t i=0; i < conn_atoms.Count(); i++) {
+    TCAtom& ca = *conn_atoms[i];
     if (ca.IsDeleted()) {
       continue;
     }

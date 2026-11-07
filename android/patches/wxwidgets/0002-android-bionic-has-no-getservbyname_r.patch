@@ -1,0 +1,17 @@
+diff --git a/build/cmake/setup.cmake b/build/cmake/setup.cmake
+index b8f25b0..32e1209 100644
+--- a/build/cmake/setup.cmake
++++ b/build/cmake/setup.cmake
+@@ -450,8 +450,10 @@ if(UNIX)
+             netdb.h
+             )
+ 
+-        if(HAVE_FUNC_GETHOSTBYNAME_R_6)
+-            # Assume that we have getservbyname_r() with consistent signature,
++        if(HAVE_FUNC_GETHOSTBYNAME_R_6 AND NOT ANDROID)
++            # Assume that we have getservbyname_r() with consistent signature
++            # (not Bionic: it has gethostbyname_r() only, sckaddr.cpp then
++            # falls back on getservbyname() under a mutex),
+             # this does seem to be the case in practice.
+             set(HAVE_FUNC_GETSERVBYNAME_R_6 1)
+         else()

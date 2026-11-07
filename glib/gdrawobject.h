@@ -70,6 +70,11 @@ public:
 
   TGlRenderer& GetParent() const {  return Parent;  }
   virtual bool Orient(class TGlPrimitive& P) = 0;
+#ifdef __ANDROID__
+  /* true when Orient+Draw of P depend on the model only (not the view), so
+  gl4es may bake the modelview into the renderer's compiled list */
+  virtual bool IsBakeable(const class TGlPrimitive&) const { return false; }
+#endif
 //  virtual void OrientAfterDraw(TGlPrimitive *P){  return; };
   virtual bool GetDimensions(vec3d& Max, vec3d& Min) = 0;
   // mouse handlers, any object receives mouse down/up events; write appropriate

@@ -20,6 +20,15 @@
 #ifndef GL_MULTISAMPLE
 #define GL_MULTISAMPLE  0x809D
 #endif
+#ifdef __ANDROID__
+// gl4es patch 0010: with this hint a compiled glCallList is inlined with the
+// modelview baked into its vertices, so a material's spheres and cylinders
+// merge into one draw; Compile() records only these pairs
+#define GL_BAKE_HINT_GL4ES 0xA110
+static bool IsBaked(const AGDrawObject& GDO, const TGlPrimitive& GlP) {
+  return GlP.IsCompiled() && GDO.IsBakeable(GlP);
+}
+#endif
 
 //..............................................................................
 AGOSettings::AGOSettings(TGlRenderer &p, const olxstr &name)
@@ -54,8 +63,16 @@ bool AGOSettings::Exit(const IOlxObject *, const IOlxObject *, TActionQueue *) {
 GLuint TGlRenderer::TGlListManager::NewList() {
   if (Pos >= Lists.Count()*Inc) {
     GLuint s = olx_gl::genLists(Inc);
+    /* old: glGenLists returns 0 on failure, GL_INVALID_* come from glGetError,
+    so this let a failure through as list base 0
     if (s == GL_INVALID_VALUE || s == GL_INVALID_OPERATION) {
       throw TFunctionFailedException(__OlxSourceInfo, "glGenLists");
+    }
+    */
+    if (s == 0) {
+      throw TFunctionFailedException(__OlxSourceInfo,
+        olxstr("glGenLists could not allocate ") << Inc <<
+        " display lists; the driver is out of them");
     }
     Lists.Add(s);
   }
@@ -846,10 +863,14 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects,
     SetView(x, y, false, Selecting, 1);
   }
 
-  if (!Selecting && IsCompiled()) {
+  const bool compiled = !Selecting && IsCompiled();
+  if (compiled) {
     olx_gl::callList(CompiledListId);
   }
-  else {
+#ifndef __ANDROID__
+  else
+#endif
+  { // on Android the list holds only the baked pairs, the rest is drawn here
     const size_t prim_count = Primitives.PropertiesCount();
     for (size_t i = 0; i < prim_count; i++) {
       TGlMaterial& GlM = Primitives.GetProperties(i);
@@ -873,6 +894,11 @@ void TGlRenderer::DrawObjects(int x, int y, bool SelectObjects,
           if (GDO.MaskFlags(DrawMask) != 0) {
             continue;
           }
+#ifdef __ANDROID__
+          if (compiled && IsBaked(GDO, GlP)) {
+            continue;
+          }
+#endif
           HandleSelection(GDO, GlP, SelectObjects, SelectPrimitives);
           olx_gl::pushMatrix();
           if (GDO.Orient(GlP)) { // the object has drawn itself
@@ -1479,6 +1505,9 @@ void TGlRenderer::Compile(bool v) {
     if (CompiledListId == -1) {
       CompiledListId = olx_gl::genLists(1);
     }
+#ifdef __ANDROID__
+    glHint(GL_BAKE_HINT_GL4ES, 1);  // hints are not compiled into lists
+#endif
     olx_gl::newList(CompiledListId, GL_COMPILE);
     for (size_t i = 0; i < Primitives.PropertiesCount(); i++) {
       TGlMaterial& GlM = Primitives.GetProperties(i);
@@ -1506,6 +1535,11 @@ void TGlRenderer::Compile(bool v) {
           if (GDO.IsGrouped()) {
             continue;
           }
+#ifdef __ANDROID__
+          if (!IsBaked(GDO, GlP)) {
+            continue;
+          }
+#endif
           olx_gl::pushMatrix();
           if (GDO.Orient(GlP)) { // the object has drawn itself
             olx_gl::popMatrix();
@@ -1517,6 +1551,15 @@ void TGlRenderer::Compile(bool v) {
       }
     }
     olx_gl::endList();
+#ifdef __ANDROID__
+    GLint bake = 0;
+    glGetIntegerv(GL_BAKE_HINT_GL4ES, &bake);
+    glHint(GL_BAKE_HINT_GL4ES, 0);
+    if ((bake & 2) != 0) {  // gl4es met state it cannot bake: draw unbaked
+      olx_gl::deleteLists(CompiledListId, 1);
+      CompiledListId = -1;
+    }
+#endif
   }
   else {
     if (CompiledListId != -1) {

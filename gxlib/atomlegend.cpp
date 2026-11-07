@@ -10,7 +10,46 @@
 #include "atomlegend.h"
 //#include "glprimitive.h"
 #include "gxapp.h"
+#include "xcartoon.h"
 #include "eset.h"
+
+namespace {
+  /* a swatch drawn the way the ribbon is: the cartoon's own material, colour
+  material on, the colour through glColor; copied, not re-derived from the lights
+  */
+  TGlMaterial SwatchMaterial(uint32_t cl) {
+    TGlMaterial m = gxlib::cartoon_colour::RibbonMaterial(cl);
+    m.SetColorMaterial(true);
+    return m;
+  }
+  void EmitColour(uint32_t cl) {
+    olx_gl::color((float)OLX_GetRValue(cl) / 255,
+      (float)OLX_GetGValue(cl) / 255,
+      (float)OLX_GetBValue(cl) / 255,
+      (float)OLX_GetAValue(cl) / 255);
+  }
+  /* a short ribbon with one twist, in the sphere swatch's unit box; the twist
+  makes it read as a ribbon rather than a bar and shows both faces
+  */
+  void DrawRibbonSwatch(uint32_t cl) {
+    const int n = 14;
+    const double half_length = 1.15, half_width = 0.40, twist = 0.85;
+    const double two_pi = 6.283185307179586;
+    olx_gl::colorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+    EmitColour(cl);
+    olx_gl::begin(GL_QUAD_STRIP);
+    for (int i = 0; i <= n; i++) {
+      const double t = (double)i / n;
+      const double x = -half_length + 2 * half_length*t;
+      const double a = twist*sin(two_pi*t);
+      const double ca = cos(a), sa = sin(a);
+      olx_gl::normal(0.0, -sa, ca);
+      olx_gl::vertex(x, half_width*ca, half_width*sa);
+      olx_gl::vertex(x, -half_width*ca, -half_width*sa);
+    }
+    olx_gl::end();
+  }
+}
 
 TAtomLegend::TAtomLegend(TGlRenderer& Render, const olxstr& collectionName)
   : AGlMouseHandlerImp(Render, collectionName)
@@ -19,6 +58,7 @@ TAtomLegend::TAtomLegend(TGlRenderer& Render, const olxstr& collectionName)
   SetMoveable(true);
   SetSelectable(false);
   Top = Left = 0;
+  first_ribbon_row = InvalidIndex;
   FirstSpacer = 5;
   ColWidth = 16;
   Width = ColWidth*2;
@@ -162,7 +202,12 @@ bool TAtomLegend::Orient(TGlPrimitive& P) {
     olx_gl::scale(sph_scale);
     for (size_t i = 0; i < materials.Count(); i++) {
       materials[i].Init(Parent.ForcePlain());
-      P.Draw();
+      if (i < first_ribbon_row) {
+        P.Draw();
+      }
+      else {
+        DrawRibbonSwatch(row_colours[i - first_ribbon_row]);
+      }
       olx_gl::translate(0.0, -(glf.GetMaxHeight()+LineSpacer)*scale, 0.0);
     }
     P.GetProperties().Init(Parent.ForcePlain());
@@ -189,7 +234,14 @@ void TAtomLegend::Update() {
   }
   text.Clear();
   materials.Clear();
+  row_colours.Clear();
+  // no ribbon rows unless AddCartoonKey says otherwise, so every row is a ball
+  first_ribbon_row = InvalidIndex;
+  // the cartoon may hide every atom; skip the element rows, still build its key
   if (elm_set.IsEmpty()) {
+    AddCartoonKey();
+    text.Strtok(caption, '\n');
+    Fit();
     return;
   }
   ElementPList elms(elm_set);
@@ -247,7 +299,102 @@ void TAtomLegend::Update() {
     }
     text.Add(elms[i]->symbol);
   }
+  AddCartoonKey();
+  // rows past the last material get no swatch, so the caption is text only
+  text.Strtok(caption, '\n');
   Fit();
+}
+//.............................................................................
+void TAtomLegend::AddCartoonKey() {
+  TGXApp &app = TGXApp::GetInstance();
+  if (!app.AreCartoonsVisible() || app.GetCartoons().IsEmpty()) {
+    return;
+  }
+  // everything added from here on is a ribbon rather than a ball
+  first_ribbon_row = materials.Count();
+  using namespace xlib::protein;
+  const short mode = app.GetCartoonColourMode();
+
+  /* appended to the element key's lists, so it inherits dragging, saved position
+  and reset; rows draw top-down in the order added, one swatch and label each
+  */
+  if (mode == ccChain) {
+    TArrayList<olx_pair_t<olxch, uint32_t> > chains;
+    app.GetCartoonChainKey(chains);
+    for (size_t i = 0; i < chains.Count(); i++) {
+      materials.Add(SwatchMaterial(chains[i].b));
+      text.Add(olxstr("Chain ") << chains[i].a);
+    }
+  }
+  else if (mode == ccSecondary) {
+    const short kinds[] = { ss_helix, ss_strand, ss_coil };
+    const char *names[] = { "Helix", "Strand", "Coil" };
+    for (size_t i = 0; i < 3; i++) {
+      materials.Add(SwatchMaterial(cartoon_colour::Secondary(kinds[i])));
+      text.Add(names[i]);
+    }
+  }
+  else if (mode == ccPolarity) {
+    const short kinds[] = { rpLipophilic, rpHydrophilic };
+    const char *names[] = { "Lipophilic", "Hydrophilic" };
+    for (size_t i = 0; i < 2; i++) {
+      materials.Add(SwatchMaterial(cartoon_colour::Polarity(kinds[i])));
+      text.Add(names[i]);
+    }
+  }
+  else if (mode == ccCharge) {
+    const short kinds[] = { rcAcidic, rcBasic, rcNeutral };
+    const char *names[] = { "Acidic", "Basic", "Neutral" };
+    for (size_t i = 0; i < 3; i++) {
+      materials.Add(SwatchMaterial(cartoon_colour::Charge(kinds[i])));
+      text.Add(names[i]);
+    }
+  }
+  else if (mode == ccResidue) {
+    TArrayList<olx_pair_t<size_t, uint32_t> > resi;
+    app.GetCartoonResidueKey(resi);
+    for (size_t i = 0; i < resi.Count(); i++) {
+      materials.Add(SwatchMaterial(resi[i].b));
+      text.Add(resi[i].a == InvalidIndex
+        ? olxstr("Other") : StandardResidueName(resi[i].a));
+    }
+  }
+  else if (mode == ccIndex || mode == ccUeq) {
+    /* a colour bar as a column of swatches in the legend's own rows, no new
+    primitive or draggable; high at the top, so the ramp is walked backwards
+    */
+    const size_t steps = 9;
+    double u_min = 0, u_max = 0;
+    const bool have_u = (mode == ccUeq) &&
+      app.GetCartoonUeqRange(u_min, u_max);
+    for (size_t i = 0; i < steps; i++) {
+      const double t = double(steps - 1 - i)/(steps - 1);
+      materials.Add(SwatchMaterial(gxlib::cartoon::RainbowColour(t)));
+      // labels at the ends and middle only; empty rows keep text and swatch aligned
+      if (mode == ccUeq) {
+        if (!have_u) {
+          text.Add(i == 0 ? olxstr("Ueq high")
+            : (i + 1 == steps ? olxstr("Ueq low") : olxstr()));
+        }
+        else if (i == 0 || i + 1 == steps || i == steps/2) {
+          text.Add(olxstr::FormatFloat(3, u_min + (u_max - u_min)*t));
+        }
+        else {
+          text.Add(EmptyString());
+        }
+      }
+      else {
+        text.Add(i == 0 ? olxstr("C term")
+          : (i + 1 == steps ? olxstr("N term") : olxstr()));
+      }
+    }
+  }
+  /* read back from the diffuse term SwatchMaterial set; alpha forced opaque,
+  GetRGB drops it and zero would draw nothing
+  */
+  for (size_t i = first_ribbon_row; i < materials.Count(); i++) {
+    row_colours.Add(materials[i].DiffuseF.GetRGB() | 0xff000000);
+  }
 }
 //.............................................................................
 void TAtomLegend::SetVisible(bool v) {

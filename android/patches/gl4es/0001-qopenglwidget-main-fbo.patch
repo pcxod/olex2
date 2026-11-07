@@ -1,0 +1,50 @@
+diff --git a/include/gl4esinit.h b/include/gl4esinit.h
+index 79cbb34..b139cc1 100644
+--- a/include/gl4esinit.h
++++ b/include/gl4esinit.h
+@@ -22,6 +22,11 @@ void set_getmainfbsize(void (APIENTRY_GL4ES *new_getMainFBSize)(int* width, int*
+ void initialize_gl4es(void);
+ // do this to uninitialize GL4ES if init constructors are disabled.
+ void close_gl4es(void);
++// NOX11+NOEGL: framebuffer the toolkit uses as "0" (QOpenGLWidget FBO); call after makeCurrent
++void gl4es_setMainFBO(unsigned int fbo);
++// NOX11+NOEGL: flush pending lists/bitmaps before the toolkit presents the frame
++void gl4es_pre_swap(void);
++void gl4es_post_swap(void);
+ // wrapped GetProcAddress
+ void* APIENTRY_GL4ES gl4es_GetProcAddress(const char *name);
+ 
+diff --git a/src/gl/fpe.c b/src/gl/fpe.c
+index 23748ed..fc3de32 100644
+--- a/src/gl/fpe.c
++++ b/src/gl/fpe.c
+@@ -1132,7 +1132,10 @@ void realize_glenv(int ispoint, int first, int count, GLenum type, const void* i
+         gltexture_t * tex = NULL;
+         while(tu_idx<MAX_TEX && glprogram->texunits[tu_idx].type && !need) {
+             tex = glstate->texture.bound[glprogram->texunits[tu_idx].req_tu][glprogram->texunits[tu_idx].type - 1];
+-            if(tex && tex->binded_fbo==glstate->fbo.current_fb->id) {
++            // binded_fbo is 0 for a texture on no FBO: without the first test every
++            // textured draw to the default framebuffer rebinds GLES FBO 0, which loses
++            // a toolkit-owned default FBO (QOpenGLWidget on Android)
++            if(tex && tex->binded_fbo && tex->binded_fbo==glstate->fbo.current_fb->id) {
+                 DBG(printf("Texture %d is used on Uniform %s (%d) and binded on FBO %d Attachement=%s\n", tex->glname, GetUniformName(glprogram, glprogram->texunits[tu_idx].id), glprogram->texunits[tu_idx].id, glstate->fbo.current_fb->id, PrintEnum(tex->binded_attachment));)
+                 need = 1;
+             }
+diff --git a/src/gl/framebuffers.c b/src/gl/framebuffers.c
+index b585f3b..54b4224 100644
+--- a/src/gl/framebuffers.c
++++ b/src/gl/framebuffers.c
+@@ -1500,6 +1500,13 @@ void APIENTRY_GL4ES gl4es_glBlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX
+ #endif
+ }
+ 
++// The toolkit renders into its own FBO (QOpenGLWidget::defaultFramebufferObject)
++// and binds it behind gl4es's back: make gl4es map "framebuffer 0" onto it.
++// Call after every makeCurrent; the FBO stays owned by the toolkit.
++void gl4es_setMainFBO(GLuint fbo) {
++  if(glstate) glstate->fbo.mainfbo_fbo = fbo;
++}
++
+ GLuint gl4es_getCurrentFBO() {
+   return (glstate->fbo.current_fb->id)?glstate->fbo.current_fb->id:glstate->fbo.mainfbo_fbo;
+ }

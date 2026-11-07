@@ -172,8 +172,14 @@ public:
     AttachedSites.Clear();
     AttachedSitesI.Clear();
   }
+  // by atom id, then matrix id
+  void SortAttachedSites();
   // aplies conninfo to the list of attached sites
   void UpdateAttachedSites();
+  /* as above, for the atoms having conn info. Over a whole unit the list is
+  the same for every atom, so it is collected once by the caller
+  */
+  void UpdateAttachedSites(const TPtrList<TCAtom>& conn_atoms);
 
   size_t AttachedSiteICount() const { return AttachedSitesI.Count(); }
   TCAtom::Site& GetAttachedSiteI(size_t i) const {

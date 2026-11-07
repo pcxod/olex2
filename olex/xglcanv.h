@@ -12,10 +12,17 @@
 #include "gxapp.h"
 #include "wx/wx.h"
 #include "wx/glcanvas.h"
+#include "touchnav.h"
 
 class TGlCanvas: public wxGLCanvas  {
 private:
   class TGXApp *FXApp;
+  TTouchNav TouchNav;
+  bool TouchEnabled, DrawPending;
+  /* one redraw after the queued input: drawing per move event lets the
+  events pile up behind a slow frame and the view lags behind the finger
+  */
+  void DrawLater();
   void OnMouseDown(wxMouseEvent& event);
   void OnMouseUp(wxMouseEvent& event);
   void OnMouseMove(wxMouseEvent& event);
@@ -32,6 +39,14 @@ private:
   class TMainForm *FParent;
   wxGLContext* Context;
   short EncodeEvent(const wxMouseState &evt, bool update_button=true);
+  // wx positions are in window units, Olex2's GL coordinates in pixels
+  void ToPixels(wxMouseEvent &e) const {
+    e.m_x = olx_round(e.m_x*GetContentScaleFactor());
+    e.m_y = olx_round(e.m_y*GetContentScaleFactor());
+  }
+  void ToPixels(wxGestureEvent &e) const {
+    e.SetPosition(e.GetPosition()*GetContentScaleFactor());
+  }
 public:
   TGlCanvas(TMainForm *parent, int* gl_attr, const wxWindowID id = -1,
     const wxPoint& pos = wxDefaultPosition,
@@ -44,6 +59,10 @@ public:
   void OnMouse(wxMouseEvent& event);
   void XApp(TGXApp *XA);
   TGXApp *GetXApp() { return FXApp; }
+  // option gl_touch, read in XApp()
+  bool IsTouchEnabled() const { return TouchEnabled; }
+  // the right-click menu for G (0 - the general one) at canvas x, y
+  void ShowContextMenu(int x, int y, AGDrawObject *G);
 
   void Render();
   /* If default is true - NULL is returned,

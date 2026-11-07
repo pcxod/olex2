@@ -77,6 +77,7 @@ TXGrid::TLegend::TLegend(TGlRenderer& Render, const olxstr& collectionName)
   SetMoveable(true);
   SetSelectable(false);
   Top = Left = 0;
+  Moved = TopRight = false;
   Width = 64;
   Height = 128;
   Z = 0;
@@ -92,8 +93,11 @@ void TXGrid::TLegend::SetData(unsigned char *rgb,
       *tex, 0, width, height, 0, format, rgb);
   }
   else {
-    TextureId = Parent.GetTextureManager().Add2DTexture(
+    /* old: the legend box size, not the texture's
       GetCollectionName(), 0, Width, Height, 0,
+    */
+    TextureId = Parent.GetTextureManager().Add2DTexture(
+      GetCollectionName(), 0, width, height, 0,
       format, rgb);
     TGlTexture* tex = Parent.GetTextureManager().FindTexture(TextureId);
     tex->SetEnvMode(tpeDecal);
@@ -186,9 +190,13 @@ void TXGrid::TLegend::Fit() {
 bool TXGrid::TLegend::OnMouseUp(const IOlxObject *Sender,
   const TMouseData& Data)
 {
+  if (TopRight && !Moved) {
+    TopRightCorner(Left, Top);
+  }
   Left = olx_round(Left + GetCenter()[0]);
   Top = olx_round(Top - GetCenter()[1]);
   Center.Null();
+  Moved = true;
   GetPrimitives().GetStyle().SetParam("Top", Top, true);
   GetPrimitives().GetStyle().SetParam("Left", Left, true);
   return AGlMouseHandlerImp::OnMouseUp(Sender, Data);
@@ -200,15 +208,20 @@ bool TXGrid::TLegend::Orient(TGlPrimitive& P) {
   }
   olx_gl::normal(0, 0, 1);
   Z = Parent.CalcRasterZ(0.1);
+  // anchored from the live size: pict resizes and zooms the renderer
+  int left = Left, top = Top;
+  if (TopRight && !Moved) {
+    TopRightCorner(left, top);
+  }
   const double es = Parent.GetExtraZoom()*Parent.GetViewZoom();
   if (P.GetType() == sgloText) {
     TGlFont &glf = Parent.GetScene().GetFont(~0, true);
     const uint16_t th = glf.TextHeight(EmptyString());
     const double hw = Parent.GetWidth() / 2;
     const double hh = Parent.GetHeight() / 2;
-    const double GlLeft = ((Left + Width + GetCenter()[0])*es - hw) + 0.1;
+    const double GlLeft = ((left + Width + GetCenter()[0])*es - hw) + 0.1;
     const double scale = Parent.GetViewZoom() == 1.0 ? 1.0 : 1. / Parent.GetExtraZoom();
-    const double GlTop = (hh - (Top - GetCenter()[1])*es - Height*scale) + 0.1;
+    const double GlTop = (hh - (top - GetCenter()[1])*es - Height*scale) + 0.1;
     const double LineSpacer = 0.05*th;
     vec3d T(GlLeft, GlTop, Z);
     for (size_t i = 0; i < text.Count(); i++) {
@@ -231,16 +244,23 @@ bool TXGrid::TLegend::Orient(TGlPrimitive& P) {
     const double z = Z - 0.01;
     double w = Width,
       h = Height / Parent.GetExtraZoom();
-    P.Vertices[0] = vec3d((Left + w + xx - hw)*Scale, -(Top + h + xy - hh)*Scale, z);
-    P.Vertices[1] = vec3d(P.Vertices[0][0], -(Top + xy - hh)*Scale, z);
-    P.Vertices[2] = vec3d((Left + xx - hw)*Scale, P.Vertices[1][1], z);
+    P.Vertices[0] = vec3d((left + w + xx - hw)*Scale, -(top + h + xy - hh)*Scale, z);
+    P.Vertices[1] = vec3d(P.Vertices[0][0], -(top + xy - hh)*Scale, z);
+    P.Vertices[2] = vec3d((left + xx - hw)*Scale, P.Vertices[1][1], z);
     P.Vertices[3] = vec3d(P.Vertices[2][0], P.Vertices[0][1], z);
     return false;
   }
   else {
     TGlFont &glf = Parent.GetScene().GetFont(~0, true);
     double Scale = Parent.GetScale();
+    /* old: the first label only, but a "-" makes the lower ones wider
     double tw = glf.TextWidth(text[0]) * Scale *
+    */
+    double tw = 0;
+    for (size_t i = 0; i < text.Count(); i++) {
+      tw = olx_max(tw, (double)glf.TextWidth(text[i]));
+    }
+    tw *= Scale *
      (Parent.GetViewZoom() == 1.0 ? 1.0 : 1. / Parent.GetExtraZoom());
     Scale *= es;
     const double hw = Parent.GetWidth() / (2 * es);
@@ -249,9 +269,9 @@ bool TXGrid::TLegend::Orient(TGlPrimitive& P) {
     const double z = Z - 0.01;
     double w = Width,
       h = Height / Parent.GetExtraZoom();
-    P.Vertices[0] = vec3d((Left + xx - hw + w)*Scale, -(Top + h + xy - hh)*Scale, z);
+    P.Vertices[0] = vec3d((left + xx - hw + w)*Scale, -(top + h + xy - hh)*Scale, z);
     P.Vertices[1] = vec3d(P.Vertices[0][0] + tw, P.Vertices[0][1], z);
-    P.Vertices[2] = vec3d(P.Vertices[1][0], -(Top + xy - hh)*Scale, z);
+    P.Vertices[2] = vec3d(P.Vertices[1][0], -(top + xy - hh)*Scale, z);
     P.Vertices[3] = vec3d(P.Vertices[0][0], P.Vertices[2][1], z);
     return false;
   }
@@ -285,9 +305,26 @@ void TXGrid::TLegend::LibReset(const TStrObjList& Params, TMacroData& E) {
     Left = l;
     Top = t;
   }
+  Moved = true;
   GetPrimitives().GetStyle().SetParam("Top", Top, true);
   GetPrimitives().GetStyle().SetParam("Left", Left, true);
   Update();
+}
+//..............................................................................
+void TXGrid::TLegend::TopRightCorner(int& left, int& top) const {
+  const int margin = 10;
+  const double es = Parent.GetExtraZoom()*Parent.GetViewZoom();
+  TGlFont& glf = Parent.GetScene().GetFont(~0, true);
+  double tw = 0;
+  for (size_t i = 0; i < text.Count(); i++) {
+    tw = olx_max(tw, (double)glf.TextWidth(text[i]));
+  }
+  if (glf.IsVectorFont()) {
+    tw *= 1. / Parent.GetScale();
+  }
+  // Left/Top are in units of es pixels, the text in pixels
+  left = olx_round((Parent.GetWidth() - tw) / es - Width - margin);
+  top = margin;
 }
 //..............................................................................
 void TXGrid::TLegend::ExportLibrary(TLibrary& lib) {
@@ -331,13 +368,17 @@ TXGrid::TXGrid(const olxstr& collectionName, TGXApp* xapp)
   new TContextClear(Parent);
   Mask = 0;
   Instance = this;
-  Loading_ = Boxed = Extended = false;
+  Loading_ = Boxed = Extended = BoxMode = false;
   RenderMode = planeRenderModeFill;
   XApp = xapp;
   Depth = 0;
   ED = 0;
   ColorData = 0;
   MouseDown = false;
+  PlaneCacheValid = false;
+  DataVersion = 0;
+  PlaneMinVal = PlaneMaxVal = 0;
+  memset(&LastPlaneKey, 0, sizeof(LastPlaneKey));
   Size = 10;
   // texture related data
   TextIndex = ~0;
@@ -390,6 +431,17 @@ void TXGrid::Create(const olxstr& cName) {
   GlM.AmbientF = 0xD80f0f0f;
   GlM.DiffuseF = 0xD80f0f0f;
   Info->Create();
+#ifdef __ANDROID__
+  /* the style's 0,0 puts "Current level" over the file info box, which holds
+  the top left corner on Android: start below its lines, clear of the atom
+  legend as the info box is (TMainForm::OnResize)
+  */
+  if (Info->GetLeft() == 0 && Info->GetTop() == 0) {
+    const int h = Info->GetFont().GetMaxHeight();
+    Info->SetLeft(3*h);
+    Info->SetTop(4*h);
+  }
+#endif
   Legend->SetMaterial(GS.GetMaterial("eMap", GlM));
   Legend->Create();
   if (GPC.PrimitiveCount() != 0) {
@@ -416,6 +468,16 @@ void TXGrid::Create(const olxstr& cName) {
   glpN = &GPC.NewPrimitive("-Surface", sgloQuads);
   glpN->SetProperties(GS.GetMaterial("-Surface",
     TGlMaterial("85;1.000,0.000,0.000,0.850;3632300160;1.000,1.000,1.000,0.500;36")));
+  // shells cut open by the mask show their inside: a darker back colour, not black
+  for (TGlPrimitive* p : { glpP, glpN }) {
+    TGlMaterial m = p->GetProperties();
+    if ((m.GetFlags() & sglmAmbientB) == 0) {
+      m.AmbientB = m.AmbientF * 0.6f;
+      m.DiffuseB = m.DiffuseF * 0.6f;
+      m.SetFlags(m.GetFlags() | sglmAmbientB | sglmDiffuseB);
+      p->SetProperties(m);
+    }
+  }
 
   glpC = &GPC.NewPrimitive("Contour plane", sgloQuads);
   glpC->SetProperties(GS.GetMaterial("Contour plane",
@@ -499,12 +561,43 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
     GlP.SetTextureId(~0);
     return false;
   }
-  TPlaneCalculationTask calc_task(*this, ED->Data, ContourData, TextData,
-    MaxDim, Size, Depth, bm, c2c, center, RenderMode);
-  TListIteratorManager<TPlaneCalculationTask> tasks(calc_task, MaxDim,
-    tLinearTask, MaxDim > 64);
+  const TGlOption& start_p =
+    GetPrimitives().FindPrimitiveByName("-Surface")->GetProperties().AmbientF;
+  const TGlOption& end_p =
+    GetPrimitives().FindPrimitiveByName("+Surface")->GetProperties().AmbientF;
+  PlaneKey key;
+  memset(&key, 0, sizeof(key));  // padding takes part in the comparison
+  for (int i = 0; i < 9; i++) {
+    key.bm[i] = bm[i / 3][i % 3];
+    key.c2c[i] = c2c[i / 3][i % 3];  // a cell change keeps ED but moves the plane
+  }
+  for (int i = 0; i < 3; i++) {
+    key.center[i] = center[i];
+  }
+  for (int i = 0; i < 4; i++) {
+    key.colours[i] = start_p[i];
+    key.colours[4 + i] = end_p[i];
+  }
+  key.depth = Depth;
+  key.size = Size;
+  key.box_min = box_min;
+  key.box_step = box_step;
+  key.max_dim = MaxDim;
+  key.levels = ContourLevelCount;
+  key.data_version = DataVersion;
+  key.data = ED;
+  key.mode = RenderMode;
+  key.reverse = ReverseColors;
+  const bool cached = PlaneCacheValid &&
+    memcmp(&key, &LastPlaneKey, sizeof(key)) == 0 &&
+    ((RenderMode & planeRenderModePlane) == 0 ||
+      olx_is_valid_index(TextIndex));
   float minVal = 1000, maxVal = -1000;
-  if (!olx_feq(box_step, 0.0f)) {
+  if (cached) {
+    minVal = PlaneMinVal;
+    maxVal = PlaneMaxVal;
+  }
+  else if (!olx_feq(box_step, 0.0f)) {
     if (box_step < 0) {
       minVal = box_min + box_step*(ContourLevelCount-1);
       maxVal = box_min - box_step;
@@ -514,20 +607,24 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
       maxVal = box_min + box_step*ContourLevelCount;
     }
   }
-  else {
-    for (size_t i = 0; i < tasks.Count(); i++) {
-      if (tasks[i].minVal < minVal) {
-        minVal = tasks[i].minVal;
-      }
-      if (tasks[i].maxVal > maxVal) {
-        maxVal = tasks[i].maxVal;
+  if (!cached) {
+    TPlaneCalculationTask calc_task(*this, ED->Data, ContourData, TextData,
+      MaxDim, Size, Depth, bm, c2c, center, RenderMode);
+    TListIteratorManager<TPlaneCalculationTask> tasks(calc_task, MaxDim,
+      tLinearTask, MaxDim > 64);
+    if (olx_feq(box_step, 0.0f)) {
+      for (size_t i = 0; i < tasks.Count(); i++) {
+        if (tasks[i].minVal < minVal) {
+          minVal = tasks[i].minVal;
+        }
+        if (tasks[i].maxVal > maxVal) {
+          maxVal = tasks[i].maxVal;
+        }
       }
     }
+    PlaneMinVal = minVal;
+    PlaneMaxVal = maxVal;
   }
-  const TGlOption& start_p =
-    GetPrimitives().FindPrimitiveByName("-Surface")->GetProperties().AmbientF;
-  const TGlOption& end_p =
-    GetPrimitives().FindPrimitiveByName("+Surface")->GetProperties().AmbientF;
   vec3i colours2[] = {
     vec3i(int(start_p[0] * 255), int(start_p[1] * 255), int(start_p[2] * 255)),
     vec3i(int(end_p[0] * 255), int(end_p[1] * 255), int(end_p[2] * 255))
@@ -564,7 +661,7 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
   }
   olx_gl::normal(bm[0][2], bm[1][2], bm[2][2]);
   const float max_v = olx_max(olx_abs(minVal), olx_abs(maxVal));
-  if ((RenderMode&planeRenderModePlane) != 0) {
+  if (!cached && (RenderMode&planeRenderModePlane) != 0) {
     for (size_t i = 0; i < MaxDim; i++) {
       for (size_t j = 0; j < MaxDim; j++) {
         const size_t off = (i + j*MaxDim) * 3;
@@ -600,6 +697,10 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
     }
     GlP.SetTextureId(TextIndex);
   }
+  else if ((RenderMode&planeRenderModePlane) != 0) {
+    // the selection pass detaches it
+    GlP.SetTextureId(TextIndex);
+  }
   if ((RenderMode&planeRenderModeContour) != 0) {
     Contour<float> cm;
     Contour<float>::MemberFeedback<TXGrid> mf(*this, &TXGrid::GlLine);
@@ -620,7 +721,7 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
       ContourLevelCount, ContourLevels, mf);
     GlP.EndColorRendering();
   }
-  if ((RenderMode&planeRenderModePlane) != 0) {
+  if (!cached && (RenderMode&planeRenderModePlane) != 0) {
     float legend_step = (maxVal - minVal) / 32;
     for (int i = 0; i < 32; i++) {
       float val = minVal + legend_step*i;
@@ -633,6 +734,7 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
       }
     }
     Legend->SetData((unsigned char*)LegendData, 32, 32, GL_RGB);
+    Legend->TopRight = false;
     legend_step = (maxVal - minVal) / ContourLevelCount;
     Legend->text.Clear();
     for (int i = 0; i < (int)ContourLevelCount; i++) {
@@ -650,6 +752,8 @@ bool TXGrid::Orient(TGlPrimitive& GlP) {
     Legend->Fit();
     UpdateInfo();
   }
+  LastPlaneKey = key;
+  PlaneCacheValid = true;
   return false;
 }
 //.............................................................................
@@ -671,12 +775,14 @@ bool TXGrid::GetDimensions(vec3d &Max, vec3d &Min)  {
 };
 //.............................................................................
 void TXGrid::InitGrid(size_t maxX, size_t maxY, size_t maxZ, bool use_colors) {
+  DataChanged();
   DeleteObjects();
   _ResetLists();
   MaxX = maxX;
   MaxY = maxY;
   MaxZ = maxZ;
   MaxVal = MinVal = 0;
+  BoxMode = false;
   olx_del_obj(ED);
   olx_del_obj(ColorData);
   ED = new TArray3D<float>(0, MaxX, 0, MaxY, 0, MaxZ);
@@ -699,6 +805,7 @@ void TXGrid::InitGrid(size_t maxX, size_t maxY, size_t maxZ, bool use_colors) {
 }
 //.............................................................................
 void TXGrid::DeleteObjects() {
+  DataChanged();
   if (ED != 0) {
     delete ED;
     MaxX = MaxY = MaxZ = 0;
@@ -761,6 +868,7 @@ bool TXGrid::LoadFromFile(const olxstr& GridFile) {
 }
 //.............................................................................
 void TXGrid::SetScale(float v) {
+  DataChanged();
   const bool _3d = Is3D();
   if (!Loading_) {
     Boxed = false;
@@ -780,7 +888,32 @@ void TXGrid::SetScale(float v) {
     normals.Clear();
     vertices.Clear();
     colors.Clear();
-    if (XApp->Get3DFrame().IsVisible() || Boxed) {
+    if (BoxMode) {
+      CIsoSurface IS(ED->Data, ColorData != 0 ? &ColorData->Data : 0);
+      IS.GenerateSurface(Scale);
+      vertices.Add(0).TakeOver(IS.VertexList());
+      normals.Add(0).TakeOver(IS.NormalList());
+      triangles.Add(0).TakeOver(IS.TriangleList());
+      if (ColorData != 0) {
+        colors.Add(0).TakeOver(IS.GetVertexData());
+      }
+      else if (Scale < 0) {
+        IS.GenerateSurface(-Scale);
+        vertices.Add(0).TakeOver(IS.VertexList());
+        normals.Add(0).TakeOver(IS.NormalList());
+        triangles.Add(0).TakeOver(IS.TriangleList());
+      }
+      for (size_t li = 0; li < vertices.Count(); li++) {
+        for (size_t i = 0; i < vertices[li].Count(); i++) {
+          vertices[li][i] = vertices[li][i] * BoxAxes + BoxOrigin;
+        }
+        for (size_t i = 0; i < normals[li].Count(); i++) {
+          normals[li][i] = (normals[li][i] * BoxAxes).Normalise();
+        }
+      }
+      Boxed = true;
+    }
+    else if (XApp->Get3DFrame().IsVisible() || Boxed) {
       double SZ = olx_round(
         (double)MaxX / XApp->XFile().GetAsymmUnit().GetAxes()[0]);
       const vec3i isz = (XApp->Get3DFrame().GetSize()*SZ).Round<int>();
@@ -831,6 +964,14 @@ void TXGrid::SetScale(float v) {
         vertices.Add(0).TakeOver(IS.VertexList());
         normals.Add(0).TakeOver(IS.NormalList());
         triangles.Add(0).TakeOver(IS.TriangleList());
+      }
+      // grid-index normals are covectors: to Cartesian by the inverse transpose
+      const mat3f c2c(XApp->XFile().GetAsymmUnit().GetCartesianToCell());
+      for (size_t li = 0; li < normals.Count(); li++) {
+        for (size_t i = 0; i < normals[li].Count(); i++) {
+          vec3f& n = normals[li][i];
+          n = (c2c * vec3f(n[0] * MaxX, n[1] * MaxY, n[2] * MaxZ)).Normalise();
+        }
       }
     }
     RescaleSurface(false);
@@ -1168,10 +1309,13 @@ void TXGrid::RescaleSurface(bool collect_only) {
           else {
             for (int j = 0; j < 3; j++) {
               olx_gl::normal(norms[trians[i][j]]);
+              /* old: vertex before color, so each colour went to the next vertex
               olx_gl::vertex(verts[trians[i][j]]);
+              */
               if (ColorData != 0) {
                 olx_gl::color(colors[li][trians[i][j]]);
               }
+              olx_gl::vertex(verts[trians[i][j]]);
             }
           }
         }
@@ -1180,10 +1324,13 @@ void TXGrid::RescaleSurface(bool collect_only) {
         for (size_t i = 0; i < trians.Count(); i++) {
           for (int j = 0; j < 3; j++) {
             olx_gl::normal(norms[trians[i][j]]);
+            /* old: vertex before color, so each colour went to the next vertex
             olx_gl::vertex(verts[trians[i][j]]);
+            */
             if (ColorData != 0) {
               olx_gl::color(colors[li][trians[i][j]]);
             }
+            olx_gl::vertex(verts[trians[i][j]]);
           }
         }
       }
@@ -1194,6 +1341,9 @@ void TXGrid::RescaleSurface(bool collect_only) {
       }
     }
   }
+  /* old: transformed (and mask-tested) every triangle corner, though a vertex
+  is shared by several triangles; now each vertex once per cell replica, same
+  arithmetic, same coordinates. it also sent the colour after its vertex
   else if (Mask != 0) {
     vec3d pts[3];
     for (size_t li = 0; li < triangles.Count(); li++) {
@@ -1352,9 +1502,109 @@ void TXGrid::RescaleSurface(bool collect_only) {
       }
     }
   }
+  */
+  else {
+    TArrayList<vec3d> cart;
+    TArrayList<bool> inside;
+    for (size_t li = 0; li < triangles.Count(); li++) {
+      const TArrayList<vec3f>& verts = vertices[li];
+      const TArrayList<vec3f>& norms = normals[li];
+      const TArrayList<IsoTriangle>& trians = triangles[li];
+      TTypeList<vec3f> *va = (li == 0 ? &cp_vertices : &cn_vertices);
+      cart.SetCount(verts.Count());
+      inside.SetCount(verts.Count());
+      if (!collect_only) {
+        olx_gl::newList(li == 0 ? PListId : NListId, GL_COMPILE);
+        olx_gl::polygonMode(GL_FRONT_AND_BACK, GetPolygonMode());
+        olx_gl::begin(GL_TRIANGLES);
+      }
+      if (Mask != 0) {
+        for (int x = -1; x <= 1; x++) {
+          for (int y = -1; y <= 1; y++) {
+            for (int z = -1; z <= 1; z++) {
+              for (size_t i = 0; i < verts.Count(); i++) {
+                vec3d p = verts[i];
+                p[0] = p[0] / MaxX + x;
+                p[1] = p[1] / MaxY + y;
+                p[2] = p[2] / MaxZ + z;
+                if ((inside[i] = Mask->Get(p))) {
+                  cart[i] = au.CellToCartesian(p);
+                }
+              }
+              EmitTriangles(trians, norms, li, cart, &inside, va, collect_only);
+            }
+          }
+        }
+      }
+      else if (Extended) {
+        for (float x = ExtMin[0]; x < ExtMax[0]; x++) {
+          for (float y = ExtMin[1]; y < ExtMax[1]; y++) {
+            for (float z = ExtMin[2]; z < ExtMax[2]; z++) {
+              for (size_t i = 0; i < verts.Count(); i++) {
+                vec3d p = verts[i];
+                p[0] = p[0] / MaxX + x;
+                p[1] = p[1] / MaxY + y;
+                p[2] = p[2] / MaxZ + z;
+                if ((inside[i] = !(p[0] > ExtMax[0] || p[1] > ExtMax[1] ||
+                  p[2] > ExtMax[2])))
+                {
+                  cart[i] = au.CellToCartesian(p);
+                }
+              }
+              EmitTriangles(trians, norms, li, cart, &inside, va, collect_only);
+            }
+          }
+        }
+      }
+      else {
+        for (size_t i = 0; i < verts.Count(); i++) {
+          vec3d p = verts[i];
+          p[0] = p[0] / MaxX;
+          p[1] = p[1] / MaxY;
+          p[2] = p[2] / MaxZ;
+          cart[i] = au.CellToCartesian(p);  // cell drawing
+        }
+        EmitTriangles(trians, norms, li, cart, 0, va, collect_only);
+      }
+      if (!collect_only) {
+        olx_gl::end();
+        olx_gl::polygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        olx_gl::endList();
+      }
+    }
+  }
+}
+//.............................................................................
+void TXGrid::EmitTriangles(const TArrayList<IsoTriangle>& trians,
+  const TArrayList<vec3f>& norms, size_t li, const TArrayList<vec3d>& cart,
+  const TArrayList<bool>* inside, TTypeList<vec3f>* va, bool collect_only)
+{
+  for (size_t i = 0; i < trians.Count(); i++) {
+    const IsoTriangle& t = trians[i];
+    if (inside != 0 &&
+      !((*inside)[t[0]] && (*inside)[t[1]] && (*inside)[t[2]]))
+    {
+      continue;
+    }
+    if (collect_only) {
+      for (int j = 0; j < 3; j++) {
+        va->AddCopy(cart[t[j]]);
+      }
+    }
+    else {
+      for (int j = 0; j < 3; j++) {
+        olx_gl::normal(norms[t[j]]);
+        if (ColorData != 0) {
+          olx_gl::color(colors[li][t[j]]);
+        }
+        olx_gl::vertex(cart[t[j]]);
+      }
+    }
+  }
 }
 //.............................................................................
 void TXGrid::AdjustMap() {
+  DataChanged();
   if (ED == 0) {
     return;
   }
@@ -1386,7 +1636,27 @@ void TXGrid::AdjustMap() {
   ED->Data[MaxX][MaxY][MaxZ] = ED->Data[0][0][0];
 }
 //.............................................................................
+void TXGrid::SetColourLegend(const unsigned char* rgb,
+  const TStrList& labels)
+{
+  Legend->text = labels;
+  if (labels.IsEmpty()) {
+    Legend->SetVisible(false);
+    return;
+  }
+  for (int i = 0; i < 32; i++) {
+    for (int j = 0; j < 32 * 3; j += 3) {
+      memcpy(&LegendData[i * 32 * 3 + j], &rgb[i * 3], 3);
+    }
+  }
+  Legend->SetData((unsigned char*)LegendData, 32, 32, GL_RGB);
+  Legend->Fit();
+  Legend->TopRight = true;
+  Legend->SetVisible(true);
+}
+//.............................................................................
 void TXGrid::InitIso() {
+  DataChanged();
   if (Is3D() && ED != 0) {
     SetScale(Scale);
     Legend->text.Clear();
@@ -1929,41 +2199,70 @@ PyObject* pyImport(PyObject* self, PyObject* args) {
   int dim1, dim2, dim3, focus1, focus2, focus3;
   int type;
   Py_ssize_t len;
-  olxcstr format = PythonExt::UpdateBinaryFormat("(iii)(iii)s#i");
+  /* optional: colours as uint32 RGBA per point, and a Cartesian box (origin,
+  three step vectors in Angstrom) - then the grid is the whole array and is
+  not wrapped into the cell
+  */
+  char* colors = 0;
+  Py_ssize_t clen = 0;
+  float box[12];
+  PyObject* pbox = 0;
+  olxcstr format = PythonExt::UpdateBinaryFormat("(iii)(iii)s#i|s#O");
   if (!PyArg_ParseTuple(args, format.c_str(),
     &dim1, &dim2, &dim3,
-    &focus1, &focus2, &focus3, &data, &len, &type))
+    &focus1, &focus2, &focus3, &data, &len, &type, &colors, &clen, &pbox))
   {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo,
       format.c_str());
   }
   const size_t sz = dim1 * dim2*dim3;
   if ((type == 0 && sz * sizeof(double) != (size_t)len) ||
-    (type == 1 && sz * sizeof(int) != (size_t)len))
+    (type == 1 && sz * sizeof(int) != (size_t)len) ||
+    (clen != 0 && sz * sizeof(uint32_t) != (size_t)clen))
   {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "array size");
   }
+  const bool boxed = (pbox != 0 && pbox != Py_None);
+  if (boxed && !PyArg_ParseTuple(pbox, "ffffffffffff", &box[0], &box[1],
+    &box[2], &box[3], &box[4], &box[5], &box[6], &box[7], &box[8], &box[9],
+    &box[10], &box[11]))
+  {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo, "box");
+  }
   TEMemoryInputStream ms(data, len);
   TXGrid& g = *TXGrid::GetInstance();
-  g.InitGrid(focus1, focus2, focus3);
+  // the cell grid keeps its last plane for AdjustMap, the box grid is complete
+  const int e = boxed ? 1 : 0;
+  g.InitGrid(focus1 - e, focus2 - e, focus3 - e, clen != 0);
   for (int d1 = 0; d1 < focus1; d1++) {
     for (int d2 = 0; d2 < focus2; d2++)
       for (int d3 = 0; d3 < focus3; d3++) {
         float v;
+        const size_t idx = (d1*dim2 + d2)*dim3 + d3;
         if (type == 0) {
           double _v;
-          ms.SetPosition(((d1*dim2 + d2)*dim3 + d3) * sizeof(double));
+          ms.SetPosition(idx * sizeof(double));
           ms >> _v;
           v = (float)_v;
         }
         else if (type == 1) {
           int _v;
-          ms.SetPosition(((d1*dim2 + d2)*dim3 + d3) * sizeof(int));
+          ms.SetPosition(idx * sizeof(int));
           ms >> _v;
           v = (float)_v;
         }
-        g.SetValue(d1, d2, d3, v);
+        if (clen != 0) {
+          g.SetValue(d1, d2, d3, v, ((const uint32_t*)colors)[idx]);
+        }
+        else {
+          g.SetValue(d1, d2, d3, v);
+        }
       }
+  }
+  if (boxed) {
+    g.SetBox(vec3f(box[0], box[1], box[2]),
+      mat3f(box[3], box[4], box[5], box[6], box[7], box[8], box[9], box[10],
+        box[11]));
   }
   return PythonExt::PyNone();
 }
@@ -2072,12 +2371,37 @@ PyObject* pyIsVisible(PyObject* self, PyObject* args) {
   return Py_BuildValue("b", TXGrid::GetInstance()->IsVisible());
 }
 //.............................................................................
+PyObject* pySetLegend(PyObject* self, PyObject* args) {
+  char* rgb;
+  Py_ssize_t len;
+  PyObject* plabels;
+  olxcstr format = PythonExt::UpdateBinaryFormat("s#O");
+  if (!PyArg_ParseTuple(args, format.c_str(), &rgb, &len, &plabels) ||
+    !PySequence_Check(plabels))
+  {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo,
+      format.c_str());
+  }
+  TStrList labels;
+  for (Py_ssize_t i = 0; i < PySequence_Size(plabels); i++) {
+    PyObject* l = PySequence_GetItem(plabels, i);
+    labels.Add(PythonExt::ParseStr(l));
+    Py_DECREF(l);
+  }
+  if (!labels.IsEmpty() && len != 32 * 3) {
+    return PythonExt::InvalidArgumentException(__OlxSourceInfo,
+      "32 RGB rows expected");
+  }
+  TXGrid::GetInstance()->SetColourLegend((const unsigned char*)rgb, labels);
+  return PythonExt::PyNone();
+}
+//.............................................................................
 //.............................................................................
 
 static PyMethodDef XGRID_Methods[] = {
   {"Init", pyInit, METH_VARARGS, "initialises grid memory"},
   {"GetSize", pyGetSize, METH_VARARGS, "returns size of the grid"},
-  {"Import", pyImport, METH_VARARGS, "imports grid from an array"},
+  {"Import", pyImport, METH_VARARGS, "imports grid from an array: (dims), (focus), data, is_int[, rgba uint32 bytes[, (origin, 3 step vectors) in Angstrom - a box, not wrapped]]"},
   {"SetValue", pySetValue, METH_VARARGS, "sets grid value"},
   {"GetValue", pyGetValue, METH_VARARGS, "gets grid value"},
   {"SetMinMax", pySetMinMax, METH_VARARGS,
@@ -2086,6 +2410,9 @@ static PyMethodDef XGRID_Methods[] = {
   "sets minimum and maximum vaues of the grid to be avoided"},
   {"IsVisible", pyIsVisible, METH_VARARGS, "returns grid visibility status"},
   {"SetVisible", pySetVisible, METH_VARARGS, "sets grid visibility"},
+  {"SetLegend", pySetLegend, METH_VARARGS,
+   "shows a colour scale: 32 RGB rows as bytes (top first) and the labels"
+   " (top first); no labels hides it"},
   {"InitSurface", pyInitSurface, METH_VARARGS,
    "initialisess surface drawing. If optional distance from VdW surface is"
    " provided - the surface gets masked by the structure as well"},

@@ -27,6 +27,22 @@ class TAtomLegend : public AGlMouseHandlerImp {
   double Z;
   TStrList text;
   TArrayList<TGlMaterial> materials;
+  /* rows below are element keys drawn as spheres, from here on cartoon keys
+  drawn as ribbon - a ball already means atom type here. Cartoon rows are
+  always appended last, so one boundary separates them
+  */
+  size_t first_ribbon_row;
+  /* per row, from first_ribbon_row on. Coloured through glColor as the ribbon
+  is - the material alone leaves the ambient dark and the swatch looks duller
+  than what it is a key to
+  */
+  TArrayList<uint32_t> row_colours;
+  // free text appended below the keys, one row per line, no swatch
+  olxstr caption;
+  /* appends the key for the current cartoon colouring as more rows of this
+  legend, so it moves, saves and resets with the element key
+  */
+  void AddCartoonKey();
 protected:
   vec3d Center;
   virtual bool DoTranslate(const vec3d& t) { Center += t;  return true; }
@@ -51,6 +67,7 @@ public:
   virtual void UpdateLabel() { Fit(); }
   virtual void SetVisible(bool v);
   void SetPosition(int left, int top);
+  void SetCaption(const olxstr& c) { caption = c; }
   void ResetPosition(bool right=false, bool bottom=false, int margin=0);
 };
 EndGxlNamespace()

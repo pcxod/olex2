@@ -26,6 +26,8 @@
 #include "vcov.h"
 #include "olxvar.h"
 #include "absorpc.h"
+#include <algorithm>
+#include <vector>
 
 
 RefinementModel::RefinementModel(TAsymmUnit& au) :
@@ -998,6 +1000,20 @@ void RefinementModel::SetReflections(const TRefList &refs) const {
 //.............................................................................
 const TRefList& RefinementModel::GetReflections() const {
   TStopWatch sw(__FUNC__);
+  // an HKLF 5 model over a file without batch numbers falls back to HKLF 4,
+  // also when the cached list was loaded before the model said HKLF 5
+  auto checked = [this]() -> const TRefList& {
+    if (HKLF >= 5 && !_Reflections.IsEmpty() && !_Reflections[0].IsBatchSet()) {
+      TBasicApp::NewLogEntry(logWarning) << "HKL file is not compatible with"
+        " the HKLF instruction - clearing BASF and resetting to HKLF 4";
+      HKLF = 4;
+      if (!MERG_set) {  // SetHKLF forced MERG 0 for the batch format
+        MERG = def_MERG;
+      }
+      const_cast<XVarManager &>(Vars).ClearBASF();
+    }
+    return _Reflections;
+  };
   try {
     if (HKLSource.IsEmpty()) {
       return _Reflections;
@@ -1007,7 +1023,7 @@ const TRefList& RefinementModel::GetReflections() const {
         hkl_src_id == HklFileID &&
         HklFileMat == HKLF_mat)
     {
-      return _Reflections;
+      return checked();
     }
     HklFileID = hkl_src_id;
     THklFile hf(HKLF_mat);
@@ -1052,7 +1068,7 @@ const TRefList& RefinementModel::GetReflections() const {
       HKLF = hf.GetHKLF();
     }
     SetReflections(hf.RefList());
-    return _Reflections;
+    return checked();
   }
   catch(TExceptionBase& exc) {
     _Reflections.Clear();
@@ -1060,6 +1076,7 @@ const TRefList& RefinementModel::GetReflections() const {
   }
 }
 //.............................................................................
+/* old: summed |f0 + f' + i f''| per element, not the modulus of the sum
 double RefinementModel::CalcF000(const ContentList* cont_, Logging logging) const {
   const ContentList& cont = cont_ == 0 ? GetUserContent() : *cont_;
   double r_e = expl.GetRadiationEnergy();
@@ -1103,6 +1120,31 @@ double RefinementModel::CalcF000(const ContentList* cont_, Logging logging) cons
   if (!compute_fp_fdp && skipped_fp_fdp > 0) {
     TBasicApp::NewLogEntry(logWarning) <<
       "No anomaloud dispersion data available for this wavelength";
+  }
+  return F000;
+}
+*/
+/* non-dispersive F(000) = sum f0(0), the electrons in the cell: what Fourier
+inversion (maps, masks) needs and what the IUCr dictionary defines; f' and f''
+stay out
+*/
+double RefinementModel::CalcF000(const ContentList* cont_, Logging logging) const {
+  const ContentList& cont = cont_ == 0 ? GetUserContent() : *cont_;
+  double F000 = 0;
+  for (size_t i = 0; i < cont.Count(); i++) {
+    XScatterer* xs = FindSfacData(cont[i].element->GetChargedLabel(cont[i].charge));
+    // SFAC Gaussians first: a 'Q' in SFAC/UNIT has no tabulated ones
+    if (xs != 0 && xs->IsSet(XScatterer::setGaussian)) {
+      F000 += cont[i].count * xs->calc_sq(0);
+      continue;
+    }
+    const cm_Gaussians* g = cont[i].element->gaussians;
+    if (g == 0) {
+      TBasicApp::NewLogEntry(logging) << "No scattering factors for " <<
+        cont[i].element->symbol << ", skipped in F000";
+      continue;
+    }
+    F000 += cont[i].count * round(g->calc_sq(0));
   }
   return F000;
 }
@@ -1186,14 +1228,6 @@ const RefinementModel::HklStat& RefinementModel::GetMergeStat() {
       FilterHkl(refs, _HklStat);
       TRefPList measured_refs,
         merge_stats_refs;
-      if (HKLF >= 5) {
-        if (!refs.IsEmpty() && !refs[0].IsBatchSet()) {
-          TBasicApp::NewLogEntry(logWarning) << "HKL file is not compatible with"
-            " the HKLF instruction - clearing BASF and resetting to HKLF 4";
-          HKLF = 4;
-          Vars.ClearBASF();
-        }
-      }
       if (HKLF >= 5) {
         measured_refs = refs.ptr().Filter(olx_alg::olx_gt(0,
           FunctionAccessor::MakeConst(&TReflection::GetBatch)));
@@ -2493,6 +2527,10 @@ PyObject* RefinementModel::PyExport(bool export_conn) {
     PythonExt::SetDictItem(main, rcList[i]->GetName(), rcList[i]->PyExport());
   }
 
+  if (HKLF > 4) {  // validates the code against the file, may reset it to 4
+    try { GetReflections(); }
+    catch (...) {}
+  }
   PythonExt::SetDictItem(hklf, "value", Py_BuildValue("i", HKLF));
   PythonExt::SetDictItem(hklf, "s", Py_BuildValue("d", HKLF_s));
   PythonExt::SetDictItem(hklf, "m", Py_BuildValue("d", HKLF_m));
@@ -2707,12 +2745,13 @@ double RefinementModel::CalcCompletenessTo2Theta(double tt, bool Laue) {
   else {
     refs.AddAll(refs_);
   }
-  for (size_t i = 0; i < refs.Count(); i++) {
-    refs[i]->Standardise(info_ex);
-  }
   if (refs.IsEmpty()) {
     completeness_cache.Add(key, 0);
     return 0;
+  }
+  /* old: standardised the local FilterHkl copy in place and sorted the pointers
+  for (size_t i = 0; i < refs.Count(); i++) {
+    refs[i]->Standardise(info_ex);
   }
   QuickSorter::SortSF(refs, &TReflection::Compare);
   size_t u_cnt = 0;
@@ -2731,6 +2770,25 @@ double RefinementModel::CalcCompletenessTo2Theta(double tt, bool Laue) {
       u_cnt++;
     }
   }
+  */
+  // only the distinct standardised indices count, sorted as plain indices
+  std::vector<vec3i> uniq(refs.Count());
+  for (size_t i = 0; i < refs.Count(); i++) {
+    uniq[i] = TReflection::Standardise(refs[i]->GetHkl(), info_ex);
+  }
+  std::sort(uniq.begin(), uniq.end(), [](const vec3i& a, const vec3i& b) {
+    return a[2] != b[2] ? a[2] < b[2] : (a[1] != b[1] ? a[1] < b[1] : a[0] < b[0]);
+  });
+  uniq.erase(std::unique(uniq.begin(), uniq.end()), uniq.end());
+  size_t u_cnt = 0;
+  for (size_t i = 0; i < uniq.size(); i++) {
+    if (omits.Contains(uniq[i]) || TReflection::IsAbsent(uniq[i], info_ex)) {
+      continue;
+    }
+    if (TReflection::ToCart(uniq[i], h2c).QLength() <= min_ds_sq) {
+      u_cnt++;
+    }
+  }
 
   olx_pair_t<vec3i, vec3i> range = CalcIndicesToD(min_d);
   size_t e_cnt=0;
@@ -2741,17 +2799,17 @@ double RefinementModel::CalcCompletenessTo2Theta(double tt, bool Laue) {
           continue;
         }
         vec3i hkl(h,k,l);
-        vec3i shkl = TReflection::Standardise(hkl, info_ex);
-        if (shkl != hkl) {
+        // the box is about twice the sphere: test the cheap condition first
+        if (TReflection::ToCart(hkl, h2c).QLength() > min_ds_sq) {
+          continue;
+        }
+        if (TReflection::Standardise(hkl, info_ex) != hkl) {
           continue;
         }
         if (TReflection::IsAbsent(hkl, info_ex)) {
           continue;
         }
-        double qd = TReflection::ToCart(hkl, h2c).QLength();
-        if (qd <= min_ds_sq) {
-          e_cnt++;
-        }
+        e_cnt++;
       }
     }
   }

@@ -47,8 +47,21 @@ void TComboBox::SetText(const olxstr& T) {
   }
 }
 //..............................................................................
+void TComboBox::SetItemsFrom(const olxstr &src) {
+  if (src.IsEmpty() || src != ItemsSrc) {
+    Clear();
+    AddItems(TStrList(src, ';'));
+    ItemsSrc = src;
+  }
+  else { // the same items, start from no selection like a new list
+    StrValue.SetLength(0);
+    wxComboBox::SetSelection(wxNOT_FOUND);
+  }
+}
+//..............................................................................
 void TComboBox::Clear() {
   StrValue.SetLength(0);
+  ItemsSrc.SetLength(0);
   if (GetCount() == 0) {
     return;
   }
