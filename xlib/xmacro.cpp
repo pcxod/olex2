@@ -2501,7 +2501,17 @@ void XLibMacros::macFix(TStrObjList &Cmds, const TParamList &Options,
       if (owner != 0) {
         rm.Vars.FreeParam(a, catom_var_name_Uiso);
         a.SetUisoOwner(owner);
-        double k = owner->GetType() == iOxygenZ ? 1.5 : 1.2;
+        // 1.5 for O-H and for CH3/NH3 (SHELXL AFIX 137 convention), else 1.2
+        size_t hc = 0;
+        for (size_t hi = 0; hi < owner->AttachedSiteCount(); hi++) {
+          TCAtom& h = owner->GetAttachedAtom(hi);
+          if (!h.IsDeleted() && h.GetType() == iHydrogenZ) {
+            hc++;
+          }
+        }
+        double k = (owner->GetType() == iOxygenZ ||
+          (hc >= 3 && (owner->GetType() == iCarbonZ ||
+            owner->GetType() == iNitrogenZ))) ? 1.5 : 1.2;
         a.SetUisoScale(k);
         a.SetUiso(owner->GetUiso() * k);
       }
