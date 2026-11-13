@@ -1,0 +1,68 @@
+<!-- #include tool-h3 gui\blocks\tool-h3.htm;image=#image;colspan=1;1; -->
+
+<tr bgcolor="$GetVar(HtmlTableBgColour)">
+<!-- #include tool-column gui\blocks\tool-first-column.htm;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+  <td width="25%">%Resolution%/&Aring</td>
+  <td width="25%">
+    <font size="$GetVar('HtmlFontSizeControls')">
+    <input
+      type="text"
+      name = "SET_SNUM_CALCVOID_RESOLUTION"
+      width="95%"
+      height="GetVar('HtmlInputHeight')"
+      valign="center"
+      bgcolor="GetVar('HtmlTableBgColour')"
+      fgcolor="GetVar('HtmlFontColour')"
+      value="$spy.GetParam('snum.calcvoid.resolution')"
+      onchange="spy.SetParam('snum.calcvoid.resolution',html.GetValue('~name~'))"
+    >
+    </font>
+  </td>
+  <td width="25%">%Distance%/&Aring</td>
+  <td width="25%">
+    <font size="$GetVar('HtmlFontSizeControls')">
+    <input
+      type="text"
+      name = "SET_SNUM_CALCVOID_DISTANCE"
+      width="95%"
+      height="GetVar('HtmlInputHeight')"
+      valign="center"
+      bgcolor="GetVar('HtmlTableBgColour')"
+      fgcolor="GetVar('HtmlFontColour')"
+      value="spy.GetParam('snum.calcvoid.distance')"
+      onchange="spy.SetParam('snum.calcvoid.distance',html.GetValue('~name~'))"
+    >
+    </font>
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<tr bgcolor="$GetVar(HtmlTableBgColour)">
+<!-- #include tool-column gui\blocks\tool-first-column.htm;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+  <td width="50%">
+    <font size="$GetVar('HtmlFontSizeControls')">
+    <input
+      bgcolor="GetVar('HtmlTableBgColour')"
+      fgcolor="GetVar('HtmlFontColour')"
+      type="checkbox"
+      height="GetVar('HtmlCheckboxHeight')"
+      value="%Precise%"
+      valign="bottom"
+      width="100%"
+      name="SNUM_CALCVOID_PRECISE"
+      checked="spy.GetParam('snum.calcvoid.precise')"
+      oncheck="spy.SetParam('snum.calcvoid.precise','True')"
+      onuncheck="spy.SetParam('snum.calcvoid.precise','False')"
+    >
+    </font>
+  </td>
+    $+
+      html.Snippet(GetVar(default_link),
+      "name=MAKE_VOID_MAP",
+      "value=spy.gui.maps.getActionString(Void,MAKE_VOID_MAP)",
+      "onclick=spy.gui.maps.VoidView()>>spy.gui.maps.getActionString(Void,MAKE_VOID_MAP)",
+      )
+    $-
+
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->

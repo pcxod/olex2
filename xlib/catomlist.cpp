@@ -117,6 +117,7 @@ olxstr ExplicitCAtomRef::GetExpression(TResidue *r) const {
     rv << '_' << atom->GetParent()->GetResidue(atom->GetResiId()).GetNumberStr();
   }
   if (matrix != 0) {
+    /* old: index+1 is not the EQIV name past $9
     if (use_resi) {
       rv << '$';
     }
@@ -124,6 +125,11 @@ olxstr ExplicitCAtomRef::GetExpression(TResidue *r) const {
       rv << "_$";
     }
     rv << (atom->GetParent()->GetRefMod()->UsedSymmIndex(*matrix)+1);
+    */
+    if (!use_resi) {
+      rv << '_';
+    }
+    rv << atom->GetParent()->GetRefMod()->UsedSymmName(*matrix);
   }
   if (!valid_s) {
     TBasicApp::NewLogEntry(logInfo) << "Expression will not be read correctly"
@@ -382,7 +388,13 @@ void ImplicitCAtomRef::InitRef(const RefinementModel& rm,
   }
   else {
     olxstr rn = Name.SubStringFrom(idx + 1);
-    if (rn.IsNumber()) {
+    // old: if (rn.IsNumber()) { - sent chain:number to the class name lookup
+    // FindResidue takes a bare number or chain:number
+    const size_t ci = rn.IndexOf(':');
+    const bool by_number = (ci == InvalidIndex)
+      ? rn.IsNumber()
+      : (ci <= 1 && rn.SubStringFrom(ci + 1).IsNumber());
+    if (by_number) {
       resi = rm.aunit.FindResidue(rn);
       if (resi == 0) {
         TBasicApp::NewLogEntry(logWarning) <<
@@ -1139,6 +1151,10 @@ void AtomRefList::SortExplicitRefs() {
   if (!IsExplicit()) {
     return;
   }
+  /* IsExplicit only rules out implicit atoms: a 'C6 < C2' range is a
+  ListAtomRef, which the cast below turns into a null atom
+  */
+  ConvertToExplicit();
   QuickSorter::Sort(refs, ComplexComparator::Make(
     DynamicCastAccessor<ExplicitCAtomRef>(),
     FunctionComparator::Make(&AtomRefList::RefTagCmp)));
@@ -1148,7 +1164,12 @@ void AtomRefList::SortByTag(const TPtrList<AtomRefList> &sync) {
   if (!IsExplicit()) {
     return;
   }
+  // ranges expand first, as in SortExplicitRefs, so the counts compare atoms
+  ConvertToExplicit();
   for (size_t i = 0; i < sync.Count(); i++) {
+    if (sync[i]->IsExplicit()) {
+      sync[i]->ConvertToExplicit();
+    }
     if (sync[i]->GetRefs().Count() != refs.Count()) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         "atoms lists sizes mismatch");

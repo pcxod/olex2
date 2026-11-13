@@ -48,6 +48,7 @@
 #include "olxdll.h"
 #include "refinement_listener.h"
 #include "xyz.h"
+#include "protein.h"
 
 #ifdef _CUSTOM_BUILD_
   #include "custom_base.h"
@@ -68,6 +69,29 @@ using namespace cif_dp;
 using namespace olex2;
 void HKLCreate(TStrObjList &Cmds, const TParamList &Options, TMacroData &E);
 
+bool XLibMacros::IsPdbEntryCode(const olxstr &s) {
+  if (s.Length() == 4) {
+    if (!olxstr::o_isdigit(s.CharAt(0))) {
+      return false;
+    }
+    for (size_t i = 1; i < 4; i++) {
+      if (!olxstr::o_isalphanumeric(s.CharAt(i))) {
+        return false;
+      }
+    }
+    return true;
+  }
+  if (s.Length() == 12 && s.StartsFromi("pdb_")) {
+    for (size_t i = 4; i < 12; i++) {
+      if (!olxstr::o_isalphanumeric(s.CharAt(i))) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return false;
+}
+//..............................................................................
 void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitMacro(Run, EmptyString(), fpAny^fpNone,
     "Runs provided macros (combined by '>>')");
@@ -871,6 +895,9 @@ void XLibMacros::Export(TLibrary& lib)  {
   xlib_InitFunc(DataDir, fpNone, "Returns the location of user data");
   xlib_InitFunc(HKLSrc, fpNone|fpOne|psFileLoaded,
     "Returns/sets hkl source for currently loaded file");
+  xlib_InitFunc(HKLM, fpNone|psFileLoaded,
+    "Returns 'main,satellites,max|m|' when the hkl source is an .hklm file of "
+    "(3+1)D data, empty otherwise");
 //_____________________________________________________________________________
   xlib_InitFunc(LSM, fpNone|fpOne|psCheckFileTypeIns,
     "Return/sets current refinement method, L.S. or CGLS currently. The method"
@@ -2194,6 +2221,7 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
     }
     for (size_t i = 0; i < au.AtomCount(); i++) {
       TCAtom &a = au.GetAtom(i);
+      /* old: every N with an H, and the first H of an NH2
       if (a.IsDeleted() || a.GetType() != iNitrogenZ) {
         continue;
       }
@@ -2206,6 +2234,32 @@ void XLibMacros::macHAdd(TStrObjList &Cmds, const TParamList &Options,
         }
       }
       if (h_atom == 0) {
+        continue;
+      }
+      */
+      if (a.IsDeleted() || a.GetType() != iNitrogenZ || !a.IsRingAtom()) {
+        continue;
+      }
+      // two conformers close a ring through a disordered backbone; of the
+      // amino acid N only His has a tautomer to choose
+      const size_t ri = protein::ResidueIndex(
+        au.GetResidue(a.GetResiId()).GetClassName());
+      if (ri != InvalidIndex && protein::StandardResidueName(ri) != "HIS") {
+        continue;
+      }
+      TCAtom *h_atom = 0;
+      size_t h_cnt = 0;
+      for (size_t j = 0; j < a.AttachedSiteCount(); j++) {
+        TCAtom &aa = a.GetAttachedAtom(j);
+        if (!aa.IsDeleted() && aa.GetType() == iHydrogenZ) {
+          if (h_atom == 0) {
+            h_atom = &aa;
+          }
+          h_cnt++;
+        }
+      }
+      // taking one H of an NH2 leaves a broken AFIX 93
+      if (h_atom == 0 || h_cnt > 1) {
         continue;
       }
       bool conflict = false;
@@ -4628,6 +4682,22 @@ void XLibMacros::funSGS(const TStrObjList& Cmds, TMacroData& E) {
   }
 }
 //.............................................................................
+void XLibMacros::funHKLM(const TStrObjList& Params, TMacroData &E) {
+  RefinementModel& rm = TXApp::GetInstance().XFile().GetRM();
+  olxstr fn = rm.GetHKLSource();
+  if (!THklFile::IsHklmFile(fn) || !TEFile::Exists(fn)) {
+    E.SetRetVal(EmptyString());
+    return;
+  }
+  THklFile hf(rm.GetHKLF_mat());
+  hf.LoadFromFile(fn, false);
+  int max_m = 0;
+  for (size_t i = 0; i < hf.SatelliteCount(); i++) {
+    max_m = olx_max(max_m, olx_abs(hf.GetSatelliteM(i)));
+  }
+  E.SetRetVal(olxstr(hf.RefCount()) << ',' << hf.SatelliteCount() << ',' << max_m);
+}
+//..............................................................................
 void XLibMacros::funHKLSrc(const TStrObjList& Params, TMacroData &E) {
   TXApp& xapp = TXApp::GetInstance();
   if (Params.Count() == 1) {
@@ -4638,10 +4708,14 @@ void XLibMacros::funHKLSrc(const TStrObjList& Params, TMacroData &E) {
     if (TEFile::Exists(fn) && !TEFile::IsDir(fn)) {  // check the format...
       static TEFile::FileID fid;
       TEFile::FileID tfid = TEFile::GetFileID(fn);
-      if (tfid != fid && !fn.EndsWith(".hkl.fcf")) {
+      // an .hklm fails the HKL line test; renaming it would lose the satellites
+      if (tfid != fid && !fn.EndsWith(".hkl.fcf") && !THklFile::IsHklmFile(fn)) {
         fid = tfid;
         TEFile f(fn, "rb");
-        if (!THklFile::IsHKLFileLine(f.ReadLine())) {
+        // old: renamed free format hkl files to .hkl.fcf
+        // if (!THklFile::IsHKLFileLine(f.ReadLine())) {
+        olxstr l = f.ReadLine();
+        if (!THklFile::IsHKLFileLine(l) && !THklFile::IsFreeHKLLine(l)) {
           f.Close();
           olxstr nfn = TEFile::ChangeFileExt(fn, "hkl.fcf");
           TEFile::Rename(fn, nfn);
@@ -5354,6 +5428,19 @@ int32_t ShelXl_checksum(const olxstr &text) {
   return sum;
 }
 
+// a cached loop's rendered rows standing in for one cell (CifMerge_EmbeddData)
+struct cetRenderedRows : public cif_dp::ICifEntry {
+  olx_object_ptr<TStrList> rows;  // shared with the cache, never modified
+  cetRenderedRows(const olx_object_ptr<TStrList>& r) : rows(r) {}
+  virtual void ToStrings(TStrList& list) const {
+    if (rows.ok()) {
+      list.AddAll(*rows);
+    }
+  }
+  virtual ICifEntry* Replicate() const { return new cetRenderedRows(*this); }
+  virtual olxstr GetStringValue() const { return EmptyString(); }
+};
+
 void CifMerge_EmbeddData(TCif &Cif, bool insert_res, bool insert_hkl,
   bool insert_fab, bool hkl_fcf_format)
 {
@@ -5396,6 +5483,7 @@ void CifMerge_EmbeddData(TCif &Cif, bool insert_res, bool insert_hkl,
   if (insert_hkl) {
     olxstr hkl_src = xapp.XFile().LocateHklFile();
     if (TEFile::Exists(hkl_src)) {
+      /* old: parsed the hkl file and built the loop cells on every merge
       THklFile hkl;
       hkl.LoadFromFile(hkl_src, false);
       cetTable* t;
@@ -5416,6 +5504,62 @@ void CifMerge_EmbeddData(TCif &Cif, bool insert_res, bool insert_hkl,
         }
         Cif.SetParam("_olex2_hkl_file_MD5",
           MD5::Digest(olxcstr(olxstr(bf).DeleteChars(' '))), false);
+      }
+      */
+      /* the loop is rendered once and kept while the hkl content is the same,
+      so later merges skip parsing and building the cells. Only into a temporary
+      TCif: a loaded CIF keeps real rows for anything that reads them. Only the
+      last hkl is cached, one copy of its loop text
+      */
+      static olxstr cache_key;
+      static TStrList cache_cols;
+      static olx_object_ptr<TStrList> cache_rows;
+      const bool cacheable = !use_md5 && !xapp.CheckFileType<TCif>();
+      olxstr key;
+      if (cacheable) {
+        TEFile hf(hkl_src, "rb");
+        key << MD5::Digest(hf) << hkl_fcf_format;
+      }
+      Cif.Remove(hkl_fcf_format ? "_refln" : "_diffrn_refln");
+      if (!cacheable || key != cache_key) {
+        THklFile hkl;
+        hkl.LoadFromFile(hkl_src, false);
+        cetTable* t = hkl_fcf_format
+          ? THklFile::ExperimentalToFCF(hkl.RefList(), Cif)
+          : THklFile::ExperimentalToCIF(hkl.RefList(), Cif);
+        if (use_md5) {
+          olxstr_buf bf;
+          for (size_t i = 0; i < t->RowCount(); i++) {
+            for (size_t j = 0; j < t->ColCount(); j++) {
+              bf << (*t)[i][j]->GetStringValue();
+            }
+          }
+          Cif.SetParam("_olex2_hkl_file_MD5",
+            MD5::Digest(olxcstr(olxstr(bf).DeleteChars(' '))), false);
+        }
+        if (cacheable && t != 0) {
+          cache_rows = new TStrList;
+          for (size_t i = 0; i < t->RowCount(); i++) {
+            olx_object_ptr<TStrList> rc = t->RowContent(i);
+            if (rc.ok()) {
+              cache_rows->AddAll(*rc);
+            }
+          }
+          cache_cols.Clear();
+          for (size_t i = 0; i < t->ColCount(); i++) {
+            cache_cols.Add(t->ColName(i));
+          }
+          cache_key = key;
+        }
+      }
+      else {
+        // one row whose first cell emits all the rows keeps it a cetTable,
+        // which the _diffrn_refln# sort pivot needs, and the text identical
+        CifRow& r = Cif.AddLoopDef(olxstr(',').Join(cache_cols), true).AddRow();
+        r[0] = new cetRenderedRows(cache_rows);
+        for (size_t i = 1; i < r.Count(); i++) {
+          r[i] = new cetRenderedRows(olx_object_ptr<TStrList>());
+        }
       }
     }
   }
@@ -9461,6 +9605,19 @@ void XLibMacros::macUpdateAfix(TStrObjList& Cmds, const TParamList& Options,
     if (d < 0) {
       continue;
     }
+    // X-H distances only: a riding group with a non-H member keeps its geometry
+    bool all_h = true;
+    for (size_t ai = 0; ai < ag.Count(); ai++) {
+      if (ag[ai].GetType() != iHydrogenZ) {
+        all_h = false;
+        break;
+      }
+    }
+    if (!all_h) {
+      TBasicApp::NewLogEntry() << "UpdateAfix: skipping group on "
+        << pivot.GetLabel() << " - it has non-H members";
+      continue;
+    }
     ag.SetD(d);
     vec3d pc = au.Orthogonalise(pivot.ccrd());
     for (size_t ai = 0; ai < ag.Count(); ai++) {
@@ -11851,6 +12008,15 @@ void XLibMacros::funCif(const TStrObjList& Params, TMacroData &E)  {
   if (bix != InvalidIndex) {
     block_index = param.SubStringFrom(bix+1).ToSizeT();
     param = param.SubStringTo(bix);
+  }
+  /* a macromolecular file answers to none of the core names. Translated only
+  when the core one is absent, so a file carrying both is read as itself
+  */
+  if (cf.IsMMCif() && !cf.ParamExists(param, block_index)) {
+    olxstr mm = TCif::MMEquivalentOf(param);
+    if (!mm.IsEmpty() && cf.ParamExists(mm, block_index)) {
+      param = mm;
+    }
   }
   if (cf.ParamExists(param, block_index)) {
     E.SetRetVal(cf.GetParamAsString(param, block_index));

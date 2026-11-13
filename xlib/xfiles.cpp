@@ -18,6 +18,7 @@
 #include "cif.h"
 #include "hkl.h"
 #include "cif.h"
+#include "refutil.h"
 #include "utf8file.h"
 #include "atomsort.h"
 #include "infotab.h"
@@ -110,11 +111,166 @@ void TBasicCFile::LoadStrings(const TStrList &lines, const olxstr &nameToken) {
   PostLoad();
 }
 //..............................................................................
+const char *TBasicCFile::EncodingName(short enc) {
+  switch (enc) {
+  case enc_utf8: return "UTF-8";
+  case enc_utf16le: return "UTF-16 little endian";
+  case enc_utf16be: return "UTF-16 big endian";
+  default: return "8 bit";
+  }
+}
+//..............................................................................
+namespace {
+  // appends one code point to a UTF-8 byte buffer
+  void put_utf8(olxcstr &out, uint32_t cp) {
+    if (cp < 0x80) {
+      out << (char)cp;
+    }
+    else if (cp < 0x800) {
+      out << (char)(0xC0 | (cp >> 6)) << (char)(0x80 | (cp & 0x3F));
+    }
+    else if (cp < 0x10000) {
+      out << (char)(0xE0 | (cp >> 12))
+        << (char)(0x80 | ((cp >> 6) & 0x3F)) << (char)(0x80 | (cp & 0x3F));
+    }
+    else {
+      out << (char)(0xF0 | (cp >> 18))
+        << (char)(0x80 | ((cp >> 12) & 0x3F))
+        << (char)(0x80 | ((cp >> 6) & 0x3F)) << (char)(0x80 | (cp & 0x3F));
+    }
+  }
+  /* unmarked UTF-16 still shows in a text file: half the bytes are zero, and
+  which half says which way round
+  */
+  short guess_utf16(const unsigned char *b, size_t len) {
+    const size_t n = olx_min(len, (size_t)4096) & ~(size_t)1;
+    if (n < 16) {
+      return TBasicCFile::enc_bytes;
+    }
+    size_t even = 0, odd = 0;
+    for (size_t i = 0; i < n; i += 2) {
+      if (b[i] == 0) { even++; }
+      if (b[i + 1] == 0) { odd++; }
+    }
+    const size_t half = n / 2;
+    if (odd*4 > half*3 && even*4 < half) {
+      return TBasicCFile::enc_utf16le;
+    }
+    if (even*4 > half*3 && odd*4 < half) {
+      return TBasicCFile::enc_utf16be;
+    }
+    return TBasicCFile::enc_bytes;
+  }
+  // true only if there is a multi-byte sequence and every one of them is valid
+  bool is_utf8(const unsigned char *b, size_t len) {
+    bool multi_byte = false;
+    for (size_t i = 0; i < len; ) {
+      if (b[i] < 0x80) {
+        i++;
+        continue;
+      }
+      size_t extra;
+      if ((b[i] & 0xE0) == 0xC0) { extra = 1; }
+      else if ((b[i] & 0xF0) == 0xE0) { extra = 2; }
+      else if ((b[i] & 0xF8) == 0xF0) { extra = 3; }
+      else { return false; }
+      if (i + extra >= len) {
+        return false;
+      }
+      for (size_t j = 1; j <= extra; j++) {
+        if ((b[i + j] & 0xC0) != 0x80) {
+          return false;
+        }
+      }
+      multi_byte = true;
+      i += extra + 1;
+    }
+    return multi_byte;
+  }
+}
+//..............................................................................
+TStrList::const_list_type TBasicCFile::ReadLines(const olxstr &fn,
+  short *enc_out)
+{
+  TEFile f(fn, "rb");
+  const size_t sz = f.GetAvailableSizeT();
+  TStrList rv;
+  if (enc_out != 0) {
+    *enc_out = enc_bytes;
+  }
+  if (sz == 0) {
+    return rv;
+  }
+  olx_array_ptr<unsigned char> buffer(new unsigned char[sz + 2]);
+  f.Read(*buffer, sz);
+  buffer[sz] = buffer[sz + 1] = 0;
+  const unsigned char *b = *buffer;
+  size_t len = sz;
+  short enc;
+  if (len >= 3 && b[0] == 0xEF && b[1] == 0xBB && b[2] == 0xBF) {
+    b += 3;
+    len -= 3;
+    enc = enc_utf8;
+  }
+  else if (len >= 2 && b[0] == 0xFF && b[1] == 0xFE) {
+    b += 2;
+    len -= 2;
+    enc = enc_utf16le;
+  }
+  else if (len >= 2 && b[0] == 0xFE && b[1] == 0xFF) {
+    b += 2;
+    len -= 2;
+    enc = enc_utf16be;
+  }
+  else if ((enc = guess_utf16(b, len)) == enc_bytes && is_utf8(b, len)) {
+    enc = enc_utf8;
+  }
+  olxstr text;
+  if (enc == enc_utf16le || enc == enc_utf16be) {
+    const bool le = (enc == enc_utf16le);
+    olxcstr utf8;
+    utf8.SetCapacity(len);
+    for (size_t i = 0; i + 1 < len; i += 2) {
+      uint32_t cp = le ? (uint32_t)(b[i] | (b[i + 1] << 8))
+        : (uint32_t)((b[i] << 8) | b[i + 1]);
+      if (cp >= 0xD800 && cp < 0xDC00 && i + 3 < len) {  // surrogate pair
+        const uint32_t lo = le ? (uint32_t)(b[i + 2] | (b[i + 3] << 8))
+          : (uint32_t)((b[i + 2] << 8) | b[i + 3]);
+        if (lo >= 0xDC00 && lo < 0xE000) {
+          cp = 0x10000 + ((cp - 0xD800) << 10) + (lo - 0xDC00);
+          i += 2;
+        }
+      }
+      put_utf8(utf8, cp);
+    }
+    text = TUtf8::Decode(utf8);
+  }
+  else if (enc == enc_utf8) {
+    text = TUtf8::Decode((const char *)b, len);
+  }
+  else {
+    text = olxcstr((const char *)b, len);
+  }
+  // classic Mac endings: no line feeds at all, so this would be one line
+  const olxch sep = (text.IndexOf('\n') == InvalidIndex &&
+    text.IndexOf('\r') != InvalidIndex) ? '\r' : '\n';
+  rv.Strtok(text, sep, false);
+  for (size_t i = 0; i < rv.Count(); i++) {
+    rv[i].TrimR('\r');
+  }
+  if (enc_out != 0) {
+    *enc_out = enc;
+  }
+  return rv;
+}
+//..............................................................................
 void TBasicCFile::LoadFromFile(const olxstr& _fn) {
   TStopWatch sw(__FUNC__);
   TXFile::NameArg file_n(_fn);
   TEFile::CheckFileExists(__OlxSourceInfo, file_n.file_name);
-  TStrList L = TEFile::ReadLines(file_n.file_name);
+  short enc = enc_bytes;
+  // old: TStrList L = TEFile::ReadLines(file_n.file_name); - a BOM, UTF-16 or CR only file read as empty
+  TStrList L = ReadLines(file_n.file_name, &enc);
   if (L.IsEmpty()) {
     throw TEmptyFileException(__OlxSourceInfo, _fn);
   }
@@ -124,7 +280,11 @@ void TBasicCFile::LoadFromFile(const olxstr& _fn) {
   }
   catch (const TExceptionBase& exc) {
     FileName.SetLength(0);
-    throw TFunctionFailedException(__OlxSourceInfo, exc);
+    // old: throw TFunctionFailedException(__OlxSourceInfo, exc);
+    // the parser only reports what it did not find, so say how the bytes were read
+    throw TFunctionFailedException(__OlxSourceInfo, exc,
+      olxstr("read as ") << EncodingName(enc) << ", " << L.Count() <<
+      " line(s)");
   }
 }
 //..............................................................................
@@ -496,6 +656,9 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
         TBasicApp::NewLogEntry(logWarning)
           << "Failed to extract HKL data from CIF";
       }
+      if (GetRM().GetReflections().IsEmpty()) {
+        GetRM().SetHKLSource(LocateHklFile());
+      }
     }
     else {
       olxstr src = LocateHklFile();
@@ -504,6 +667,29 @@ void TXFile::PostLoad(const olxstr &fn, TBasicCFile *Loader, bool replicated) {
       }
       GetRM().SetHKLSource(src);
     }
+  }
+  // a CIF without an embedded RES has no OSF - fit one to its own data
+  if (FLastLoader->Is<TCif>() && GetRM().Vars.VarCount() > 0 &&
+    GetRM().Vars.GetVar(0).GetValue() == 1.0 &&
+    &TXApp::GetInstance().XFile() == this)
+  {
+    try {
+      TRefList refs;
+      evecd Fsq;
+      TXApp::GetInstance().CalcFsq(refs, Fsq, false, SFUtil::EXTIDest::Fc);
+      if (refs.Count() > 0) {
+        // twice - the SHELX weights depend on the current scale
+        for (int i = 0; i < 2; i++) {
+          double k = RefUtil::CalcFsqScaleShelx(GetRM(), Fsq, refs);
+          if (k > 0) {
+            GetRM().Vars.GetVar(0).SetValue(1. / sqrt(k));
+          }
+        }
+        TBasicApp::NewLogEntry(logInfo) << "OSF fitted to the CIF data: " <<
+          olxstr::FormatFloat(4, GetRM().Vars.GetVar(0).GetValue());
+      }
+    }
+    catch (const TExceptionBase&) {}
   }
   // try resolve the residues
   if (false && FLastLoader->Is<TCif>()) {
@@ -1584,6 +1770,11 @@ olxstr TXFile::LocateHklFile() {
   if (TEFile::Existsi(HklFN, HklFN)) {
     return HklFN;
   }
+  // (3+1)D data: THklFile reads the main reflections and keeps the satellites
+  HklFN = TEFile::ChangeFileExt(fn, "hklm");
+  if (TEFile::Existsi(HklFN, HklFN)) {
+    return HklFN;
+  }
   HklFN = TEFile::ChangeFileExt(fn, "raw");
   if (TEFile::Existsi(HklFN, HklFN)) {
     THklFile Hkl;
@@ -1611,6 +1802,12 @@ olxstr TXFile::LocateHklFile() {
   TEFile::ListDir(dir, hkl_files, "*.hkl", sefFile);
   if (hkl_files.Count() == 1) {
     return TEFile::AddPathDelimeterI(dir) << hkl_files[0];
+  }
+  if (hkl_files.IsEmpty()) {
+    TEFile::ListDir(dir, hkl_files, "*.hklm", sefFile);
+    if (hkl_files.Count() == 1) {
+      return TEFile::AddPathDelimeterI(dir) << hkl_files[0];
+    }
   }
   return EmptyString();
 }

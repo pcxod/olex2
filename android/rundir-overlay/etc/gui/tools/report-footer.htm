@@ -1,0 +1,256 @@
+  <tr>
+    <td bgcolor="#cccccc">
+
+<table border="0" VALIGN='center' width="100%" cellpadding="1" cellspacing="1" bgcolor="$GetVar(HtmlTableBgColour)">
+
+<tr align = 'center' name=EDIT_CIF width='100%'>
+<!-- #include tool-help-first-column gui\blocks\tool-help-first-column.htm;help_ext=CIF-Part-1;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+$+
+  html.Snippet(
+    GetVar(default_link),
+    "value=Edit CIF Info",
+    "onclick=spy.ExtractCifInfo(True,True)>>spy.EditCifInfo()>>html.Update",
+    "td1=<td width='50%'>",
+    "focus="
+  )
+$-
+$+
+  html.Snippet(
+    GetVar(default_link),
+    "value=Merge CIF",
+    "onclick=spy.ExtractCifInfo(True,True)>>spy.MergeCif(True)>>html.Update",
+    "td1=<td width='50%'>",
+    "focus="
+  )
+$-
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<tr align = 'center' name=EDIT_CIF width='100%'>
+<!-- #include tool-first-column gui\blocks\tool-first-column.htm;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+<td width='50%' align='left'>
+  &nbsp;HKL/RES
+</td>
+
+<td width='50%' align='right'>
+  $+
+    html.Snippet("gui/snippets/input-combo",
+    "name=SET_CIF_FINALISE",
+    "items=Include [IUcr]<-Include;Exclude<-Exclude;Leave as is<-Ignore",
+    "value=spy.GetParam('user.cif.finalise')",
+    "readonly=True",
+    "onchange=spy.SetParam('user.cif.finalise',html.GetValue('~name~'))"
+    )
+  $-
+</td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<tr align = 'center' name=EDIT_CIF width='100%'>
+<!-- #include tool-help-first-column gui\blocks\tool-help-first-column.htm;help_ext=CIF-Part-2;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+
+
+$+
+  html.Snippet(
+    GetVar(default_link),
+    "value=IUCr checkCIF",
+    "onclick=spy.cif.GetCheckCifReport()",
+    "td1=<td width='50%'>"
+  )
+$-
+
+
+<td name=GET_CHECKCIF_REPORT_FORMAT align='left' VALIGN='center' width='50%'>
+$+
+  html.Snippet(
+    "gui/snippets/input-combo",
+    "name=SET_CHECKCIF_FORMAT",
+    "items=html;pdf",
+    "value=spy.GetParam('user.cif.checkcif.format')",
+    "readonly=True",
+    "onchange=spy.SetParam('user.cif.checkcif.format',html.GetValue('~name~'))"
+  )
+$-
+</td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<tr align = 'center' name=EDIT_CIF width='100%'>
+<!-- #include tool-first-column gui\blocks\tool-first-column.htm;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+<td width='50%' align='center'>
+<zimg border="0" src="gui/images/src/CCDC_tiny.png">
+</td>
+
+$+
+  html.Snippet(
+    GetVar(default_link),
+    "value=Request CCDC Number",
+    "onclick=spy.ccdc_submit()",
+    "td1=<td width='50%'>"
+  )
+$-
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+
+<tr align = 'center' name=EDIT_CIF width='100%'>
+<!-- #include tool-help-first-column gui\blocks\tool-help-first-column.htm;help_ext=CIF-Part-3;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+
+<td name=AUTO_MERGE_CIF align='right' VALIGN='right' width='8%'>
+    <input
+      type='checkbox'
+      height="GetVar(HtmlCheckboxHeight)"
+      bgcolor="GetVar('HtmlTableBgColour')"
+      name = "CIFMERGE_AFTER_REFINE"
+      checked = "spy.GetParam(snum.refinement.cifmerge_after_refinement)"
+      onclick = "spy.SetParam(snum.refinement.cifmerge_after_refinement,html.GetState(~name~))"
+      name='SET_CIFMERGE'
+      right='false'
+    >
+</td>
+
+  <td align='left' width='22%'>
+Merge CIF:
+  </td>
+
+  <td align='left' width='70%'>
+<a target='Edit the built-in CIF information' href='spy.EditCifInfo()'>metacif</a> $spy.gui.report.publication.DisplayMergeList()
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<tr align = 'center' width='100%'>
+<!-- #include tool-first-column gui\blocks\tool-first-column.htm;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+  <td align='left' width='30%'>
+    &nbsp;<b>Add CIF</b>
+  </td>
+  <td width='35%'>
+    <snippet src="gui/snippets/gui-link-plain"
+     name="add_local_cif"
+     value="local"
+     onclick="spy.gui.report.publication.add_cif_to_merge_list(FileOpen('Choose definition file','.cif files|*.cif', FilePath()))>>html.Update"  />
+  </td>
+  <td width='35%'>
+    <snippet src="gui/snippets/gui-link-plain"
+     name="add_default_cif"
+     value="default"
+     onclick="spy.gui.report.publication.add_cif_to_merge_list(FileOpen('Choose definition file','.cif files|*.cif', BaseDir()/etc/site))>>html.Update"  />
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<tr align = 'center' width='100%'>
+<!-- #include tool-help-first-column gui\blocks\tool-help-first-column.htm;help_ext=CIF-Part-4;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+  <td name="Force metacif" align='right' VALIGN='right' width='8%'>
+    <input
+      type='checkbox'
+      height="GetVar(HtmlCheckboxHeight)"
+      bgcolor="GetVar('HtmlTableBgColour')"
+      name = "FORCE_METACIF"
+      checked = "spy.GetParam(snum.metadata.force_metacif)"
+      onclick = "spy.SetParam(snum.metadata.force_metacif,html.GetState(~name~))"
+      right='false'
+    >
+  </td>
+  <td width='92%'>
+    Merge metacif items even if marked for skipping
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<tr align = 'center' width='100%'>
+<!-- #include tool-help-first-column gui\blocks\tool-help-first-column.htm;help_ext=CIF-Part-HTAB;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+  <td width="30%">&nbsp;<b>HTAB</b> max D-A</td>
+  <td width="20%">
+    <snippet src="gui/snippets/input-text"
+     name="htab_d"
+     value="spy.GetParam('snum.cif.htab_max_d')"
+     onchange="spy.SetParam('snum.cif.htab_max_d', html.GetValue('~name~'))"  />
+  </td>
+
+  <td width="30%" align="right">min D-H-A angle</td>
+  <td width="20%">
+    <snippet src="gui/snippets/input-text"
+     name="htab_ang"
+     value="spy.GetParam('snum.cif.htab_min_angle')"
+     onchange="spy.SetParam('snum.cif.htab_min_angle', html.GetValue('~name~'))"  />
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<tr align = 'center' width='100%'>
+<!-- #include tool-first-column gui\blocks\tool-first-column.htm;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+  <td width="50%">
+    <snippet src="gui/snippets/gui-link-plain"
+     name="htab_cmd"
+     value="HTAB"
+     onclick="fuse>>delins htab>>htab spy.GetParam('snum.cif.htab_max_d') spy.GetParam('snum.cif.htab_min_angle') -g=html.GetState('htab_display')"  />
+  </td>
+  <td width="50%" align="left">
+    <snippet src="gui/snippets/input-checkbox-plain"
+     value="Display"
+     name="htab_display" />
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<tr align = 'center' width='100%'>
+<!-- #include tool-help-first-column gui\blocks\tool-help-first-column.htm;help_ext=CIF-Part-4;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+   <td width="8%" align="right">$+
+     html.Snippet("gui/snippets/input-checkbox-plain", "name=report_rtabs",
+      "checked=spy.GetParam('snum.cif.report_rtabs')",
+      "onclick=spy.SetParam('snum.cif.report_rtabs', html.GetState('~name~'))")
+   $-</td>
+  <td width="42%">
+    Report RTABs
+  </td>
+
+  <td width="8%" align="right">$+
+    html.Snippet("gui/snippets/input-checkbox-plain", "name=report_vars",
+     "checked=spy.GetParam('snum.cif.report_vars')",
+     "onclick=spy.SetParam('snum.cif.report_vars', html.GetState('~name~'))")
+  $-</td>
+  <td width="42%">
+    Report VARs
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<tr align = 'center' width='100%'>
+<!-- #include tool-first-column gui\blocks\tool-first-column.htm;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+  <td width="30%">
+    &nbsp;Final data name
+  </td>
+  <td width="70%">$+
+    html.Snippet("gui/snippets/input-text", "name=cif_dataname",
+     "value=spy.GetParam('snum.cif.dataname')",
+     "onchange=spy.SetParam('snum.cif.dataname', html.GetValue('~name~'))")
+  $-</td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+
+
+<!-- #ignoreif sg('%c')
+<tr align = 'center' name=EDIT_CIF width='100%'>
+<!-- #include tool-help-first-column gui\blocks\tool-help-first-column.htm;help_ext=ABS-STR;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+  <td width="50%">Absolute structure determination
+    <br>Flack parameter: $spy.GetParam('snum.refinement.flack_str')
+    <br>Hooft parameter: $spy.GetParam('snum.refinement.hooft_str')
+   </td>
+   <td width="50%">$+
+     html.Snippet("gui/snippets/input-combo", "name=abs_str_determination",
+      "value=spy.get_cif_item('_chemical_absolute_configuration')",
+      "items=Anomalous dispersion<-ad;Reference molecule<-rm;Reference molecule + AD<-rmad;
+Synthesis<-syn;Unknown<-unk;Not applicable<-.;",
+      "onchange=spy.set_cif_item('_chemical_absolute_configuration', html.GetValue('~name~'))")
+    $-</td>
+
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+#ignoreif -->
+
+
+</table>
+      </td>
+    </tr>

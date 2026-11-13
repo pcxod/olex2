@@ -90,7 +90,9 @@ void TAsymmUnit::Assign(const TAsymmUnit& C) {
 
   for (size_t i = 0; i < C.Residues.Count(); i++) {
     TResidue& resi = C.Residues[i];
-    TResidue& nr = NewResidue(resi.GetClassName(), resi.GetNumber(),
+    // old: TResidue& nr = NewResidue( - merged mutation sites
+    // verbatim, so a mutation site keeps both of its residues
+    TResidue& nr = AddResidue(resi.GetClassName(), resi.GetNumber(),
       resi.GetAlias(), resi.GetChainId());
     nr.SetCapacity(resi.Count());
   }
@@ -264,15 +266,51 @@ void TAsymmUnit::InitData() {
   }
 }
 //..............................................................................
+TResidue& TAsymmUnit::AddResidue(const olxstr& RClass, int number, int alias,
+  olxch chainId)
+{
+  if (chainId == ' ' || chainId == '\0') {
+    chainId = TResidue::NoChainId();
+  }
+  TResidue &r = Residues.Add(new TResidue(*this,
+    (uint32_t)Residues.Count() + 1, RClass, number, alias, chainId));
+  olx_pdict<int, TResidue*> &rd = ResidueRegistry.Add(chainId);
+  if (rd.Find(number, 0) == 0) {
+    rd(number, &r);
+  }
+  if (alias != number && rd.Find(alias, 0) == 0) {
+    rd(alias, &r);
+  }
+  return r;
+}
+//..............................................................................
 TResidue& TAsymmUnit::NewResidue(const olxstr& RClass, int number, int alias,
   olxch chainId)
 {
+  // the registry is keyed on this: a blank would file under ' ', not '~'
+  if (chainId == ' ' || chainId == '\0') {
+    chainId = TResidue::NoChainId();
+  }
+  /* old: any residue 0 was the main one, the PDB numbers from zero
   if (number == 0) {
     if (!RClass.IsEmpty()) {
       throw TInvalidArgumentException(__OlxSourceInfo,
         "Cannot rename main residue");
     }
     return MainResidue;
+  }
+  */
+  /* only the unnamed residue is the main one: the PDB numbers from zero, and
+  a named residue 0 in a chain is an ordinary one, MainResidue being chain-less
+  */
+  if (number == 0) {
+    if (RClass.IsEmpty()) {
+      return MainResidue;
+    }
+    if (chainId == TResidue::NoChainId()) {
+      throw TInvalidArgumentException(__OlxSourceInfo,
+        "Cannot rename main residue");
+    }
   }
   if (number == TResidue::NoResidue && alias == TResidue::NoResidue) {
     for (size_t i = 0; i < Residues.Count(); i++) {
@@ -299,10 +337,25 @@ TResidue& TAsymmUnit::NewResidue(const olxstr& RClass, int number, int alias,
         er->SetClassName(RClass);
       }
       else {
+        /* old: a mutation site cannot be loaded
         throw TInvalidArgumentException(__OlxSourceInfo,
           olx_print("Residue number %d is already assigned class %w", number,
             &er->GetClassName())
         );
+        */
+        /* residue level disorder: the same number is another residue in another
+        conformer, both in the model. The registry holds one per number, so the
+        others are found by scanning
+        */
+        for (size_t i = 0; i < Residues.Count(); i++) {
+          TResidue &r = Residues[i];
+          if (r.GetNumber() == number && r.GetChainId() == chainId &&
+            r.GetClassName().Equalsi(RClass))
+          {
+            return r;
+          }
+        }
+        return AddResidue(RClass, number, alias, chainId);
       }
     }
     return *er;
@@ -368,15 +421,24 @@ ConstPtrList<TResidue> TAsymmUnit::FindResidues(const olxstr& resi, size_t max_n
   return list;
 }
 //..............................................................................
+/* in this residue's own chain: the number alone searches the chain-less
+bucket only, so a residue in a chain had no neighbours, nor SHELX's _+ and _-
+*/
 TResidue* TAsymmUnit::NextResidue(const TResidue& r) const {
-  return FindResidue(r.GetNumber()+1);
+  // old: return FindResidue(r.GetNumber()+1);
+  return FindResidue(r.GetChainId(), r.GetNumber()+1);
 }
 //..............................................................................
 TResidue* TAsymmUnit::PrevResidue(const TResidue& r) const {
-  return FindResidue(r.GetNumber()-1);
+  // old: return FindResidue(r.GetNumber()-1);
+  return FindResidue(r.GetChainId(), r.GetNumber()-1);
 }
 //..............................................................................
 TResidue* TAsymmUnit::FindResidue(olxch chainId, int num) const {
+  // as NewResidue, or a blank chain never finds what it filed under '~'
+  if (chainId == ' ' || chainId == '\0') {
+    chainId = TResidue::NoChainId();
+  }
   size_t cid = ResidueRegistry.IndexOf(chainId);
   return cid == InvalidIndex ? 0 : ResidueRegistry.GetValue(cid).Find(num, 0);
 }
@@ -478,7 +540,8 @@ void TAsymmUnit::AssignResidues(const TAsymmUnit& au) {
   }
   for (size_t i=0; i < au.Residues.Count(); i++) {
     TResidue& that_resi = au.Residues[i];
-    TResidue& this_resi = NewResidue(
+    // old: TResidue& this_resi = NewResidue( - merged mutation sites
+    TResidue& this_resi = AddResidue(
       that_resi.GetClassName(), that_resi.GetNumber(), that_resi.GetAlias(),
       that_resi.GetChainId());
     this_resi.SetCapacity(that_resi.Count());

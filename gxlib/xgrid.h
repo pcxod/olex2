@@ -42,6 +42,7 @@ class TXGrid : public AGDrawObject {
   class TLegend : public AGlMouseHandlerImp {
     int Width, Height;
     int Top, Left;
+    bool Moved;  // dragged or reset this session: keep the place
     GLuint TextureId;
     double Z;
     TGlMaterial GlM;
@@ -53,6 +54,7 @@ class TXGrid : public AGDrawObject {
     const vec3d& GetCenter() const { return Center; }
     void Init(unsigned char* RGB, GLenum format);
     void LibReset(const TStrObjList& Params, TMacroData& E);
+    void TopRightCorner(int& left, int& top) const;
   public:
     TLegend(TGlRenderer& Render, const olxstr& collectionName);
     void SetData(unsigned char* RGB, GLsizei width, GLsizei height,
@@ -67,6 +69,8 @@ class TXGrid : public AGDrawObject {
     void ExportLibrary(TLibrary& lib);
 
     TStrList text;
+    // the colour scale sits in the top right corner until the user moves it
+    bool TopRight;
   };
 
   TArray3D<float>* ED;
@@ -84,11 +88,21 @@ class TXGrid : public AGDrawObject {
   GLuint TextIndex;
   static TXGrid* Instance;
   void RescaleSurface(bool collect_only);
+  /* emits (or collects) the triangles whose vertices are all inside, using
+  the per vertex Cartesian coordinates; inside == 0 - all are
+  */
+  void EmitTriangles(const TArrayList<IsoTriangle>& trians,
+    const TArrayList<vec3f>& norms, size_t li, const TArrayList<vec3d>& cart,
+    const TArrayList<bool>* inside, TTypeList<vec3f>* va, bool collect_only);
   TGlTextBox *Info;
   TLegend *Legend;
   short RenderMode;
   bool Extended, Boxed, Loading_;
   vec3f ExtMin, ExtMax;
+  // a Cartesian box grid (molecular cubes): no cell wrapping, no mask
+  bool BoxMode;
+  vec3f BoxOrigin;
+  mat3f BoxAxes;
   TGlPrimitive* glpP, *glpN, *glpC;
   // these will keep the masked objects
   TArrayList<vec3f_alist> vertices, normals;
@@ -127,8 +141,25 @@ protected:
   static void _ResetLists() {
     if (Instance != 0) {
       Instance->PListId = Instance->NListId = ~0;
+      Instance->PlaneCacheValid = false;
     }
   }
+  /* 2D map modes: the resampled plane, texture and legend are kept until
+  something they depend on changes; DataVersion is bumped by everything that
+  alters the map values (raw writes through Data() end with AdjustMap)
+  */
+  struct PlaneKey {
+    float bm[9], c2c[9], center[3], depth, size, box_min, box_step, colours[8];
+    size_t max_dim, levels, data_version;
+    const void* data;
+    short mode;
+    bool reverse;
+  };
+  PlaneKey LastPlaneKey;
+  bool PlaneCacheValid;
+  size_t DataVersion;
+  float PlaneMinVal, PlaneMaxVal;
+  void DataChanged() { DataVersion++; }
 public:
   TXGrid(const olxstr& collectionName, TGXApp* xapp);
   virtual ~TXGrid();
@@ -147,6 +178,7 @@ public:
     if (ColorData != 0) {
       ColorData->Data[i][j][k] = cl;
     }
+    DataChanged();
   }
   double GetValue(int i, int j, int k) const {
     return ED->Data[i][j][k];
@@ -157,6 +189,7 @@ public:
     if (ColorData != 0) {
       ColorData->Data[(int)ind[0]][(int)ind[1]][(int)ind[2]] = cl;
     }
+    DataChanged();
   }
   template <class T> float GetValue(const T& v) const {
     return ED->Data[(int)v[0]][(int)v[1]][(int)v[2]];
@@ -164,6 +197,15 @@ public:
 
   // copies the 0yz x0z and xy0 layers to Maxyz xMaxyz and xyMaxZ
   void AdjustMap();
+  /* the grid becomes a Cartesian box: origin and the three step vectors (rows,
+  Angstrom); InitGrid resets it. The grid covers all MaxX+1 points
+  */
+  void SetBox(const vec3f& origin, const mat3f& axes) {
+    BoxOrigin = origin;
+    BoxAxes = axes;
+    BoxMode = true;
+  }
+  bool IsBox() const { return BoxMode; }
   virtual void Create(const olxstr& cName = EmptyString());
 
   virtual bool Orient(TGlPrimitive& P);
@@ -209,6 +251,11 @@ public:
       Clear();
     }
   }
+
+  /* the colour scale of a coloured surface: 32 RGB rows, the first at the
+  top, and the labels from the top down; no labels hides it. Shift+drag moves it
+  */
+  void SetColourLegend(const unsigned char* rgb, const TStrList& labels);
 
   bool OnMouseDown(const IOlxObject *Sender, const TMouseData& Data);
   bool OnMouseUp(const IOlxObject *Sender, const TMouseData& Data);

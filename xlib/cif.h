@@ -29,6 +29,10 @@ private:
   // to be used inernally for locating atoms in the tables
   ConstPtrList<TCAtom> FindAtoms(const TStrList& names);
   bool has_duplicate_labels;
+  /* the macromolecular dictionary: same STAR syntax and parser, other data
+  names (_cell.length_a) and orthogonal coordinates
+  */
+  bool is_mmcif;
 protected:
   static cif_dp::cetTable* LoopFromDef(cif_dp::CifBlock& dp,
     const TStrList& col_names);
@@ -38,6 +42,11 @@ protected:
     return LoopFromDef(dp, TStrList(col_names, ','));
   }
   void _LoadCurrent();
+  // builds the asymmetric unit from the mmCIF categories
+  void _LoadCurrentMM();
+  // one residue per chain, sequence number and insertion code; 0 if none
+  TResidue *MMResidue(const olxstr &comp_id, const olxstr &seq_id,
+    const olxstr &chain_id, const olxstr &ins_code);
   size_t get_bix(size_t block_idx) const {
     size_t bix = block_idx == InvalidIndex ? block_index : block_idx;
     if (bix == InvalidIndex || bix >= data_provider.Count()) {
@@ -56,6 +65,12 @@ public:
   bool HasDuplicateLabels() {
     return has_duplicate_labels;
   }
+  // valid after loading; the CIF written on ACTA has to follow it
+  bool IsMMCif() const { return is_mmcif; }
+  /* the macromolecular name for a core one, empty if there is none: a table,
+  _refine_ls_R_factor_gt being _refine.ls_R_factor_R_work
+  */
+  static olxstr MMEquivalentOf(const olxstr &core_name);
   /* Saves the data to a file and returns true if successful and false in the
   case of failure
   */

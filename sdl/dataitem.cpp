@@ -254,7 +254,8 @@ bool TDataItem::DeleteByName(const olxstr& name) {
         }
         return false;
       }
-      root->DeleteFieldByIndex(ii);
+      // old: root->DeleteFieldByIndex(ii); - left the later fields' indices stale
+      root->DeleteFieldByIndex(ii, true);
       return true;
     }
     if ((i + 1) == toks.Count()) {

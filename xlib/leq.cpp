@@ -340,13 +340,19 @@ XVarReference& XVarManager::AddVarRef(XVar& var, IXVarReferencer& a,
   short var_name, short relation, double coeff)
 {
   XVarReference* prf = a.GetVarRef(var_name);
+  /* only the references after a removed one change index; the old loops
+  renumbered all of them, quadratic in the coded parameter count
+  */
+  size_t from = References.Count();
   if (prf != 0 && olx_is_valid_index(prf->GetId())) {
+    from = prf->GetId();
     prf->Parent._RemRef(*prf);
-    References.Delete(prf->GetId());
+    References.Delete(from);
   }
   XVarReference& rf = References.Add(
     new XVarReference(var, a, var_name, relation, coeff));
-  for (size_t i = 0; i < References.Count(); i++) {
+  // old: for (size_t i = 0; i < References.Count(); i++) {
+  for (size_t i = from; i < References.Count(); i++) {
     References[i].SetId(i);
   }
   var._AddRef(rf);
@@ -362,9 +368,11 @@ XVarReference* XVarManager::ReleaseRef(IXVarReferencer& a, short var_name) {
     if (!olx_is_valid_index(prf->GetId())) {
       return 0;
     }
+    const size_t from = prf->GetId();
     prf->Parent._RemRef(*prf);
-    References.Release(prf->GetId());
-    for (size_t i = 0; i < References.Count(); i++) {
+    References.Release(from);
+    // old: for (size_t i = 0; i < References.Count(); i++) {
+    for (size_t i = from; i < References.Count(); i++) {
       References[i].SetId(i);
     }
     prf->SetId(~0);
@@ -376,10 +384,12 @@ void XVarManager::RestoreRef(IXVarReferencer& a, short var_name,
   XVarReference* vr)
 {
   XVarReference* prf = a.GetVarRef(var_name);
+  size_t from = References.Count();
   if (prf != 0) {
     prf->Parent._RemRef(*prf);
     if (olx_is_valid_index(prf->GetId())) { // is not released?
-      References.Delete(prf->GetId());
+      from = prf->GetId();
+      References.Delete(from);
     }
   }
   if (vr != 0) {
@@ -390,7 +400,8 @@ void XVarManager::RestoreRef(IXVarReferencer& a, short var_name,
   else {
     a.SetVarRef(var_name, 0);
   }
-  for (size_t i = 0; i < References.Count(); i++) {
+  // old: for (size_t i = 0; i < References.Count(); i++) {
+  for (size_t i = from; i < References.Count(); i++) {
     References[i].SetId(i);
   }
 }
@@ -440,10 +451,12 @@ void XVarManager::FixParam(IXVarReferencer& ca, short var_index) {
 void XVarManager::FreeParam(IXVarReferencer& ca, short var_index) {
   XVarReference* vr = ca.GetVarRef(var_index);
   if (vr != 0 && olx_is_valid_index(vr->GetId())) {
+    const size_t from = vr->GetId();
     vr->Parent._RemRef(*vr);
     ca.SetVarRef(var_index, 0);
-    References.Delete(vr->GetId());
-    for (size_t i = 0; i < References.Count(); i++) {
+    References.Delete(from);
+    // old: for (size_t i = 0; i < References.Count(); i++) {
+    for (size_t i = from; i < References.Count(); i++) {
       References[i].SetId(i);
     }
   }

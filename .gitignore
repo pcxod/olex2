@@ -1,0 +1,45 @@
+# Build intermediates
+*.obj
+*.tlog
+*.sbr
+*.pdb
+*.cache
+# *.pdb also matches Protein Data Bank files: add a test structure with -f
+*.db
+*.db-shm
+*.db-wal
+*.bin
+*.opendb
+*.ipch
+*.log
+*.vsidx
+*.lib
+*.bsc
+*.recipe
+*.FileListAbsolute.txt
+
+# Visual Studio per-user state
+.vs/
+
+# Build output trees
+build/MSVC-2022/Olex2/x64/
+build/MSVC-2022/Olex2/Win32/
+
+# local VS2026 solution; new sources must also go into the MSVC-2022 projects
+build/MSVC-2026/
+
+# Scratch driver for running Olex2 headlessly, built in place
+olex2c/
+
+# written by SConstruct for -D_SVN_REVISION_AVAILABLE builds
+svn_revision.h
+
+# Standalone Qt reimplementation. Its own repository, cloned separately from
+# github.com/AK-Kleemiss/QT_implementation
+QT_implementation/
+
+# Test harness binaries, built from the .cpp files beside them
+tests/cartoon_bench/*.exe
+tests/cartoon_bench/*.exp
+tests/protein_report/*.exe
+tests/protein_report/*.exp

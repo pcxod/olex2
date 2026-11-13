@@ -70,6 +70,8 @@
 #include "html/htmlmanager.h"
 
 #include <iostream>
+#include <map>
+#include <array>
 
 #include "pyext.h"
 
@@ -122,7 +124,9 @@
 
 #ifdef __linux__
 #include <signal.h>
+# ifndef __ANDROID__  // no fontconfig in the NDK
 #include <fontconfig/fontconfig.h>
+# endif
 #endif
 
 #include "olxmps.h"
@@ -2852,6 +2856,21 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
     if (TEFile::UnixPath(file_n.file_name).StartsFrom("http://") ||
       TEFile::UnixPath(file_n.file_name).StartsFrom("https://"))
     {
+      /* the structure factors are in a separate mmCIF, not an hkl beside the
+      model, and need converting - the python side does the whole entry
+      */
+      {
+        TUrl url(TEFile::UnixPath(file_n.file_name));
+        olxstr fn = TEFile::ExtractFileName(url.GetPath());
+        if (url.GetHost().Containsi("rcsb.org") && fn.EndsWithi(".cif")) {
+          olxstr code = TEFile::ChangeFileExt(fn, EmptyString());
+          if (XLibMacros::IsPdbEntryCode(code)) {
+            Macros.ProcessMacro(
+              olxstr("spy.pdb.fetch_entry('") << code << "')", Error);
+            return;
+          }
+        }
+      }
       TStrList files;
       files << file_n.file_name;
       // loking for COD urls
@@ -2875,6 +2894,25 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
       file_n.file_name = FXApp->XFile().GetFileName();
     }
     bool exists = TEFile::Exists(file_n.file_name);
+    /* a PDB entry code, as the COD url above. Only when nothing of that name
+    exists, whatever its extension - a local file wins
+    */
+    olxstr entry_code = Cmds.Text(' ').Trim(' ');
+    if (!exists && XLibMacros::IsPdbEntryCode(entry_code)) {
+      // the name is only made absolute below, so resolve the folder here
+      olxstr dir = TEFile::ExtractFilePath(file_n.file_name);
+      if (dir.IsEmpty()) {
+        dir = XLibMacros::CurrentDir();
+      }
+      TStrList named;
+      TEFile::ListDir(dir, named,
+        olxstr(TEFile::ExtractFileName(file_n.file_name)) << ".*", sefFile);
+      if (named.IsEmpty()) {
+        Macros.ProcessMacro(olxstr("spy.pdb.fetch_entry('")
+          << entry_code << "')", Error);
+        return;
+      }
+    }
     if (TEFile::ExtractFileExt(file_n.file_name).IsEmpty() || !exists) {
       olxstr res_fn = file_n.file_name + ".res",
         ins_fn = file_n.file_name + ".ins";
@@ -2914,7 +2952,7 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
       return;
     }
     FileFilter ff;
-    ff.AddAll("ins;cif;cmf;res;xyz;p4p;crs;pdb;fco;fcf;hkl");
+    ff.AddAll("ins;cif;cmf;res;xyz;p4p;crs;pdb;fco;fcf;hkl;hklm");
     ff.Add("*.mol", "MDL MOL");
     ff.Add("*.mas", "XD master");
     ff.Add("*.mol2", "Tripos MOL2");
@@ -2967,8 +3005,10 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
         FXApp->GetRenderer().GetStyles().LoadFromFile(DefStyle, false);
       }
     }
-    // special treatment of the hkl files
-    if (TEFile::ExtractFileExt(file_n.file_name).Equalsi("hkl")) {
+    // special treatment of the hkl files; an .hklm opens the same way and stays the HKL source
+    const olxstr hklm_src = THklFile::IsHklmFile(file_n.file_name)
+      ? file_n.file_name : EmptyString();
+    if (TEFile::ExtractFileExt(file_n.file_name).Equalsi("hkl") || !hklm_src.IsEmpty()) {
       if (!TEFile::Exists(TEFile::ChangeFileExt(file_n.file_name, "ins"))) {
         THklFile hkl;
         sw.start("Loading HKL file");
@@ -3069,6 +3109,9 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
         ins.SaveForSolution(ins_fn, EmptyString(), EmptyString(), false);
       }
       Macros.ProcessMacro(olxstr("reap ").quote() << ins_fn, Error);
+      if (!hklm_src.IsEmpty()) {
+        FXApp->XFile().GetRM().SetHKLSource(hklm_src);
+      }
       return;
     }
     try {
@@ -3108,6 +3151,9 @@ void TMainForm::macReap(TStrObjList &Cmds, const TParamList &Options,
       sw.start("Loading the XFile");
       TEFile::ChangeDir(TEFile::ExtractFilePath(file_n.ToString()));
       FXApp->LoadXFile(file_n.ToString());
+      if (!hklm_src.IsEmpty()) {
+        FXApp->XFile().GetRM().SetHKLSource(hklm_src);
+      }
       sw.start("Creating bad reflections and refinement info tables");
       BadReflectionsTable(false, false);
       RefineDataTable(false, false);
@@ -3430,6 +3476,9 @@ void TMainForm::macPopup(TStrObjList& Cmds, const TParamList& Options, TMacroDat
 }
 //..............................................................................
 void TMainForm::macPython(TStrObjList& Cmds, const TParamList& Options, TMacroData& E) {
+#ifndef _PYTHON
+  E.ProcessingError(__OlxSrcInfo, "this build has no Python");
+#else
   if (Options.Contains('i') || Options.Contains('l')) {
     TdlgStyledEdit* dlg = new TdlgStyledEdit(this, true);
     olx_finally f_ = olx_finally::make(*dlg, &TdlgStyledEdit::Destroy);
@@ -3458,6 +3507,7 @@ void TMainForm::macPython(TStrObjList& Cmds, const TParamList& Options, TMacroDa
     tmp << '\n';
   }
   PythonExt::GetInstance()->RunPython(tmp);
+#endif
 }
 //..............................................................................
 void TMainForm::macCreateMenu(TStrObjList& Cmds, const TParamList& Options, TMacroData& E) {
@@ -4966,7 +5016,69 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
     }
     else if (Cmds[0].Equalsi("poly") && Cmds.Count() > 3) {
       TStrList svertices, striangles;
-      if (Cmds.Count() == 4 && TEFile::Exists(Cmds[3])) {
+      TArrayList<vec3f> vertices;
+      TArrayList<vec3s> triags;
+      TArrayList<uint32_t> colors; // one per triangle, from the obj's mtl
+      bool keep_winding = false; // obj: the file orients the faces
+      if (Cmds.Count() == 4 && Cmds[3].EndsWithi(".obj") &&
+        TEFile::Exists(Cmds[3]))
+      {
+        /* Wavefront obj as NoSpherA2 writes it: 'v x y z', 'usemtl name',
+        'f i j k' (1-based), the colour is the material's Kd in the .mtl next
+        to it. -s scales the coordinates (0.529177 for a bohr file)
+        */
+        olxstr_dict<uint32_t> mats;
+        olxstr mtl_fn = TEFile::ChangeFileExt(Cmds[3], "mtl");
+        if (TEFile::Exists(mtl_fn)) {
+          TStrList ml = TEFile::ReadLines(mtl_fn);
+          olxstr name;
+          for (size_t i = 0; i < ml.Count(); i++) {
+            TStrList toks(ml[i], ' ');
+            if (toks.Count() == 2 && toks[0] == "newmtl") {
+              name = toks[1];
+            }
+            else if (toks.Count() == 4 && toks[0] == "Kd") {
+              mats.Add(name, OLX_RGB(toks[1].ToFloat() * 255,
+                toks[2].ToFloat() * 255, toks[3].ToFloat() * 255));
+            }
+          }
+        }
+        float scale = Options.FindValue("s", "1").ToFloat();
+        keep_winding = true;
+        uint32_t color = 0x808080;
+        TStrList ol = TEFile::ReadLines(Cmds[3]);
+        for (size_t i = 0; i < ol.Count(); i++) {
+          TStrList toks(ol[i], ' ');
+          if (toks.Count() == 4 && toks[0] == "v") {
+            vertices.Add(vec3f(toks[1].ToFloat(), toks[2].ToFloat(),
+              toks[3].ToFloat()) * scale);
+          }
+          else if (toks.Count() == 4 && toks[0] == "f") {
+            triags.Add(vec3s(toks[1].ToSizeT() - 1, toks[2].ToSizeT() - 1,
+              toks[3].ToSizeT() - 1));
+            colors.Add(color);
+          }
+          else if (toks.Count() == 2 && toks[0] == "usemtl") {
+            color = mats.Find(toks[1], color);
+          }
+        }
+        if (vertices.Count() < 3 || triags.IsEmpty()) {
+          Error.ProcessingError(__OlxSrcInfo, "no triangles in the obj file");
+        }
+        // -f=file: one packed RGB per face line, overrides the mtl
+        olxstr colour_fn = Options.FindValue('f');
+        if (!colour_fn.IsEmpty() && TEFile::Exists(colour_fn)) {
+          TStrList cl = TEFile::ReadLines(colour_fn);
+          if (cl.Count() != triags.Count()) {
+            Error.ProcessingError(__OlxSrcInfo, "the colour file must have "
+              "one line per face");
+          }
+          for (size_t i = 0; i < cl.Count(); i++) {
+            colors[i] = cl[i].ToUInt();
+          }
+        }
+      }
+      else if (Cmds.Count() == 4 && TEFile::Exists(Cmds[3])) {
         TStrList toks(TEFile::ReadLines(Cmds[3]).Text(';'), ';');
         if (toks.Count() != 2) {
           Error.ProcessingError(__OlxSrcInfo, "a list of vertices seperated "
@@ -4986,14 +5098,15 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
         svertices.Strtok(toks[0], ',');
         striangles.Strtok(toks[1], ',');
       }
-      if (svertices.Count() < 3 || striangles.IsEmpty()) {
+      if (vertices.IsEmpty() &&
+        (svertices.Count() < 3 || striangles.IsEmpty()))
+      {
         Error.ProcessingError(__OlxSrcInfo, "at least three vertices and 1 "
           "triangle are expected");
       }
-      if (Error.IsSuccessful()) {
-        TArrayList<vec3f> vertices(svertices.Count());
-        TArrayList<vec3s> triags(striangles.Count());
-        vec3f center;
+      if (Error.IsSuccessful() && vertices.IsEmpty()) {
+        vertices.SetCount(svertices.Count());
+        triags.SetCount(striangles.Count());
         for (size_t i = 0; i < svertices.Count(); i++) {
           TStrList toks(svertices[i], ' ');
           if (toks.Count() != 3) {
@@ -5004,9 +5117,7 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
           for (int j = 0; j < 3; j++) {
             vertices[i][j] = toks[j].ToFloat();
           }
-          center += vertices[i];
         }
-        center /= vertices.Count();
         for (size_t i = 0; i < striangles.Count(); i++) {
           TStrList toks(striangles[i], ' ');
           if (toks.Count() != 3) {
@@ -5022,6 +5133,80 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
             }
           }
         }
+      }
+      if (Error.IsSuccessful()) {
+        vec3f center;
+        for (size_t i = 0; i < vertices.Count(); i++) {
+          center += vertices[i];
+        }
+        center /= vertices.Count();
+        /* one normal per vertex, the average of its faces; marching cubes
+        writes every triangle with its own three vertices and no vn, so the
+        vertices are merged by coordinate first
+        */
+        TArrayList<vec3f> &normals = *(new TArrayList<vec3f>(triags.Count() * 3));
+        TArrayList<vec3f> &data = *(new TArrayList<vec3f>(triags.Count() * 3));
+        TArrayList<size_t> vid(vertices.Count()), order(triags.Count() * 3);
+        TArrayList<vec3f> vn;
+        {
+          std::map<std::array<float, 3>, size_t> unique;
+          for (size_t i = 0; i < vertices.Count(); i++) {
+            std::array<float, 3> k = { vertices[i][0], vertices[i][1], vertices[i][2] };
+            std::pair<std::map<std::array<float, 3>, size_t>::iterator, bool> r =
+              unique.insert(std::make_pair(k, vn.Count()));
+            if (r.second) {
+              vn.Add(vec3f());
+            }
+            vid[i] = r.first->second;
+          }
+        }
+        for (size_t i = 0; i < triags.Count(); i++) {
+          size_t idx[3] = { triags[i][0], triags[i][1], triags[i][2] };
+          vec3f tc;
+          for (int j = 0; j < 3; j++) {
+            tc += vertices[idx[j]];
+          }
+          tc /= 3;
+          vec3f n = (vertices[idx[0]] - vertices[idx[1]]).XProdVec(
+            (vertices[idx[2]] - vertices[idx[1]]));
+          if (n.QLength() > 0) { // marching cubes leaves degenerate faces
+            n.Normalise();
+          }
+          if (keep_winding) {
+            n *= -1;
+          }
+          else if ((tc - center).DotProd(n) < 0) {
+            n *= -1;
+          }
+          else {
+            olx_swap(idx[0], idx[2]);
+          }
+          for (int j = 0; j < 3; j++) {
+            data[3 * i + j] = vertices[idx[j]];
+            order[3 * i + j] = vid[idx[j]];
+            vn[vid[idx[j]]] += n;
+          }
+        }
+        for (size_t i = 0; i < vn.Count(); i++) {
+          if (vn[i].QLength() > 0) {
+            vn[i].Normalise();
+          }
+        }
+        for (size_t i = 0; i < order.Count(); i++) {
+          normals[i] = vn[order[i]];
+        }
+        TDUserObj* uo = FXApp->FindUserObject(Cmds[1]);
+        if (uo == 0) {
+          uo = new TDUserObj(FXApp->GetRenderer(), sgloTriangles, Cmds[1]);
+          FXApp->AddObjectToCreate(uo);
+        }
+        else { // same name - replace the geometry
+          FXApp->GetRenderer().RemoveCollection(uo->GetPrimitives());
+        }
+        uo->SetVertices(&data);
+        uo->SetNormals(&normals);
+        /* old: one normal per face (faceted shading) and a new object on
+        every call, even for an existing name
         TArrayList<vec3f> &normals = *(new TArrayList<vec3f>(triags.Count()));
         TArrayList<vec3f> &data = *(new TArrayList<vec3f>(triags.Count() * 3));
         for (size_t i = 0; i < triags.Count(); i++) {
@@ -5046,9 +5231,44 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
         uo->SetVertices(&data);
         uo->SetNormals(&normals);
         FXApp->AddObjectToCreate(uo);
+        */
+        /* -t=alpha, 0..1: a see-through surface. The colour drives the
+        material (sglmColorMat), so the alpha has to go into the colours -
+        the obj's mtl and the colour file come through OLX_RGB, which leaves
+        it at 0, and the surface would vanish as soon as blending is on
+        */
+        float alpha = olx_min(1.0f,
+          olx_max(0.0f, Options.FindValue("t", "1").ToFloat()));
+        bool has_colors = (colors.Count() == triags.Count());
+        TGlMaterial glm;
+        if (has_colors) {
+          uint32_t a = ((uint32_t)(alpha * 255 + 0.5f)) << 24;
+          TArrayList<uint32_t> &vc = *(new TArrayList<uint32_t>(data.Count()));
+          for (size_t i = 0; i < colors.Count(); i++) {
+            vc[3 * i] = vc[3 * i + 1] = vc[3 * i + 2] =
+              (colors[i] & 0x00FFFFFF) | a;
+          }
+          uo->SetColors(&vc);
+          glm.SetFlags(sglmColorMat | sglmSpecularF | sglmShininessF |
+            (alpha < 1 ? sglmTransparent : 0));
+          glm.SpecularF = 0x808080;
+          glm.ShininessF = 32;
+          uo->SetMaterial(glm);
+        }
         uo->SetZoomable(true);
         uo->SetMoveable(true);
         uo->Create();
+        if (has_colors) {
+          /* Create takes the material from the style if it has one, so a
+          surface shown again with a different -t would come back with the
+          material of the first one
+          */
+          TGlPrimitive* glp = uo->GetPrimitives().FindPrimitiveByName("Object");
+          if (glp != 0) {
+            glp->SetProperties(glm);
+            uo->GetPrimitives().GetStyle().SetMaterial("Object", glm);
+          }
+        }
       }
     }
     else {
@@ -6437,7 +6657,7 @@ void TMainForm::macRegisterFonts(TStrObjList &Cmds, const TParamList &Options,
     TEGC::AddP(toRemove.release());
   }
   SendMessage(HWND_BROADCAST, WM_FONTCHANGE, 0, 0);
-#elif __linux__
+#elif defined(__linux__) && !defined(__ANDROID__)
   if (FcConfigAppFontAddDir(0, (const FcChar8 *)Cmds[0].ToMBStr().c_str())) {
     TBasicApp::NewLogEntry(logInfo) << "Successfully registered the font directory";
   }

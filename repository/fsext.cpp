@@ -33,6 +33,7 @@ TFileHandlerManager::~TFileHandlerManager() {
 }
 //..............................................................................
 void TFileHandlerManager::_Clear() {
+  Generation()++;
   for (size_t i = 0; i < FMemoryBlocks.Count(); i++) {
     delete[] FMemoryBlocks.GetValue(i)->Buffer;
     delete FMemoryBlocks.GetValue(i);
@@ -242,6 +243,7 @@ void TFileHandlerManager::_SaveToStream(IDataOutputStream& os,
 void TFileHandlerManager::_LoadFromStream(IDataInputStream& is,
   short persistenceId)
 {
+  Generation()++;
   // validation of the stream
   olx_array_ptr<char> fSignature(SignatureLength() + 1);
   is.Read(fSignature, SignatureLength());
@@ -320,6 +322,7 @@ void TFileHandlerManager::Clear(short persistenceMask)  {
     for (size_t i = 0; i < Handler()->FMemoryBlocks.Count(); i++) {
       TMemoryBlock *mb = Handler()->FMemoryBlocks.GetValue(i);
       if ((mb->PersistenceId & persistenceMask) != 0) {
+        Generation()++;
         delete[] mb->Buffer;
         delete mb;
         Handler()->FMemoryBlocks.Delete(i--);
@@ -360,6 +363,9 @@ TMemoryBlock * TFileHandlerManager::_AddMemoryBlock(const olxstr& name,
   }
   else {
     delete[] mb->Buffer;
+  }
+  if (persistenceId != 0 || mb->PersistenceId != 0) {
+    Generation()++;
   }
   mb->Buffer = new char[length + 1];
   mb->Length = (uint32_t)length;
@@ -425,6 +431,9 @@ bool TFileHandlerManager::Remove(const olxstr& fn) {
     return false;
   }
   TMemoryBlock* mb = Handler()->FMemoryBlocks.GetValue(idx);
+  if (mb->PersistenceId != 0) {
+    Generation()++;
+  }
   delete[] mb->Buffer;
   delete mb;
   Handler()->FMemoryBlocks.Delete(idx);

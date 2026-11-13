@@ -21,6 +21,9 @@ TGlMouse::TGlMouse(TGlRenderer *Parent, TDFrame *Frame)
   FSX = FSY = 0;
   MData.GlMouse = this;
   InMode = FDblClick = false;
+#ifdef __ANDROID__
+  ViewBaked = false;
+#endif
   FParent = Parent;
   SetHandler(MouseEvtHandler::New(smbLeft, 0, smeMouseMove, meRotateXY));
   SetHandler(MouseEvtHandler::New(smbLeft, sssCtrl, smeMouseMove, meRotateZ));
@@ -122,6 +125,9 @@ bool TGlMouse::MouseUp(int x, int y, short Shift, short button) {
   }
   MData.Button &= ~button;
   MData.SetObject(0);
+#ifdef __ANDROID__
+  BakeView(false);
+#endif
   return res;
 }
 //..............................................................................
@@ -218,6 +224,9 @@ bool TGlMouse::MouseMove(int x, int y, short Shift)  {
     // default handlers...
     for (size_t i=0; i < Handlers.Count(); i++) {
       if (Handlers[i]->WillProcess(MData)) {
+#ifdef __ANDROID__
+        BakeView(true);  // the move handlers change only the view
+#endif
         Handlers[i]->Process(MData);
         res = true;
         break;
@@ -228,6 +237,15 @@ bool TGlMouse::MouseMove(int x, int y, short Shift)  {
   FSY = y;
   return res;
 }
+//..............................................................................
+#ifdef __ANDROID__
+void TGlMouse::BakeView(bool v) {
+  if (v != ViewBaked) {
+    ViewBaked = v;
+    FParent->Compile(v);
+  }
+}
+#endif
 //..............................................................................
 AMouseEvtHandler &TGlMouse::SetHandler(AMouseEvtHandler &eh) {
   bool found = false;
@@ -349,12 +367,12 @@ TLibrary *TGlMouse::ExportLib(const olxstr &name) {
 //..............................................................................
 //..............................................................................
 //..............................................................................
-void GlobalGlFunction(meMoveXY(const TMouseData &md)) {
-  if (!md.GlMouse->IsTranslationEnabled()) {
-    return;
+// shared by the mouse handlers below and by touch gestures (olex/touchnav)
+bool TGlMouse::MoveView(double dx, double dy) {
+  if (!IsTranslationEnabled()) {
+    return false;
   }
-  TGlRenderer *R = md.GlMouse->Parent();
-  const int dx = (md.X - md.GlMouse->SX()), dy = (md.GlMouse->SY() - md.Y);
+  TGlRenderer *R = FParent;
   double v = R->GetScale();
   vec3d t = vec3d(dx*v, dy*v, 0) / R->GetBasis().GetZoom();
   if (R->GetStereoFlag() == glStereoMatrix) {
@@ -364,7 +382,37 @@ void GlobalGlFunction(meMoveXY(const TMouseData &md)) {
   else {
     R->Translate(R->GetBasis().GetMatrix()*t);
   }
-  md.GlMouse->SetAction(glmaTranslateXY);
+  SetAction(glmaTranslateXY);
+  return true;
+}
+//..............................................................................
+bool TGlMouse::RotateViewZ(double ddeg) {
+  if (!IsRotationEnabled()) {
+    return false;
+  }
+  double RZ = FParent->GetBasis().GetRZ() + ddeg;
+  if (RZ > 360) {
+    RZ = 0;
+  }
+  if (RZ < 0) {
+    RZ = 360;
+  }
+  FParent->RotateZ(RZ);
+  SetAction(glmaRotateZ);
+  return true;
+}
+//..............................................................................
+bool TGlMouse::ZoomView(double z) {
+  if (!IsZoomingEnabled()) {
+    return false;
+  }
+  FParent->SetZoom(z);
+  SetAction(glmaZoom);
+  return true;
+}
+//..............................................................................
+void GlobalGlFunction(meMoveXY(const TMouseData &md)) {
+  md.GlMouse->MoveView(md.X - md.GlMouse->SX(), md.GlMouse->SY() - md.Y);
 }
 //..............................................................................
 void GlobalGlFunction(meMoveZ(const TMouseData &md)) {
@@ -409,29 +457,21 @@ void GlobalGlFunction(meRotateZ(const TMouseData &md)) {
   }
   TGlRenderer *R = md.GlMouse->Parent();
   const int dx = (md.X - md.GlMouse->SX()), dy = (md.GlMouse->SY() - md.Y);
-  double RZ = R->GetBasis().GetRZ();
+  double dRZ = 0;
   if (md.GlMouse->SX() > R->GetWidth() / 2) {
-    RZ -= (double)dy / FRotationDiv;
+    dRZ -= (double)dy / FRotationDiv;
   }
   else {
-    RZ += (double)dy / FRotationDiv;
+    dRZ += (double)dy / FRotationDiv;
   }
 
   if (md.GlMouse->SY() > R->GetHeight() / 2) {
-    RZ -= (double)dx / FRotationDiv;
+    dRZ -= (double)dx / FRotationDiv;
   }
   else {
-    RZ += (double)dx / FRotationDiv;
+    dRZ += (double)dx / FRotationDiv;
   }
-
-  if (RZ > 360) {
-    RZ = 0;
-  }
-  if (RZ < 0) {
-    RZ = 360;
-  }
-  R->RotateZ(RZ);
-  md.GlMouse->SetAction(glmaRotateZ);
+  md.GlMouse->RotateViewZ(dRZ);
 }
 //..............................................................................
 void GlobalGlFunction(meZoom(const TMouseData &md)) {
@@ -444,8 +484,7 @@ void GlobalGlFunction(meZoom(const TMouseData &md)) {
   if ((md.Shift&sssAlt) != 0) {
     df /= R->CalcZoom();
   }
-  R->SetZoom(R->GetZoom() + (double)dx / df - (double)dy / df);
-  md.GlMouse->SetAction(glmaZoom);
+  md.GlMouse->ZoomView(R->GetZoom() + (double)dx / df - (double)dy / df);
 }
 //..............................................................................
 void GlobalGlFunction(meZoomI(const TMouseData &md)) {
@@ -458,8 +497,7 @@ void GlobalGlFunction(meZoomI(const TMouseData &md)) {
   if ((md.Shift&sssAlt) != 0) {
     df /= R->CalcZoom();
   }
-  R->SetZoom(R->GetZoom() - (double)dx / df + (double)dy / df);
-  md.GlMouse->SetAction(glmaZoom);
+  md.GlMouse->ZoomView(R->GetZoom() - (double)dx / df + (double)dy / df);
 }
 //..............................................................................
 //..............................................................................

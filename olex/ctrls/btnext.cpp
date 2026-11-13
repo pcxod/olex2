@@ -12,6 +12,8 @@
 #include "olxstate.h"
 #include "fsext.h"
 #include "olxvar.h"
+#include "edict.h"
+#include <wx/mstream.h>
 
 using namespace ctrl_ext;
 //..............................................................................
@@ -258,11 +260,38 @@ void TImgButton::MouseMoveEvent(wxMouseEvent& event) {
   }
 }
 //..............................................................................
-wxBitmap TImgButton::BmpFromImage(const wxImage& img, int w, int h) const {
-  if (img.GetWidth() != w || img.GetHeight() != h) {
-    return wxBitmap(img.Scale(w, h));
+/* process-wide caches, so a page rebuild does not re-decode unchanged button
+images. An image hit needs byte-identical file content, a bitmap is keyed by
+the image data it was made from (pinned, so the pointer cannot be reused).
+Wiped whole when full; never destroyed, wx objects must not outlive the GUI
+*/
+namespace {
+  struct ImgCacheEntry { wxMemoryBuffer bytes; wxImage img; };
+  struct BmpCacheEntry { wxImage pin; wxBitmap bmp; };
+  olxstr_dict<ImgCacheEntry>& ImgCache() {
+    static olxstr_dict<ImgCacheEntry>* c = new olxstr_dict<ImgCacheEntry>;
+    return *c;
   }
-  return wxBitmap(img);
+  olxstr_dict<BmpCacheEntry>& BmpCache() {
+    static olxstr_dict<BmpCacheEntry>* c = new olxstr_dict<BmpCacheEntry>;
+    return *c;
+  }
+}
+wxBitmap TImgButton::BmpFromImage(const wxImage& img, int w, int h) const {
+  const olxstr key = olxstr((size_t)img.GetRefData()) << ':' << w << 'x' << h;
+  const size_t ci = BmpCache().IndexOf(key);
+  if (ci != InvalidIndex) {
+    return BmpCache().GetValue(ci).bmp;
+  }
+  if (BmpCache().Count() > 4096) {
+    BmpCache().Clear();
+  }
+  BmpCacheEntry& e = BmpCache().Add(key);
+  e.pin = img;
+  if (img.GetWidth() != w || img.GetHeight() != h) {
+    return (e.bmp = wxBitmap(img.Scale(w, h)));
+  }
+  return (e.bmp = wxBitmap(img));
 }
 //..............................................................................
 void TImgButton::SetImages(const olxstr& src, int w, int h) {
@@ -285,16 +314,36 @@ void TImgButton::SetImages(const olxstr& src, int w, int h) {
         ": could not locate image '" << fn << '\'';
       continue;
     }
+    wxMemoryOutputStream bytes;
+    fsFile->GetStream()->Read(bytes);
+    const void* data = bytes.GetOutputStreamBuffer()->GetBufferStart();
+    const size_t len = bytes.GetLength();
+    const size_t ci = ImgCache().IndexOf(fn);
     wxImage* img;
+    if (ci != InvalidIndex && ImgCache().GetValue(ci).bytes.GetDataLen() == len &&
+      memcmp(ImgCache().GetValue(ci).bytes.GetData(), data, len) == 0)
     {
+      img = new wxImage(ImgCache().GetValue(ci).img);
+    }
+    else {
       wxLogNull bl;
-      img = new wxImage(*(fsFile->GetStream()), wxBITMAP_TYPE_ANY);
+      // old: decoded straight from the stream on every page build, no cache
+      // img = new wxImage(*(fsFile->GetStream()), wxBITMAP_TYPE_ANY);
+      wxMemoryInputStream mis(data, len);
+      img = new wxImage(mis, wxBITMAP_TYPE_ANY);
       if (!img->IsOk()) {
         TBasicApp::NewLogEntry(logError) << "Failed to load image: " <<
           fn;
         delete img;
         continue;
       }
+      if (ImgCache().Count() > 2048) {
+        ImgCache().Clear();
+      }
+      ImgCacheEntry& e = ImgCache().Add(fn);
+      e.bytes.SetDataLen(0);
+      e.bytes.AppendData(data, len);
+      e.img = *img;
     }
     if (dest.Equalsi("up")) {
       imgState |= TImgButton::stUp;
@@ -353,5 +402,22 @@ void TImgButton::SetDown(bool v) {
     olx_swap(bmpUp, bmpDown);
   }
   _SetDown(v);
+}
+//..............................................................................
+void TImgButton::Reuse() {
+  _SetDown(false);
+  // SetImages sets only the bitmaps its source names
+  bmpUp = bmpDown = bmpDisabled = bmpHover = wxNullBitmap;
+  ResetActionQueues();
+  if (ActionQueue != 0) {
+    ActionQueue->Remove(this);
+    ActionQueue = 0;
+  }
+  Data.SetLength(0);
+  DependMode.SetLength(0);
+  Hint.SetLength(0);
+  UnsetToolTip();
+  state = (MouseIn ? stHover : 0);
+  ProcessingOnDown = false;
 }
 //..............................................................................

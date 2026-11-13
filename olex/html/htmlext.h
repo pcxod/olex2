@@ -21,6 +21,9 @@
 #include "../ctrls.h"
 #include "widgetcellext.h"
 #include "htmlprep.h"
+#ifdef __ANDROID__
+#include <vector>
+#endif
 
 enum {
   html_parent_resize = 2
@@ -85,6 +88,31 @@ protected:
     bool LoadFromFile(const olxstr& fn);
   };
   TObjectsState ObjectsState;
+  /* named combo boxes and image buttons of the previous page while the next
+  one is parsed: a reload recreates every control and the native create, fill
+  and destroy are most of its time, so the INPUT tag takes these back by name
+  */
+  olxstr_dict<wxWindow*, true> Recycled;
+  void RecycleControls();
+#ifdef __ANDROID__
+  /* a tab switch re-parses the whole sidebar: keep the last few cell trees
+  alive with their (hidden) controls, keyed by the evaluated page text and the
+  client width - the same text parses to the same tree
+  */
+  struct PageCache {
+    olxstr text;
+    int width;
+    wxHtmlContainerCell *cell;
+    olxstr_dict<AnAssociation3<AOlxCtrl*, wxWindow*, bool>, true> objects;
+    wxColour bg;
+    std::vector<wxWindow*> windows; // sorted
+  };
+  std::vector<PageCache*> PageCaches;
+  olxstr PageText;
+  int PageWidth;
+  void StashPage();
+  bool IsCachedWindow(wxWindow *w) const;
+#endif
 protected:
   olxstr GetObjectValue(const AOlxCtrl *Object);
   const olxstr& GetObjectData(const AOlxCtrl *Object);
@@ -166,6 +194,15 @@ public:
   wxWindow *FindObjectWindow(const olxstr& Name)  {
     const size_t ind = Objects.IndexOf(Name);
     return (ind == InvalidIndex) ? 0 : Objects.GetValue(ind).b;
+  }
+  // the previous page's control by this name if it is a T, see Recycled
+  template <class T> T *TakeRecycled(const olxstr &name) {
+    const size_t i = Recycled.IndexOf(name);
+    T *w = (i == InvalidIndex) ? 0 : dynamic_cast<T*>(Recycled.GetValue(i));
+    if (w != 0) {
+      Recycled.Delete(i);
+    }
+    return w;
   }
 
   bool IsDefined(const olxstr & Name) const {

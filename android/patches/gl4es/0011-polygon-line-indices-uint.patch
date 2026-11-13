@@ -1,0 +1,80 @@
+diff --git a/src/gl/list.h b/src/gl/list.h
+index 1efc143..89981e9 100644
+--- a/src/gl/list.h
++++ b/src/gl/list.h
+@@ -221,7 +221,7 @@ typedef struct _renderlist_t {
+     int     post_normal;
+     GLfloat post_normals[3];
+ 
+-    GLushort    *ind_lines;
++    GLuint      *ind_lines;
+     int         ind_line;
+     GLfloat      *final_colors;
+ 
+diff --git a/src/gl/listdraw.c b/src/gl/listdraw.c
+index d616b3b..30be324 100644
+--- a/src/gl/listdraw.c
++++ b/src/gl/listdraw.c
+@@ -239,14 +239,25 @@ void listInactiveVBO(renderlist_t* list, save_vbo_t* saved) {
+     }
+ }
+ 
+-int fill_lineIndices(modeinit_t *modes, int length, GLenum mode, GLushort* indices, GLushort *ind_line)
++// line indices are GLuint: a list past 65536 vertices wrapped in GLushort and
++// drew stray lines across the mesh; narrowed in place without element_index_uint
++static int narrow_lineIndices(GLuint *ind_line, int k)
++{
++    if (!hardext.elementuint) {
++        GLushort *s = (GLushort*)ind_line;
++        for (int j=0; j<k; ++j) s[j] = ind_line[j];
++    }
++    return k;
++}
++
++int fill_lineIndices(modeinit_t *modes, int length, GLenum mode, GLushort* indices, GLuint *ind_line)
+ {
+     #define ind(a)  indices?indices[a]:(a)
+     int k=0;
+     int i=0;
+     for (int m=0; m<length; m++) {
+-        GLenum mode_init = modes[k].mode_init;
+-        int len = modes[k].ilen;
++        GLenum mode_init = modes[m].mode_init;
++        int len = modes[m].ilen;
+         switch (mode) {
+             case GL_TRIANGLE_STRIP:
+                 // first 3 points a triangle, then a 2 lines per new point
+@@ -742,13 +753,13 @@ void draw_renderlist(renderlist_t *list) {
+                 if (glstate->polygon_mode == GL_LINE && list->mode_init>=GL_TRIANGLES) {
+                     int ilen = list->ilen;
+                     if(!list->ind_lines) {
+-                        GLushort *ind_line = list->ind_lines = (GLushort*)malloc(sizeof(GLushort)*ilen*4+2);
++                        GLuint *ind_line = list->ind_lines = (GLuint*)malloc(sizeof(GLuint)*ilen*4+2);
+                         modeinit_t tmp; tmp.mode_init = list->mode_init; tmp.ilen=list->ilen;
+                         int k = fill_lineIndices(list->mode_inits?list->mode_inits:&tmp, list->mode_inits?list->mode_init_len:1, list->mode, indices, list->ind_lines);
+-                        list->ind_line = k;
++                        list->ind_line = narrow_lineIndices(list->ind_lines, k);
+                     }
+                     bindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+-                    gles_glDrawElements(mode, list->ind_line, GL_UNSIGNED_SHORT, list->ind_lines);
++                    gles_glDrawElements(mode, list->ind_line, hardext.elementuint?GL_UNSIGNED_INT:GL_UNSIGNED_SHORT, list->ind_lines);
+                     use_vbo_indices = 1;
+                 } else {
+                     int vbo_indices = 0;
+@@ -789,13 +800,13 @@ void draw_renderlist(renderlist_t *list) {
+                 int len = list->len;
+                 if ((glstate->polygon_mode == GL_LINE) && (list->mode_init>=GL_TRIANGLES)) {
+                     if(!list->ind_lines) {
+-                        GLushort *ind_line = list->ind_lines = (GLushort*)malloc(sizeof(GLushort)*len*4+2);
++                        GLuint *ind_line = list->ind_lines = (GLuint*)malloc(sizeof(GLuint)*len*4+2);
+                         modeinit_t tmp; tmp.mode_init = list->mode_init; tmp.ilen=len;
+                         int k = fill_lineIndices(list->mode_inits?list->mode_inits:&tmp, list->mode_inits?list->mode_init_len:1, list->mode, NULL, list->ind_lines);
+-                        list->ind_line = k;
++                        list->ind_line = narrow_lineIndices(list->ind_lines, k);
+                     }
+                     bindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+-					gles_glDrawElements(mode, list->ind_line, GL_UNSIGNED_SHORT, list->ind_lines);
++					gles_glDrawElements(mode, list->ind_line, hardext.elementuint?GL_UNSIGNED_INT:GL_UNSIGNED_SHORT, list->ind_lines);
+                 } else {
+                     if(list->instanceCount==1)
+                         gles_glDrawArrays(mode, 0, len);

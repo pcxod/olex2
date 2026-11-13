@@ -571,7 +571,14 @@ TAG_HANDLER_PROC(tag) {
     olxstr buttonImage = tag.GetParam(wxT("IMAGE"));
     if (!buttonImage.IsEmpty()) {
       if (buttonImage.IndexOf(',') != InvalidIndex) {
-        TImgButton* ibtn = new TImgButton(html);
+        // the same button of the previous page, see THtml::Recycled
+        TImgButton* ibtn = html->TakeRecycled<TImgButton>(ObjectName);
+        if (ibtn == 0) {
+          ibtn = new TImgButton(html);
+        }
+        else {
+          ibtn->Reuse();
+        }
         ibtn->SetImages(buttonImage, width_set ? ax : -1, height_set ? ay : -1);
         ibtn->SetDown(GetBoolAttribute(tag, "DOWN"));
         CreatedWindow = ibtn;
@@ -680,19 +687,46 @@ TAG_HANDLER_PROC(tag) {
     if (GetBoolAttribute(tag, "READONLY")) {
       style = wxCB_READONLY;
     }
-    TComboBox *Box = new TComboBox(html, wxID_ANY, wxEmptyString, wxDefaultPosition,
-      wxSize(ax, ay), style);
+    // the same combo of the previous page, a read-only one stays read-only
+    TComboBox *Box = html->TakeRecycled<TComboBox>(ObjectName);
+    if (Box != 0 &&
+      (Box->GetWindowStyleFlag() & (wxCB_READONLY | wxTE_PROCESS_ENTER)) != style)
+    {
+      Box->Destroy();
+      Box = 0;
+    }
+    if (Box == 0) {
+      Box = new TComboBox(html, wxID_ANY, wxEmptyString, wxDefaultPosition,
+        wxSize(ax, ay), style);
+    }
+    else {
+      Box->ResetActionQueues();
+      Box->SetOnChangeAlways(false);
+      Box->SetSize(ax, ay);
+    }
     Box->SetFont(m_WParser->GetDC()->GetFont());
     AdjustSize(*Box);
     CreatedObject = Box;
     CreatedWindow = Box;
     if (tag.HasParam(wxT("ITEMS"))) {
       olxstr Items = ExpandMacroShortcuts(tag.GetParam(wxT("ITEMS")), macro_map);
+      /* ITEMS was already expanded once by htmlprep; a '(' in a plain list
+      (IAM(FLAT).tscb) parses as a call here and fails - keep the list then
+      */
+      const olxstr raw = Items;
+      if (!op->processFunction(Items, SrcInfo, true)) {
+        Items = raw;
+      }
+      Box->SetItemsFrom(Items);
+      /* old: used whatever a failed expansion left, and appended to what the
+      (now possibly reused) box held
       op->processFunction(Items, SrcInfo, true);
       TStrList SL(Items, ';');
       Box->AddItems(SL);
+      */
     }
     else {
+      Box->Clear();
       Box->AddObject(Value);
     }
     Box->SetText(Value);
@@ -1013,7 +1047,11 @@ TAG_HANDLER_PROC(tag) {
     }
     else if (itemsTag) {
       olxstr items = tag.GetParam(wxT("ITEMS"));
-      op->processFunction(items, SrcInfo, true);
+      const olxstr raw = items;  // as for the combo ITEMS above
+      if (!op->processFunction(items, SrcInfo, true)) {
+        items = raw;
+      }
+      // old: op->processFunction(items, SrcInfo, true); - the result was ignored
       itemsList.Strtok(items, ';');
     }
     TListBox *List = new TListBox(html);
@@ -1108,6 +1146,9 @@ TAG_HANDLER_PROC(tag) {
     else if (m_WParser->GetActualColor().IsOk()) {
       CreatedWindow->SetForegroundColour(m_WParser->GetActualColor());
     }
+    else { // a reused control drops the colour of the previous page
+      CreatedWindow->SetForegroundColour(wxNullColour);
+    }
 
     if (ParseColor(SrcInfo, tag, "BGCOLOR", macro_map, cl)) {
       CreatedWindow->SetBackgroundColour(cl);
@@ -1115,6 +1156,9 @@ TAG_HANDLER_PROC(tag) {
     else if (m_WParser->GetContainer()->GetBackgroundColour().IsOk()) {
       CreatedWindow->SetBackgroundColour(
         m_WParser->GetContainer()->GetBackgroundColour());
+    }
+    else {
+      CreatedWindow->SetBackgroundColour(wxNullColour);
     }
     CreatedWindow->Enable(!GetBoolAttribute(tag, "DISABLED"));
   }

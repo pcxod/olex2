@@ -1,0 +1,91 @@
+<!-- #include tool-h3 gui\blocks\tool-h3.htm;image=#image;colspan=1;1; -->
+
+<tr bgcolor="$GetVar(HtmlTableBgColour)">
+<!-- #include tool-column gui\blocks\tool-first-column.htm;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+  <td align='left' width="15%">%Map%</td>
+  <td width="35%">
+    $+
+      html.Snippet("gui/snippets/input-combo",
+      "name=SET_SNUM_MAP_TYPE",
+      "items=diff;fcalc;2Fo-Fc<-tomc;fobs;fcfmc;Mask<-mask",
+      "value=spy.GetParam('snum.map.type')",
+      "onchange=spy.SetParam('snum.map.type',html.GetValue('~name~'))>>spy.gui.maps.MapView('off')",
+      "onchangealways=True",
+      )
+    $-
+  </td>
+  <td align='center' width="15%">%Source%</td>
+  <td width="35%">$+
+      html.Snippet("gui/snippets/input-combo",
+      "name=SET_SNUM_MAP_SOURCE",
+      "items=fcf;olex;cctbx;",
+      "value=spy.GetParam('snum.map.source')",
+      "onchange=spy.SetParam('snum.map.source',html.GetValue('~name~'))>>spy.gui.maps.MapView('off')>>spy.gui.maps.MapView('on')",
+      )
+    $-</td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<tr bgcolor="$GetVar(HtmlTableBgColour)">
+<!-- #include tool-column gui\blocks\tool-first-column.htm;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+  <td align='left' width="15%">%Res%/&Aring</td>
+  <td width="35%">
+    $+
+      html.Snippet("gui/snippets/input-text",
+      "name=SET_SNUM_MAP_RESOLUTION",
+      "value=spy.GetParam('snum.map.resolution')",
+      "onleave=spy.SetParam('snum.map.resolution',html.GetValue(~name~))>>spy.gui.maps.MapView(off)",
+      )
+    $-
+  </td>
+
+    $+
+    html.Snippet(GetVar(default_link),
+    "name=MAKE_EDEN_MAP",
+    "value='\$spy.gui.maps.getActionString()'",
+    "onclick=spy.gui.maps.MapView()",
+    "td1=<td width='50%'>"
+    )$-
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<tr bgcolor="$GetVar(HtmlTableBgColour)">
+<!-- #include tool-column gui\blocks\tool-first-column.htm;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+  <td align='left' width="15%">%Scale%</td>
+  <td width="85%">$+
+      html.Snippet("gui/snippets/input-combo",
+      "name=SET_SNUM_SCALE_TYPE",
+      "items=Use current scale<-external;Force current scale<-external-forced;Update with sigma weights<-sigma;Update with ShelX weights<-shelx",
+      "value=spy.GetParam('snum.map.scale')",
+      "onchange=spy.SetParam('snum.map.scale',html.GetValue('~name~'))>>spy.gui.maps.MapView('off')",
+      "onchangealways=True",
+      )
+    $-</td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<tr bgcolor="$GetVar(HtmlTableBgColour)">
+<!-- #include tool-column gui\blocks\tool-first-column.htm;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+  <td width="70%">$+
+    html.Snippet("gui/snippets/input-checkbox", "name=SNUM_MAP_MASK",
+     "checked=spy.GetParam('snum.map.mask','false')",
+     "value=%Use structure mask%",
+     "onclick=spy.SetParam('snum.map.mask',html.GetState(~name~))")
+   $-</td>
+  <td width="30%">
+    $+
+      html.Snippet("gui/snippets/input-text",
+      "name=SET_SNUM_MASK_D",
+      "value=spy.GetParam('snum.map.mask_d')",
+      "onleave=spy.SetParam('snum.map.mask_d',html.GetValue(~name~))",
+      )
+    $-</td>
+
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+
+<tr bgcolor="$GetVar(HtmlTableBgColour)">
+<!-- #include tool-column gui\blocks\tool-first-column.htm;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->

@@ -1,0 +1,26 @@
+diff --git a/src/gl/raster.c b/src/gl/raster.c
+index 197dc83..a1922c3 100644
+--- a/src/gl/raster.c
++++ b/src/gl/raster.c
+@@ -460,7 +460,9 @@ void APIENTRY_GL4ES gl4es_glBitmap(GLsizei width, GLsizei height, GLfloat xorig,
+         for (int y = sy; y < ey; ++y) {
+ 			int by = floor(y/zoomy);
+             from = bitmap + (by * ((width+7)/8));
+-			to = glstate->raster.bitmap + 4 * (GLint)(rx+((ry+y) * glstate->raster.bm_width));
++			// the row starts at column sx, not 0: rx<0 (clipped at the left)
++			// wrote before the buffer on row 0
++			to = glstate->raster.bitmap + 4 * (GLint)(rx+sx+((ry+y) * glstate->raster.bm_width));
+             for (int x = sx; x < ex; ++x) {
+ 				int bx = floor(x/zoomx);
+                 GLubyte b = from[(bx / 8)];
+@@ -476,7 +478,9 @@ void APIENTRY_GL4ES gl4es_glBitmap(GLsizei width, GLsizei height, GLfloat xorig,
+         for (int y = sy; y < ey; ++y) {
+ 			int by = floor(y/zoomy);
+             from = bitmap + (by * ((width+7)/8));
+-			to = glstate->raster.bitmap + 4 * (GLint)(rx+((ry+y) * glstate->raster.bm_width));
++			// the row starts at column sx, not 0: rx<0 (clipped at the left)
++			// wrote before the buffer on row 0
++			to = glstate->raster.bitmap + 4 * (GLint)(rx+sx+((ry+y) * glstate->raster.bm_width));
+             for (int x = sx; x < ex; ++x) {
+ 				int bx = floor(x/zoomx);
+                 GLubyte b = from[(bx / 8)];

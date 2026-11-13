@@ -1,0 +1,114 @@
+<!-- #include tool-h3 gui\blocks\tool-h3.htm;image=#image;colspan=1;1; -->
+
+<!-- FIRST ROW -->
+<!-- #include tool-row gui\blocks\tool-row.htm;name='METADATA_ID';1 -->
+    <td VALIGN="center" ALIGN="left" width="14%">
+      <b>Sample ID</b>
+    </td>
+
+    <td VALIGN="center" ALIGN="left" width="86%">
+      <font size="$GetVar('HtmlFontSizeControls')">
+        <input
+          type="text"
+          width="100%"
+          height="$GetVar(HtmlComboHeight)"
+          name="SET_SNUM_REPORT_SUBMISSION_ORIGINAL_SAMPLE_ID"
+          value="spy.GetParam('snum.report.submission_original_sample_id')"
+          valign="center"
+          onleave="spy.SetParam('snum.report.submission_original_sample_id',html.GetValue('~name~'))>>spy.AddVariableToUserInputList('snum.report.submission_original_sample_id')>>spy.changeBoxColour('~name~','#FFDCDC')"
+          bgcolor="spy.bgcolor('~name~')"
+        >
+      </font>
+    </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- SECOND ROW -->
+<!-- #include tool-row gui\blocks\tool-row.htm;name='METADATA_PEOPLE';1 -->
+    <td VALIGN="center" ALIGN="left" width="14%">
+      <b>Submitter</b>
+    </td>
+$+
+  html.Snippet(
+    GetVar(default_link),
+    "name=SET_SNUM_METACIF_SUBMITTER",
+    "value=spy.getPersonInfo(spy.GetParam('snum.report.submitter'), 'displayname')",
+    "onclick=spy.gui.report.publication.OnPersonChange('~name~','snum.report.submitter')>>spy.gui.report.publication.OnAddNameToAuthorList(None,spy.GetParam('snum.report.submitter'))",
+    "td1=<td width='36%'>"
+    )
+$-
+
+    <td VALIGN="center" ALIGN="right" width="14%">
+      <b>Operator</b>
+    </td>
+
+$+
+  html.Snippet(
+    GetVar(default_link),
+    "name=SET_SNUM_METACIF_OPERATOR",
+    "value=spy.getPersonInfo(spy.GetParam('snum.report.operator'), 'displayname')",
+    "onclick=spy.gui.report.publication.OnPersonChange('~name~', 'snum.report.operator')>>spy.gui.report.publication.OnAddNameToAuthorList(None,spy.GetParam('snum.report.operator'))",
+    "td1=<td width='36%'>"
+    )
+$-
+
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+
+<!-- SECOND ROW -->
+<!-- #include tool-row gui\blocks\tool-row.htm;name='METADATA_DATES';1 -->
+    <td VALIGN="center" ALIGN="left" width="14%">
+      <b>Submitted</b>
+    </td>
+    <td width='36%'>
+      <input
+        type="date"
+        dropdown=True
+        height="GetVar('HtmlInputHeight')"
+        width='100%'
+        name="SET_SNUM_REPORT_DATE_SUBMITTED"
+        value="spy.Getparam(snum.report.date_submitted)"
+        valign="center"
+        onchange="spy.SetParam('snum.report.date_submitted',html.GetValue('~name~'))>>spy.AddVariableToUserInputList('snum.report.date_submitted')>>spy.changeBoxColour('~name~','#FFDCDC')"
+        bgcolor="spy.bgcolor('~name~')"
+      >
+    </td>
+    <td VALIGN="center" ALIGN="right" width="14%">
+      <b>Collected</b>
+    </td>
+    <td width='36%'>
+      <input
+        type="date"
+        dropdown=True
+        height="GetVar('HtmlInputHeight')"
+        width='100%'
+        name="SET_SNUM_REPORT_DATE_COLLECTED"
+        value="spy.Getparam(snum.report.date_collected)"
+        valign="center"
+        onchange="spy.SetParam('snum.report.date_collected',html.GetValue('~name~'))>>spy.AddVariableToUserInputList('snum.report.date_collected')>>spy.changeBoxColour('~name~','#FFDCDC')"
+        bgcolor="spy.bgcolor('~name~')"
+      >
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- #include tool-row gui\blocks\tool-row.htm;name='METADATA_DATES_2';1 -->
+    <td VALIGN="center" ALIGN="left" width="14%">
+      <b>Completed</b>
+    </td>
+    <td width='36%'>
+      <input
+        type="date"
+        height="GetVar('HtmlInputHeight')"
+        width='100%'
+        name="SET_SNUM_REPORT_DATE_COMPLETED"
+        value="spy.Getparam(snum.report.date_completed)"
+        valign="center"
+        dropdown=True
+        onchange="spy.SetParam('snum.report.date_completed',html.GetValue('~name~'))>>spy.AddVariableToUserInputList('snum.report.date_completed')>>spy.changeBoxColour('~name~','#FFDCDC')"
+
+        bgcolor="spy.bgcolor('~name~')"
+      >
+    </td>
+    <td width='50%'></td>
+
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+

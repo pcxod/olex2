@@ -518,6 +518,11 @@ void TSameGroup::GetRestrainedDistances(
     TArrayList<list_t*>& esd_map = di == 0 ? l12_map : l13_map;
     for (size_t i = 0; i < dl.Count(); i++) {
       for (size_t j = 1; j < dl[i].Count(); j++) {
+        // SHELXL: SAME s1 0 restrains no 1-3 distances; a zero-sigma SADI would
+        // divide by zero
+        if (di == 1 && Dependent[dl[i][j].extra]->Esd13 == 0) {
+          continue;
+        }
         TTypeList<DistanceGenerator::idx_pair_t>& l = esd_map[dl[i][j].extra]->AddNew();
         l.AddCopy(dl[i][0]);
         l.AddCopy(dl[i][j]);
@@ -926,6 +931,7 @@ void TSameGroupList::Analyse() {
     olxstr_dict<TPtrList<TSameGroup> > dep2ref; // ins_str of dep -> ref
     for (size_t i = 0; i < items.Count(); i++) {
       if (!items[i].IsReference() && items[i].GetAtoms().IsExplicit() &&
+        items[i].GetParentGroup() != 0 && // an orphan dependent has none
         items[i].GetParentGroup()->DependentCount() == 1)
       {
         olxstr ss = items[i].ToInsString();
@@ -1165,7 +1171,7 @@ void TSameGroupList::PrepareSave() {
         }
         TAtomRefList& arl = sg_atoms[&sg2];
         for (size_t ai = 0; ai < arl.Count(); ai++) {
-          arl[i].GetAtom().SetSameId((uint16_t)sg1.GetReleasableId());
+          arl[ai].GetAtom().SetSameId((uint16_t)sg1.GetReleasableId());
         }
         sg2.SetTag(2);
         sg2.OnReleasedDelete();

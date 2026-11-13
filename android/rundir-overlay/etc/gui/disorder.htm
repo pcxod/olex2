@@ -1,0 +1,183 @@
+<!-- #include tool-top gui\blocks\tool-top.htm;image=#image;onclick=#onclick;1; -->
+
+
+<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='FRAGMENT_LIBRARY';help_ext=Fragment-Library;1 -->
+  <td width='100%' colspan='2'>
+    <font size="$GetVar('HtmlFontSizeControls')"><b>
+    <input
+      type="button"
+      name="FRAGMENT_LIBRARY_LINK"
+      value="Ilia's Fragment Library"
+      width="100%"
+      height="GetVar(HtmlInputHeight)"
+      onclick="shell https://xray.chem.wisc.edu/idealized-molecular-geometry-library/"
+      bgcolor="GetVar(linkButton.bgcolor)"
+      fgcolor="GetVar(linkButton.fgcolor)"
+      fit="false"
+      flat="GetVar(linkButton.flat)"
+      custom="GetVar(custom_button)"
+    >
+    </b></font>
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+
+<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='LINK_SELECTED';help_ext=Link-Selected;1 -->
+  <td width='30%'>
+    <b>%Link% %Selected%:</b>
+  </td>
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=Occupancies",
+    "name=LINK_SEL_OCC",
+    "onclick=fvar sel",
+    "td1=<td width='35%'>"
+    )
+  $-
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=PARTs & Occupancies",
+    "name=LINK_SEL_PARTS",
+    "onclick=part -p=2 -lo sel>>fuse",
+    "td1=<td width='35%'>"
+    )
+  $-
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='LINK_CONSTRAINTS';help_ext=Link-Constraints;1 -->
+  <td width='40%'>
+    <b>Link PARTs & Occupanies + </b>
+  </td>
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=EADP",
+    "name=LINK_PARTS_EADP",
+    "onclick=if strcmp(sel(),'') then none else 'link_parts_occupancies_with EADP'",
+    "td1=<td width='30%'>"
+    )
+  $-
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=ISOR",
+    "name=LINK_PARTS_ISOR",
+    "onclick=if strcmp(sel(),'') then none else 'link_parts_occupancies_with ISOR'",
+    "td1=<td width='30%'>"
+    )
+  $-
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='LINK_PARTS_2';help_ext=Link-Parts-1;1 -->
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=%Assign% selection to PART",
+    "name=ASSIGN_PART",
+    "onclick=part sel html.GetValue(part)",
+    "td1=<td width='70%'>"
+    )
+  $-
+  <td width='30%' VALIGN='center'>
+    <font size="$GetVar('HtmlFontSizeControls')">
+      <input type="spin" bgcolor="GetVar('HtmlInputBgColour')"
+      name="part" width="100%" height="GetVar(HtmlSpinHeight)" value="1" min=-100>
+    </font>
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='LINK_PARTS_1';help_ext=Link-Parts-2;1 -->
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=%Assign% selection to two PARTs in order",
+    "name=ASSIGN_TWO_PARTS",
+    "onclick=part sel html.GetValue(part)",
+    "td1=<td width='100%'>"
+    )
+  $-
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='SHOW_PARTS';help_ext=SHOW-PARTS;1 -->
+  <td width='100%'>
+    <b>%Show% PART</b>
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+<!-- #include tool-row gui\blocks\tool-row.htm;name='SHOW_PARTS_2';1; -->
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=0 1",
+    "name=SHOWP_0_1",
+    "onclick=showP 0 1",
+    "td1=<td width='33%'>"
+    )
+  $-
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=0 2",
+    "name=SHOWP_0_2",
+    "onclick=showP 0 2",
+    "td1=<td width='33%'>"
+    )
+  $-
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=0 -1",
+    "name=SHOWP_0_M1",
+    "onclick=showP 0 -1",
+    "td1=<td width='33%'>"
+    )
+  $-
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+<!-- #include tool-row gui\blocks\tool-row.htm;name='SHOW_PARTS_3';1; -->
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=0 -2",
+    "name=SHOWP_0_M2",
+    "onclick=showP 0 -2",
+    "td1=<td width='33%'>"
+    )
+  $-
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=1 2",
+    "name=SHOWP_1_2",
+    "onclick=showP 1 2",
+    "td1=<td width='33%'>"
+    )
+  $-
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=1",
+    "name=SHOWP_1",
+    "onclick=showP 1",
+    "td1=<td width='33%'>"
+    )
+  $-
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+<!-- #include tool-row gui\blocks\tool-row.htm;name='SHOW_PARTS_4';1; -->
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=2",
+    "name=SHOWP_2",
+    "onclick=showP 2",
+    "td1=<td width='33%'>"
+    )
+  $-
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=ALL",
+    "name=SHOWP_ALL",
+    "onclick=showP",
+    "td1=<td width='33%'>"
+    )
+  $-
+  <td width='33%'></td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='SPLIT_GROUP';help_ext=Split-Group;1 -->
+<!-- #include model-disorder gui\snippets\snippet-model-disorder.htm;1; -->
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='FIT_GROUP';help_ext=Fit-and-Split-Group;1 -->
+<!-- #include fit-group gui\snippets\snippet-fit-group.htm;1; -->
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+
+<!-- #include tool-footer gui\blocks\tool-footer.htm;colspan=2;1; -->

@@ -154,6 +154,9 @@ void TPdb::LoadFromStrings(const TStrList& Strings) {
 
 
   Title = "OLEX2: imported from PDB";
+
+  // for ANISOU: a TER consumes a serial, so serial-1 is not the atom index
+  olx_pdict<size_t, TCAtom *> by_serial;
   for (size_t i = 0; i < Strings.Count(); i++) {
     if (Strings[i].StartsFromi("CRYST1")) {
       toks.StrtokF(Strings[i], CrystF);
@@ -183,7 +186,10 @@ void TPdb::LoadFromStrings(const TStrList& Strings) {
         GetAsymmUnit().SetZ(toks[9].ToDouble());
       }
     }
-    else if (Strings[i].StartsFromi("ATOM")) {
+    // HETATM too: same layout, ATOM alone drops every ligand, metal and water
+    else if (Strings[i].StartsFromi("ATOM") ||
+      Strings[i].StartsFromi("HETATM"))
+    {
       toks.Clear();
       toks.StrtokF(Strings[i], AtomF);
       if (toks.Count() < 12) {
@@ -192,18 +198,44 @@ void TPdb::LoadFromStrings(const TStrList& Strings) {
       TResidue *resi = 0;
       if (toks[6].IsNumber()) {
         int r_num = toks[6].ToInt();
+        olxch chain = toks[5].CharAt(0);
+        if (chain == ' ') {
+          chain = TResidue::NoChainId();
+        }
+        const olxstr cls = toks[4].TrimWhiteChars();
+        /* 52 and 52A are different residues: the insertion code folds into the
+        number as in TCif::MMResidue, or the two readers disagree
+        */
+        const olxstr ins = toks[7].Trim(' ');
+        if (!ins.IsEmpty() && olxstr::o_isalpha(ins.CharAt(0))) {
+          r_num = r_num*100 +
+            (int)(olxstr::o_toupper(ins.CharAt(0)) - 'A' + 1);
+        }
+        /* old: by number only, which merged a mutation site and ignored the chain
         resi = GetAsymmUnit().FindResidue(r_num);
         if (resi == 0) {
           resi = &GetAsymmUnit().NewResidue(toks[4].TrimWhiteChars(), r_num, r_num,
             toks[5].CharAt(0));
         }
+        */
+        // by class as well as number: a mutation site is two residues on one
+        // number, both in the model
+        resi = &GetAsymmUnit().NewResidue(cls, r_num, r_num, chain);
       }
       TCAtom& CA = GetAsymmUnit().NewAtom(resi);
+      {
+        const olxstr sn = toks[1].Trim(' ');
+        if (sn.IsNumber()) {
+          by_serial.Add(sn.ToSizeT(), &CA);
+        }
+      }
       CA.ccrd() = GetAsymmUnit().Fractionalise(
         vec3d(toks[8].ToDouble(), toks[9].ToDouble(), toks[10].ToDouble()));
       if (toks.Count() > 11) {
         CA.SetOccu(toks[11].ToDouble());
       }
+      // a deposited occupancy is a value, not something to refine - see cif.cpp
+      GetRM().Vars.FixParam(CA, catom_var_name_Sof);
       if (toks.Count() > 12) {
         CA.SetUiso(toks[12].ToDouble() / (8 * olx_sqr(M_PI)));
       }
@@ -248,7 +280,10 @@ void TPdb::LoadFromStrings(const TStrList& Strings) {
       QE[4] = toks[14].ToDouble();
       QE[5] = toks[13].ToDouble();
       QE /= 10000;
-      TCAtom* ca = GetAsymmUnit().FindCAtomById(toks[1].ToSizeT() - 1);
+      // old: serial-1, which every TER shifts
+      // TCAtom* ca = GetAsymmUnit().FindCAtomById(toks[1].ToSizeT() - 1);
+      const olxstr sn = toks[1].Trim(' ');
+      TCAtom* ca = sn.IsNumber() ? by_serial.Find(sn.ToSizeT(), 0) : 0;
       if (ca != 0) {
         ca->UpdateEllp(QE);
         if (ca->GetEllipsoid()->IsNPD()) {

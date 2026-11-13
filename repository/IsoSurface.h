@@ -25,6 +25,8 @@
 #include "estlist.h"
 #include "threex3.h"
 #include "eset.h"
+#include <vector>
+#include <string.h>
 
 using namespace olx_array;
 struct IsoTriangle {
@@ -55,7 +57,7 @@ public:
   /* This list may be empty if no data was provided */
   inline TArrayList<int>& GetVertexData() { return VertexData; }
 protected:
-////////////////////////////////////////////////////////////////////////
+  /* old: a dictionary of all vertices renamed after the scan, slow and large
   struct IsoPoint {
     size_t newID;
     int data;
@@ -209,25 +211,89 @@ protected:
       x =     static_cast<int>(((code & 0xFFFFF0000000000) >> 40));
     }
   };
-///////////////////////////////////////////////////////////////////////////////////
   const int ZSlice;
+  T4DIndex IsoPoints;
+  TArrayList<IsoTriangle> Triangles, AllTriangles;
+  void RenameVerticesAndTriangles();
+  */
+  /* vertices sit on grid edges: grid point (x,y,z) owns the edges along x, y
+  and z that start there (slots 0, 1, 2). A vertex in plane X comes only from
+  slabs X-1 and X, so three planes of slots are kept: plane X is numbered once
+  slab X is done, and a slab's triangles are resolved once both its planes
+  are. Vertex order (x, y, z, slot) and triangles are those of the old index
+  */
+  struct EdgePlane {
+    TArrayList<vec3f> crd;
+    TArrayList<int> data;
+    TArrayList<uint32_t> id;  // valid where the occupancy bit is set
+    /* occupancy bitmap: few slots carry a vertex, so numbering skips empty
+    words and a reset clears only the bitmap
+    */
+    TArrayList<uint64_t> used;
+    void Reset(size_t sz) {
+      if (id.Count() != sz) {
+        crd.SetCount(sz);
+        data.SetCount(sz);
+        id.SetCount(sz);
+        used.SetCount((sz + 63) / 64);
+      }
+      if (!used.IsEmpty()) {
+        memset(&used[0], 0, used.Count() * sizeof(uint64_t));
+      }
+    }
+    void Release() {
+      crd.Clear();
+      data.Clear();
+      id.Clear();
+      used.Clear();
+    }
+  };
+  EdgePlane planes[3];
+  /* triangle corners of the last two slabs: the slot index within its plane,
+  bit 31 set when the corner lies in plane x+1 (a plane holds < 2^31 slots)
+  */
+  static const uint32_t next_plane_bit = 1u << 31;
+  /* std::vector: clear() keeps the capacity, TArrayList::Clear frees it and
+  the lists would regrow from scratch for every slab
+  */
+  std::vector<uint32_t> pending[2];
+  // collected here, copied to the lists below once the size is known
+  std::vector<vec3f> new_vertices;
+  std::vector<int> new_data;
+  std::vector<uint32_t> new_triangles;  // vertex id triples
 
   TArrayList<vec3f> Normals;
   TArrayList<vec3f> Vertices;
   TArrayList<int> VertexData;
 
-  // List of POINT3Ds which form the isosurface.
-  T4DIndex IsoPoints;
-
   // List of IsoTriangleS which form the triangulation of the isosurface.
-  TArrayList<IsoTriangle> Triangles, AllTriangles;
+  TArrayList<IsoTriangle> Triangles;
 
+  /* maps a cube edge (0-11) of voxel (x,y,z) to the grid point owning it and
+  the slot there
+  */
+  static void EdgeOwner(int edgeNo, int& x, int& y, int& z, int& slot);
+  /* the 4 corners of a voxel face as bits 1,2,4,8: for a positive level
+  'inside' is above it, otherwise below it
+  */
+  unsigned int Classify(float a, float b, float c, float d) const {
+    if (m_tIsoLevel > 0) {
+      return (unsigned int)(a > m_tIsoLevel) |
+        ((unsigned int)(b > m_tIsoLevel) << 1) |
+        ((unsigned int)(c > m_tIsoLevel) << 2) |
+        ((unsigned int)(d > m_tIsoLevel) << 3);
+    }
+    return (unsigned int)(a < m_tIsoLevel) |
+      ((unsigned int)(b < m_tIsoLevel) << 1) |
+      ((unsigned int)(c < m_tIsoLevel) << 2) |
+      ((unsigned int)(d < m_tIsoLevel) << 3);
+  }
   void AddSurfacePoint(unsigned int nX, unsigned int nY,
     unsigned int nZ, unsigned int nEdgeNo);
-  /* Renames vertices and triangles so that they can be accessed more
-   efficiently.
-   */
-  void RenameVerticesAndTriangles();
+  // gives plane x its final vertex ids
+  void NumberPlane(size_t x);
+  // turns the corners of slab x into vertex ids, dropping degenerate triangles
+  void ResolveSlab(size_t x);
 
   // Calculates the normals.
   void CalculateNormals();
