@@ -20,9 +20,43 @@
 #include "etime.h"
 #include "integration.h"
 #include "label_corrector.h"
+#include "symmcon.h"
 
 using namespace exparse::parser_util;
 using namespace cif_dp;
+
+namespace {
+  /* site symmetry constraints of a position from the CIF's own operators
+  (MatrixList, identity first): TCAtom::GetSiteConstraints reads the atom's
+  equivalents, which are only set once the unit cell is initialised, after the
+  CIF has been read. The stabiliser test is GetPositionMultiplicity's
+  */
+  SiteSymmCon SiteConstraintsAt(const smatd_list& ml, const vec3d& p) {
+    SiteSymmCon rv;
+    for (size_t i = 1; i < ml.Count(); i++) {
+      vec3d v = p - ml[i] * p;
+      v -= v.Round<int>();
+      if (v.IsNull(1e-3)) {
+        const SymmCon* sc = SymmConReg::Find(rotation_id::get(ml[i].r));
+        if (sc != 0) {
+          rv += sc;
+        }
+      }
+    }
+    return rv;
+  }
+  /* a value without an s.u. is imported as fixed, but on a special position
+  the components the symmetry determines (x = 1/2, U12 = U23 = 0 on a 2-fold
+  along b, ...) come without one anyway. Fixing those is no fix in ShelXL, while
+  olex2.refine refines a site or U only when all of its components are free,
+  so it froze the whole ADP - and the anharmonic tensor - of such atoms.
+  map[i].param != i: determined by another component or zero (-2); U in the
+  Olex2 order U11 U22 U33 U23 U13 U12, then x y z
+  */
+  bool IsSymmetryImplied(const SiteSymmCon& ssc, int i) {
+    return ssc.map[i].param != (i < 6 ? i : i - 6);
+  }
+}
 
 TCif::TCif()
   : block_index(InvalidIndex), has_duplicate_labels(false), is_mmcif(false)
@@ -1120,6 +1154,22 @@ void TCif::Initialize() {
         ALoop->Get(i, ASymbol != InvalidIndex ? ASymbol : ALabel).GetStringValue());
     }
     A.SetType(*type);
+    bool no_esd[3];
+    for (int j = 0; j < 3; j++) {
+      EValue = ALoop->Get(i, ACi[j]).GetStringValue();
+      A.ccrd()[j] = EValue.GetV();  A.ccrdEsd()[j] = EValue.GetE();
+      no_esd[j] = (EValue.GetE() == 0);
+    }
+    if (no_esd[0] || no_esd[1] || no_esd[2]) {
+      // the whole site first: a coordinate's site symmetry needs all three
+      SiteSymmCon ssc = SiteConstraintsAt(MatrixList, A.ccrd());
+      for (int j = 0; j < 3; j++) {
+        if (no_esd[j] && !IsSymmetryImplied(ssc, 6 + j)) {
+          GetRM().Vars.FixParam(A, catom_var_name_X + j);
+        }
+      }
+    }
+    /* old: fixed every coordinate without an s.u.
     for (int j = 0; j < 3; j++) {
       EValue = ALoop->Get(i, ACi[j]).GetStringValue();
       A.ccrd()[j] = EValue.GetV();  A.ccrdEsd()[j] = EValue.GetE();
@@ -1127,6 +1177,7 @@ void TCif::Initialize() {
         GetRM().Vars.FixParam(A, catom_var_name_X + j);
       }
     }
+    */
     if (ACUiso != InvalidIndex) {
       EValue = ALoop->Get(i, ACUiso).GetStringValue();
       A.SetUisoEsd(EValue.GetE());
@@ -1280,13 +1331,16 @@ void TCif::Initialize() {
           ALoop->DelRow(i--);
           continue;
         }
+        SiteSymmCon ssc = SiteConstraintsAt(MatrixList, ci->data.ccrd());
         for (int j = 0; j < 6; j++) {
           EValue = ALoop->Get(i, Ui[j]).GetStringValue();
           Q[j] = EValue.GetV()*scale;
           E[j] = EValue.GetE()*scale;
-          if (EValue.GetE() == 0) {
+          // Ui is in the Olex2 order U11 U22 U33 U23 U13 U12, as ssc.map
+          if (EValue.GetE() == 0 && !IsSymmetryImplied(ssc, j)) {
             GetRM().Vars.FixParam(ci->data, catom_var_name_U11 + j);
           }
+          // old: if (EValue.GetE() == 0) - a symmetry-zero Uij froze the ADP
         }
         GetAsymmUnit().UcifToUcart(Q);
         ci->data.AssignEllp(&GetAsymmUnit().NewEllp().Initialise(Q, E));
