@@ -3816,7 +3816,7 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons) {
   if (Modes->GetCurrent() != 0 && Modes->GetCurrent()->OnDblClick()) {
     return true;
   }
-  if (G == 0) {
+  if (G == 0 && Flags == 0) {
     processMacro("sel -u");
     return true;
   }
@@ -3846,7 +3846,7 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons) {
       ((TXGlLabel*)G)->SetLabel(label);
 
   }
-  else if (G->Is<TXAtom>()) {
+  else if (G->Is<TXAtom>() && Flags == 0) {
     TXAtom * xa = (TXAtom*)G;
     if (xa->CAtom().GetExyzGroup() != 0) {
       TGXApp::AtomIterator ai = FXApp->GetAtoms();
