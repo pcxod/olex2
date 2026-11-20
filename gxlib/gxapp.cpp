@@ -6691,3 +6691,7 @@ vec3d TGXApp::GetConstrainedDirection(const vec3d &t_) {
   return t_;
 }
 //..............................................................................
+TLibrary* TGXApp::ExportLibrary(const olxstr& lib_name) {
+  return TXApp::ExportLibrary(lib_name);
+}
+//..............................................................................

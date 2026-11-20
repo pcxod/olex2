@@ -14,10 +14,6 @@
 #include <math.h>
 #include <string>
 
-#ifdef __WXWIDGETS__
-  #include "wx/wx.h"
-  #include "wx/string.h"
-#endif
 #ifdef _PYTHON
   #undef HAVE_SSIZE_T
   #undef HAVE_WCHAR_H
@@ -29,6 +25,11 @@
   #else
     #include "Python.h"
   #endif
+#endif
+// must follow Python
+#ifdef __WXWIDGETS__
+#include "wx/wx.h"
+#include "wx/string.h"
 #endif
 
 #define CharSizeMask 0xE0000000

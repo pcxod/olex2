@@ -247,6 +247,8 @@ public:
 
   void ToDataItem(TDataItem& item) const;
   void FromDataItem(TDataItem& item);
+
+  virtual TLibrary* ExportLibrary(const olxstr& lib_name = "app");
 };
 
 EndXlibNamespace()

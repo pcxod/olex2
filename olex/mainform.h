@@ -19,7 +19,7 @@
 #include "ipimp.h"
 #include "macroerror.h"
 #include "library.h"
-#include "eaccell.h"
+#include "eaccel.h"
 #include "estlist.h"
 #include "updateth.h"
 #include "macrolib.h"
@@ -517,6 +517,7 @@ private:
   DefFunc(ThreadCount)
   DefFunc(FullScreen)
   DefFunc(Freeze)
+  DefFunc(Appearance)
 //..............................................................................
 public:
   bool IsControl(const olxstr& cname) const;
@@ -592,8 +593,8 @@ private:
   void BadReflectionsTable(bool TableDef=true, bool Create=true);
   void RefineDataTable(bool TableDef=true, bool Create=true);
 
-  TAccellList<olxstr> AccShortcuts;
-  TAccellList<TMenuItem*> AccMenus;
+  TAccelList<olx_pair_t<olxstr, olxstr> > AccShortcuts;
+  TAccelList<TMenuItem*> AccMenus;
 
   olxstr_dict<TMenu*, false> Menus;
   int32_t TranslateShortcut(const olxstr& sk);

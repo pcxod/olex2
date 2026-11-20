@@ -15,7 +15,8 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerWorkingDirectory>$(RunDir)</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerEnvironment>PYTHONHOME=$(RunDir)/Python38</LocalDebuggerEnvironment>
+    <LocalDebuggerEnvironment>PYTHONHOME=$(PYTHONHOME)
+OLEX2_CCTBX_DIR=$(OLEX2_CCTBX_DIR)</LocalDebuggerEnvironment>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerWorkingDirectory>$(RunDir)</LocalDebuggerWorkingDirectory>

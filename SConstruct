@@ -60,8 +60,8 @@ else:
   def_tool = 'gnu'
 variables = Variables()
 variables.AddVariables(
-    EnumVariable('TOOL', 'The tool to use', def_tool, allowed_values=\
-     ('vc8', 'vc9', 'vc10', 'vc11', 'vc14.2', 'gnu', 'intel'))
+    EnumVariable('TOOL', 'The tool to use', def_tool, 
+     allowed_values=('vc8', 'vc9', 'vc10', 'vc12', 'vc14.2', 'vc14.3', 'vc14.4', 'gnu', 'intel', 'clang'))
     )
 env = Environment(ENV = os.environ, variables = variables, TARGET_ARCH=env_arch)
 Help(variables.GenerateHelpText(env))
@@ -85,8 +85,8 @@ elif env['TOOL'] == 'gnu':
     Tool('g++')(env)
 elif env['TOOL'] == 'vc11':
   env = Environment(ENV = os.environ, variables = variables, TARGET_ARCH=env_arch, MSVC_VERSION='11.0')
-elif env['TOOL'] == 'vc14.2':
-  env = Environment(ENV = os.environ, variables = variables, TARGET_ARCH=env_arch, MSVC_VERSION='14.2')
+elif env['TOOL'].startswith('vc14'):
+  env = Environment(ENV = os.environ, variables = variables, TARGET_ARCH=env_arch, MSVC_VERSION=env['TOOL'][2:])
 elif env['TOOL'] == 'intel':
     Tool('intelc')(env)
 env.Append(CCFLAGS = ['-D_UNICODE', '-DUNICODE'])
@@ -163,16 +163,16 @@ unirun = Glob('./unirun/*.cpp')
 olex2c = Split("""./olex2c/olex2c.cpp""")
 tests = Glob('./tests/tests/*.cpp')
 
-np_repository = Split("""./repository/filesystem.cpp   ./repository/shellutil.cpp
-                         ./repository/url.cpp          ./repository/wxzipfs.cpp
-                         ./repository/httpfs.cpp       ./repository/IsoSurface.cpp
-                         ./repository/fsext.cpp        ./repository/eprocess.cpp
-                         ./repository/olxvar.cpp       ./repository/cdsfs.cpp
-                         ./repository/hkl_util.cpp
+np_repository = Split("""repository/filesystem.cpp   repository/shellutil.cpp
+                         repository/url.cpp          repository/wxzipfs.cpp
+                         repository/httpfs.cpp       repository/IsoSurface.cpp
+                         repository/fsext.cpp        repository/eprocess.cpp
+                         repository/olxvar.cpp       repository/cdsfs.cpp
+                         repository/updateapi.cpp    repository/patchapi.cpp
+                         repository/hkl_util.cpp     repository/olxffi.cpp
                          """)
-py_repository = Split("""./repository/pyext.cpp   ./repository/py_reg.cpp
-                         ./repository/py_core.cpp ./repository/updateapi.cpp 
-                         ./repository/patchapi.cpp ./repository/hkl_py.cpp""")
+py_repository = Split("""repository/pyext.cpp repository/py_core.cpp repository/py_reg.cpp
+                         repository/hkl_py.cpp repository/refinement_listener.cpp""")
 
 olex2c_win = Split("""./repository/unzip.cpp ./repository/winzipfs.cpp""")
 #function to process file name list
@@ -250,7 +250,7 @@ if sys.platform[:3] == 'win':
     env.Append(CCFLAGS = cc_flags) 
     #env.Append(LINKFLAGS=['/LTCG'])
   else:
-    cc_flags = ['/EHsc', '/RTC1', '-D_DUBUG', '/Od', '/MDd', '/bigobj', '/fp:fast']
+    cc_flags = ['/EHsc', '/RTC1', '-D_DUBUG', '/Od', '/MDd', '/bigobj', '/fp:fast', '/FS']
     if architecture == '64bit':  cc_flags.append('/Zi')
     else:  cc_flags.append('/ZI')
     env.Append(CCFLAGS = cc_flags) 
@@ -265,9 +265,9 @@ if sys.platform[:3] == 'win':
     env.Append(LINKFLAGS=['/MACHINE:X86'])
     env['TARGET_ARCH'] = 'x86'
   # generic libs
-  env.Append(LIBS = Split(""" mapi32 glu32 user32 opengl32 gdi32 ole32 
+  env.Append(LIBS = Split(""" mapi32 glu32 user32 opengl32 gdi32 ole32
                              advapi32 comdlg32 comctl32 shell32 rpcrt4 oleaut32
-                             kernel32 wsock32 Iphlpapi winspool"""))
+                             kernel32 wsock32 Iphlpapi winspool uuid Ws2_32"""))
   env.Append(LIBPATH = [pyFolder+'libs'])
 else:
   if env['TOOL'] != 'intel':
@@ -318,21 +318,24 @@ if sys.platform[:3] == 'win':
   wx_env = env.Clone()
   if architecture == '64bit':
     wx_env.Append(LIBPATH = [wxFolder+'lib/vc_x64_lib'])
+    ifold = "x64_"
   else:
     wx_env.Append(LIBPATH = [wxFolder+'lib/vc_lib'])
+    ifold = ""
   wx_env.Append(CCFLAGS = ['-D__WXWIDGETS__'])
+  
   if not debug:
-    wx_libs = """wxmsw$$u_adv wxmsw$$u_html wxbase$$u_net wxmsw$$u_gl 
-                 wxmsw$$u_core wxbase$$u wxmsw$$u_webview wxmsw$$u_stc
-                 wxexpat wxjpeg wxpng wxtiff wxzlib wxregexu wxscintilla
+    wx_libs = """wxmsw$$u_adv wxmsw$$u_html wxbase$$u_net wxmsw$$u_gl
+                 wxmsw$$u_core wxbase$$u wxmsw$$u_webview wxmsw$$u_stc wxlexilla
+                 wxexpat wxjpeg wxpng wxtiff wxzlib wxregexu wxscintilla wxwebp
                  """
-    wx_env.Append(CPPPATH=[wxFolder+'include', wxFolder+'lib/vc_lib/mswu'])
+    wx_env.Append(CPPPATH=[wxFolder+'include', wxFolder+'lib/vc_%slib/mswu' %ifold])
   else:
     wx_libs = """wxexpat wxjpeg wxpng wxtiff wxzlib wxscintillad
-                 wxbase$$ud wxbase$$ud_net wxmsw$$ud_gl wxmsw$$ud_stc
+                 wxbase$$ud wxbase$$ud_net wxmsw$$ud_gl wxmsw$$ud_stc wxlexillad
                  wxmsw$$ud_richtext wxmsw$$ud_html wxmsw$$ud_core
-                 wxmsw$$ud_adv wxregexud"""
-    wx_env.Append(CPPPATH=[wxFolder+'include', wxFolder+'lib/vc_lib/mswud'])
+                 wxmsw$$ud_adv wxregexud wxwebpd"""
+    wx_env.Append(CPPPATH=[wxFolder+'include', wxFolder+'lib/vc_%slib/mswu' %ifold])
   wx_env.Append(LIBS = Split(wx_libs.replace('$$', wxVersion)))
   olex2_env = wx_env.Clone()
   unirun_env = wx_env.Clone()
@@ -373,6 +376,7 @@ tests_files.append('./repository/olxvar.cpp')
 tests_files.append('./repository/fsext.cpp')
 tests_files.append('./repository/shellutil.cpp')
 tests_files.append('./repository/hkl_util.cpp')
+tests_files.append('./repository/refinement_listener.cpp')
 if sys.platform[:3] == 'win':
   tests_env.Append(LINKFLAGS=['/MANIFEST', '/PDB:' + out_dir + 'exe/tests.pdb'])
 tests_files = processFileNameList(tests_files, tests_env, out_dir+'tests')
