@@ -7,8 +7,7 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-/* prints the chain segments and secondary structure xlib/protein.h finds in a
-file, so an assignment can be checked against a known fold without the GUI
+/* prints the chain segments and secondary structure xlib/protein.h finds
   cl /O2 /EHsc /I..\..\sdl /I..\..\xlib protein_report.cpp
     sdl.lib xlib-np.lib Iphlpapi.lib
 

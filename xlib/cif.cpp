@@ -26,10 +26,8 @@ using namespace exparse::parser_util;
 using namespace cif_dp;
 
 namespace {
-  /* site symmetry constraints of a position from the CIF's own operators
-  (MatrixList, identity first): TCAtom::GetSiteConstraints reads the atom's
-  equivalents, which are only set once the unit cell is initialised, after the
-  CIF has been read. The stabiliser test is GetPositionMultiplicity's
+  /* site constraints from the CIF's own operators (identity first): the atom's
+  equivalents that GetSiteConstraints reads are not set while the CIF is read
   */
   SiteSymmCon SiteConstraintsAt(const smatd_list& ml, const vec3d& p) {
     SiteSymmCon rv;
@@ -45,13 +43,9 @@ namespace {
     }
     return rv;
   }
-  /* a value without an s.u. is imported as fixed, but on a special position
-  the components the symmetry determines (x = 1/2, U12 = U23 = 0 on a 2-fold
-  along b, ...) come without one anyway. Fixing those is no fix in ShelXL, while
-  olex2.refine refines a site or U only when all of its components are free,
-  so it froze the whole ADP - and the anharmonic tensor - of such atoms.
-  map[i].param != i: determined by another component or zero (-2); U in the
-  Olex2 order U11 U22 U33 U23 U13 U12, then x y z
+  /* symmetry-determined components on a special position have no s.u.; fixing
+  them froze the whole ADP in olex2.refine. map[i].param != i: determined (-2:
+  zero); U11 U22 U33 U23 U13 U12, then x y z
   */
   bool IsSymmetryImplied(const SiteSymmCon& ssc, int i) {
     return ssc.map[i].param != (i < 6 ? i : i - 6);
@@ -272,10 +266,8 @@ TResidue *TCif::MMResidue(const olxstr &comp_id, const olxstr &seq_id,
   return r;
 }
 //..............................................................................
-/* deposited hydrogens ride on the nearest heavy atom of their own residue and
-part, with the AFIX the pivot's H count and bonding call for. HAdd skips an atom
-that has any H, so one left free here stays free and wanders off. An H riding on
-nothing, or a count no AFIX fits, is dropped for HAdd to put back
+/* deposited H ride on the nearest heavy atom of their residue and part (HAdd
+skips an atom with any H, a free one wanders); an H no AFIX fits is dropped
 */
 static void MMRideHydrogens(TAsymmUnit& au, RefinementModel& rm) {
   struct Group {
@@ -331,9 +323,8 @@ static void MMRideHydrogens(TAsymmUnit& au, RefinementModel& rm) {
     for (size_t gi = 0; gi < groups.Count(); gi++) {
       Group& g = groups[gi];
       TCAtom& p = *g.pivot;
-      /* heavy neighbours in this and the adjacent residues, a backbone N being
-      bonded to the C before it. Conformers of one atom share its name here and
-      count once
+      /* heavy neighbours here and in the adjacent residues (N to the previous
+      C); conformers of one atom count once
       */
       TStrList seen;
       for (size_t rj = (ri == 0 ? 0 : ri - 1);
@@ -479,9 +470,8 @@ void TCif::_LoadCurrentMM() {
     }
   }
   //..........................................................................
-  /* the experiment. mmCIF spells these with a dot and the ordinary CIF branch
-  looks only for the underscore forms, so without this a synchrotron dataset
-  keeps the Mo Ka default and refines with the wrong dispersion corrections
+  /* the experiment; mmCIF spells these with a dot, missing them leaves Mo Ka
+  and the wrong dispersion for synchrotron data
   */
   {
     const char *wl[2] = { "_diffrn_radiation_wavelength.wavelength",

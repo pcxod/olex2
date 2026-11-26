@@ -14,17 +14,13 @@
 #include "satom.h"
 #include "asymmunit.h"
 
-/* polymer topology: which atoms form the backbone and how residues join into
-chains. Model knowledge rather than graphics, so it lives here - the cartoon is
-one consumer, residue selection and fragment work are others
-*/
+// polymer topology: backbone atoms and how residues join into chains
 BeginXlibNamespace()
 
 namespace protein {
 
-/* the minimum an atom needs to be classified, positions Cartesian. Not TSAtom
-on purpose: the classifier is then a pure function of geometry, testable
-without a lattice, a file or a graphics context
+/* what the classifier needs of an atom, Cartesian; not TSAtom, so it is a pure
+function of geometry, testable without a lattice
 */
 struct ProteinAtom {
   short z;
@@ -47,20 +43,14 @@ struct BackboneRoles {
   bool IsValid() const { return ca != InvalidIndex; }
 };
 
-/* assigns N, CA, C and O within a residue by geometry, not by label: a SHELX
-model names them by element and sequence, so crambin's first residue is
-N3, C6, C7, O3. Every candidate is scored against ideal peptide geometry and
-the best wins, not the first inside a window - in haemoglobin at 1.74 A a
-serine CB-OG fits any window wide enough for that structure's own C=O. atoms
-holds the residue's own plus, marked foreign, bonded atoms of its neighbours
+/* N, CA, C and O by geometry, not label (SHELX labels are N3, C6...): best
+score against ideal peptide geometry, not the first in a window (Ser CB-OG can
+pass for C=O); foreign atoms are bonded atoms of the neighbours
 */
 BackboneRoles FindBackbone(const TTypeList<ProteinAtom> &atoms);
 
-/* chemical character from the RESI class name, along three independent axes.
-Name lookups on purpose, unlike the backbone classifier: class names survive
-where atom labels do not, a converted model keeping RESI THR 1. Three axes
-because one list would have to choose - aspartate is acidic and hydrophilic,
-and offering those as alternatives answers neither question
+/* chemical character from the RESI class name (it survives where labels do
+not), on independent axes: Asp is both acidic and hydrophilic
 */
 
 // whether the sidechain prefers the protein's interior or the solvent
@@ -69,10 +59,7 @@ enum ResiduePolarity {
   rpLipophilic,
   rpHydrophilic
 };
-/* glycine and proline count as hydrophilic, cysteine as lipophilic. All three
-are borderline, but this axis is about the solvent and a residue left out would
-read as unknown, which is worse than a defensible call
-*/
+// borderline: Gly and Pro count as hydrophilic, Cys as lipophilic
 ResiduePolarity ClassifyPolarity(const olxstr &class_name);
 
 // acid/base character at neutral pH
@@ -82,35 +69,25 @@ enum ResidueCharge {
   rcBasic,
   rcNeutral
 };
-/* the protonation variants follow their parent - ASH, GLH and LYN are neutral
-forms, but a colour key should show the acidic and basic residues where a
-reader expects them
-*/
+// protonation variants (ASH, GLH, LYN) follow their parent
 ResidueCharge ClassifyCharge(const olxstr &class_name);
 
-/* which of the twenty standard amino acids, as an index into a fixed
-alphabetical order, InvalidIndex otherwise. Variants map onto their parent:
-CYX and CSO, HID/HIE/HIP, ASH, GLH, LYN, and MSE to methionine
+/* index of the standard amino acid in alphabetical order, or InvalidIndex;
+variants (CYX, CSO, HID/HIE/HIP, ASH, GLH, LYN, MSE) map onto their parent
 */
 size_t ResidueIndex(const olxstr &class_name);
 size_t StandardResidueCount();
 // the three-letter code for an index from ResidueIndex, or an empty string
 olxstr StandardResidueName(size_t index);
 
-/* non-hydrogen atom count of a standard amino acid from its RESI class name,
-0 when the name is not known. For weighting a residue drawn as ribbon: the
-model centre averages atom positions, so a chain replaced by a ribbon has to
-carry the weight its atoms would have. Zero is a real answer - the caller
-then counts the residue's atoms in the model
+/* non-hydrogen atom count by RESI class, 0 if unknown (the caller then counts
+the model's atoms); weights a ribbon residue in the model centre
 */
 size_t ResidueAtomCount(const olxstr &class_name);
 
-/* hydrogens a standard amino acid atom carries at neutral pH, by RESI class and
-PDB atom name, with the number of heavy atoms it is bonded to. Lys NZ and the
-N-terminus are NH3+, carboxylates and the C-terminus carry none, and the
-protonation variants say what they are - ASH, GLH, CYX, HID/HIE/HIP. Plain His
-ND1/NE2 give h=-1 since the tautomer is not a property of the name. SO4, ACT
-and FMT are covered as the anions they are in a protein crystal
+/* hydrogens of an atom at neutral pH by RESI class and PDB name, and its heavy
+neighbour count; Lys NZ and N-terminus NH3+, carboxylates none, plain His
+ND1/NE2 h=-1 (tautomer unknown), SO4/ACT/FMT as anions
 */
 bool ResidueHydrogens(const olxstr &class_name, const olxstr &atom_name,
   int &h, int &heavy);
@@ -122,9 +99,8 @@ struct BackboneResidue {
   size_t resi_id;
   vec3d ca, o;
   bool has_o;
-  /* TCAtom ids of the four backbone atoms, or InvalidIndex. The positions are
-  all a ribbon needs, but a display has to know which atoms it stands for or a
-  sidechain drawn as sticks brings the backbone with it, inside the ribbon
+  /* TCAtom ids of the backbone atoms, or InvalidIndex, so a sidechain drawn
+  as sticks can leave out the atoms the ribbon stands for
   */
   size_t n_id, ca_id, c_id, o_id;
   BackboneResidue()
@@ -134,10 +110,7 @@ struct BackboneResidue {
   {}
 };
 
-/* a run of residues whose backbone is continuous. A break starts a new segment
-rather than a gap flag on a longer one - drawing a ribbon across a break is the
-most visible way to get this wrong, and splitting makes it impossible
-*/
+// a continuous backbone run; a break starts a new one, no ribbon spans it
 struct ChainSegment {
   olxch chain_id;
   // symmetry matrix id, so each generated copy is traced separately
@@ -146,17 +119,13 @@ struct ChainSegment {
   ChainSegment() : chain_id('~'), matrix_id(0) {}
 };
 
-/* CA-CA distance above which the backbone is broken. A peptide bond gives
-about 3.8 A; 4.5 allows a strained model without joining separate pieces.
-Numbering is not trusted on its own - insertion codes are dropped on import and
-TER is ignored - only to widen this across a gap, never to join
+/* CA-CA break distance: 3.8 A per peptide, 4.5 allows strain; numbering only
+widens it across a gap, never joins on its own
 */
 extern const double default_break_distance;
 
-/* whether two residues adjacent in numbering are one continuous piece of
-backbone. The limit widens across a numbered gap rather than the gap breaking
-the chain: one residue missing leaves its neighbours 7.6 A apart. Only over
-a few residues - beyond that a ribbon across the gap is an invention
+/* continuity of residues adjacent in numbering; the limit widens over a short
+numbered gap (one missing residue leaves 7.6 A), not over a long one
 */
 bool IsContinuous(const BackboneResidue &prev, const BackboneResidue &next,
   double break_distance = default_break_distance);
@@ -167,13 +136,9 @@ const short
   ss_helix = 1,
   ss_strand = 2;
 
-/* assigns secondary structure along a segment, one entry per residue, from CA
-positions alone after P-SEA (Labesse 1997) - distances, virtual angle and
-virtual torsion, all of which survive a model with no carbonyl oxygens.
-Weighted rather than thresholded: each descriptor scores a Gaussian around its
-ideal, every window votes for the residues it spans, and the winner needs a
-margin. Hysteresis then drops helices under four residues and strands under
-three
+/* secondary structure per residue from CA positions only, after P-SEA
+(Labesse 1997): Gaussian scores, window votes, a winning margin; helices under
+four and strands under three residues are dropped
 */
 void AssignSecondaryStructure(const ChainSegment &seg, TArrayList<short> &out);
 

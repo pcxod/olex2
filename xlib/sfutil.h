@@ -110,11 +110,9 @@ namespace SFUtil {
     bool anom_only = false,
     EXTIDest extiDest=EXTIDest::Fc,
     TArrayList<compd>* Fc = 0);
-  /* Wiener-filters the residual dF = (Fo - |Fc|)e^{i phi} in map coefficients
- F in place, see wiener_filter.h. For a 2Fo-Fc map F = Fc + 2dF, only dF is
- filtered and Fc kept. Fsq_scale puts refs' Fo^2 on the Fc^2 scale (scale^2
- from GetSF, 1 for an fcf); the noise comes from the refinement weights. Logs
- the shell table
+  /* Wiener-filters dF = (Fo - |Fc|)e^{i phi} of F in place (2Fo-Fc: only the
+ 2dF part); Fsq_scale puts Fo^2 on the Fc^2 scale (scale^2 from GetSF, 1 for
+ an fcf)
  */
   void WienerFilter(const TRefList& refs, TArrayList<compd>& F,
     const TArrayList<compd>& Fc, double Fsq_scale,

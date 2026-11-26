@@ -410,10 +410,8 @@ public:
   with the cartoon on is not a polymer, and a protein with it off still is
   */
   bool HasPolymerBackbone();
-  /* reports to the GUI whether what was drawn is a polymer, the decision on
-  what to do about it being left to Python where the settings live. is_polymer
-  is whether a backbone was traced, not whether a cartoon is on. Both answers
-  are sent - the GUI stores it, so it must be told when it stops being true
+  /* tells the GUI (Python decides) whether a backbone was traced, not whether
+  a cartoon is on; false is sent too, the GUI keeps the last answer
   */
   void SuggestPolymerRefinement(bool is_polymer);
   const TPtrList<class TXCartoon>& GetCartoons() const { return Cartoons; }
@@ -433,10 +431,8 @@ public:
   size_t SetCartoonFocus(const TSAtomPList &seed, double radius);
   void ClearCartoonFocus();
   bool HasCartoonFocus() const { return !CartoonFocus.IsEmpty(); }
-  /* residues in Olex2's residue notation - 'A:45', 'A:45-60', '45-60', 'A',
-  '*' - appended as TResidue ids. False if the text is not of that form, the
-  cue to try the atom grammar. That grammar reaches residues too, but
-  FindResidues knows nothing of chains or ranges
+  /* residue notation ('A:45', 'A:45-60', '45-60', 'A', '*') to TResidue ids;
+  false if not of that form, then try the atom grammar (no chains or ranges)
   */
   bool ResolveResidues(const olxstr &spec, TSizeList &out) const;
   /* draws these residues' sidechains as atoms, the backbone staying with the
@@ -449,10 +445,8 @@ public:
   bool HasCartoonSidechains() const { return !CartoonSidechains.IsEmpty(); }
   bool GetCartoonFocusSidechains() const { return CartoonFocusSidechains; }
   void SetCartoonFocusSidechains(bool v);
-  /* restricts the display to these atoms and their surroundings, returning how
-  many units survived - residues when a cartoon is drawn, atoms otherwise. whole
-  completes what the radius touched to its residue, or to the connected
-  fragment for an atom without one; the cartoon path is whole residues already
+  /* shows only these atoms and their surroundings, returns the units kept
+  (residues with a cartoon, else atoms); whole completes to residue or fragment
   */
   size_t SetFocus(const TSAtomPList &seed, double radius, bool whole = true);
   void ClearFocus();

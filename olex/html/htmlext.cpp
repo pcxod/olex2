@@ -26,10 +26,8 @@
 #include <QtWidgets/QWidget>
 #include <algorithm>
 namespace {
-  /* swipe scrolls an HTML panel. Qt turns a touch into mouse events, so a
-  press inside a scrollable THtml is held back: past the drag distance the
-  panel follows the finger and the control never sees the press, otherwise the
-  press is replayed on release. No fling, scrolls in wxHTML_SCROLL_STEP steps
+  /* swipe scrolls an HTML panel: a press in a scrollable THtml is held back,
+  becomes a scroll past the drag distance or is replayed on release
   */
   class THtmlSwipe : public QObject {
     QPointer<QObject> target;

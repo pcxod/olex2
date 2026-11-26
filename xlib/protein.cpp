@@ -24,10 +24,8 @@ namespace {
   */
   const double max_c_o = 1.60, max_ca_c = 1.80, max_n_ca = 1.75;
   const double max_peptide_c_n = 1.55;
-  /* Worst total deviation still accepted, summed over the three distances.
-  Loosening this saturates rather than helping: on haemoglobin 0.55 leaves 30
-  residues unassigned and 1.5 leaves 27, so what remains has no N-CA-C=O
-  candidate at all and is not a threshold problem.
+  /* worst total deviation accepted, summed over the three distances; looser
+  does not help, what stays unassigned has no N-CA-C=O candidate at all
   */
   const double max_deviation = 0.9;
   // credit for carrying the next residue's nitrogen, in the same units
@@ -38,19 +36,15 @@ namespace {
   }
 
   const double ideal_ca_ca = 3.8;
-  /* Bounds for a recovered CA, and the widest mean deviation accepted. Wider
-  than a peptide step in both directions: the residues this runs on are the ones
-  the classifier could not place, which is usually a sign the geometry is poor.
+  /* bounds for a recovered CA and its widest mean deviation, wider than a
+  peptide step: these residues already failed the classifier on poor geometry
   */
   const double min_rec_ca_ca = 2.8, max_rec_ca_ca = 4.7,
     max_rec_deviation = 0.55;
   // credit for carrying a nitrogen at CA-N distance, as the peptide credit above
   const double amine_credit = 0.25;
   const double max_ca_n = 1.65;
-  /* Numbered gap over which the break test is widened. Beyond this the missing
-  stretch is long enough that a ribbon drawn across it would be an invention
-  rather than an interpolation, whatever the distance says.
-  */
+  // widest numbered gap the break test spans; longer, a ribbon is invented
   const int max_bridge_residues = 3;
 
   /* finds the CA of a residue the classifier rejected, from its traced
@@ -222,10 +216,7 @@ BackboneRoles FindBackbone(const TTypeList<ProteinAtom> &atoms) {
 }
 //.............................................................................
 namespace {
-  /* The twenty, alphabetically by three-letter code. Alphabetical rather than
-  grouped by property: the other two axes are what the properties are for, and a
-  reader looking a residue up in a twenty-row key finds it by name.
-  */
+  // the twenty, alphabetically by three-letter code, so a key reads by name
   const char *standard_residues[] = {
     "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE",
     "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL"
@@ -307,10 +298,8 @@ size_t ResidueAtomCount(const olxstr &class_name) {
   if (n.IsEmpty()) {
     return 0;
   }
-  /* Non-hydrogen atoms, backbone included. Hydrogen is left out because a
-  protein model refined from diffraction data usually has none, and a count
-  that assumed them would be wrong by more than the differences between the
-  residues themselves.
+  /* non-hydrogen atoms, backbone included; a refined protein model usually has
+  no hydrogens
   */
   if (n == "GLY") { return 4; }
   if (n == "ALA") { return 5; }
@@ -422,9 +411,8 @@ bool IsContinuous(const BackboneResidue &prev, const BackboneResidue &next,
 }
 //.............................................................................
 namespace {
-  /* Removes runs shorter than the minimum, and fills a single-residue hole
-  inside a run. Both directions matter: a lone helix residue in a loop is noise,
-  and a lone loop residue inside a helix is a ribbon cut in half.
+  /* drops runs shorter than the minimum and fills a one-residue hole in a run,
+  which would otherwise cut the ribbon in half
   */
   void SmoothRuns(TArrayList<short> &ss, short kind, size_t min_len) {
     const size_t n = ss.Count();
@@ -469,10 +457,8 @@ void AssignSecondaryStructure(const ChainSegment &seg, TArrayList<short> &out) {
     h[i] = s[i] = w[i] = 0;
   }
 
-  /* Every five-residue window votes for all five of the residues it spans, so
-  a residue in the middle of a helix collects five consistent votes and one at
-  the end collects fewer. That is the smoothing, and it falls out of the
-  evidence rather than being applied afterwards.
+  /* each five-residue window votes for all five residues, so an end residue
+  collects fewer votes than a middle one; that is the smoothing
   */
   for (size_t i = 0; i + 4 < n; i++) {
     const vec3d &c0 = seg.residues[i].ca;
@@ -503,9 +489,8 @@ void AssignSecondaryStructure(const ChainSegment &seg, TArrayList<short> &out) {
     }
   }
 
-  /* The winner needs both a floor and a margin. Without the floor a residue in
-  a loop is assigned whichever of the two it resembles slightly more; without
-  the margin the boundary between a helix and the coil leaving it flickers.
+  /* the winner needs a floor (or loops get assigned) and a margin (or helix
+  ends flicker)
   */
   const double min_evidence = 0.30, margin = 1.15;
   for (size_t i = 0; i < n; i++) {
@@ -524,9 +509,8 @@ void AssignSecondaryStructure(const ChainSegment &seg, TArrayList<short> &out) {
   SmoothRuns(out, ss_helix, 4);
   SmoothRuns(out, ss_strand, 3);
 
-  /* a strand is only a strand if it is in a sheet: the descriptors above see
-  the same local shape in an extended loop. A real one has a partner about 5 A
-  away from elsewhere in the chain - the one place the assignment is not local
+  /* a strand needs a partner strand about 5 A away elsewhere in the chain, an
+  extended loop has the same local shape
   */
   const double max_pairing = 5.6, max_pairing_sq = max_pairing*max_pairing;
   const size_t min_separation = 4;
@@ -550,9 +534,8 @@ void AssignSecondaryStructure(const ChainSegment &seg, TArrayList<short> &out) {
       }
     }
   }
-  /* trim unpaired residues off the ends rather than dropping the run: the
-  common error is a strand running too far into the loop, and a run with no
-  partner trims to nothing anyway. An interior one is kept - a beta bulge
+  /* trim unpaired residues off the ends (strands overrun into loops); an
+  unpaired interior one is a beta bulge and stays
   */
   size_t i = 0;
   while (i < n) {
@@ -577,9 +560,8 @@ void AssignSecondaryStructure(const ChainSegment &seg, TArrayList<short> &out) {
 void ExtractSegments(const TAsymmUnit &au, const TSAtomPList &atoms,
   TTypeList<ChainSegment> &out, double break_distance)
 {
-  /* group atoms by residue, keyed also by symmetry matrix so a generated copy
-  is its own chain. Not by walking TResidue::Next(): NextResidue passes an int
-  that converts to olxstr and searches the no-chain bucket only
+  /* group atoms by residue and symmetry matrix; not via TResidue::Next(), its
+  int converts to olxstr and searches the no-chain bucket only
   */
   olxdict<uint64_t, TSAtomPList, TPrimitiveComparator> by_residue;
   TArrayList<uint64_t> order;
@@ -621,9 +603,8 @@ void ExtractSegments(const TAsymmUnit &au, const TSAtomPList &atoms,
     const uint32_t matrix_id = uint32_t(key & 0xffffffff);
     TSAtomPList &ra = by_residue.Get(key);
 
-    /* The residue's own atoms, plus any bonded atom of another residue marked
-    foreign. The peptide nitrogen is what distinguishes a backbone carbonyl
-    from a sidechain C-OH, so it has to be visible to the classifier.
+    /* own atoms plus bonded atoms of other residues as foreign: the peptide N
+    tells a backbone carbonyl from a sidechain C-OH
     */
     TTypeList<ProteinAtom> pa;
     for (size_t j = 0; j < ra.Count(); j++) {
@@ -649,10 +630,7 @@ void ExtractSegments(const TAsymmUnit &au, const TSAtomPList &atoms,
 
     const BackboneRoles roles = FindBackbone(pa);
     if (!roles.IsValid()) {
-      /* Not an amino acid - water, ion, ligand - or an amino acid whose
-      geometry is too poor to place. The second pass tells those apart, using
-      the chain that forms around them.
-      */
+      // not an amino acid, or too poor to place: the second pass tells which
       const size_t ui = unplaced.IndexOf(ckey);
       (ui == InvalidIndex ? unplaced.Add(ckey, TArrayList<size_t>())
         : unplaced.GetValue(ui)).Add(i);
@@ -671,9 +649,8 @@ void ExtractSegments(const TAsymmUnit &au, const TSAtomPList &atoms,
       br.o = pa[roles.o].crd;
       br.has_o = true;
     }
-    /* the roles index pa, whose first ra.Count() entries are this residue's
-    own atoms in order and the rest the foreign neighbours. A backbone atom is
-    never one of those, so an index past the range belongs to no atom here
+    /* roles index pa: own atoms first (ra.Count()), then foreign ones, which
+    are never backbone, so an index past ra belongs to no atom here
     */
     struct id_of {
       static size_t get(const TSAtomPList &ra, size_t role) {
@@ -687,10 +664,8 @@ void ExtractSegments(const TAsymmUnit &au, const TSAtomPList &atoms,
     br.o_id = id_of::get(ra, roles.o);
   }
 
-  /* second pass: place the residues the classifier rejected from the CA of
-  their traced neighbours. Only those in a numbered gap of a chain qualify,
-  which keeps waters and ligands out. Recovered residues do not help each
-  other, so two consecutive failures leave a hole for the bridging below
+  /* second pass: place rejected residues inside a numbered chain gap (not
+  waters or ligands) from their neighbours' CA; two in a row leave a hole
   */
   for (size_t i = 0; i < unplaced.Count(); i++) {
     const uint64_t ckey = unplaced.GetKey(i);

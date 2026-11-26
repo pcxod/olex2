@@ -50,9 +50,8 @@ public:
     enc_utf16be
   };
   static const char *EncodingName(short enc);
-  /* reads a structure file into lines. A byte order mark, UTF-16 or CR only
-  line endings all turn up and parse as an empty file if taken as bytes. Sets
-  enc, if given, to what the content turned out to be
+  /* reads a structure file into lines, handling a BOM, UTF-16 and CR only
+  endings (else an empty file); enc, if given, gets the encoding found
   */
   static TStrList::const_list_type ReadLines(const olxstr &fn,
     short *enc = 0);

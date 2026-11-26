@@ -7,11 +7,8 @@
 * the root folder.                                                            *
 ******************************************************************************/
 
-/* frame time of protein-sized cartoon display lists: a driver may compile a
-list into a vertex buffer or replay it as immediate mode. The triangles come
-from gxlib/cartoon_geom.cpp, emitted as TXCartoon::EmitList does, one list per
-chain. VSync is off, and the first row, an empty scene, is the window and
-driver overhead
+/* frame time of cartoon display lists built as TXCartoon::EmitList does, one
+per chain, VSync off; the first row (empty scene) is the driver overhead
   cl /O2 /EHsc /I..\..\sdl /I..\..\xlib /I..\..\gxlib cartoon_bench.cpp
     ..\..\gxlib\cartoon_geom.cpp sdl.lib opengl32.lib gdi32.lib user32.lib
 */

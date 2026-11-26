@@ -154,12 +154,8 @@ void GXLibMacros::Export(TLibrary& lib) {
     ,
     fpAny,
     "Draws the polymer backbone as a cartoon: 'cartoon on', 'cartoon off' or"
-    " 'cartoon' to toggle. Clicking a ribbon selects that residue, and clicking"
-    " it again deselects it; 'isolate' then shows just those residues and their"
-    " surroundings. Sugars, ligands, metals and waters are not traced"
-    " and stay drawn as atoms and bonds in whatever style is set. 'cartoon"
-    " test N' replaces it with N residues of synthetic helix, for measuring"
-    " the display list at a scale no available structure reaches");
+    " 'cartoon' to toggle. Clicking a ribbon (de)selects its residue; ligands,"
+    " sugars, metals and waters stay drawn as atoms");
   gxlib_InitMacro(Isolate,
     "r-radius in A around the chosen atoms [5]&;"
     "c-cut: keep only what is inside the radius, instead of completing every"
@@ -167,20 +163,9 @@ void GXLibMacros::Export(TLibrary& lib) {
     "nc-do not move the view; by default it centres and scales to whatever is"
     " left showing, and back to the whole structure on leaving",
     fpAny,
-    "Shows only the chosen atoms and what surrounds them, and hides the rest:"
-    " 'isolate sel -r=5' for the selection, 'isolate C1 C2' for named atoms, or"
-    " 'isolate' on its own for whatever is selected, residues clicked on a"
-    " cartoon included. A loaded map is masked to the same region."
-    "\nWhatever the radius reaches is completed to the unit it belongs to, so"
-    " molecules are never cut in half: an atom that has a residue brings its"
-    " residue, an atom that has none - a solvent, a ligand, or any atom of a"
-    " small-molecule structure - brings its whole connected molecule. '-c'"
-    " keeps the bare sphere instead."
-    "\nWith a cartoon on the screen the unit is always the residue, and a"
-    " residue arrives with its sidechain."
-    "\n'isolate off' leaves the view again, and so does a second bare"
-    " 'isolate', which is what makes it work as a single key. 'fmol' and 'uniq'"
-    " also leave it, since they decide what is visible themselves");
+    "Shows only the given [selected] atoms and their surroundings, completed"
+    " to whole residues or molecules, and masks a loaded map to them. 'isolate"
+    " off' or a second bare 'isolate' leaves it, as do 'fmol' and 'uniq'");
   gxlib_InitMacro(AZoom, EmptyString(), fpAny^fpNone,
     "Modifies given atoms [all] radius. The first argument is the new radius "
     "in %");

@@ -343,9 +343,8 @@ TResidue& TAsymmUnit::NewResidue(const olxstr& RClass, int number, int alias,
             &er->GetClassName())
         );
         */
-        /* residue level disorder: the same number is another residue in another
-        conformer, both in the model. The registry holds one per number, so the
-        others are found by scanning
+        /* residue level disorder: one number, two residues in two conformers;
+        the registry holds one per number, so scan
         */
         for (size_t i = 0; i < Residues.Count(); i++) {
           TResidue &r = Residues[i];

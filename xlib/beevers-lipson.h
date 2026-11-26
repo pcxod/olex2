@@ -37,10 +37,8 @@ public:
       F, map, vol, vec3s(0, 0, 0), vec3s(d[0] - 1, d[1] - 1, d[2] - 1));
   }
 
-  /* as above, for the grid points from..to inclusive: the summation is
-  separable, so a box costs proportionally less and holds the full map's values.
-  Points outside are not written. The sigma is over the box; CellSigma gives
-  the cell's
+  /* as above for the grid points from..to inclusive, others not written; the
+  sigma is over the box, CellSigma gives the cell's
   */
   template <class FloatT>
   static MapInfo CalcEDM(const TArrayList<SFUtil::StructureFactor>& F,
@@ -50,9 +48,8 @@ public:
       F, map, vol, from, to);
   }
 
-  /* sigma over the whole cell from a coarse full map, for contouring a boxed
-  map. Parseval over the P1 expanded list does not give it reliably, a coarse
-  grid is cheap
+  /* cell sigma from a coarse full map, for contouring a boxed map; Parseval
+  over the P1 list is not reliable
   */
   template <class FloatT>
   static double CellSigma(const TArrayList<SFUtil::StructureFactor>& F,

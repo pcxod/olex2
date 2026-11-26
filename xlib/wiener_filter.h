@@ -13,19 +13,11 @@
 #include <algorithm>
 #include <cstddef>
 
-/* Wiener weights for the coefficients of a difference (residual) map.
- dF = (Fo - |Fc|) e^{i phi} carries the model error S plus the measurement
- noise. Deposited sigmas understate that noise at low angle; the refined WGHT
- does not, sigma_w(Fo^2) = 1/sqrt(w), sigma_w(F) = sigma_w(Fo^2)/2F.
- Per sin(theta)/lambda shell the signal is what the residual holds beyond it,
-   S = max(<|dF|^2 - sigma_w(F)^2>, 0),   c = S / (S + sigma_w(F)^2),
- so high-angle shells, which are noise only, drop out and the low-angle ones
- with the bonding and lone-pair density stay. S uses no model, only the data
- and the weights, so the filter cannot paint in what an aspherical model
- expects.
- Shells hold equal counts; their edges are numpy.quantile (linear) values and
- a reflection goes to shell searchsorted(edges, stl), so a Python check gives
- the same weights to rounding.
+/* Wiener weights per sin(theta)/lambda shell for difference map coefficients:
+c = S/(S + sigma_w(F)^2), S = max(<|dF|^2 - sigma_w(F)^2>, 0), sigma_w(F) =
+1/(2F sqrt(w)) from the refined weights (deposited sigmas are too small at low
+angle); no model term, so it cannot paint in non-spherical density.
+equal-count shells: numpy.quantile edges + searchsorted, as a Python check does
 */
 namespace olx_wiener {
   struct shell_info {

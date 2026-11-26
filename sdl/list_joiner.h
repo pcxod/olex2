@@ -27,10 +27,6 @@ struct ListJoiner {
   // a plain == is ambiguous for olx_pair_t; the member call picks one
   template <typename item_t>
   static bool are_equal(const item_t& a, const item_t& b) {
-    /* old: an address test first; a and b always come from different lists,
-    so it never fired
-    return static_cast<const void*>(&a) == static_cast<const void*>(&b) ? true : a.operator==(b);
-    */
     return a.operator==(b);
   }
 

@@ -27,14 +27,10 @@ class TAtomLegend : public AGlMouseHandlerImp {
   double Z;
   TStrList text;
   TArrayList<TGlMaterial> materials;
-  /* rows below are element keys drawn as spheres, from here on cartoon keys
-  drawn as ribbon - a ball already means atom type here. Cartoon rows are
-  always appended last, so one boundary separates them
-  */
+  // rows from here on are cartoon keys drawn as ribbon, always appended last
   size_t first_ribbon_row;
-  /* per row, from first_ribbon_row on. Coloured through glColor as the ribbon
-  is - the material alone leaves the ambient dark and the swatch looks duller
-  than what it is a key to
+  /* per row from first_ribbon_row, through glColor as the ribbon is; the
+  material alone leaves the ambient dark
   */
   TArrayList<uint32_t> row_colours;
   // free text appended below the keys, one row per line, no swatch

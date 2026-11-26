@@ -216,11 +216,9 @@ protected:
   TArrayList<IsoTriangle> Triangles, AllTriangles;
   void RenameVerticesAndTriangles();
   */
-  /* vertices sit on grid edges: grid point (x,y,z) owns the edges along x, y
-  and z that start there (slots 0, 1, 2). A vertex in plane X comes only from
-  slabs X-1 and X, so three planes of slots are kept: plane X is numbered once
-  slab X is done, and a slab's triangles are resolved once both its planes
-  are. Vertex order (x, y, z, slot) and triangles are those of the old index
+  /* point (x,y,z) owns the edges starting there along x, y, z (slots 0-2);
+  plane X gets vertices from slabs X-1 and X only, so three planes are kept and
+  numbered as their slabs finish; vertex order (x, y, z, slot) as the old index
   */
   struct EdgePlane {
     TArrayList<vec3f> crd;

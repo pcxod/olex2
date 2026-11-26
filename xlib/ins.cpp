@@ -958,11 +958,8 @@ bool TIns::ProcessSFAC(ParseContext& cx, const TStrList& Toks, bool update_rm) {
             << Toks[1]);
         }
         lb = XScatterer::NormaliseCharge(lb, elm);
-        /* a label without a charge keys by element, so OI/OII (O-, O2-) next to
-        a plain O merge into one O and a split site between them goes singular.
-        Z - f(0) of the table's own Gaussians names the ion; X-ray only: a
-        neutron table has no Gaussians, an electron one (lambda < 0.1 A) no
-        integer f(0)
+        /* uncharged labels (OI, OII) would merge with plain O; Z - f(0) of the
+        table's Gaussians names the ion, X-ray only (no integer f(0) otherwise)
         */
         if (XScatterer::ChargeFromLabel(lb, elm) == 0) {
           const double a = Toks[2].ToDouble() + Toks[4].ToDouble() +

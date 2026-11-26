@@ -2474,10 +2474,8 @@ bool TLattice::_ResidueHAdd(AConstraintGenerator& cg, TSAtom& atom,
   olxstr name = ca.GetLabel();
   int h, heavy;
   if (!protein::ResidueHydrogens(r.GetClassName(), name, h, heavy)) {
-    /* a conformer renamed when the .ins was written, CE of part 2 saved as
-    C1x: it is the nearest atom of that element in another part whose name
-    this part lacks, or within 0.5 A of that one with the same heavy neighbour
-    count - an Arg NH2 of one part can sit as close to NE of the other
+    /* a conformer renamed in the .ins (CE as C1x): the nearest atom of that
+    element in another part, or within 0.5 A of it with as many heavy neighbours
     */
     if (ca.GetPart() <= 0) {
       return false;

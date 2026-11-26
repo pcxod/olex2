@@ -6,9 +6,8 @@
 * This source file is distributed under the terms of the licence located in   *
 * the root folder.                                                            *
 ******************************************************************************/
-/* Feeds synthesised wx gesture events through TTouchNav into a real
-TGlRenderer/TGlMouse (no window, no GL context) and checks the view and the
-mouse handlers. Exit code = number of failed checks
+/* synthesised wx gestures through TTouchNav into a real TGlRenderer/TGlMouse
+(no window, no GL context); exit code = number of failed checks
 */
 #include "touchnav.h"
 #include "glrender.h"
