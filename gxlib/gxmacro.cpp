@@ -1013,8 +1013,12 @@ void GXLibMacros::macCalcFourier(TStrObjList &Cmds, const TParamList &Options,
         // a whole grid step of slack, so the mask cannot reach past the box
         int lo = (int)floor(mn[i] * dim[i]) - 1,
           hi = (int)ceil(mx[i] * dim[i]) + 1;
-        box_from[i] = (size_t)olx_max(0, lo);
-        box_to[i] = (size_t)olx_min(dim[i] - 1, hi);
+        // the masked map is drawn wrapped, so a box crossing a cell edge
+        // takes the whole axis
+        if (lo >= 0 && hi < dim[i]) {
+          box_from[i] = (size_t)lo;
+          box_to[i] = (size_t)hi;
+        }
       }
       boxed = (box_to - box_from + vec3s(1, 1, 1)).Prod() <
         (size_t)dim.Prod();

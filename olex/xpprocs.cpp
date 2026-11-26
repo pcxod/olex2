@@ -5066,6 +5066,16 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
         if (vertices.Count() < 3 || triags.IsEmpty()) {
           Error.ProcessingError(__OlxSrcInfo, "no triangles in the obj file");
         }
+        // same check as the text input below
+        for (size_t i = 0; i < triags.Count(); i++) {
+          for (int j = 0; j < 3; j++) {
+            if (triags[i][j] >= vertices.Count()) {
+              TBasicApp::NewLogEntry(logError) << "Vertex index out of range: '"
+                << (triags[i][j] + 1) << '\'';
+              triags[i][j] = 0;
+            }
+          }
+        }
         // -f=file: one packed RGB per face line, overrides the mtl
         olxstr colour_fn = Options.FindValue('f');
         if (!colour_fn.IsEmpty() && TEFile::Exists(colour_fn)) {

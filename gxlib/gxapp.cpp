@@ -5531,9 +5531,10 @@ bool TGXApp::GetVisibleAtomBounds(vec3d& mn, vec3d& mx, double inc) {
   }
   // BuildSceneMask tests against r_vdw^2 + inc, so this is that as a distance
   const double reach = sqrt(olx_sqr(max_r) + olx_max(0.0, inc));
-  const vec3d ax = XFile().GetAsymmUnit().GetAxes();
+  // a sphere of radius r spans r*|a*| along x, not r/|a| (oblique cells)
+  const mat3d& h2c = XFile().GetAsymmUnit().GetHklToCartesian();
   for (int i = 0; i < 3; i++) {
-    const double d = reach / ax[i];
+    const double d = reach * h2c[i].Length();
     mn[i] -= d;
     mx[i] += d;
   }

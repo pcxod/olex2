@@ -409,6 +409,9 @@ bool TMainForm::Destroy() {
   SaveVFS(plGlobal);  // save virtual db to file
   SaveVFS(plStructure);
   vfs_writer.Join();
+  if (vfs_writer.failed) { // nothing later would report it
+    TBasicApp::NewLogEntry(logInfo) << "Failed to save VFS";
+  }
   FXApp->OnObjectsDestroy.Remove(this);
   processMacro("onexit");
   {

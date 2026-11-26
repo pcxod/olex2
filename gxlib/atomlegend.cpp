@@ -97,6 +97,10 @@ void TAtomLegend::Create(const olxstr& cName) {
 }
 //.............................................................................
 void TAtomLegend::Fit() {
+  if (text.IsEmpty()) {
+    Width = Height = 0;
+    return;
+  }
   TGlFont &glf = Parent.GetScene().GetFont(
     Parent.GetScene().FindFontIndexForType<TXAtom>(), true);
   const uint16_t th = glf.TextHeight(EmptyString());
