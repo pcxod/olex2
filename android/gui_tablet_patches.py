@@ -767,3 +767,1375 @@ PATCHES = [
      'with\r\n<td>',
      'with\r\n</td>'),
 ]
+
+# the 14 tablet pages that were whole copies in rundir-overlay/etc/gui,
+# as diffs against trunk; these pages are CRLF, written here with LF
+def _crlf(rel, ps):
+    return [(rel, o.replace('\n', '\r\n'), n.replace('\n', '\r\n')) for o, n in ps]
+
+PATCHES += _crlf('etc/gui/disorder.htm', [
+(r'''    <a href='shell "https://xray.chem.wisc.edu/idealized-molecular-geometry-library/"'>Ilia's Fragment Library</a>
+''',
+ r'''    <font size="$GetVar('HtmlFontSizeControls')"><b>
+    <input
+      type="button"
+      name="FRAGMENT_LIBRARY_LINK"
+      value="Ilia's Fragment Library"
+      width="100%"
+      height="GetVar(HtmlInputHeight)"
+      onclick="shell https://xray.chem.wisc.edu/idealized-molecular-geometry-library/"
+      bgcolor="GetVar(linkButton.bgcolor)"
+      fgcolor="GetVar(linkButton.fgcolor)"
+      fit="false"
+      flat="GetVar(linkButton.flat)"
+      custom="GetVar(custom_button)"
+    >
+    </b></font>
+'''),
+(r'''<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='LINK_SELECTED';help_ext=Link-Selected;1 -->
+  <td width='100%'>
+    <b>%Link% %Selected%:</b> 
+''',
+ r'''<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='LINK_SELECTED';help_ext=Link-Selected;1 -->
+  <td width='30%'>
+    <b>%Link% %Selected%:</b> 
+'''),
+(r'''      <a href="fvar sel">Occupancies</a> | 
+      <a href="part -p=2 -lo sel>>fuse">PARTs & Occupancies</a>
+''',
+ r''''''),
+(r'''    <b>%Link% %Selected%:</b> 
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+''',
+ r'''    <b>%Link% %Selected%:</b> 
+  </td>
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=Occupancies",
+    "name=LINK_SEL_OCC",
+    "onclick=fvar sel",
+    "td1=<td width='35%'>"
+    )
+  $-
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=PARTs & Occupancies",
+    "name=LINK_SEL_PARTS",
+    "onclick=part -p=2 -lo sel>>fuse",
+    "td1=<td width='35%'>"
+    )
+  $-
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+'''),
+(r'''  <td width='100%'>
+    <b>Link PARTs & Occupanies + </b> &nbsp;
+      <a href="if strcmp(sel(),'') then none else 'link_parts_occupancies_with EADP'">EADP</a>&nbsp;
+      <a href="if strcmp(sel(),'') then none else 'link_parts_occupancies_with ISOR'">ISOR</a>
+''',
+ r'''  <td width='40%'>
+    <b>Link PARTs & Occupanies + </b>
+'''),
+(r'''    <b>Link PARTs & Occupanies + </b>
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+''',
+ r'''    <b>Link PARTs & Occupanies + </b>
+  </td>
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=EADP",
+    "name=LINK_PARTS_EADP",
+    "onclick=if strcmp(sel(),'') then none else 'link_parts_occupancies_with EADP'",
+    "td1=<td width='30%'>"
+    )
+  $-
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=ISOR",
+    "name=LINK_PARTS_ISOR",
+    "onclick=if strcmp(sel(),'') then none else 'link_parts_occupancies_with ISOR'",
+    "td1=<td width='30%'>"
+    )
+  $-
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+'''),
+(r'''  <td width='100%'>
+    <a href="part sel html.GetValue(part)"><b>%Assign% <i>selection</i> to PART</b></a>
+  </td>
+  <td VALIGN='center'>
+    <font size='2'>
+''',
+ r'''  $+
+    html.Snippet(GetVar(default_link),
+    "value=%Assign% selection to PART",
+    "name=ASSIGN_PART",
+    "onclick=part sel html.GetValue(part)",
+    "td1=<td width='70%'>"
+    )
+  $-
+  <td width='30%' VALIGN='center'>
+    <font size="$GetVar('HtmlFontSizeControls')">
+'''),
+(r'''      name="part" width="40" height="16" value="1" min=-100>
+''',
+ r'''      name="part" width="100%" height="GetVar(HtmlSpinHeight)" value="1" min=-100>
+'''),
+(r'''  <td width='100%'>
+    <a href="part sel html.GetValue(part)"><b>%Assign% <i>selection</i> to two PARTs in order</b></a>&nbsp
+  </td>
+''',
+ r'''  $+
+    html.Snippet(GetVar(default_link),
+    "value=%Assign% selection to two PARTs in order",
+    "name=ASSIGN_TWO_PARTS",
+    "onclick=part sel html.GetValue(part)",
+    "td1=<td width='100%'>"
+    )
+  $-
+'''),
+(r'''    <b>%Show% PART </b>
+    <a href="showP 0 1">0 1</a>&nbsp;
+    <a href="showP 0 2">0 2</a>&nbsp;
+    <a href="showP 0 -1">0 -1</a>&nbsp;
+    <a href="showP 0 -2">0 -2</a>&nbsp;
+    <a href="showP 1 2">1 2</a>&nbsp;
+    <a href="showP 1">1</a>&nbsp;
+    <a href="showP 2">2</a>&nbsp;
+    <a href="showP">ALL</a>&nbsp;
+''',
+ r'''    <b>%Show% PART</b>
+'''),
+(r'''  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='SPLIT_GROUP';help_ext=Split-Group;1 -->
+''',
+ r'''  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+<!-- #include tool-row gui\blocks\tool-row.htm;name='SHOW_PARTS_2';1; -->
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=0 1",
+    "name=SHOWP_0_1",
+    "onclick=showP 0 1",
+    "td1=<td width='33%'>"
+    )
+  $-
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=0 2",
+    "name=SHOWP_0_2",
+    "onclick=showP 0 2",
+    "td1=<td width='33%'>"
+    )
+  $-
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=0 -1",
+    "name=SHOWP_0_M1",
+    "onclick=showP 0 -1",
+    "td1=<td width='33%'>"
+    )
+  $-
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+<!-- #include tool-row gui\blocks\tool-row.htm;name='SHOW_PARTS_3';1; -->
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=0 -2",
+    "name=SHOWP_0_M2",
+    "onclick=showP 0 -2",
+    "td1=<td width='33%'>"
+    )
+  $-
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=1 2",
+    "name=SHOWP_1_2",
+    "onclick=showP 1 2",
+    "td1=<td width='33%'>"
+    )
+  $-
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=1",
+    "name=SHOWP_1",
+    "onclick=showP 1",
+    "td1=<td width='33%'>"
+    )
+  $-
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+<!-- #include tool-row gui\blocks\tool-row.htm;name='SHOW_PARTS_4';1; -->
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=2",
+    "name=SHOWP_2",
+    "onclick=showP 2",
+    "td1=<td width='33%'>"
+    )
+  $-
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=ALL",
+    "name=SHOWP_ALL",
+    "onclick=showP",
+    "td1=<td width='33%'>"
+    )
+  $-
+  <td width='33%'></td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='SPLIT_GROUP';help_ext=Split-Group;1 -->
+'''),
+(r'''!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='SPLIT_GROUP';help_ext=Split-Group;1 -->
+''',
+ r'''<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='SPLIT_GROUP';help_ext=Split-Group;1 -->
+'''),
+(r'''<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+
+<!-- #include tool-footer gui\blocks\tool-footer.htm;colspan=2;1; -->''',
+ r'''<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+
+<!-- #include tool-footer gui\blocks\tool-footer.htm;colspan=2;1; -->'''),
+])
+PATCHES += _crlf('etc/gui/h3-calculate-solvent-accessible-voids.htm', [
+(r'''  <td width="20%">%Probe%/&Aring</td>
+  <td width="12%">
+''',
+ r'''  <td width="25%">%Probe%/&Aring</td>
+  <td width="25%">
+'''),
+(r'''  <td width="20%">%Grid%/&Aring</td>
+  <td width="12%">
+''',
+ r'''  <td width="25%">%Grid%/&Aring</td>
+  <td width="25%">
+'''),
+(r'''  <td width="15%"> </td>
+''',
+ r'''<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<tr bgcolor="$GetVar(HtmlTableBgColour)">
+<!-- #include tool-column gui\blocks\tool-first-column.htm;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+  <td width="50%"> </td>
+'''),
+])
+PATCHES += _crlf('etc/gui/h3-calculate-voids.htm', [
+(r'''  <td width="20%">%Resolution%/&Aring</td>
+  <td width="12%">
+''',
+ r'''  <td width="25%">%Resolution%/&Aring</td>
+  <td width="25%">
+'''),
+(r'''  <td width="20%">%Distance%/&Aring</td>
+  <td width="12%">
+''',
+ r'''  <td width="25%">%Distance%/&Aring</td>
+  <td width="25%">
+'''),
+(r'''  <td width="15%">
+''',
+ r'''<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<tr bgcolor="$GetVar(HtmlTableBgColour)">
+<!-- #include tool-column gui\blocks\tool-first-column.htm;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+  <td width="50%">
+'''),
+(r'''      type="checkbox"
+      value="%Precise%"
+''',
+ r'''      type="checkbox"
+      height="GetVar('HtmlCheckboxHeight')"
+      value="%Precise%"
+'''),
+])
+PATCHES += _crlf('etc/gui/h3-electron-density.htm', [
+(r'''  <td align='left' width="10%">%Map%</td>
+  <td width="15%">
+''',
+ r'''  <td align='left' width="15%">%Map%</td>
+  <td width="35%">
+'''),
+(r'''  <td align='center' width="10%">%Source%</td>
+  <td width="15%">$+
+''',
+ r'''  <td align='center' width="15%">%Source%</td>
+  <td width="35%">$+
+'''),
+(r'''  <td align='center' width="10%">%Res%/&Aring</td>
+  <td width="10%">
+''',
+ r'''<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<tr bgcolor="$GetVar(HtmlTableBgColour)">
+<!-- #include tool-column gui\blocks\tool-first-column.htm;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+  <td align='left' width="15%">%Res%/&Aring</td>
+  <td width="35%">
+'''),
+(r'''    "onclick=spy.gui.maps.MapView()",
+    )$-
+''',
+ r'''    "onclick=spy.gui.maps.MapView()",
+    "td1=<td width='50%'>"
+    )$-
+'''),
+(r'''  <td align='left' width="10%">%Scale%</td>
+  <td width="35%">$+
+''',
+ r'''  <td align='left' width="15%">%Scale%</td>
+  <td width="85%">$+
+'''),
+(r'''    $-</td>
+  <td width="35%">$+
+    html.Snippet("gui/snippets/input-checkbox", "name=SNUM_MAP_MASK",
+''',
+ r'''    $-</td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<tr bgcolor="$GetVar(HtmlTableBgColour)">
+<!-- #include tool-column gui\blocks\tool-first-column.htm;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+  <td width="70%">$+
+    html.Snippet("gui/snippets/input-checkbox", "name=SNUM_MAP_MASK",
+'''),
+(r'''  <td>
+''',
+ r'''  <td width="30%">
+'''),
+])
+PATCHES += _crlf('etc/gui/hydrogen-atoms.htm', [
+(r'''    <table width="100%">
+''',
+ r'''    <table width="100%" cellspacing="6">
+'''),
+(r'''      <td width='5%'>A</td>
+      <td VALIGN='center' width='15%'>
+''',
+ r'''      <td width='10%'>A</td>
+      <td VALIGN='center' width='25%'>
+'''),
+(r'''      <td width='5%'>D</td>
+      <td VALIGN='center' width='15%'>
+''',
+ r'''      <td width='10%'>D</td>
+      <td VALIGN='center' width='25%'>
+'''),
+(r'''      <td VALIGN='center' width='10%'>
+''',
+ r'''      <td VALIGN='center' width='30%'>
+'''),
+(r'''      <td width="15%" align="right">
+''',
+ r'''    </tr>
+    <tr>
+      <td colspan='2' align='left'>
+'''),
+(r'''      </td>
+      <td>
+        <font size="$GetVar('HtmlFontSizeControls')">
+''',
+ r'''      </td>
+      <td colspan='3'>
+        <font size="$GetVar('HtmlFontSizeControls')">
+'''),
+(r'''    <table><tr>
+      <td>
+        <a href="hadd">%Add Hydrogen%</a>
+''',
+ r'''    <table width='100%' cellspacing='6'><tr>
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=%Add Hydrogen%",
+    "name=H_ADD",
+    "onclick=hadd",
+    "td1=<td width='33%'>"
+    )
+  $-
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=H %Labels%",
+    "name=H_LABELS",
+    "onclick=labels -h -l",
+    "td1=<td width='33%'>"
+    )
+  $-
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=No H %Labels%",
+    "name=H_NO_LABELS",
+    "onclick=labels -l",
+    "td1=<td width='33%'>"
+    )
+  $-
+    </tr><tr>
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=%Show% AFIX",
+    "name=H_SHOW_AFIX",
+    "onclick=labels -h -a",
+    "td1=<td width='33%'>"
+    )
+  $-
+      <td width='33%'>
+        <font size="$GetVar('HtmlFontSizeControls')"><b>
+        <input
+          type="button"
+          name="H_FREE_ALL"
+          value="FREE ALL H"
+          width="100%"
+          height="GetVar(HtmlInputHeight)"
+          onclick="afix 0 $H>>free uiso $H"
+          bgcolor="GetVar(linkButton.bgcolor)"
+          fgcolor="GetVar(linkButton.fgcolor)"
+          fit="false"
+          flat="GetVar(linkButton.flat)"
+          hint="Remove AFIX instructions from all hydrogen atoms, free Uiso values"
+          custom="GetVar(custom_button)"
+        >
+        </b></font>
+'''),
+(r'''      <td>
+        <a href="labels -h -l">H %Labels%</a>
+      </td>
+      <td>
+        <a href="labels -l">No H %Labels%</a>
+      </td>
+      <td>
+        <a href="labels -h -a">%Show% AFIX</a>
+      </td>
+      <td>
+        <a target="Remove AFIX instructions from all hydrogen atoms, free Uiso values" href="afix 0 $H>>free uiso $H">FREE ALL H</a>
+      </td>
+      <td>
+        <a href="ShowQ a False >> showQ b False">%Hide% Q</a>
+      </td>
+
+    </tr>
+  </table>
+''',
+ r'''  $+
+    html.Snippet(GetVar(default_link),
+    "value=%Hide% Q",
+    "name=H_HIDE_Q",
+    "onclick=ShowQ a False >> showQ b False",
+    "td1=<td width='33%'>"
+    )
+  $-
+    </tr></table>
+  </td>
+'''),
+])
+PATCHES += _crlf('etc/gui/metadata-h3-collection.htm', [
+(r'''      <font size="2">
+''',
+ r'''      <font size="$GetVar('HtmlFontSizeControls')">
+'''),
+(r'''    <font size="2">
+    <td align="right" width="80%">
+      <table cellpadding='0' cellspacing='0' width='100%'>
+        <tr>
+''',
+ r''''''),
+(r'''      <b>Submitted</b>
+    </td>
+    <td width='17%'>
+      <input
+        type="date"
+''',
+ r'''      <b>Submitted</b>
+    </td>
+    <td width='36%'>
+      <input
+        type="date"
+'''),
+(r'''    <td VALIGN="center" ALIGN="right" width="17%">
+''',
+ r'''    <td VALIGN="center" ALIGN="right" width="14%">
+'''),
+(r'''      <b>Collected</b>
+    </td>
+    <td width='17%'>
+      <input
+        type="date"
+''',
+ r'''      <b>Collected</b>
+    </td>
+    <td width='36%'>
+      <input
+        type="date"
+'''),
+(r'''    <td VALIGN="center" ALIGN="right" width="18%">
+''',
+ r'''<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- #include tool-row gui\blocks\tool-row.htm;name='METADATA_DATES_2';1 -->
+    <td VALIGN="center" ALIGN="left" width="14%">
+'''),
+(r'''    <td width='17%'>
+''',
+ r'''    <td width='36%'>
+'''),
+(r'''        </tr>
+      </table>
+    </td>
+    </font>
+''',
+ r'''    <td width='50%'></td>
+'''),
+])
+PATCHES += _crlf('etc/gui/overlay.htm', [
+(r'''  <td width='50%'>
+    <a 
+      href="match" 
+      target="Match All Fragments-target">
+      %Match All Fragments%
+    </a>
+  </td>
+  <td width='50%'>
+    <a href="match -u">%UnMatch%</a>
+  </td>
+''',
+ r'''  $+
+    html.Snippet(GetVar(default_link),
+    "value=%Match All Fragments%",
+    "name=MATCH_ALL",
+    "onclick=match",
+    "td1=<td width='50%'>"
+    )
+  $-
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=%UnMatch%",
+    "name=MATCH_UNMATCH",
+    "onclick=match -u",
+    "td1=<td width='50%'>"
+    )
+  $-
+'''),
+(r'''  <td width='100%'>
+    <a 
+      target="Match Selected Atoms-target" 
+      href="match sel">
+      %Match Selected Atoms%</a>
+  </td>
+''',
+ r'''  $+
+    html.Snippet(GetVar(default_link),
+    "value=%Match Selected Atoms%",
+    "name=MATCH_SEL",
+    "onclick=match sel",
+    "td1=<td width='100%'>"
+    )
+  $-
+'''),
+(r'''  <td width='100%'>
+    <a href="@reap -*>>mode match>>html.update">%Overlay Structure%</a>&nbsp;|&nbsp;
+    <a href="mode match">%Mode Match%</a>
+  </td>
+''',
+ r'''  $+
+    html.Snippet(GetVar(default_link),
+    "value=%Overlay Structure%",
+    "name=MATCH_OVERLAY",
+    "onclick=@reap -*>>mode match>>html.update",
+    "td1=<td width='50%'>"
+    )
+  $-
+  $+
+    html.Snippet(GetVar(default_link),
+    "value=%Mode Match%",
+    "name=MATCH_MODE",
+    "onclick=mode match",
+    "td1=<td width='50%'>"
+    )
+  $-
+'''),
+])
+PATCHES += _crlf('etc/gui/peanut.htm', [
+(r'''<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='Peanut_1';help_ext=Anomalous-Dispersion;1 -->
+  <td width="10%" align='left'>
+    <b>Type </b>
+''',
+ r'''<!-- #include tool-row-help gui\blocks\tool-row-help.htm;name='Peanut_1';help_ext=Anomalous-Dispersion;1 -->
+  <td width="20%" align='left'>
+    <b>Type </b>
+'''),
+(r'''  <td width="12%" align="'center'"> $+
+''',
+ r'''  <td width="30%" align="'center'"> $+
+'''),
+(r'''  </td>
+  <td width="10%" align='left'>
+    <b>Quality </b>
+''',
+ r'''  </td>
+  <td width="20%" align='left'>
+    <b>Quality </b>
+'''),
+(r'''  <td width='8%' align='left'>
+''',
+ r'''  <td width='30%' align='left'>
+    <font size="$GetVar('HtmlFontSizeControls')">
+'''),
+(r'''      width="50"
+      height="17"
+''',
+ r'''      width="100%"
+      height="GetVar(HtmlSpinHeight)"
+'''),
+(r'''    >
+  </td>
+''',
+ r'''    >
+    </font>
+  </td>
+'''),
+(r'''  <td width="10%" align='right'>
+''',
+ r'''<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+<!-- #include tool-row gui\blocks\tool-row.htm;name='Peanut_1b';1; -->
+  <td width="20%" align='left'>
+'''),
+(r'''  <td width="20%" align='center'>
+''',
+ r'''  <td width="30%" align='center'>
+'''),
+(r'''  <td width="10%" align='left'>
+''',
+ r'''  <td width="20%" align='left'>
+'''),
+(r'''  <td width="10%" align="'center'"> $+
+''',
+ r'''  <td width="30%" align="'center'"> $+
+'''),
+(r'''    "onclick=spy.Peanut.show_MSDS()",
+    "bgcolor=GetVar(HtmlTableRowBgColour)",
+    "td1=<td width="20%" align='center'>",
+    )
+  $-
+''',
+ r'''    "onclick=spy.Peanut.show_MSDS()",
+    "bgcolor=GetVar(HtmlTableRowBgColour)",
+    "td1=<td width='50%' align='center'>",
+    )
+  $-
+'''),
+(r'''    "onclick=spy.Peanut.remove_MSDS()",
+    "bgcolor=GetVar(HtmlTableRowBgColour)",
+    "td1=<td width="20%" align='center'>",
+    )
+  $-  
+''',
+ r'''    "onclick=spy.Peanut.remove_MSDS()",
+    "bgcolor=GetVar(HtmlTableRowBgColour)",
+    "td1=<td width='50%' align='center'>",
+    )
+  $-  
+'''),
+(r'''  $-  
+  $+
+''',
+ r'''  $-  
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+<!-- #include tool-row gui\blocks\tool-row.htm;name='Peanut_2b';1; -->
+  $+
+'''),
+(r'''    "onclick=spy.Peanut.show_diff()",
+    "bgcolor=GetVar(HtmlTableRowBgColour)",
+    "td1=<td width="20%" align='center'>",
+    )
+  $-
+''',
+ r'''    "onclick=spy.Peanut.show_diff()",
+    "bgcolor=GetVar(HtmlTableRowBgColour)",
+    "td1=<td width='50%' align='center'>",
+    )
+  $-
+'''),
+(r'''    "td1=<td width="20%" align='center'>",
+''',
+ r'''    "td1=<td width='50%' align='center'>",
+'''),
+])
+PATCHES += _crlf('etc/gui/rotate.htm', [
+(r'''<!-- #include tool-top gui\blocks\tool-top.htm;image=#image;onclick=#onclick;1; -->
+
+''',
+ r'''<!-- #include tool-top gui\blocks\tool-top.htm;image=#image;onclick=#onclick;1; -->
+
+<!-- Android tablet: one axis per row ([-] spin [+]) -->
+
+'''),
+(r'''  <td name=LABEL_ROTATE width='15%'>
+''',
+ r'''  <td name=LABEL_ROTATE width='25%'>
+'''),
+(r'''  <td name=SPIN_ROTATION_X align='left'>
+''',
+ r'''  <td width='25%' align='right'>
+'''),
+(r'''    $spy.MakeHoverButton('tiny-:x','rota 1 math.eval(html.GetValue(rx)*-1)')
+    &thinsp;
+    <font size='$GetVar(HtmlFontSizeControls)'>
+''',
+ r'''    $spy.MakeHoverButton('tiny-:x','rota 1 math.eval(html.GetValue(rx)*-1)')
+  </td>
+  <td name=SPIN_ROTATION_X width='25%'>
+    <font size='$GetVar(HtmlFontSizeControls)'>
+'''),
+(r'''      name = "rx"
+      width="45"
+      height="$GetVar(HtmlSPinHeight)"
+      value="10"
+''',
+ r'''      name = "rx"
+      width="100%"
+      height="$GetVar(HtmlSpinHeight)"
+      value="10"
+'''),
+(r'''    </font>
+    &thinsp;
+    $spy.MakeHoverButton('tiny-x:','rota 1 html.getvalue(rx)')
+''',
+ r'''    </font>
+  </td>
+  <td width='25%' align='left'>
+    $spy.MakeHoverButton('tiny-x:','rota 1 html.getvalue(rx)')
+'''),
+(r'''  <td name=SPIN_ROTATION_Y align='center'>
+''',
+ r'''<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- #include tool-row gui\blocks\tool-row.htm;name='ROTATE_Y';1 -->
+  <td width='25%'></td>
+  <td width='25%' align='right'>
+'''),
+(r'''    $spy.MakeHoverButton('tiny-:y','rota 2 math.eval(html.GetValue(ry)*-1)')
+    &thinsp;
+    <font size='$GetVar(HtmlFontSizeControls)'>
+''',
+ r'''    $spy.MakeHoverButton('tiny-:y','rota 2 math.eval(html.GetValue(ry)*-1)')
+  </td>
+  <td name=SPIN_ROTATION_Y width='25%'>
+    <font size='$GetVar(HtmlFontSizeControls)'>
+'''),
+(r'''      name = "ry"
+      width="45"
+      height="$GetVar(HtmlSPinHeight)"
+      bgcolor="$GetVar(HtmlInputBgColour)"
+''',
+ r'''      name = "ry"
+      width="100%"
+      height="$GetVar(HtmlSpinHeight)"
+      bgcolor="$GetVar(HtmlInputBgColour)"
+'''),
+(r'''    </font>
+    &thinsp;
+    $spy.MakeHoverButton('button_tiny-y:','rota 2 html.getvalue(ry)')
+''',
+ r'''    </font>
+  </td>
+  <td width='25%' align='left'>
+    $spy.MakeHoverButton('button_tiny-y:','rota 2 html.getvalue(ry)')
+'''),
+(r'''  <td name=SPIN_ROTATION_Z align='right'>
+''',
+ r'''<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- #include tool-row gui\blocks\tool-row.htm;name='ROTATE_Z';1 -->
+  <td width='25%'></td>
+  <td width='25%' align='right'>
+'''),
+(r'''    $spy.MakeHoverButton('tiny-:z','rota 3 math.eval(html.GetValue(rz)*-1)')
+    &thinsp;
+    <font size='$GetVar(HtmlFontSizeControls)'>
+''',
+ r'''    $spy.MakeHoverButton('tiny-:z','rota 3 math.eval(html.GetValue(rz)*-1)')
+  </td>
+  <td name=SPIN_ROTATION_Z width='25%'>
+    <font size='$GetVar(HtmlFontSizeControls)'>
+'''),
+(r'''      width="45"
+      height="$GetVar(HtmlSPinHeight)"
+''',
+ r'''      width="100%"
+      height="$GetVar(HtmlSpinHeight)"
+'''),
+(r'''    &thinsp;
+''',
+ r'''  </td>
+  <td width='25%' align='left'>
+'''),
+(r'''  <td name=LABEL_AUTO_ROTATION width='15%'>
+''',
+ r'''  <td name=LABEL_AUTO_ROTATION width='25%'>
+'''),
+(r'''  <td name=CHECK_X>
+''',
+ r'''  <td name=CHECK_X width='25%'>
+'''),
+(r'''  <td name=CHECK_Y>
+''',
+ r'''  <td name=CHECK_Y width='25%'>
+'''),
+(r'''  <td name=CHECK_Z>
+''',
+ r'''  <td name=CHECK_Z width='25%'>
+'''),
+(r'''    $-
+  </td>
+
+  <td name=LABEL_AUTO_ROTATION_SPEED width='15%'>
+''',
+ r'''    $-
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+  <td name=LABEL_AUTO_ROTATION_SPEED width='15%'>
+'''),
+(r'''  <td name=LABEL_AUTO_ROTATION_SPEED width='15%'>
+''',
+ r'''<!-- #include tool-row gui\blocks\tool-row.htm;name='AUTO_ROTATION_SPEED';1 -->
+  <td name=LABEL_AUTO_ROTATION_SPEED width='25%'>
+'''),
+(r'''  <td name=SLIDER_SPEED align='center'>
+''',
+ r'''  <td name=SLIDER_SPEED width='75%'>
+'''),
+(r'''      width="70"
+      height="20"
+''',
+ r'''      width="100%"
+      height="$GetVar(HtmlInputHeight)"
+'''),
+(r'''  <td name=XYZ align='right'>
+''',
+ r'''<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<!-- #include tool-row gui\blocks\tool-row.htm;name='VIEW_ALONG';1 -->
+  <td width='25%'>
+    <b>View along</b>
+  </td>
+  <td name=XYZ width='25%'>
+'''),
+(r'''    $spy.MakeHoverButton('tiny-a','matr 1')
+    &nbsp
+    $spy.MakeHoverButton('tiny-b','matr 2')
+''',
+ r'''    $spy.MakeHoverButton('tiny-a','matr 1')
+  </td>
+  <td width='25%'>
+    $spy.MakeHoverButton('tiny-b','matr 2')
+'''),
+(r'''    &nbsp
+''',
+ r'''  </td>
+  <td width='25%'>
+'''),
+])
+PATCHES.append(('etc/gui/start.htm', '    "hint=A small organic structure to get started with",\n    )$-\n', '    "hint=A small organic structure to get started with",\n    "td1=<td width=\'33%\'>"\n    )$-\n'))
+PATCHES.append(('etc/gui/start.htm', '    "hint=Simple disorder in a ring",\n    )$-\n', '    "hint=Simple disorder in a ring",\n    "td1=<td width=\'33%\'>"\n    )$-\n'))
+PATCHES.append(('etc/gui/start.htm', '    "hint=A simple coordination complex",\n\n', '    "hint=A simple coordination complex",\n    "td1=<td width=\'33%\'>"\n    )$-\n\n'))
+PATCHES.append(('etc/gui/start.htm', '    )$-\n\n    )$-\n\n    $+\n', "    )$-\n\n<!-- #include row_table_off gui\\blocks\\row_table_off.htm;1; -->\n\n<!-- #include tool-row gui\\blocks\\tool-row.htm;name='SAMPLE_STRUCTURES_2';1 -->\n\n    $+\n"))
+PATCHES.append(('etc/gui/start.htm', '    "hint=A Z\'=2 structure",\n    )$-\n', '    "hint=A Z\'=2 structure",\n    "td1=<td width=\'33%\'>"\n    )$-\n'))
+PATCHES.append(('etc/gui/start.htm', '    "hint=Two binding modes for water ligands and water solvent",\n    )$-\n', '    "hint=Two binding modes for water ligands and water solvent",\n    "td1=<td width=\'33%\'>"\n    )$-\n'))
+PATCHES.append(('etc/gui/start.htm', '    "hint=Toluene disordered across a symmetry element",\n    )$-\n', '    "hint=Toluene disordered across a symmetry element",\n    "td1=<td width=\'33%\'>"\n    )$-\n'))
+PATCHES.append(('etc/gui/start.htm', '    "hint=Toluene disordered across a symmetry element",\n    "td1=<td width=\'33%\'>"\n    )$-\n\n    $+\n    html.Snippet(GetVar(default_link),\n', '    "hint=Toluene disordered across a symmetry element",\n    "td1=<td width=\'33%\'>"\n    )$-\n\n<!-- #include row_table_off gui\\blocks\\row_table_off.htm;1; -->\n\n<!-- #include tool-row gui\\blocks\\tool-row.htm;name=\'SAMPLE_STRUCTURES_3\';1 -->\n\n    $+\n    html.Snippet(GetVar(default_link),\n'))
+PATCHES.append(('etc/gui/start.htm', '    "hint=Calcium tartrate, a continuous solid",\n    )$-\n', '    "hint=Calcium tartrate, a continuous solid",\n    "td1=<td width=\'33%\'>"\n    )$-\n'))
+PATCHES.append(('etc/gui/start.htm', '    "onclick=spy.internal.get_structure_from_url(TyrosineED.zip)",\n    )$-\n', '    "onclick=spy.internal.get_structure_from_url(TyrosineED.zip)",\n    "td1=<td width=\'33%\'>"\n    )$-\n'))
+PATCHES.append(('etc/gui/start.htm', '    "value=• • •",\n', '    "value=More...",\n'))
+PATCHES.append(('etc/gui/start.htm', '    "hint=More examples",\n    )$-\n', '    "hint=More examples",\n    "td1=<td width=\'33%\'>"\n    )$-\n'))
+PATCHES.append(('etc/gui/start.htm', "  <td width='100%' valign='center'>\n    <b>%Documentation%</b>:\n", ''))
+PATCHES.append(('etc/gui/start.htm', '  <a target=\'Documentation at the Olexsys website\' href="shell \'https://www.olexsys.org/olex2/docs/\'"><b>Online</b></a> |\n  <a target=\'Help for line commands\' href="shell BaseDir()/etc/documentation/Commands.pdf">Static %PDF%</a> |\n  <a href="shell https://uwmadison.app.box.com/s/2qq12zzw893vc3n1rspefv9h9p6gw83k">Ilia Guzei\'s Manual&nbsp;</a>\n  </td>\n', '    $+\n    html.Snippet(GetVar(default_link),\n    "value=Online Manual",\n    "onclick=shell \'https://www.olexsys.org/olex2/docs/\'",\n    "td1=<td width=\'33%\'>"\n    )$-\n\n    $+\n    html.Snippet(GetVar(default_link),\n    "value=Commands PDF",\n    "onclick=shell BaseDir()/etc/documentation/Commands.pdf",\n    "td1=<td width=\'33%\'>"\n    )$-\n\n    $+\n    html.Snippet(GetVar(default_link),\n    "value=Guzei Manual",\n    "onclick=shell https://uwmadison.app.box.com/s/2qq12zzw893vc3n1rspefv9h9p6gw83k",\n    "td1=<td width=\'33%\'>"\n    )$-\n\n'))
+PATCHES += _crlf('etc/gui/tools/legend-and-placement.htm', [
+(r'''
+<td width='5%'>
+<b>Legend </b>
+''',
+ r'''
+<td width='25%'>
+<b>Legend </b>
+'''),
+(r'''<td width='5%'>
+''',
+ r'''<td width='15%'>
+'''),
+(r'''      name = "LEGEND#scope"
+      fgcolor="GetVar('HtmlFontColour')"
+''',
+ r'''      name = "LEGEND#scope"
+      height="$GetVar(HtmlCheckboxHeight)"
+      width="$GetVar(HtmlCheckboxWidth)"
+      fgcolor="GetVar('HtmlFontColour')"
+'''),
+(r'''    </font>
+</td>
+
+  <td width='15%'>
+    $+
+    html.Snippet(
+    "gui/snippets/input-combo",
+''',
+ r'''    </font>
+</td>
+
+  <td width='30%'>
+    $+
+    html.Snippet(
+    "gui/snippets/input-combo",
+'''),
+(r'''    $-
+  </td>
+
+  <td width='15%'>
+    $+
+    html.Snippet(
+    "gui/snippets/input-combo", "name=LEGEND_VERTICAL",
+''',
+ r'''    $-
+  </td>
+
+  <td width='30%'>
+    $+
+    html.Snippet(
+    "gui/snippets/input-combo", "name=LEGEND_VERTICAL",
+'''),
+(r'''  <td width='15%'>
+''',
+ r'''<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+<!-- #include tool-row gui\blocks\tool-row.htm;name='LEGEND_SETTINGS_2';1 -->
+
+  <td width='25%'>
+    Padding
+  </td>
+
+  <td width='35%'>
+'''),
+(r'''  <td width='24%' align='right'>
+     Reset Legend
+  </td>
+''',
+ r''''''),
+(r'''    "value=Set Legend",
+''',
+ r'''    "value=Reset Legend",
+    "td1=<td width='40%'>",
+'''),
+])
+PATCHES += _crlf('etc/gui/tools/report-footer.htm', [
+(r'''    "onclick=spy.ExtractCifInfo(True,True)>>spy.EditCifInfo()>>html.Update",
+    "td1=<td width='33%'>",
+    "focus="
+''',
+ r'''    "onclick=spy.ExtractCifInfo(True,True)>>spy.EditCifInfo()>>html.Update",
+    "td1=<td width='50%'>",
+    "focus="
+'''),
+(r'''    "td1=<td width='33%'>",
+''',
+ r'''    "td1=<td width='50%'>",
+'''),
+(r'''  )
+$-
+
+<td width='12%' align='right'>
+''',
+ r'''  )
+$-
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<td width='12%' align='right'>
+'''),
+(r'''<td width='12%' align='right'>
+  HKL/RES
+''',
+ r'''<tr align = 'center' name=EDIT_CIF width='100%'>
+<!-- #include tool-first-column gui\blocks\tool-first-column.htm;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+<td width='50%' align='left'>
+  &nbsp;HKL/RES
+'''),
+(r'''<td width='25%' align='right'>
+''',
+ r'''<td width='50%' align='right'>
+'''),
+(r'''    "td1=<td width='33%'>"
+''',
+ r'''    "td1=<td width='50%'>"
+'''),
+(r'''<td name=GET_CHECKCIF_REPORT_FORMAT align='left' VALIGN='center' width='12%'>
+''',
+ r'''<td name=GET_CHECKCIF_REPORT_FORMAT align='left' VALIGN='center' width='50%'>
+'''),
+(r'''$-
+</td>
+
+<td width='20%' align='center'>
+''',
+ r'''$-
+</td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+<td width='20%' align='center'>
+'''),
+(r'''<td width='20%' align='center'>
+''',
+ r'''<tr align = 'center' name=EDIT_CIF width='100%'>
+<!-- #include tool-first-column gui\blocks\tool-first-column.htm;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+<td width='50%' align='center'>
+'''),
+(r'''    "td1=<td width='30%'>"
+''',
+ r'''    "td1=<td width='50%'>"
+'''),
+(r'''<td name=AUTO_MERGE_CIF align='right' VALIGN='right' width='5%'>
+''',
+ r'''<td name=AUTO_MERGE_CIF align='right' VALIGN='right' width='8%'>
+'''),
+(r'''    <input
+      type='checkbox'
+      bgcolor="GetVar('HtmlTableBgColour')"
+      name = "CIFMERGE_AFTER_REFINE"
+''',
+ r'''    <input
+      type='checkbox'
+      height="GetVar(HtmlCheckboxHeight)"
+      bgcolor="GetVar('HtmlTableBgColour')"
+      name = "CIFMERGE_AFTER_REFINE"
+'''),
+(r'''  <td align='left' width='15%'>
+''',
+ r'''  <td align='left' width='22%'>
+'''),
+(r'''  <td align='left' width='50%'>
+''',
+ r'''  <td align='left' width='70%'>
+'''),
+(r'''<a target='Edit the built-in CIF information' href='spy.EditCifInfo()'>metacif</a> $spy.gui.report.publication.DisplayMergeList()
+  </td>
+
+  <td align='right' width ='35%'>
+''',
+ r'''<a target='Edit the built-in CIF information' href='spy.EditCifInfo()'>metacif</a> $spy.gui.report.publication.DisplayMergeList()
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+  <td align='right' width ='35%'>
+'''),
+(r'''  <td align='right' width ='35%'>
+  <b>Add</b>
+<a href="spy.gui.report.publication.add_cif_to_merge_list(FileOpen('Choose definition file','.cif files|*.cif', FilePath()))>>html.Update">
+  <b>local</b></a> |
+<a href="spy.gui.report.publication.add_cif_to_merge_list(FileOpen('Choose definition file','.cif files|*.cif', BaseDir()/etc/site))>>html.Update">
+  <b>default</b></a>&nbsp;<b>CIF</b>
+''',
+ r'''<tr align = 'center' width='100%'>
+<!-- #include tool-first-column gui\blocks\tool-first-column.htm;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+  <td align='left' width='30%'>
+    &nbsp;<b>Add CIF</b>
+  </td>
+  <td width='35%'>
+    <snippet src="gui/snippets/gui-link-plain"
+     name="add_local_cif"
+     value="local"
+     onclick="spy.gui.report.publication.add_cif_to_merge_list(FileOpen('Choose definition file','.cif files|*.cif', FilePath()))>>html.Update"  />
+  </td>
+  <td width='35%'>
+    <snippet src="gui/snippets/gui-link-plain"
+     name="add_default_cif"
+     value="default"
+     onclick="spy.gui.report.publication.add_cif_to_merge_list(FileOpen('Choose definition file','.cif files|*.cif', BaseDir()/etc/site))>>html.Update"  />
+'''),
+(r'''  <td name="Force metacif" align='right' VALIGN='right' width='5%'>
+''',
+ r'''  <td name="Force metacif" align='right' VALIGN='right' width='8%'>
+'''),
+(r'''      type='checkbox'
+      bgcolor="GetVar('HtmlTableBgColour')"
+''',
+ r'''      type='checkbox'
+      height="GetVar(HtmlCheckboxHeight)"
+      bgcolor="GetVar('HtmlTableBgColour')"
+'''),
+(r'''  </td>
+  <td>
+    Merge metacif items even if marked for skipping
+''',
+ r'''  </td>
+  <td width='92%'>
+    Merge metacif items even if marked for skipping
+'''),
+(r'''    Merge metacif items even if marked for skipping
+  <td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+''',
+ r'''    Merge metacif items even if marked for skipping
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+'''),
+(r'''  <td width="10%"><b>HTAB:</b><td>
+  <td width="20%">Max D-A</td>
+  <td width="10%">
+''',
+ r'''  <td width="30%">&nbsp;<b>HTAB</b> max D-A</td>
+  <td width="20%">
+'''),
+(r'''  <td width="20%">Min D-H-A angle<td>
+  <td width="10%">
+''',
+ r'''  <td width="30%" align="right">min D-H-A angle</td>
+  <td width="20%">
+'''),
+(r'''     onchange="spy.SetParam('snum.cif.htab_min_angle', html.GetValue('~name~'))"  />
+  </td>
+
+  <td width="15%">
+''',
+ r'''     onchange="spy.SetParam('snum.cif.htab_min_angle', html.GetValue('~name~'))"  />
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+  <td width="15%">
+'''),
+(r'''  <td width="15%">
+''',
+ r'''<tr align = 'center' width='100%'>
+<!-- #include tool-first-column gui\blocks\tool-first-column.htm;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+  <td width="50%">
+'''),
+(r'''  <td width="5%" align="right">
+''',
+ r'''  <td width="50%" align="left">
+'''),
+(r'''   <td width="5%" align="right">$+
+''',
+ r'''   <td width="8%" align="right">$+
+'''),
+(r'''   $-</td>
+  <td>
+    Report RTABs
+''',
+ r'''   $-</td>
+  <td width="42%">
+    Report RTABs
+'''),
+(r'''    Report RTABs
+  <td>
+
+''',
+ r'''    Report RTABs
+  </td>
+
+'''),
+(r'''  <td width="5%">$+
+''',
+ r'''  <td width="8%" align="right">$+
+'''),
+(r'''  $-</td>
+  <td>
+    Report VARs
+''',
+ r'''  $-</td>
+  <td width="42%">
+    Report VARs
+'''),
+(r'''    Report VARs
+  <td>
+
+''',
+ r'''    Report VARs
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+'''),
+(r'''  <td>
+    Final data name
+  <td>
+  <td width="30%">$+
+''',
+ r'''<tr align = 'center' width='100%'>
+<!-- #include tool-first-column gui\blocks\tool-first-column.htm;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+  <td width="30%">
+    &nbsp;Final data name
+  </td>
+  <td width="70%">$+
+'''),
+])
+PATCHES += _crlf('etc/gui/tools/report-header.htm', [
+(r'''      "height=GetVar(HtmlComboHeight)",
+''',
+ r'''      "height=math.eval(GetVar(HtmlInputHeight)*1.3)",
+'''),
+(r'''  <td width='13%' align='left'>
+''',
+ r'''  <td width='30%' align='left'>
+'''),
+(r'''  <td width='22%' align='left'>
+''',
+ r'''  <td width='70%' align='left'>
+'''),
+(r'''    >
+    </font>
+  </td>
+
+  <td width='10%' align='right'>
+    <b>%Start% <b>
+''',
+ r'''    >
+    </font>
+  </td>
+<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+
+  <td width='10%' align='right'>
+    <b>%Start% <b>
+'''),
+(r'''  <td width='10%' align='right'>
+    <b>%Start% <b>
+''',
+ r'''<tr VALIGN='center' ALIGN='center' valign='center'>
+<!-- #include tool-first-column gui\blocks\tool-first-column.htm;1; -->
+<!-- #include row_table_on gui\blocks\row_table_on.htm;1; -->
+  <td width='15%' align='left'>
+    <b>&nbsp;%Start% </b>
+'''),
+(r'''  <td width='23%'>
+''',
+ r'''  <td width='35%'>
+'''),
+(r'''  <td width='10%' align='right'>
+    <b>%End% <b>
+''',
+ r'''  <td width='15%' align='right'>
+    <b>%End% </b>
+'''),
+(r'''  <td width='24%'>
+''',
+ r'''  <td width='35%'>
+'''),
+(r'''<td width="20%" align='left'>&nbsp;Table label style:</td>
+<td width="30%">$+
+''',
+ r'''<td width="30%" align='left'><b>&nbsp;Table label style</b></td>
+<td width="70%">$+
+'''),
+])
+PATCHES += _crlf('etc/gui/twinning.htm', [
+(r'''    "td1=<td width='50%'>"
+''',
+ r'''    "td1=<td width='33%'>"
+'''),
+(r''' 
+  <td width='14%' align='left'>
+     Extended
+''',
+ r''' 
+  <td width='30%' align='left'>
+     Extended
+'''),
+(r'''  <td width='4%' align='left'>
+''',
+ r'''  <td width='20%' align='left'>
+'''),
+(r''' 
+  <td width='14%' align='right'>
+    Min. Laws
+''',
+ r''' 
+  <td width='30%' align='right'>
+    Min. Laws
+'''),
+(r'''  <td width='8%' align='left'>
+''',
+ r'''  <td width='20%' align='left'>
+'''),
+(r'''  <td width='40%' align='right'>
+''',
+ r'''<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+<!-- #include tool-row gui\blocks\tool-row.htm;name='TWINNING_GENERAL_2';1; -->
+  <td width='70%' align='left'>
+'''),
+(r'''  </td>
+
+  <td width='10%' align='left'>
+  $+
+    html.Snippet("gui/snippets/input-text",
+''',
+ r'''  </td>
+
+  <td width='30%' align='left'>
+  $+
+    html.Snippet("gui/snippets/input-text",
+'''),
+(r'''
+  <td width='14%' align='left'>
+    Bad Refl'ns
+''',
+ r'''
+  <td width='30%' align='left'>
+    Bad Refl'ns
+'''),
+(r'''    Bad Refl'ns
+  </td>
+  <td width='10%' align='left'>
+  $+
+    html.Snippet("gui/snippets/input-combo",
+''',
+ r'''    Bad Refl'ns
+  </td>
+  <td width='20%' align='left'>
+  $+
+    html.Snippet("gui/snippets/input-combo",
+'''),
+(r'''
+
+  <td align='right'>
+    <input
+      type="button"
+''',
+ r'''
+
+  <td width='50%' align='right'>
+    <input
+      type="button"
+'''),
+(r'''  <td width='14%' align='left'>
+''',
+ r'''<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+<!-- #include tool-row gui\blocks\tool-row.htm;name='TWINNING_SPHERICAL_2';1; -->
+  <td width='30%' align='left'>
+'''),
+(r'''  <td width='10%' align='left'>
+''',
+ r'''  <td width='20%' align='left'>
+'''),
+(r'''  <td width='14%' align='right'>
+''',
+ r'''  <td width='30%' align='right'>
+'''),
+(r'''  <td width='9%' align='left'>
+''',
+ r'''  <td width='20%' align='left'>
+'''),
+(r'''  <td align='right'>
+''',
+ r'''<!-- #include row_table_off gui\blocks\row_table_off.htm;1; -->
+<!-- #include tool-row gui\blocks\tool-row.htm;name='TWINNING_SPHERICAL_3';1; -->
+  <td width='50%'></td>
+  <td width='50%' align='right'>
+'''),
+])
