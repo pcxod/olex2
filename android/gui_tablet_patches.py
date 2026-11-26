@@ -2,6 +2,8 @@
 # after assemble_assets.PATCHES.
 # (rundir-relative asset, old text occurring exactly once, new text);
 # CRLF assets carry \r\n in old/new, matched on raw bytes
+# made for olex2-gui trunk r7881; svn log -qv -r 7882:HEAD <rundir> lists
+# the assets changed since
 PATCHES = [
     # _global
     ('etc/gui/blocks/tool-help-first-column.htm',
@@ -346,7 +348,7 @@ PATCHES = [
      '"label=NoSpherA2 ",\r\n        "height=0",\r\n',
      '"label=NoSpherA2 ",\r\n'),
     ('util/pyUtil/gui/templates/gui_templates.htm',
-     "    <td width='10%%' align='left'>",
+     "    <td width='20%%' align='left'>",
      "    <td width='84%%' align='left'>"),
     ('util/pyUtil/gui/templates/gui_templates.htm',
      '  height="math.eval(GetVar(\'HtmlInputheight\')-3)"',
@@ -358,59 +360,20 @@ PATCHES = [
      '  <td valign=\'top\' width="$GetVar(HtmlTableFirstcolWidth)"',
      '  <td valign=\'center\' width="$GetVar(HtmlTableFirstcolWidth)"'),
     ('util/pyUtil/NoSpherA2/hybrid_GUI.py',
-     'width_label=11, width_combo=17)',
-     'width_label=18, width_combo=32)'),
-    ('util/pyUtil/NoSpherA2/hybrid_GUI.py',
-     'width_label=12, width_combo=19)',
-     'width_label=18, width_combo=32)'),
-    ('util/pyUtil/NoSpherA2/hybrid_GUI.py',
-     'html.GetValue(\\\'~name~\\\'))",\n                      width_label=8, width_combo=10)',
-     'html.GetValue(\\\'~name~\\\'))",\n                      width_label=18, width_combo=32)'),
-    ('util/pyUtil/NoSpherA2/hybrid_GUI.py',
-     'width_label=10, width_textbox=20)',
-     'width_label=18, width_textbox=32)'),
-    ('util/pyUtil/NoSpherA2/hybrid_GUI.py',
      'width_label=11, width_spinbox=9',
      'width_label=18, width_spinbox=32'),
     ('util/pyUtil/NoSpherA2/hybrid_GUI.py',
      'width_label=14, width_spinbox=9',
      'width_label=18, width_spinbox=32'),
     ('util/pyUtil/NoSpherA2/hybrid_GUI.py',
-     'width_label=17, width_spinbox=8',
-     'width_label=18, width_spinbox=32'),
+     'GRID_COLS = ((11, 16), (11, 15), (10, 12), (12, 13))\n',
+     '# tablet: two wide columns, _cells_html continues wider rows on the next line\nGRID_COLS = ((18, 32), (18, 32))\n'),
     ('util/pyUtil/NoSpherA2/hybrid_GUI.py',
-     'width=10,',
-     'width=32,'),
+     'GRID_COLS_3 = ((11, 22), (11, 22), (11, 23))\n',
+     'GRID_COLS_3 = GRID_COLS\n'),
     ('util/pyUtil/NoSpherA2/hybrid_GUI.py',
-     'width_label=19, width_combo=15)',
-     'width_label=18, width_combo=32)'),
-    ('util/pyUtil/NoSpherA2/hybrid_GUI.py',
-     'width_label=13, width_combo=27)',
-     'width_label=18, width_combo=32)'),
-    ('util/pyUtil/NoSpherA2/hybrid_GUI.py',
-     '\'h_aniso\\\',\\\'False\\\')",\n                         width=18)',
-     '\'h_aniso\\\',\\\'False\\\')",\n                         width=14)'),
-    ('util/pyUtil/NoSpherA2/hybrid_GUI.py',
-     '\'h_afix\\\',\\\'False\\\')",\n                         width=20)',
-     '\'h_afix\\\',\\\'False\\\')",\n                         width=14)'),
-    ('util/pyUtil/NoSpherA2/hybrid_GUI.py',
-     'width_label=15, width_spinbox=8',
-     'width_label=18, width_spinbox=32'),
-    ('util/pyUtil/NoSpherA2/hybrid_GUI.py',
-     '"<td width=\'57%\'></td>"',
-     '"<td width=\'29%\'></td>"'),
-    ('util/pyUtil/NoSpherA2/hybrid_GUI.py',
-     '  t = begin_new_line() + cpu_combo() + memory_text() + \\\n    labeled_checkbox("NoSpherA2_purification@refine",',
-     '  t = begin_new_line() + cpu_combo() + memory_text() + end_line() + \\\n    begin_new_line("NoSpherA2_Options_1", "2") + \\\n    labeled_checkbox("NoSpherA2_purification@refine",'),
-    ('util/pyUtil/NoSpherA2/hybrid_GUI.py',
-     '                     width=2) +\\\n    end_line()\n  # Charge, Multiplicity, iterative and Update/Max cycles\n  t += begin_new_line("NoSpherA2_Options_2") + charge_spin() + multiplicity_spin() + iterative_checkbox()',
-     '                     width=20) +\\\n    end_line()\n  # Charge, Multiplicity, iterative and Update/Max cycles\n  t += begin_new_line("NoSpherA2_Options_2") + charge_spin() + multiplicity_spin() + end_line() + \\\n    begin_new_line("NoSpherA2_Options_2", "2") + iterative_checkbox()'),
-    ('util/pyUtil/NoSpherA2/hybrid_GUI.py',
-     '      memory_text() + \\\n      update_tsc_button()+ \\',
-     '      memory_text() + \\\n      end_line() + \\\n      begin_new_line("NoSpherA2_Options_1", "2") + \\\n      update_tsc_button()+ \\'),
-    ('util/pyUtil/NoSpherA2/hybrid_GUI.py',
-     '        method_combo() + \\\n        cpu_combo() + \\\n        memory_text() + \\\n        end_line()\n  t += begin_new_line("NoSpherA2_Options_2") + \\\n        charge_spin() + \\\n        multiplicity_spin() + \\\n        iterative_checkbox()\n  full_har',
-     '        method_combo() + \\\n        end_line() + \\\n        begin_new_line("NoSpherA2_Options_1", "2") + \\\n        cpu_combo() + \\\n        memory_text() + \\\n        end_line()\n  t += begin_new_line("NoSpherA2_Options_2") + \\\n        charge_spin() + \\\n        multiplicity_spin() + \\\n        end_line() + \\\n        begin_new_line("NoSpherA2_Options_2", "2") + \\\n        iterative_checkbox()\n  full_har'),
+     '    if col + span > frame.n:\n      # a layout bug of the caller: render it anyway (the row wraps) but say so\n      print("NoSpherA2 GUI: row \'%s\' has more than %d grid columns" % (context, frame.n))\n      span = frame.n - col\n      if span <= 0:\n        break\n',
+     '    span = min(span, frame.n)\n    if col + span > frame.n:\n      if col < frame.n:\n        html.append(f\'\'\'\n  <td width="{frame.gap(col) + frame.span(col, frame.n - col)}%"></td>\'\'\')\n      html.append(\'\'\'\n  </tr><tr>\'\'\')\n      col = 0\n'),
     ('util/pyUtil/NoSpherA2/h3-refine_NoSpherA2-Properties.htm',
      '<td width="13%" align=\'left\'>\r\n  <b>CPUs</b>\r\n</td>\r\n<td width="9%" align=\'center\'>',
      '<td width="18%" align=\'left\'>\r\n  <b>CPUs</b>\r\n</td>\r\n<td width="22%" align=\'center\'>'),
@@ -769,7 +732,8 @@ PATCHES = [
 ]
 
 # the 14 tablet pages that were whole copies in rundir-overlay/etc/gui,
-# as diffs against trunk; these pages are CRLF, written here with LF
+# as diffs against trunk r7881 (pages unchanged since r7680); these pages are
+# CRLF, written here with LF
 def _crlf(rel, ps):
     return [(rel, o.replace('\n', '\r\n'), n.replace('\n', '\r\n')) for o, n in ps]
 
