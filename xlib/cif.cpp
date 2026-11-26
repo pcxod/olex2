@@ -252,9 +252,8 @@ TResidue *TCif::MMResidue(const olxstr &comp_id, const olxstr &seq_id,
   // by chain and number: FindResidue(int) searches the no-chain bucket only
   TResidue *r = GetAsymmUnit().FindResidue(chain, num);
   if (!ins_code.IsEmpty() && ins_code != '?' && ins_code != '.') {
-    /* 52 and 52A are different residues and the registry is keyed on an int,
-    so the insertion code folds into the key, as both number and alias: with
-    the true number as alias NewResidue would find 52 from 52A
+    /* 52A is a residue of its own on an int key: 52A -> 5201, as number and
+    alias; collides with a real residue 5201 in the same chain
     */
     const int coded = num*100 +
       (int)(olxstr::o_toupper(ins_code.CharAt(0)) - 'A' + 1);
@@ -302,6 +301,7 @@ static void MMRideHydrogens(TAsymmUnit& au, RefinementModel& rm) {
         {
           continue;
         }
+        // C/N/O-H is about 1.0 A, S-H 1.34, Se-H 1.47: room for deposited geometry
         const double d = au.Orthogonalise(p.ccrd() - h.ccrd()).Length(),
           lim = (p.GetType() == iSulphurZ || p.GetType() == iSeleniumZ) ? 1.55
           : 1.35;
@@ -349,6 +349,7 @@ static void MMRideHydrogens(TAsymmUnit& au, RefinementModel& rm) {
             continue;
           }
           const double d = au.Orthogonalise(a.ccrd() - p.ccrd()).Length();
+          // the lattice's default bond tolerance (Delta 0.5)
           if (d < a.GetType().r_bonding + p.GetType().r_bonding + 0.5) {
             const olxstr key = olxstr(rj) << ':' << a.GetLabel();
             if (seen.IndexOf(key) == InvalidIndex) {

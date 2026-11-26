@@ -1124,9 +1124,8 @@ double RefinementModel::CalcF000(const ContentList* cont_, Logging logging) cons
   return F000;
 }
 */
-/* non-dispersive F(000) = sum f0(0), the electrons in the cell: what Fourier
-inversion (maps, masks) needs and what the IUCr dictionary defines; f' and f''
-stay out
+/* non-dispersive F(000) = sum f0(0), the electron count in the cell, which
+Fourier inversion (maps, masks) needs and checkCIF accepts; f' and f'' stay out
 */
 double RefinementModel::CalcF000(const ContentList* cont_, Logging logging) const {
   const ContentList& cont = cont_ == 0 ? GetUserContent() : *cont_;
