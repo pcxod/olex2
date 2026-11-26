@@ -261,6 +261,11 @@ protected:
   size_t _AnalyseAtomHAdd(class AConstraintGenerator& cg, TSAtom& atom,
     TSAtomPList& ProcessingAtoms, bool dry_run,
     int part = DefNoPart, TCAtomPList* generated = 0);
+  /* HAdd for an atom of a standard amino acid, from its residue and PDB name
+  rather than bond lengths. Returns false to leave the atom to the geometry
+  */
+  bool _ResidueHAdd(AConstraintGenerator& cg, TSAtom& atom, class TAtomEnvi& AE,
+    int part, bool dry_run, TCAtomPList* generated, size_t& count);
   size_t _ProcessRingHAdd(AConstraintGenerator& cg, const ElementPList& rcont,
     const TSAtomPList& atoms, bool dry_run);
 public:

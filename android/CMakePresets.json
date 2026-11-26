@@ -1,0 +1,136 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 24, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "android-base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "D:/Android/build/olex2-${presetName}",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "QT_ANDROID_DEPLOYMENT_TYPE": "Debug",
+        "CMAKE_MAKE_PROGRAM": "C:/Qt/Tools/Ninja/ninja.exe",
+        "ANDROID_SDK_ROOT": "D:/Android/sdk",
+        "ANDROID_NDK_ROOT": "D:/Android/sdk/ndk/27.2.12479018",
+        "ANDROID_PLATFORM": "android-28",
+        "ANDROID_STL": "c++_shared",
+        "QT_HOST_PATH": "C:/Qt/6.11.1/mingw_64",
+        "QT_ANDROID_BUILD_ALL_ABIS": "OFF"
+      },
+      "environment": {
+        "JAVA_HOME": "D:/Android/jdk17",
+        "CMAKE_BUILD_PARALLEL_LEVEL": "6"
+      }
+    },
+    {
+      "name": "android-arm64",
+      "displayName": "Android arm64-v8a (tablet)",
+      "inherits": "android-base",
+      "toolchainFile": "C:/Qt/6.11.1/android_arm64_v8a/lib/cmake/Qt6/qt.toolchain.cmake",
+      "cacheVariables": { "ANDROID_ABI": "arm64-v8a" }
+    },
+    {
+      "name": "android-x86_64",
+      "displayName": "Android x86_64 (emulator)",
+      "inherits": "android-base",
+      "toolchainFile": "C:/Qt/6.11.1/android_x86_64/lib/cmake/Qt6/qt.toolchain.cmake",
+      "cacheVariables": { "ANDROID_ABI": "x86_64" }
+    },
+    {
+      "name": "android-armv7",
+      "displayName": "Android armeabi-v7a (32-bit ARM)",
+      "inherits": "android-base",
+      "toolchainFile": "C:/Qt/6.11.1/android_armv7/lib/cmake/Qt6/qt.toolchain.cmake",
+      "cacheVariables": { "ANDROID_ABI": "armeabi-v7a" }
+    },
+    {
+      "name": "android-x86",
+      "displayName": "Android x86 (32-bit)",
+      "inherits": "android-base",
+      "toolchainFile": "C:/Qt/6.11.1/android_x86/lib/cmake/Qt6/qt.toolchain.cmake",
+      "cacheVariables": { "ANDROID_ABI": "x86" }
+    },
+    {
+      "name": "legacy-base",
+      "hidden": true,
+      "description": "Qt 5.15.2 + NDK r21e, minSdk 21: 2014-era tablets (android/build_legacy.ps1)",
+      "generator": "Ninja",
+      "binaryDir": "D:/Android/build/olex2-${presetName}",
+      "toolchainFile": "D:/Android/sdk/ndk/21.4.7075529/build/cmake/android.toolchain.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_MAKE_PROGRAM": "C:/Qt/Tools/Ninja/ninja.exe",
+        "ANDROID_SDK": "D:/Android/sdk",
+        "ANDROID_NDK": "D:/Android/sdk/ndk/21.4.7075529",
+        "ANDROID_PLATFORM": "android-21",
+        "ANDROID_STL": "c++_shared",
+        "ANDROID_LD": "lld",
+        "CMAKE_FIND_ROOT_PATH": "D:/Android/Qt5/5.15.2/android",
+        "CMAKE_PREFIX_PATH": "D:/Android/Qt5/5.15.2/android",
+        "ANDROID_DEPLOY_QT": "D:/Android/Qt5/5.15.2/android/bin/androiddeployqt.exe",
+        "OLX_QT": "5",
+        "OLX_ANDROID_PREFIX": "D:/Android/prefix-legacy",
+        "OLX_STAGE": "D:/Android/stage-legacy",
+        "OLX_STAGE_OVERLAY": "D:/Android/stage/overlay",
+        "OLX_PYTHON_VERSION": "3.13"
+      },
+      "environment": {
+        "JAVA_HOME": "D:/Android/jdk17",
+        "CMAKE_BUILD_PARALLEL_LEVEL": "6"
+      }
+    },
+    {
+      "name": "legacy-armv7",
+      "displayName": "Legacy armeabi-v7a (2014 tablets)",
+      "inherits": "legacy-base",
+      "cacheVariables": { "ANDROID_ABI": "armeabi-v7a" }
+    },
+    {
+      "name": "legacy-arm64",
+      "displayName": "Legacy arm64-v8a (API 21-27)",
+      "inherits": "legacy-base",
+      "cacheVariables": { "ANDROID_ABI": "arm64-v8a" }
+    },
+    {
+      "name": "legacy-x86",
+      "displayName": "Legacy x86 (API 21-27)",
+      "inherits": "legacy-base",
+      "cacheVariables": { "ANDROID_ABI": "x86" }
+    },
+    {
+      "name": "legacy-x86_64",
+      "displayName": "Legacy x86_64 (API 21-27)",
+      "inherits": "legacy-base",
+      "cacheVariables": { "ANDROID_ABI": "x86_64" }
+    },
+    {
+      "name": "legacy-armv7-nopy",
+      "displayName": "Legacy armeabi-v7a without Python (S1 fallback)",
+      "inherits": "legacy-base",
+      "cacheVariables": { "ANDROID_ABI": "armeabi-v7a", "OLX_PYTHON": "OFF" }
+    }
+  ],
+  "buildPresets": [
+    { "name": "android-arm64", "configurePreset": "android-arm64", "jobs": 6,
+      "targets": ["apk"] },
+    { "name": "android-x86_64", "configurePreset": "android-x86_64", "jobs": 6,
+      "targets": ["apk"] },
+    { "name": "android-armv7", "configurePreset": "android-armv7", "jobs": 6,
+      "targets": ["apk"] },
+    { "name": "android-x86", "configurePreset": "android-x86", "jobs": 6,
+      "targets": ["apk"] },
+    { "name": "legacy-armv7", "configurePreset": "legacy-armv7", "jobs": 6,
+      "targets": ["olex2"] },
+    { "name": "legacy-arm64", "configurePreset": "legacy-arm64", "jobs": 6,
+      "targets": ["olex2"] },
+    { "name": "legacy-x86", "configurePreset": "legacy-x86", "jobs": 6,
+      "targets": ["olex2"] },
+    { "name": "legacy-x86_64", "configurePreset": "legacy-x86_64", "jobs": 6,
+      "targets": ["olex2"] },
+    { "name": "legacy-armv7-nopy", "configurePreset": "legacy-armv7-nopy", "jobs": 6,
+      "targets": ["olex2"] }
+  ]
+}

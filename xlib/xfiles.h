@@ -42,6 +42,19 @@ public:
   */
   virtual void SaveToFile(const olxstr& fileName);
   virtual void LoadFromFile(const olxstr& fileName);
+  // how the bytes were read, reported if the file then fails to parse
+  enum {
+    enc_bytes,  // as stored, in the platform's narrow encoding
+    enc_utf8,
+    enc_utf16le,
+    enc_utf16be
+  };
+  static const char *EncodingName(short enc);
+  /* reads a structure file into lines, handling a BOM, UTF-16 and CR only
+  endings (else an empty file); enc, if given, gets the encoding found
+  */
+  static TStrList::const_list_type ReadLines(const olxstr &fn,
+    short *enc = 0);
   // default implementation read strings and calls LoadStrings
   virtual void LoadFromStream(IInputStream &is, const olxstr& nameToken);
   // name token can specify the dataset index or name

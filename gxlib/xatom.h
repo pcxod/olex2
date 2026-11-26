@@ -154,6 +154,21 @@ public:
     }
   }
   bool Orient(TGlPrimitive& P);
+  /* joke code, cosmetic skins of the hidden boo/eggy/hohoho macros; never
+  saved, never touches the model or the styles
+  */
+  enum { funSkinNone = 0, funSkinHalloween, funSkinEaster, funSkinChristmas };
+  static short &FunSkin() {
+    static short v = funSkinNone;
+    return v;
+  }
+private:
+  // joke code: returns true if the atom has been fully drawn
+  bool OrientFunSkin(TGlPrimitive& P, double scale);
+public:
+#ifdef __ANDROID__
+  bool IsBakeable(const TGlPrimitive& P) const;
+#endif
   bool GetDimensions(vec3d& Max, vec3d& Min);
   virtual vec3d CalcCenter() const;
 
@@ -185,7 +200,10 @@ public:
   }
   void ListDrawingStyles(TStrList &List);
   short DrawStyle() const {  return FDrawStyle;  }
-  void DrawStyle(short V);
+  // save=false leaves the collection style, shared and saved, untouched
+  void DrawStyle(short V, bool save = true);
+  // back to the style the collection stores, undoing DrawStyle(V, false)
+  void RestoreDrawStyle() { ValidateDS(GetPrimitives().GetStyle()); }
 
   void UpdatePrimitiveParams(TGlPrimitive* GlP);
   static int Quality(TGlRenderer &r, int Val);

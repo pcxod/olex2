@@ -1,0 +1,353 @@
+diff --git a/include/gl4eshint.h b/include/gl4eshint.h
+--- a/include/gl4eshint.h
++++ b/include/gl4eshint.h
+@@ -33,6 +33,9 @@
+ #define GL_AVOID16BITS_HINT_GL4ES	    0xA10E
+ // same as using LIBGL_GAMMA=xx (PANDORA only)
+ #define GL_GAMMA_HINT_GL4ES             0xA10F
++// 1: while compiling a list, fold MODELVIEW push/pop/mult into the vertices of
++// called lists so they merge into few draws; glGetIntegerv returns bake | failed<<1
++#define GL_BAKE_HINT_GL4ES              0xA110
+ 
+ // special value to query underlying Hardware value using glGetString
+ #define GL_VENDOR_GL4ES                 (GL_VENDOR | 0x10000)
+diff --git a/src/gl/drawing.c b/src/gl/drawing.c
+--- a/src/gl/drawing.c
++++ b/src/gl/drawing.c
+@@ -8,6 +8,7 @@
+ #include "init.h"
+ #include "list.h"
+ #include "loader.h"
++#include "matvec.h"
+ #include "render.h"
+ 
+ //#define DEBUG
+@@ -64,6 +65,7 @@
+ 
+ renderlist_t *arrays_to_renderlist(renderlist_t *list, GLenum mode,
+                                    GLsizei skip, GLsizei count) {
++    BAKE_FAIL_MOVED();
+     if (! list)
+         list = alloc_renderlist();
+     DBG(LOGD("arrary_to_renderlist, compiling=%d, skip=%d, count=%d\n", glstate->list.compiling, skip, count);)
+diff --git a/src/gl/getter.c b/src/gl/getter.c
+--- a/src/gl/getter.c
++++ b/src/gl/getter.c
+@@ -736,6 +736,9 @@
+         case GL_SHRINK_HINT_GL4ES:
+             *params=globals4es.texshrink;
+             break;
++        case GL_BAKE_HINT_GL4ES:
++            *params=glstate->list.bake | (glstate->list.bake_failed<<1);
++            break;
+         case GL_ALPHAHACK_HINT_GL4ES:
+             *params=globals4es.alphahack;
+             break;
+diff --git a/src/gl/gl4es.c b/src/gl/gl4es.c
+--- a/src/gl/gl4es.c
++++ b/src/gl/gl4es.c
+@@ -16,6 +16,7 @@
+ #include "init.h"
+ #include "loader.h"
+ #include "matrix.h"
++#include "matvec.h"
+ #include "buffers.h"
+ #ifdef _WIN32
+ #ifdef _WINBASE_
+@@ -244,6 +245,7 @@
+ 
+ // immediate mode functions
+ void APIENTRY_GL4ES gl4es_glBegin(GLenum mode) {
++    BAKE_FAIL_MOVED();
+     glstate->list.begin = 1;
+     if (!glstate->list.active)
+         glstate->list.active = alloc_renderlist();
+@@ -829,6 +831,9 @@
+     // TODO: if glstate->list.active is already defined, we probably need to clean up here
+     glstate->list.active = alloc_renderlist();
+     glstate->list.compiling = true;
++    glstate->list.bake_top = 0;
++    set_identity(glstate->list.bake_mat[0]);
++    glstate->list.bake_failed = (glstate->matrix_mode!=GL_MODELVIEW);
+ }
+ AliasExport(void,glNewList,,(GLuint list, GLenum mode));
+ 
+@@ -868,8 +873,13 @@
+ AliasExport(void,glEndList,,());
+ 
+ renderlist_t* append_calllist(renderlist_t *list, renderlist_t *a);
++renderlist_t* bake_calllist(renderlist_t *list, renderlist_t *a);
+ void APIENTRY_GL4ES gl4es_glCallList(GLuint list) {
+ 	noerrorShim();
++    if (glstate->list.compiling && glstate->list.bake) {
++        glstate->list.active = bake_calllist(glstate->list.active, gl4es_glGetList(list));
++		return;
++	}
+     if (glstate->list.active) {
+         glstate->list.active = append_calllist(glstate->list.active, gl4es_glGetList(list));
+ 		return;
+diff --git a/src/gl/hint.c b/src/gl/hint.c
+--- a/src/gl/hint.c
++++ b/src/gl/hint.c
+@@ -42,6 +42,12 @@
+             // TODO: track setted value
+             return;
+         // specifics GL4ES Hints
++        case GL_BAKE_HINT_GL4ES:
++            if (mode<=1)
++                glstate->list.bake = mode;
++            else
++                errorShim(GL_INVALID_ENUM);
++            break;
+         case GL_SHRINK_HINT_GL4ES:
+             if (mode<=11)
+                 globals4es.texshrink = mode;
+diff --git a/src/gl/light.c b/src/gl/light.c
+--- a/src/gl/light.c
++++ b/src/gl/light.c
+@@ -138,6 +138,7 @@
+         return;
+     }
+     ERROR_IN_BEGIN
++    if (pname==GL_POSITION || pname==GL_SPOT_DIRECTION) BAKE_FAIL_MOVED();
+     if(glstate->list.active)
+         if (glstate->list.compiling) {
+             NewStage(glstate->list.active, STAGE_LIGHT);
+diff --git a/src/gl/list.c b/src/gl/list.c
+--- a/src/gl/list.c
++++ b/src/gl/list.c
+@@ -7,6 +7,8 @@
+ #include "init.h"
+ #include "loader.h"
+ #include "buffers.h"
++#include "matrix.h"
++#include "matvec.h"
+ 
+ // KH Map implementation
+ KHASH_MAP_IMPL_INT(material, rendermaterial_t *);
+@@ -680,6 +682,95 @@
+     return list;
+ }
+ 
++// GL_BAKE_HINT_GL4ES: inline the draws of list a with the baked MODELVIEW applied, vertices as M.v
++// and normals as M^-T.n (not renormalised, so GL_NORMALIZE sees the same lengths), so they merge
++// into few draws. Any other state in a sets bake_failed and the caller drops the list.
++renderlist_t* bake_calllist(renderlist_t *list, renderlist_t *a)
++{
++    displaylist_state_t *l = &glstate->list;
++    while(list->next) list = list->next;
++    GLfloat n[3];   // current normal, object space
++    memcpy(n, list->lastNormal, 3*sizeof(GLfloat));
++    for(; a && !l->bake_failed; a = a->next) {
++        if (a->raster_op || a->raster || a->bitmaps || a->pushattribute || a->popattribute
++         || a->material || a->colormat_face || a->light || a->lightmodel || a->texgen || a->texenv
++         || a->fog_op || a->pointparam_op || a->linestipple_op || a->render_op || a->instanceCount!=1
++         || a->set_texture || a->set_tmu || a->use_glstate || a->matrix_op==1) {
++            l->bake_failed = 1;
++            break;
++        }
++        for (unsigned long i=0; i<a->calls.len && !l->bake_failed; i++) {
++            packed_call_t *c = a->calls.calls[i];
++            if (c->func == (void*)gl4es_glNormal3f) {
++                PACKED_void_GLfloat_GLfloat_GLfloat *p = (PACKED_void_GLfloat_GLfloat_GLfloat*)c;
++                n[0] = p->args.a1; n[1] = p->args.a2; n[2] = p->args.a3;
++            } else if (c->func == (void*)gl4es_glPushMatrix || c->func == (void*)gl4es_glPopMatrix)
++                ((void (APIENTRY_GL4ES *)(void))c->func)();    // lands in bake_matrix
++            else
++                l->bake_failed = 1;
++        }
++        if (l->bake_failed) break;
++        GLfloat *M = l->bake_mat[l->bake_top];
++        if (a->matrix_op==2) matrix_mul(M, a->matrix_val, M);
++        if (a->len) {
++            renderlist_t *b = (renderlist_t*)malloc(sizeof(renderlist_t));
++            memcpy(b, a, sizeof(renderlist_t));
++            b->prev = b->next = NULL;
++            b->shared_calls = b->shared_arrays = b->shared_indices = NULL;
++            memset(&b->calls, 0, sizeof(call_list_t));
++            b->matrix_op = 0;
++            b->cap = a->len;
++            b->open = true;
++            b->stage = STAGE_DRAW;
++            b->vbo_array = b->vbo_indices = 0;
++            b->use_vbo_array = b->use_vbo_indices = 0;
++            b->vbo_vert = b->vbo_normal = b->vbo_color = b->vbo_secondary = b->vbo_fogcoord = NULL;
++            for (int i=0; i<MAX_TEX; i++) b->vbo_tex[i] = NULL;
++            b->ind_lines = NULL; b->ind_line = 0;
++            b->final_colors = NULL;
++            b->post_normal = 0;
++            if (a->vert) {
++                b->vert = alloc_sublist(4, a->len);
++                for (unsigned long i=0; i<a->len; i++) vector_matrix(a->vert+4*i, M, b->vert+4*i);
++            }
++            GLfloat r[9];
++            matrix_inverse3_transpose(M, r);
++            b->normal = alloc_sublist(3, a->len);
++            if (a->normal)
++                for (unsigned long i=0; i<a->len; i++) vector3_matrix3(a->normal+3*i, r, b->normal+3*i);
++            else {
++                GLfloat t[3];
++                vector3_matrix3(n, r, t);
++                for (unsigned long i=0; i<a->len; i++) memcpy(b->normal+3*i, t, 3*sizeof(GLfloat));
++            }
++            #define DUP(p, k) if (a->p) { b->p = alloc_sublist(k, a->len); memcpy(b->p, a->p, k*a->len*sizeof(GLfloat)); }
++            DUP(color, 4) DUP(secondary, 4) DUP(fogcoord, 1)
++            for (int i=0; i<a->maxtex; i++) { DUP(tex[i], 4) }
++            #undef DUP
++            if (a->indices) {
++                b->indices = (GLushort*)malloc(a->ilen*sizeof(GLushort));
++                memcpy(b->indices, a->indices, a->ilen*sizeof(GLushort));
++                b->indice_cap = a->ilen;
++            }
++            if (a->mode_inits) {
++                b->mode_inits = (modeinit_t*)malloc(a->mode_init_cap*sizeof(modeinit_t));
++                memcpy(b->mode_inits, a->mode_inits, a->mode_init_len*sizeof(modeinit_t));
++            }
++            if (islistscompatible_renderlist(list, b)) {
++                append_renderlist(list, b);
++                free_renderlist(b);
++            } else {
++                list->next = b;
++                b->prev = list;
++                list = b;
++            }
++        }
++        if (a->post_normal) memcpy(n, a->post_normals, 3*sizeof(GLfloat));
++    }
++    memcpy(list->lastNormal, n, 3*sizeof(GLfloat));
++    return list;
++}
++
+ void free_renderlist(renderlist_t *list) {
+ 	// test if list is NULL
+ 	if (list == NULL)
+diff --git a/src/gl/matrix.c b/src/gl/matrix.c
+--- a/src/gl/matrix.c
++++ b/src/gl/matrix.c
+@@ -108,12 +108,33 @@
+ 		glstate->fpe_state->texture[glstate->texture.active].texmat = 1;
+ }
+ 
++// GL_BAKE_HINT_GL4ES: modelview ops while compiling go to the bake stack, not into the list
++// op 0 push, 1 pop, 2 mult, 3 load (absolute, cannot be folded)
++static int bake_matrix(int op, const GLfloat *m) {
++	displaylist_state_t *l = &glstate->list;
++	if (!(l->compiling && l->bake)) return 0;
++	switch (op) {
++		case 0:
++			if (l->bake_top+1 < 16) {
++				memcpy(l->bake_mat[l->bake_top+1], l->bake_mat[l->bake_top], 16*sizeof(GLfloat));
++				++l->bake_top;
++			} else l->bake_failed = 1;
++			break;
++		case 1: if (l->bake_top) --l->bake_top; else l->bake_failed = 1; break;
++		case 2: matrix_mul(l->bake_mat[l->bake_top], m, l->bake_mat[l->bake_top]); break;
++		default: l->bake_failed = 1;
++	}
++	noerrorShim();
++	return 1;
++}
++
+ void APIENTRY_GL4ES gl4es_glMatrixMode(GLenum mode) {
+ DBG(printf("glMatrixMode(%s), list=%p\n", PrintEnum(mode), glstate->list.active);)
+ 	noerrorShim();
+ 	if (glstate->list.active && glstate->list.pending && glstate->matrix_mode==GL_MODELVIEW && mode==GL_MODELVIEW) {
+ 		return;	// nothing to do...
+ 	}
++	if (mode!=GL_MODELVIEW) BAKE_FAIL();
+ 	PUSH_IF_COMPILING(glMatrixMode);
+ 
+ 	if(!((mode==GL_MODELVIEW) || (mode==GL_PROJECTION) || (mode==GL_TEXTURE) || (mode>=GL_MATRIX0_ARB && mode<(GL_MATRIX0_ARB+MAX_ARB_MATRIX)))) {
+@@ -129,6 +150,7 @@
+ 
+ void APIENTRY_GL4ES gl4es_glPushMatrix(void) {
+ DBG(printf("glPushMatrix(), list=%p\n", glstate->list.active);)
++	if (bake_matrix(0, NULL)) return;
+ 	if (glstate->list.active && !glstate->list.pending) {
+ 		PUSH_IF_COMPILING(glPushMatrix);
+ 	}
+@@ -165,6 +187,7 @@
+ 
+ void APIENTRY_GL4ES gl4es_glPopMatrix(void) {
+ DBG(printf("glPopMatrix(), list=%p\n", glstate->list.active);)
++	if (bake_matrix(1, NULL)) return;
+ 	if (glstate->list.active 
+ 	 && !(glstate->list.compiling)
+ 	 && (globals4es.beginend) 
+@@ -218,6 +241,7 @@
+ 
+ void APIENTRY_GL4ES gl4es_glLoadMatrixf(const GLfloat * m) {
+ DBG(printf("glLoadMatrix(%f, %f, %f, %f, %f, %f, %f...), list=%p\n", m[0], m[1], m[2], m[3], m[4], m[5], m[6], glstate->list.active);)
++	if (bake_matrix(3, m)) return;
+ 	if (glstate->list.active) {
+ 		if(glstate->list.pending) gl4es_flush();
+ 		else {
+@@ -245,6 +269,7 @@
+ 
+ void APIENTRY_GL4ES gl4es_glMultMatrixf(const GLfloat * m) {
+ DBG(printf("glMultMatrix(%f, %f, %f, %f, %f, %f, %f...), list=%p\n", m[0], m[1], m[2], m[3], m[4], m[5], m[6], glstate->list.active);)
++	if (bake_matrix(2, m)) return;
+ 	if (glstate->list.active) {
+ 		if(glstate->list.pending) gl4es_flush();
+ 		else {
+@@ -279,6 +304,7 @@
+ 
+ void APIENTRY_GL4ES gl4es_glLoadIdentity(void) {
+ DBG(printf("glLoadIdentity(), list=%p\n", glstate->list.active);)
++	if (bake_matrix(3, NULL)) return;
+ 	if (glstate->list.active) {
+ 		if(glstate->list.pending) gl4es_flush();
+ 		else {
+diff --git a/src/gl/planes.c b/src/gl/planes.c
+--- a/src/gl/planes.c
++++ b/src/gl/planes.c
+@@ -14,6 +14,7 @@
+         If the dot product of the eye coordinates of a vertex with the stored plane equation components is positive or zero, 
+         the vertex is in with respect to that clipping plane. Otherwise, it is out.
+     */
++    BAKE_FAIL_MOVED();
+     PUSH_IF_COMPILING(glClipPlanef);    //TODO: fix that, equation is an array and should be copied before beeing put in the stack
+     if((plane<GL_CLIP_PLANE0) || (plane>=GL_CLIP_PLANE0+hardext.maxplanes)) {
+         errorShim(GL_INVALID_ENUM);
+diff --git a/src/gl/raster.c b/src/gl/raster.c
+--- a/src/gl/raster.c
++++ b/src/gl/raster.c
+@@ -58,6 +58,7 @@
+ }
+ 
+ void APIENTRY_GL4ES gl4es_glRasterPos3f(GLfloat x, GLfloat y, GLfloat z) {
++    BAKE_FAIL_MOVED();
+     if (glstate->list.active)
+         if (glstate->list.compiling) {
+ 		NewStage(glstate->list.active, STAGE_RASTER);
+diff --git a/src/gl/state.h b/src/gl/state.h
+--- a/src/gl/state.h
++++ b/src/gl/state.h
+@@ -120,7 +120,15 @@
+ 
+     GLuint count;
+     GLuint cap;
++    // GL_BAKE_HINT_GL4ES: MODELVIEW stack folded into the list being compiled
++    int bake, bake_failed, bake_top;
++    GLfloat bake_mat[16][16];
+ } displaylist_state_t;
++
++// while baking, anything that reads the modelview aborts the bake (the caller drops the list)
++#define BAKE_FAIL() if (glstate->list.compiling && glstate->list.bake) glstate->list.bake_failed = 1
++#define BAKE_FAIL_MOVED() if (glstate->list.compiling && glstate->list.bake \
++    && !is_identity(glstate->list.bake_mat[glstate->list.bake_top])) glstate->list.bake_failed = 1
+ 
+ typedef struct {
+     rasterpos_t rPos;
+diff --git a/src/gl/texgen.c b/src/gl/texgen.c
+--- a/src/gl/texgen.c
++++ b/src/gl/texgen.c
+@@ -17,7 +17,7 @@
+ }
+ 
+ void APIENTRY_GL4ES gl4es_glTexGenfv(GLenum coord, GLenum pname, const GLfloat *param) {
+-    
++    if (pname==GL_EYE_PLANE) BAKE_FAIL_MOVED();
+     /*
+     If pname is GL_TEXTURE_GEN_MODE, then the array must contain
+     a single symbolic constant, one of

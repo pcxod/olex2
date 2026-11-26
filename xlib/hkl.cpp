@@ -40,6 +40,8 @@ void THklFile::Init() {
 void THklFile::Clear() {
   HKLF = -1;
   Refs.Clear();
+  Satellites.Clear();
+  SatelliteM.Clear();
   Clear3D();
 }
 //..............................................................................
@@ -77,6 +79,29 @@ olx_object_ptr<TIns> THklFile::LoadFromFile(const olxstr& FN, bool get_ins,
     TStrList SL = TEFile::ReadLines(FN);
     if (SL.IsEmpty()) {
       throw TEmptyFileException(__OlxSrcInfo, FN);
+    }
+    if (IsHklmFile(FN)) {
+      LoadHklmFromStrings(SL);
+      // once per file version: the HOS, reap and every refinement re-read it
+      static TEFile::FileID logged;
+      TEFile::FileID id = TEFile::GetFileID(FN);
+      if (id != logged) {
+        logged = id;
+        int max_m = 0;
+        for (size_t i = 0; i < SatelliteM.Count(); i++) {
+          max_m = olx_max(max_m, olx_abs(SatelliteM[i]));
+        }
+        olxstr orders;
+        if (max_m == 1) {
+          orders = " (|m| = 1)";
+        }
+        else if (max_m > 1) {
+          orders << " (1 <= |m| <= " << max_m << ')';
+        }
+        TBasicApp::NewLogEntry() << "HKLM: " << Refs.Count()
+          << " main reflections, " << Satellites.Count() << " satellites" << orders;
+      }
+      return olx_object_ptr<TIns>();
     }
     return LoadFromStrings(SL, get_ins, format);
   }
@@ -118,15 +143,35 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
   }
   try {
     Clear();
-    if (format.Equals("free")) {
+    bool free = format.Equals("free");
+    size_t start = 0;
+    /* data not in the 3I4,2F8 layout: F9.2 or space-separated columns, or a
+    "SHELXL file:" header of a few lines before the fixed columns. Skip to the
+    first line that reads as either; a CIF or fcf has none in its first lines
+    */
+    if (format.IsEmpty() && !IsHKLFileLine(SL[0])) {
+      for (; start < SL.Count() && start < 8; start++) {
+        if (IsHKLFileLine(SL[start])) {
+          break;
+        }
+        if (IsFreeHKLLine(SL[start])) {
+          free = true;
+          break;
+        }
+      }
+      if (start >= SL.Count() || start >= 8) {
+        start = 0;
+      }
+    }
+    if (free) {
       bool HasBatch = false;
       {
-        TStrList toks(SL[0], ' ');
+        TStrList toks(SL[start], ' ');
         if (toks.Count() == 6 && toks[5].IsInt()) {
           HasBatch = true;
         }
       }
-      for (size_t i = 0; i < SL.Count(); i++) {
+      for (size_t i = start; i < SL.Count(); i++) {
         TStrList toks(SL[i], ' ');
         if (toks.Count() < 5 || (HasBatch && toks.Count() < 6)) {
           break;
@@ -139,7 +184,9 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
             toks[4].ToDouble());
         }
         catch (const TExceptionBase &) {
-          break;
+          // old: break; - dropped the rest of the file
+          // an overflowed column ("011545064  104806"): skip the line
+          continue;
         }
         if (HasBatch) {
           ref->SetBatch(toks[5].ToInt());
@@ -178,7 +225,7 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
       fidx5 = fidx4 + fl[4]
       ;
     {  // validate if 'real' HKL, not fcf
-      if (crystals_data_off == InvalidIndex && !IsHKLFileLine(SL[0], fl)) {
+      if (crystals_data_off == InvalidIndex && !IsHKLFileLine(SL[start], fl)) {
         TCif cif;
         try {
           cif.LoadFromStrings(SL);
@@ -223,14 +270,14 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
       HasExtras = false;
     size_t line_length = crystals_data_off == InvalidIndex ?
       0 : SL[crystals_data_off].Length(),
-      i = crystals_data_off == InvalidIndex ? 0 : crystals_data_off;
+      i = crystals_data_off == InvalidIndex ? start : crystals_data_off;
     const bool apply_basis = !Basis.IsI();
     size_t removed_cnt = 0;
     const size_t line_cnt = SL.Count();
     Refs.SetCapacity(line_cnt);
     for (; i < line_cnt; i++) {
       const olxstr& line = SL[i];
-      if (i == 0) {
+      if (i == start) {
         line_length = line.Length();
         if (line_length >= fmt_len + 4) {
           HasBatch = true;
@@ -351,6 +398,101 @@ olx_object_ptr<TIns> THklFile::LoadFromStrings(const TStrList& SL,
   return rv;
 }
 //..............................................................................
+void THklFile::LoadHklmFromStrings(const TStrList& SL) {
+  Clear();
+  const bool apply_basis = !Basis.IsI();
+  size_t removed_cnt = 0, bad_cnt = 0, first_bad = 0;
+  for (size_t i = 0; i < SL.Count(); i++) {
+    const olxstr& line = SL[i];
+    int idx[4], batch = TReflection::NoBatchSet;
+    double I, S;
+    if (line.Length() >= 32 && line.SubString(0, 4).IsInt() &&
+      line.SubString(4, 4).IsInt() && line.SubString(8, 4).IsInt() &&
+      line.SubString(12, 4).IsInt() && line.SubString(16, 8).IsNumber() &&
+      line.SubString(24, 8).IsNumber())
+    {
+      for (int j = 0; j < 4; j++) {
+        idx[j] = line.SubString(j * 4, 4).ToInt();
+      }
+      I = line.SubString(16, 8).ToDouble();
+      S = line.SubString(24, 8).ToDouble();
+      if (line.Length() >= 36 && line.SubString(32, 4).IsInt()) {
+        batch = line.SubString(32, 4).ToInt();
+      }
+    }
+    else {
+      // tabs and a stray CR count as blanks
+      TStrList toks(olxstr(line).Replace('\t', ' ').Replace('\r', ' '), ' ');
+      if (toks.IsEmpty()) {
+        continue;
+      }
+      if (toks.Count() < 6 || !toks[0].IsInt() || !toks[1].IsInt() ||
+        !toks[2].IsInt() || !toks[3].IsInt() || !toks[4].IsNumber() ||
+        !toks[5].IsNumber())
+      {
+        // before the data a header; after it an unreadable line (an
+        // overflowed "********" column, a stray character), skipped and reported
+        if (!Refs.IsEmpty() || !Satellites.IsEmpty()) {
+          if (bad_cnt++ == 0) {
+            first_bad = i;
+          }
+        }
+        continue;
+      }
+      for (int j = 0; j < 4; j++) {
+        idx[j] = toks[j].ToInt();
+      }
+      I = toks[4].ToDouble();
+      S = toks[5].ToDouble();
+      if (toks.Count() > 6 && toks[6].IsInt()) {
+        batch = toks[6].ToInt();
+      }
+    }
+    vec3i hkl(idx[0], idx[1], idx[2]);
+    if (hkl.IsNull() && idx[3] == 0) {
+      break;
+    }
+    // the HKLF matrix applies to the satellites' h too: q must then be given in the new basis
+    if (apply_basis) {
+      vec3d nh = Basis*vec3d(hkl);
+      vec3i nih = nh.Round<int>();
+      if (!nh.Equals(nih, 0.004)) {
+        removed_cnt++;
+        continue;
+      }
+      hkl = nih;
+    }
+    TReflection* ref = new TReflection(hkl, I, S, batch);
+    if (idx[3] == 0) {
+      UpdateMinMax(*ref);
+      Refs.Add(ref);
+      ref->SetTag(Refs.Count());
+    }
+    else {
+      Satellites.Add(ref);
+      ref->SetTag(Satellites.Count());
+      SatelliteM.Add(idx[3]);
+    }
+  }
+  if (removed_cnt != 0) {
+    TBasicApp::NewLogEntry(logError) <<
+      "HKL transformation leads to non-integral/invalid Miller indices";
+    TBasicApp::NewLogEntry(logError) << "Removed: " << removed_cnt <<
+      " invalid reflections";
+  }
+  if (bad_cnt != 0) {
+    TBasicApp::NewLogEntry(logError) << "HKLM: skipped " << bad_cnt
+      << " unreadable line(s), the first is line " << (first_bad + 1)
+      << ": '" << SL[first_bad] << '\'';
+  }
+  if (Refs.IsEmpty()) {
+    throw TFunctionFailedException(__OlxSourceInfo,
+      "no main reflections (m = 0) in the hklm file: each line needs "
+      "h k l m I sigma [batch]");
+  }
+  HKLF = 4;
+}
+//..............................................................................
 void THklFile::UpdateRef(const TReflection& R, bool update_data) {
   size_t ind = olx_abs(R.GetTag()) - 1;
   if (ind >= Refs.Count()) {
@@ -414,6 +556,10 @@ void THklFile::Append(const THklFile& hkls)  {
 }
 //..............................................................................
 void THklFile::SaveToFile(const olxstr& FN, const TRefPList& refs) {
+  if (IsHklmFile(FN)) {
+    throw TInvalidArgumentException(__OlxSourceInfo,
+      "writing three indices over an .hklm file would drop its satellites");
+  }
   if (refs.IsEmpty()) {
     return;
   }
@@ -428,6 +574,10 @@ void THklFile::SaveToFile(const olxstr& FN, const TRefPList& refs) {
 }
 //..............................................................................
 void THklFile::SaveToFile(const olxstr& FN, const TRefList& refs) {
+  if (IsHklmFile(FN)) {
+    throw TInvalidArgumentException(__OlxSourceInfo,
+      "writing three indices over an .hklm file would drop its satellites");
+  }
   TEFile out(FN, "w+b");
   SaveToStream(refs, out);
 }
@@ -605,6 +755,19 @@ bool THklFile::IsHKLFileLine(const olxstr& l, const olxstr &format) {
     return true;
   }
   return false;
+}
+//..............................................................................
+bool THklFile::IsFreeHKLLine(const olxstr& l) {
+  TStrList toks(l, ' ');
+  if (toks.Count() != 5 && toks.Count() != 6) {
+    return false;
+  }
+  for (size_t i = 0; i < 5; i++) {
+    if (i < 3 ? !toks[i].IsInt() : !toks[i].IsNumber()) {
+      return false;
+    }
+  }
+  return true;
 }
 //..............................................................................
 bool THklFile::IsHKLFileLine(const olxstr& l, const TSizeList &format) {

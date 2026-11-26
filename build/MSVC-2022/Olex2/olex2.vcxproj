@@ -553,6 +553,7 @@
     <ClCompile Include="..\..\..\repository\wxzipfs.cpp" />
     <ClCompile Include="..\..\..\olex\xglapp.cpp" />
     <ClCompile Include="..\..\..\olex\xglcanv.cpp" />
+    <ClCompile Include="..\..\..\olex\touchnav.cpp" />
     <ClCompile Include="..\..\..\olex\xpprocs.cpp" />
     <ClCompile Include="..\..\..\olex\ctrls\btnext.cpp" />
     <ClCompile Include="..\..\..\olex\ctrls\checkboxext.cpp" />
@@ -605,6 +606,7 @@
     <ClInclude Include="..\..\..\repository\wxzipfsext.h" />
     <ClInclude Include="..\..\..\olex\xglapp.h" />
     <ClInclude Include="..\..\..\olex\xglcanv.h" />
+    <ClInclude Include="..\..\..\olex\touchnav.h" />
     <ClInclude Include="..\..\..\olex\ctrls\btnext.h" />
     <ClInclude Include="..\..\..\olex\ctrls\checkboxext.h" />
     <ClInclude Include="..\..\..\olex\ctrls\comboext.h" />

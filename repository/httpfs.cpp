@@ -746,7 +746,7 @@ olx_object_ptr<AFileSystem> HttpFSFromURL(const TUrl& url) {
   if (url.GetProtocol() == "https") {
 #ifdef __WIN32__
     return new TWinHttpFileSystem(url);
-#else
+#elif defined(_OPENSSL)
     return new TSSLHttpFileSystem(url);
 #endif
   }

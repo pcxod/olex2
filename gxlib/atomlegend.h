@@ -27,6 +27,18 @@ class TAtomLegend : public AGlMouseHandlerImp {
   double Z;
   TStrList text;
   TArrayList<TGlMaterial> materials;
+  // rows from here on are cartoon keys drawn as ribbon, always appended last
+  size_t first_ribbon_row;
+  /* per row from first_ribbon_row, through glColor as the ribbon is; the
+  material alone leaves the ambient dark
+  */
+  TArrayList<uint32_t> row_colours;
+  // free text appended below the keys, one row per line, no swatch
+  olxstr caption;
+  /* appends the key for the current cartoon colouring as more rows of this
+  legend, so it moves, saves and resets with the element key
+  */
+  void AddCartoonKey();
 protected:
   vec3d Center;
   virtual bool DoTranslate(const vec3d& t) { Center += t;  return true; }
@@ -51,6 +63,7 @@ public:
   virtual void UpdateLabel() { Fit(); }
   virtual void SetVisible(bool v);
   void SetPosition(int left, int top);
+  void SetCaption(const olxstr& c) { caption = c; }
   void ResetPosition(bool right=false, bool bottom=false, int margin=0);
 };
 EndGxlNamespace()
