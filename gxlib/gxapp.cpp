@@ -310,6 +310,8 @@ TGXApp::TGXApp(const olxstr &FileName, AGlScene *scene)
   CartoonUeqMin = CartoonUeqMax = 0;
   CartoonUeqValid = false;
   AtomFocusActive = false;
+  PreFocusMask = 0;
+  PreFocusMaskSaved = false;
   ZoomAfterModelBuilt = FXPolyVisible = true;
   stateStructureVisible = stateHydrogensVisible = stateHydrogenBondsVisible =
     stateQPeaksVisible = stateQPeakBondsVisible = stateCellVisible =
@@ -471,6 +473,7 @@ TGXApp::~TGXApp() {
   delete FLabels;
   delete FHklFile;
   delete FXGrid;
+  delete PreFocusMask;
   delete GlRenderer;
   delete FGlMouse;
 }
@@ -651,11 +654,11 @@ void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
     Rings[i].Create();
   }
   /* the cartoon is the default above this residue count until the user sets it
-  for the session; 0 switches the default off
+  for the session; off (0) unless the option is set
   */
   if (!CartoonUserSet && !CartoonsVisible) {
     const size_t threshold = TBasicApp::GetOptions()
-      .FindValue("cartoon_auto_residues", "30").ToSizeT();
+      .FindValue("cartoon_auto_residues", "0").ToSizeT();
     const size_t rc = XFile().GetAsymmUnit().ResidueCount();
     if (threshold != 0 && rc >= threshold) {
       CartoonsVisible = true;
@@ -7425,13 +7428,39 @@ void TGXApp::ClearFocus() {
 }
 //..............................................................................
 void TGXApp::RemaskGrid() {
-  // a loaded map is masked to the visible atoms, so the focus clips it too
+  /* a loaded map is masked to the visible atoms, so the focus clips it too;
+  clearing the focus puts back the mask the map had before, or none
+  */
   if (XGrid().IsEmpty()) {
+    delete PreFocusMask;
+    PreFocusMask = 0;
+    PreFocusMaskSaved = false;
     return;
   }
-  FractMask *fm = new FractMask;
-  BuildSceneMask(*fm, 0);
-  XGrid().SetMask(*fm);
+  if (HasFocus()) {
+    if (!PreFocusMaskSaved) {
+      PreFocusMask = XGrid().ReleaseMask();
+      PreFocusMaskSaved = true;
+    }
+    else {
+      delete XGrid().ReleaseMask();
+    }
+    FractMask *fm = new FractMask;
+    BuildSceneMask(*fm, 0);
+    XGrid().SetMask(*fm);
+  }
+  else if (PreFocusMaskSaved) {
+    // a map recomputed during the focus still gets the pre-focus mask back
+    delete XGrid().ReleaseMask();
+    if (PreFocusMask != 0) {
+      XGrid().SetMask(*PreFocusMask);
+    }
+    PreFocusMask = 0;
+    PreFocusMaskSaved = false;
+  }
+  else {
+    return;
+  }
   XGrid().InitIso();
 }
 //..............................................................................

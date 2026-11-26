@@ -215,6 +215,12 @@ public:
   double GetScale() const { return Scale; }
   // this object will be deleted
   void SetMask(FractMask& fm) { Mask = &fm; }
+  // the caller owns the returned mask (may be 0), the grid is left unmasked
+  FractMask* ReleaseMask() {
+    FractMask* m = Mask;
+    Mask = 0;
+    return m;
+  }
 
   // extends the grid by +-1
   bool IsExtended() const { return Extended; }

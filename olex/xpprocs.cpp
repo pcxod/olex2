@@ -5151,15 +5151,16 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
           center += vertices[i];
         }
         center /= vertices.Count();
-        /* one normal per vertex, the average of its faces; marching cubes
-        writes every triangle with its own three vertices and no vn, so the
-        vertices are merged by coordinate first
+        /* an obj (marching cubes) gets one normal per vertex, the average of
+        its faces, after merging its vertices by coordinate; the text input
+        keeps one normal per face
         */
+        const bool smooth = keep_winding;
         TArrayList<vec3f> &normals = *(new TArrayList<vec3f>(triags.Count() * 3));
         TArrayList<vec3f> &data = *(new TArrayList<vec3f>(triags.Count() * 3));
         TArrayList<size_t> vid(vertices.Count()), order(triags.Count() * 3);
         TArrayList<vec3f> vn;
-        {
+        if (smooth) {
           std::map<std::array<float, 3>, size_t> unique;
           for (size_t i = 0; i < vertices.Count(); i++) {
             std::array<float, 3> k = { vertices[i][0], vertices[i][1], vertices[i][2] };
@@ -5194,8 +5195,13 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
           }
           for (int j = 0; j < 3; j++) {
             data[3 * i + j] = vertices[idx[j]];
-            order[3 * i + j] = vid[idx[j]];
-            vn[vid[idx[j]]] += n;
+            if (smooth) {
+              order[3 * i + j] = vid[idx[j]];
+              vn[vid[idx[j]]] += n;
+            }
+            else {
+              normals[3 * i + j] = n;
+            }
           }
         }
         for (size_t i = 0; i < vn.Count(); i++) {
@@ -5203,8 +5209,10 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
             vn[i].Normalise();
           }
         }
-        for (size_t i = 0; i < order.Count(); i++) {
-          normals[i] = vn[order[i]];
+        if (smooth) {
+          for (size_t i = 0; i < order.Count(); i++) {
+            normals[i] = vn[order[i]];
+          }
         }
         TDUserObj* uo = FXApp->FindUserObject(Cmds[1]);
         if (uo == 0) {
@@ -5216,8 +5224,8 @@ void TMainForm::macAddObject(TStrObjList &Cmds, const TParamList &Options, TMacr
         }
         uo->SetVertices(&data);
         uo->SetNormals(&normals);
-        /* old: one normal per face (faceted shading) and a new object on
-        every call, even for an existing name
+        /* old: one normal per face for every input and a new object on every
+        call, even for an existing name
         TArrayList<vec3f> &normals = *(new TArrayList<vec3f>(triags.Count()));
         TArrayList<vec3f> &data = *(new TArrayList<vec3f>(triags.Count() * 3));
         for (size_t i = 0; i < triags.Count(); i++) {

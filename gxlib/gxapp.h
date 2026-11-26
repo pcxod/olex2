@@ -159,6 +159,9 @@ class TGXApp : public TXApp, AEventsDispatcher, public ASelectionOwner {
   change needs; during a build Create() emits them once, already coloured
   */
   void ApplyCartoonColours(bool rebuild);
+  // the map's mask from before the focus (0 - none), put back when it clears
+  FractMask* PreFocusMask;
+  bool PreFocusMaskSaved;
   void RemaskGrid();
 
   void ClearXObjects();
