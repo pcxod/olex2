@@ -1711,3 +1711,7 @@ TSBond& TXApp::GetSBond(const TSBond::Ref& r) const {
   return *b;
 }
 //..............................................................................
+TLibrary* TXApp::ExportLibrary(const olxstr& lib_name) {
+  return TBasicApp::ExportLibrary(lib_name);
+}
+//..............................................................................

@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -175,6 +175,8 @@ namespace {
 const olxstr ProcessOutputCBName("procout");
 const olxstr OnStateChangeCBName("statechange");
 const olxstr OnLogCBName("onlog");
+const olxstr OnLogCBKey("onkey");
+const olxstr OnLogCBAccel("onaccel");
 
 class TObjectVisibilityChange : public AActionHandler {
   TMainForm *FParent;
@@ -211,7 +213,8 @@ public:
 //..............................................................................
 TMainForm::TMainForm(TGlXApp *Parent)
   : TMainFrame(wxT("Olex2"), wxPoint(0,0), wxDefaultSize, wxT("MainForm")),
-  olex2::OlexProcessorImp(NULL),
+  olex2::OlexProcessorImp(0),
+  FParent(Parent),
   HtmlManager(*(new THtmlManager(this))),
   _ProcessHandler(*this)
 {
@@ -374,7 +377,6 @@ TMainForm::TMainForm(TGlXApp *Parent)
 
   Modes = new TModeRegistry();
 
-  FParent = Parent;
   ObjectUnderMouse(0);
   FHelpItem = 0;
   FTimer = new TTimer;
@@ -1001,6 +1003,9 @@ void TMainForm::XApp(Olex2App *XA)  {
     "Returns/sets full screen mode (true/false/swap)");
   this_InitFuncD(Freeze, fpNone|fpOne,
     "Gets/Sets display update status");
+  this_InitFuncD(Appearance, fpNone | fpOne,
+    "Gets/Sets app appearance dark/light/system");
+
   Library.AttachLibrary(FXApp->ExportLibrary());
   Library.AttachLibrary(LibFile::ExportLibrary());
   Library.AttachLibrary(LibStr::ExportLibrary());
@@ -1484,7 +1489,7 @@ void TMainForm::StartupInit() {
   FGlConsole->ShowBuffer(true);  // this should be on :)
   processMacro("reload macro", __OlxSrcInfo);
   processMacro("reload help", __OlxSrcInfo);
-
+  
   FTimer->Start(15);
 
   if (TEFile::Exists(FXApp->GetBaseDir() + "settings.xld")) {
@@ -1497,11 +1502,10 @@ void TMainForm::StartupInit() {
         olxstr cmd;
         for (size_t i=0; i < sh->ItemCount(); i++) {
           TDataItem& item = sh->GetItemByIndex(i);
+          olxstr accell = item.FindField("key");
           AccShortcuts.AddAccell(
-            TranslateShortcut(item.FindField("key")),
-            item.FindField("macro"));
-          // cannot execute it through a macro - functions get evaluated...
-          //Macros.ProcessMacro(cmd, MacroError);
+            TranslateShortcut(accell),
+            olx_pair::make(accell, item.FindField("macro")));
         }
       }
       catch (TExceptionBase& exc) {
@@ -2405,6 +2409,7 @@ bool TMainForm::ProcessTab() {
 //..............................................................................
 void TMainForm::OnChar(wxKeyEvent& m) {
   OnNonIdle();
+  callCallbackFunc(OnLogCBKey, TStrList() << (char)m.GetKeyCode());
   m.Skip(false);
 #ifdef __ANDROID__  // wxQt takes the char code from the key text, and Android's Enter text is '\n'
   if (m.m_keyCode == '\n') {
@@ -2726,9 +2731,10 @@ void TMainForm::OnKeyDown(wxKeyEvent& m) {
     m.Skip();
     return;
   }
-  olxstr Cmd = AccShortcuts.GetValue(Fl << 16 | m.m_keyCode);
-  if (!Cmd.IsEmpty()) {
-    processMacro(Cmd, __OlxSrcInfo);
+  olx_pair_t<olxstr, olxstr> cmd = AccShortcuts.GetValue(Fl << 16 | m.m_keyCode);
+  if (!cmd.GetB().IsEmpty()) {
+    callCallbackFunc(OnLogCBAccel, TStrList() << cmd.GetA());
+    processMacro(cmd.GetB(), __OlxSrcInfo);
     TimePerFrame = FXApp->Draw();
     return;
   }
@@ -3849,7 +3855,7 @@ void TMainForm::OnIdle() {
   }
 }
 //..............................................................................
-void TMainForm::SetUserCursor(const olxstr& param, const olxstr& mode)  {
+void TMainForm::SetUserCursor(const olxstr& param, const olxstr& mode) {
   wxBitmap bmp(32, 32);
   wxMemoryDC memDC(bmp);
   wxBrush Brush = memDC.GetBrush();
@@ -3889,7 +3895,13 @@ bool TMainForm::ProcessEvent(wxEvent& evt) {
   if (evt.GetEventType() == wxEVT_COMMAND_MENU_SELECTED &&
     AccMenus.ValueExists(evt.GetId()))
   {
-    olxstr macro(AccMenus.GetValue(evt.GetId())->GetCommand());
+    TMenuItem *mi = AccMenus.GetValue(evt.GetId());
+    olxstr macro(mi->GetCommand());
+    olx_object_ptr<wxAcceleratorEntry> accel = mi->GetAccel();
+    if (accel.ok()) {
+      callCallbackFunc(OnLogCBAccel,
+        TStrList() << olxstr(accel->ToString()));
+    }
     if (!macro.IsEmpty()) {
       TStrList sl = TParamList::StrtokLines(macro, ">>");
       for (size_t i = 0; i < sl.Count(); i++) {
@@ -3966,13 +3978,15 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons) {
     return true;
   }
   if (G == 0) {
-    /* with touch on, a double tap on the background clears the selection as
-    a double click does, and centres the model when nothing is selected
-    */
-    const bool centre = FGlCanvas != 0 && FGlCanvas->IsTouchEnabled() &&
-      FXApp->GetSelection().Count() == 0;
-    processMacro(centre ? "center" : "sel -u");
-    TimePerFrame = FXApp->Draw();
+    if (Flags == 0) {
+      /* with touch on, a double tap on the background clears the selection as
+      a double click does, and centres the model when nothing is selected
+      */
+      const bool centre = FGlCanvas != 0 && FGlCanvas->IsTouchEnabled() &&
+        FXApp->GetSelection().Count() == 0;
+      processMacro(centre ? "center" : "sel -u");
+      TimePerFrame = FXApp->Draw();
+    }
     return true;
   }
   if (G->Is<TGlBitmap>()) {
@@ -4001,7 +4015,7 @@ bool TMainForm::OnMouseDblClick(int x, int y, short Flags, short Buttons) {
       ((TXGlLabel*)G)->SetLabel(label);
 
   }
-  else if (G->Is<TXAtom>()) {
+  else if (G->Is<TXAtom>() && Flags == 0) {
     TXAtom * xa = (TXAtom*)G;
     if (xa->CAtom().GetExyzGroup() != 0) {
       TGXApp::AtomIterator ai = FXApp->GetAtoms();
@@ -4200,9 +4214,9 @@ bool TMainForm::IsControl(const olxstr& _cname) const {
   }
 }
 //..............................................................................
-void TMainForm::DoUpdateFiles()  {
+void TMainForm::DoUpdateFiles() {
   TBasicApp::EnterCriticalSection();
-  if (_UpdateThread == NULL) {
+  if (_UpdateThread == 0) {
     TBasicApp::LeaveCriticalSection();
     return;
   }
@@ -4221,12 +4235,12 @@ void TMainForm::DoUpdateFiles()  {
       wxT("__location.update and __cmd.update files and the patch directory."),
       wxT("Updates available"), wxICON_INFORMATION, this);
     TBasicApp::EnterCriticalSection();
-    if (_UpdateThread == NULL) {
+    if (_UpdateThread == 0) {
       TBasicApp::LeaveCriticalSection();
       return;
     }
     _UpdateThread->SendTerminate();
-    _UpdateThread = NULL;
+    _UpdateThread = 0;
     TBasicApp::LeaveCriticalSection();
     return;
   }
@@ -4234,14 +4248,14 @@ void TMainForm::DoUpdateFiles()  {
   if (sf.ask_for_update) {
     // this is essential as it can freeze the GTK GUI
     TBasicApp::LeaveCriticalSection();
-    TdlgMsgBox* msg_box = new TdlgMsgBox( this,
+    TdlgMsgBox* msg_box = new TdlgMsgBox(this,
       olxstr("There are new updates available (") <<
-        olxstr::FormatFloat(3, (double)sz/(1024*1024)) << "Mb)\n" <<
+      olxstr::FormatFloat(3, (double)sz / (1024 * 1024)) << "Mb)\n" <<
       "Updates will be downloaded in the background during this session and\n"
       "will take effect with the next restart of Olex2",
       "Automatic Updates",
       "Do not show this message again",
-      wxYES|wxNO|wxICON_QUESTION,
+      wxYES | wxNO | wxICON_QUESTION,
       true);
     int res = msg_box->ShowModal();
     bool checked = msg_box->IsChecked();
@@ -4258,7 +4272,7 @@ void TMainForm::DoUpdateFiles()  {
         sf.Save();
       }
     }
-    else  {
+    else {
       _UpdateThread->SendTerminate();
       _UpdateThread = 0;
       if (checked) {
@@ -4349,22 +4363,23 @@ void TMainForm::OnCloseWindow(wxCloseEvent &evt) {
 
 //..............................................................................
 #ifdef _PYTHON
-PyObject* pyIsControl(PyObject* self, PyObject* args)  {
+PyObject* pyIsControl(PyObject* self, PyObject* args) {
   olxstr cname, pname;  // control and popup (if any) name
-  if( !PythonExt::ParseTuple(args, "w|w", &cname, &pname) )
+  if (!PythonExt::ParseTuple(args, "w|w", &cname, &pname)) {
     return PythonExt::InvalidArgumentException(__OlxSourceInfo, "w|w");
+  }
   if (!pname.IsEmpty()) {
     cname = pname << "->" << cname;
   }
   return Py_BuildValue("b", TGlXApp::GetMainForm()->IsControl(cname));
 }
 //..............................................................................
-PyObject* pyGetIdleTime(PyObject* self, PyObject* args)  {
+PyObject* pyGetIdleTime(PyObject* self, PyObject* args) {
   time_t t = TGlXApp::GetMainForm()->idle_time;
-  return Py_BuildValue("d", (double)t/1000);
+  return Py_BuildValue("d", (double)t / 1000);
 }
 //..............................................................................
-PyObject* pyResetIdleTime(PyObject* self, PyObject* args)  {
+PyObject* pyResetIdleTime(PyObject* self, PyObject* args) {
   TGlXApp::GetMainForm()->idle_time = 0;
   return PythonExt::PyNone();
 }

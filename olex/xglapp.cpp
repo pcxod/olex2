@@ -228,6 +228,7 @@ bool TGlXApp::OnInit() {
     }
   }
 #endif
+  
   MainForm = new TMainForm(this);
   XApp->InitOlex2App();
   /* This generic progress box requires more thinking in particular considering

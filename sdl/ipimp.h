@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -67,7 +67,7 @@ public:
   }
 
   virtual TLibrary&  GetLibrary() {
-    if (LibraryContainer == NULL) {
+    if (LibraryContainer == 0) {
       throw TFunctionFailedException(__OlxSourceInfo,
         "uninitialised library container");
     }
@@ -92,7 +92,9 @@ public:
   {
     size_t ind = CallbackFuncs.IndexOf(cbEvent),
       i = ind;
-    if (ind == InvalidIndex)  return;
+    if (ind == InvalidIndex) {
+      return;
+    }
     // go forward
     while (i < CallbackFuncs.Count() &&
       CallbackFuncs.GetKey(i).Equals(cbEvent))
@@ -167,12 +169,15 @@ public:
   }
 
   virtual void callCallbackFunc(const olxstr& cbEvent, const TStrList& params) {
+    TSizeList indices;
+    CallbackFuncs.GetIndices(cbEvent, indices);
+    if (indices.IsEmpty()) {
+      return;
+    }
     beforeCall(cbEvent);
-    TSizeList indexes;
     TMacroData me;
-    CallbackFuncs.GetIndices(cbEvent, indexes);
-    for( size_t i=0; i < indexes.Count(); i++ )  {
-      CallbackFuncs.GetValue(indexes[i])->Run(params, me);
+    for( size_t i=0; i < indices.Count(); i++ )  {
+      CallbackFuncs.GetValue(indices[i])->Run(params, me);
       AnalyseError(me);
       me.Reset();
     }

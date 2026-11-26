@@ -3548,12 +3548,12 @@ void TMainForm::macCreateMenu(TStrObjList& Cmds, const TParamList& Options, TMac
     mi = (menu == 0 ? 0 : toks.Count() - 1 - mi);
     for (size_t i = mi; i < toks.Count(); i++) {
       if ((i + 1) == toks.Count()) {
-        int accell = AccMenus.GetLastId();
-        if (accell == 0) {
-          accell = 1000;
+        int accel = AccMenus.GetLastId();
+        if (accel == 0) {
+          accel = 1000;
         }
         else {
-          accell++;
+          accel++;
         }
         if (Cmds.Count() == 3) {
           size_t insindex = menu->FindItem(Cmds[2].u_str());
@@ -3564,7 +3564,7 @@ void TMainForm::macCreateMenu(TStrObjList& Cmds, const TParamList& Options, TMac
             menu->InsertSeparator(insindex);
           }
           else {
-            TMenuItem* item = new TMenuItem(itemType, accell, menu, toks[i]);
+            TMenuItem* item = new TMenuItem(itemType, accel, menu, toks[i]);
             if (!modeDependent.IsEmpty()) {
               item->SetActionQueue(TModeRegistry::GetInstance().OnChange,
                 modeDependent, TMenuItem::ModeDependent);
@@ -3577,7 +3577,7 @@ void TMainForm::macCreateMenu(TStrObjList& Cmds, const TParamList& Options, TMac
               item->SetCommand(Cmds[1]);
             }
             menu->Insert(insindex, item);
-            AccMenus.AddAccell(accell, item);
+            AccMenus.AddAccell(accel, item);
           }
         }
         else {
@@ -3585,7 +3585,7 @@ void TMainForm::macCreateMenu(TStrObjList& Cmds, const TParamList& Options, TMac
             menu->AppendSeparator();
           }
           else {
-            TMenuItem* item = new TMenuItem(itemType, accell, menu, toks[i]);
+            TMenuItem* item = new TMenuItem(itemType, accel, menu, toks[i]);
             if (!modeDependent.IsEmpty()) {
               item->SetActionQueue(TModeRegistry::GetInstance().OnChange,
                 modeDependent, TMenuItem::ModeDependent);
@@ -3596,7 +3596,7 @@ void TMainForm::macCreateMenu(TStrObjList& Cmds, const TParamList& Options, TMac
             }
             if (Cmds.Count() > 1)  item->SetCommand(Cmds[1]);
             menu->Append(item);
-            AccMenus.AddAccell(accell, item);
+            AccMenus.AddAccell(accel, item);
           }
         }
       }
@@ -3808,7 +3808,8 @@ void TMainForm::macUncheckMenu(TStrObjList& Cmds, const TParamList& Options, TMa
 void TMainForm::macCreateShortcut(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {
-  AccShortcuts.AddAccell(TranslateShortcut( Cmds[0]), Cmds[1]);
+  AccShortcuts.AddAccell(
+    TranslateShortcut(Cmds[0]), olx_pair::make(Cmds[0], Cmds[1]));
 }
 //..............................................................................
 void TMainForm::macSetCmd(TStrObjList &Cmds, const TParamList &Options, TMacroData &E) {
@@ -6666,3 +6667,21 @@ void TMainForm::macRegisterFonts(TStrObjList &Cmds, const TParamList &Options,
   }
 #endif
 }
+//..............................................................................
+void TMainForm::funAppearance(const TStrObjList& Params, TMacroData& E) {
+  if (Params.IsEmpty()) {
+    wxSystemAppearance appearance = wxSystemSettings::GetAppearance();
+    E.SetRetVal(olxstr(appearance.IsDark() ? "dark" : "light"));
+  }
+  else {
+    wxAppBase::Appearance v = wxAppBase::Appearance::System;
+    if (Params[0] == "dark") {
+      v = wxAppBase::Appearance::Dark;
+    }
+    else if (Params[0] == "light") {
+      v = wxAppBase::Appearance::Light;
+    }
+    FParent->SetAppearance(v);
+  }
+}
+//..............................................................................

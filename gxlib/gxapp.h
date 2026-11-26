@@ -906,6 +906,7 @@ public:
     }
     return *gxai;
   }
+  virtual TLibrary* ExportLibrary(const olxstr& lib_name = "app");
 };
 ////////////////////////////////////////////////////////////////////////////////
 

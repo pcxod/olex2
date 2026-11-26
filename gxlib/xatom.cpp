@@ -27,6 +27,9 @@
 #include "glbackground.h"
 #include "eset.h"
 #include "xapp.h"
+#include "glmouse.h"
+// for extra mouse handlesrs need macro processing
+#include "integration.h"
 
 //----------------------------------------------------------------------------//
 // TSAtom function bodies
@@ -1348,6 +1351,17 @@ bool TXAtom::OnMouseDown(const IOlxObject *Sender, const TMouseData& Data) {
 //..............................................................................
 bool TXAtom::OnMouseUp(const IOlxObject *Sender, const TMouseData& Data) {
   if (!IsMoveable()) {
+    if (Data.Shift == sssCtrl) {
+      olex2::IOlex2Processor *ip = olex2::IOlex2Processor::GetInstance();
+      if (ip != 0) {
+        olxstr cmd = "sel ";
+        if (IsSelected()) {
+          cmd << "-u ";
+        }
+        ip->processMacro(cmd << GetLabel());
+        return true;
+      }
+    }
     return Label->IsVisible() ? Label->OnMouseUp(Sender, Data) : false;
   }
   return AGlMouseHandlerImp::OnMouseUp(Sender, Data);

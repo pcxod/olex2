@@ -149,7 +149,7 @@ public:
   // valid only if correct string is passed to the constructor
   static const olxstr& GetExeName()  {  return GetInstance().ExeName;  }
   static TBasicApp& GetInstance() {
-    if (Instance_() == NULL) {
+    if (Instance_() == 0) {
       throw TFunctionFailedException(__OlxSourceInfo,
         "Uninitialised application layer...");
     }
@@ -197,7 +197,7 @@ public:
     return GetInstance().GetPlatformString_(full);
   }
   static bool Is64BitCompilation();
-  TLibrary* ExportLibrary(const olxstr& lib_name="app");
+  virtual TLibrary* ExportLibrary(const olxstr& lib_name="app");
 
   // application layer critical section
   static void EnterCriticalSection()  {  GetCriticalSection().enter();  }
