@@ -578,9 +578,9 @@ void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
     ObjectsToCreate[i]->Create();
   }
 
-  OnObjectsCreate.Execute(dynamic_cast<TBasicApp*>(this), NULL);
+  OnObjectsCreate.Execute(dynamic_cast<TBasicApp*>(this), 0);
   /*somehow if the XLAbels are created before the DBasis (like after picture drawing),
-  the 'disappear' from opengl selection... - the plane is drawn in different color and
+  they 'disappear' from opengl selection... - the plane is drawn in different color and
   selection is inpossible, unless properties are changed, odd... could not figure out
   what is going wrong... */
 
@@ -618,7 +618,7 @@ void TGXApp::CreateObjects(bool centerModel, bool init_visibility)  {
   for (size_t i=0; i < LooseObjects.Count(); i++) {
     if (!LooseObjects[i]->IsVisible()) {
       delete LooseObjects[i];
-      LooseObjects[i] = NULL;
+      LooseObjects[i] = 0;
     }
     else {
       LooseObjects[i]->Create();
@@ -1668,8 +1668,6 @@ bool TGXApp::Dispatch(int MsgId, short MsgSubId, const IOlxObject* Sender,
       SelectionCopy[0].Clear();
       StoreGroup(GetSelection(), SelectionCopy[0]);
       StoreLabels();
-      ClearLines();
-      ClearAngles();
       LoadingFile = true;
     }
     else if (MsgSubId == msiExit) {
@@ -2769,12 +2767,19 @@ TXGlLabel& TGXApp::CreateLabel(const vec3d& center, const olxstr& T,
   return L;
 }
 //..............................................................................
-TXGlLabel *TGXApp::AddLabel(const olxstr& Name, const vec3d& center, const olxstr& T)  {
+TXGlLabel *TGXApp::AddLabel(const olxstr& Name, const vec3d& center,
+  const olxstr& T, bool structureLabel)
+{
   TXGlLabel* gl = new TXGlLabel(*GlRenderer, Name);
   gl->SetLabel(T);
   gl->SetOffset(center);
   gl->Create();
-  LooseObjects.Add(gl);
+  if (structureLabel) {
+    XLabels.Add(gl);
+  }
+  else {
+    LooseObjects.Add(gl);
+  }
   return gl;
 }
 //..............................................................................
@@ -2788,7 +2793,7 @@ TXLine* TGXApp::AddLine(const olxstr& Name, const vec3d& base, const vec3d& edge
     }
   }
   TXLine* XL = new TXLine(*GlRenderer,
-    Name.IsEmpty() ? olxstr("TXLine") << LooseObjects.Count() : Name,
+    Name.IsEmpty() ? olxstr("TXLine") << Lines.Count() : Name,
     base, edge);
   XL->Create();
   return &Lines.Add(XL);
@@ -2814,7 +2819,7 @@ TXAngle* TGXApp::AddAngle(const olxstr& Name, const vec3d& center,
     }
   }
   TXAngle* XA = new TXAngle(*GlRenderer,
-    Name.IsEmpty() ? olxstr("TXAngle") << LooseObjects.Count() : Name,
+    Name.IsEmpty() ? olxstr("TXAngle") << Angles.Count() : Name,
     center, from, to);
   XA->Create();
   XA->GetGlLabel().SetVisible(true);
@@ -3516,12 +3521,14 @@ bool TGXApp::IsLabelMarked(size_t i) const {  return FLabels->IsLabelMarked(i); 
 //..............................................................................
 void TGXApp::ClearLabelMarks()  {  FLabels->ClearLabelMarks();  }
 //..............................................................................
-void TGXApp::ClearLabels()  {
+void TGXApp::ClearLabels() {
   FLabels->Clear();
   // check just in case...
-  for( size_t i=0; i < XLabels.Count(); i++ )
-    if( XLabels[i].IsSelected() )
+  for (size_t i = 0; i < XLabels.Count(); i++) {
+    if (XLabels[i].IsSelected()) {
       XLabels[i].SetSelected(false);
+    }
+  }
   XLabels.Clear();
 }
 //..............................................................................
@@ -5592,7 +5599,9 @@ void TGXApp::ToDataItem(TDataItem& item, IOutputStream& zos) const {
 
   TDataItem& labels = item.AddItem("Labels");
   for (size_t i = 0; i < XLabels.Count(); i++) {
-    XLabels[i].ToDataItem(labels.AddItem("Label"));
+    if (XLabels[i].IsVisible()) {
+      XLabels[i].ToDataItem(labels.AddItem("Label"));
+    }
   }
   TDataItem& atom_labels_item = item.AddItem("AtomLabels");
   for (size_t i = 0; i < atom_labels.Count(); i++) {
@@ -5824,26 +5833,6 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis) {
   FHBondsVisible = visibility.GetFieldByName("h_bonds").ToBool();
   FQPeaksVisible = visibility.GetFieldByName("q_atoms").ToBool();
   FQPeakBondsVisible = visibility.GetFieldByName("q_bonds").ToBool();
-  CreateObjects(true);
-  vis = FDBasis->IsVisible();
-  FDBasis->SetVisible(visibility.GetFieldByName("basis").ToBool());
-  if (vis != FDBasis->IsVisible()) {
-    OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this), FDBasis);
-  }
-
-  vis = XFile().DUnitCell->IsVisible();
-  XFile().DUnitCell->SetVisible(visibility.GetFieldByName("cell").ToBool());
-  if (vis != XFile().DUnitCell->IsVisible()) {
-    OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this),
-      XFile().DUnitCell);
-  }
-
-  vis = FAtomLegend->IsVisible();
-  FAtomLegend->SetVisible(visibility.FindField("legend", TrueString()).ToBool());
-  if (vis != FAtomLegend->IsVisible()) {
-    OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this),
-      FAtomLegend);
-  }
   {
     TEBitArray arr;
     arr.FromBase64String(visibility.GetFieldByName("atoms"));
@@ -5900,6 +5889,27 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis) {
       bi.Next().GetGlLabel().FromDataItem(bond_labels->GetItemByIndex(i++));
     }
   }
+
+  CreateObjects(true);
+  vis = FDBasis->IsVisible();
+  FDBasis->SetVisible(visibility.GetFieldByName("basis").ToBool());
+  if (vis != FDBasis->IsVisible()) {
+    OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this), FDBasis);
+  }
+
+  vis = XFile().DUnitCell->IsVisible();
+  XFile().DUnitCell->SetVisible(visibility.GetFieldByName("cell").ToBool());
+  if (vis != XFile().DUnitCell->IsVisible()) {
+    OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this),
+      XFile().DUnitCell);
+  }
+
+  vis = FAtomLegend->IsVisible();
+  FAtomLegend->SetVisible(visibility.FindField("legend", TrueString()).ToBool());
+  if (vis != FAtomLegend->IsVisible()) {
+    OnGraphicsVisible.Execute(dynamic_cast<TBasicApp*>(this),
+      FAtomLegend);
+  }
   //// restore
 
   //BondIterator bonds = GetBonds();
@@ -5925,7 +5935,7 @@ void TGXApp::FromDataItem(TDataItem& item, IInputStream& zis) {
     }
     // compatibility
     TDataItem* atoms = group.FindItem("Atoms");
-    if (atoms != NULL) {
+    if (atoms != 0) {
       glG.IncCapacity(atoms->FieldCount());
       for (size_t j = 0; j < atoms->FieldCount(); j++) {
         glG.Add(GetXAtom(atoms->GetFieldByIndex(j).ToSizeT()));
@@ -6442,6 +6452,9 @@ void TGXApp::ClearStructureRelated() {
   GetRenderer().SelectAll(false);
   UserObjects.Clear();
   Rings.Clear();
+  Lines.Clear();
+  Angles.Clear();
+  XLabels.Clear();
   GetLabels().ClearLabelMarks(lmiDefault);
   IndividualCollections.Clear();
   TXPlane::NamesRegistry().Clear();

@@ -36,6 +36,7 @@
 #include "listalg.h"
 #include "xangle.h"
 #include "refutil.h"
+#include "pers_util.h"
 
 #define gxlib_InitMacro(macroName, validOptions, argc, desc)\
   lib.Register(\
@@ -167,6 +168,15 @@ void GXLibMacros::Export(TLibrary& lib) {
     ,
     fpAny,
     "Creates moveable labels for provided atoms/bonds/angles (selection)");
+  gxlib_InitMacro(AddLabel,
+    "f-font name [Default]&;"
+    "s-structure label [false] - labels has structure lifespan&;"
+    ,
+    fpThree | fpFive,
+    "Adds a new label to the collection named by the first argument.\n"
+    "For 3 arguments: [collection_name] 'x y z' label, where 'x y z' may be "
+    "obtained by a call to crd() function\n"
+    "For 5 arguments: [collection_name] x y z label");
   gxlib_InitMacro(ShowH,
     EmptyString(),
     fpNone|fpTwo|psFileLoaded,
@@ -1657,6 +1667,35 @@ void GXLibMacros::macLabel(TStrObjList &Cmds, const TParamList &Options,
   app.SelectAll(false);
 }
 //.............................................................................
+void GXLibMacros::macAddLabel(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& E)
+{
+  vec3d crd;
+  olxstr name, label;
+  if (Cmds.Count() == 3) {
+    name = Cmds[0];
+    label = Cmds[2];
+    PersUtil::VecFromStr(Cmds[1], crd, ' ', true);
+  }
+  else  if (Cmds.Count() == 5) {
+    name = Cmds[0];
+    PersUtil::VecFromList(Cmds, crd, 1);
+    label = Cmds[4];
+  }
+  TXGlLabel *l = app.AddLabel(name, crd, label, Options.GetBoolOption('s'));
+  const olxstr& fn = Options.FindValue("f");
+  if (!fn.IsEmpty()) {
+    TGlFont *glf = app.GetRenderer().GetScene().FindFont(fn);
+    if (glf != 0) {
+      l->SetFontIndex(glf->GetId());
+      l->UpdateLabel();
+    }
+    else {
+      TBasicApp::NewLogEntry(logWarning) << "Undefined font: " << fn;
+    }
+  }
+}
+//..............................................................................
 void GXLibMacros::macShowH(TStrObjList &Cmds, const TParamList &Options,
   TMacroData &E)
 {

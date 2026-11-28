@@ -4091,30 +4091,6 @@ void TMainForm::funAlert(const TStrObjList& Params_, TMacroData& E) {
   FGlCanvas->SetFocus();
 }
 //..............................................................................
-void TMainForm::macAddLabel(TStrObjList &Cmds, const TParamList &Options, TMacroData &E)  {
-  vec3d crd;
-  olxstr name, label;
-  if( Cmds.Count() == 3 )  {
-    name = Cmds[0];
-    label = Cmds[2];
-    TStrList toks;
-    toks.Strtok(Cmds[1], ' ');
-    if( toks.Count() == 3 )  {
-      crd[0] = toks[0].ToDouble();
-      crd[1] = toks[1].ToDouble();
-      crd[2] = toks[2].ToDouble();
-    }
-  }
-  else  if( Cmds.Count() == 5 ) {
-    name = Cmds[0];
-    crd[0] = Cmds[1].ToDouble();
-    crd[1] = Cmds[2].ToDouble();
-    crd[2] = Cmds[3].ToDouble();
-    label = Cmds[4];
-  }
-  FXApp->AddLabel(name, crd, label);
-}
-//..............................................................................
 //
 class TOnSync : public AActionHandler {
   TGXApp& xa;
@@ -4718,27 +4694,21 @@ void TMainForm::macStartLogging(TStrObjList &Cmds, const TParamList &Options,
   LogFiles.Push(f);
 }
 //..............................................................................
-void TMainForm::macViewLattice(TStrObjList &Cmds, const TParamList &Options,
-  TMacroData &Error)
+void TMainForm::macViewLattice(TStrObjList& Cmds, const TParamList& Options,
+  TMacroData& Error)
 {
-  if( !TEFile::Exists(Cmds[0])  )  {
+  if (!TEFile::Exists(Cmds[0])) {
     Error.ProcessingError(__OlxSrcInfo, "file does not exist");
     return;
   }
-  TBasicCFile* bcf = FXApp->XFile().FindFormat(TEFile::ExtractFileExt(Cmds[0]));
-  if( bcf == NULL )  {
+  TBasicCFile* bcf_ = FXApp->XFile().FindFormat(TEFile::ExtractFileExt(Cmds[0]));
+  if (bcf_ == 0) {
     Error.ProcessingError(__OlxSrcInfo, "unknown file format");
     return;
   }
-  bcf = dynamic_cast<TBasicCFile *>(bcf->Replicate());
-  try  {  bcf->LoadFromFile(Cmds[0]);  }
-  catch(const TExceptionBase& exc)  {
-    delete bcf;
-    throw TFunctionFailedException(__OlxSourceInfo, exc);
-  }
-  TXLattice& xl = FXApp->AddLattice("xlatt", bcf->GetAsymmUnit().GetCellToCartesian());
-  delete bcf;
-  return;
+  olx_object_ptr<TBasicCFile> bcf = dynamic_cast<TBasicCFile*>(bcf_->Replicate());
+  bcf->LoadFromFile(Cmds[0]);
+  FXApp->AddLattice("xlatt", bcf->GetAsymmUnit().GetCellToCartesian());
 }
 //..............................................................................
 void main_GenerateCrd(const vec3d_list& p, const smatd_list& sm, vec3d_list& res) {

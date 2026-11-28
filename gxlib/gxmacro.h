@@ -30,6 +30,7 @@ public:
   DefMacro(TelpV)
   DefMacro(Info)
   DefMacro(Label)
+  DefMacro(AddLabel)
   DefMacro(Labels)
   DefMacro(ShowH)
   DefMacro(ShowQ)

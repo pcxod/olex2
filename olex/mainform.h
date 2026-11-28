@@ -363,7 +363,6 @@ private:
   DefMacro(Exit)
   DefMacro(SetEnv)
   DefMacro(Help)
-  DefMacro(AddLabel)
   DefMacro(Hide)
   DefMacro(Exec)
   DefMacro(Shell)

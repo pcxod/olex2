@@ -612,7 +612,10 @@ public:
   void ClearAngles() { Angles.Clear(); }
   size_t LineCount() const { return Lines.Count(); }
   TXLine &GetLine(size_t i) const { return Lines[i]; }
-  TXGlLabel *AddLabel(const olxstr& Name, const vec3d& center, const olxstr& T);
+  size_t AngleCount() const { return Angles.Count(); }
+  TXAngle& GetAngle(size_t i) const { return Angles[i]; }
+  TXGlLabel *AddLabel(const olxstr& Name, const vec3d& center,
+    const olxstr& T, bool structureLabel=false);
   AGDrawObject* FindLooseObject(const olxstr& Name);
   TDUserObj *FindUserObject(const olxstr& Name);
 
@@ -646,10 +649,10 @@ public:
   const TTypeListExt<TDRing, AGDrawObject> &GetRings() const {
     return Rings;
   }
-  // recreated all labels (if any) in case if font size etc changed
   size_t LabelCount() const { return XLabels.Count(); }
   TXGlLabel& GetLabel(size_t i) { return XLabels[i]; }
   const TXGlLabel& GetLabel(size_t i) const { return XLabels[i]; }
+  // recreated all labels (if any) in case if font size etc changed
   void UpdateLabels();
   static olxstr Label(const TXAtomPList &atoms, const olxstr &sep = ' ');
   //..............................................................................
