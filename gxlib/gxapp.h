@@ -28,6 +28,7 @@
 #include "xatom.h"
 #include "xbond.h"
 #include "xplane.h"
+#include "xangle.h"
 #include "gxfiles.h"
 #include "label_utils.h"
 #ifdef __WXWIDGETS__

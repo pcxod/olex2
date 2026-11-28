@@ -132,7 +132,10 @@ struct IIterator {
   virtual ~IIterator() {}
   virtual bool HasNext() const = 0;
   virtual const value_t& Next() = 0;
+
+  typedef olx_object_ptr<IIterator<value_t> > ptr_t;
 };
+
 
 
 template <typename value_t>
@@ -151,26 +154,99 @@ struct AIterable : public IOlxObject {
   }
 };
 
-template <class container_t, class accessor_t, typename value_t>
-struct IndexableIterator : public IIterator<value_t> {
-  size_t idx;
-  const container_t* cont;
+struct IndexableIterator {
+  template <class container_t>
+  struct DummyConstContainerIterator_ :
+    public IIterator<typename container_t::list_item_type>
+  {
+    typedef typename container_t::list_item_type value_t;
+    DummyConstContainerIterator_()
+    {}
+    bool HasNext() const {
+      return false;
+    }
+    const value_t& Next() {
+      TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, 0, 0, 0);
+      throw 1; // never reached
+    }
+  };
 
-  IndexableIterator(const container_t* b)
-    : idx(InvalidIndex), cont(b)
-  {}
+  template <class container_t>
+  struct ConstContainerIterator_ :
+    public IIterator<typename container_t::list_item_type>
+  {
+    typedef typename container_t::list_item_type value_t;
+    size_t idx;
+    const container_t& cont;
 
-  bool HasNext() const {
-    return (idx + 1) < olx_ref::get(cont).Count();
+    ConstContainerIterator_(const container_t& b)
+      : idx(InvalidIndex), cont(b)
+    {}
+
+    bool HasNext() const {
+      return (idx + 1) < cont.Count();
+    }
+
+    const value_t& Next() {
+      idx++;
+      size_t cnt = cont.Count();
+      if (idx >= cnt) {
+        TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, idx, 0, cnt);
+      }
+      return cont[idx];
+    }
+  };
+
+  template <class container_t, class accessor_t, typename value_t>
+  struct IndexableIterator_ : public IIterator<value_t> {
+    size_t idx;
+    const container_t* cont;
+
+    IndexableIterator_(const container_t* b)
+      : idx(InvalidIndex), cont(b)
+    {}
+
+    bool HasNext() const {
+      return (idx + 1) < olx_ref::get(cont).Count();
+    }
+
+    const value_t& Next() {
+      idx++;
+      size_t cnt = olx_ref::get(cont).Count();
+      if (idx >= cnt) {
+        TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, idx, 0, cnt);
+      }
+      return accessor_t::get(olx_ref::get(cont), idx);
+    }
+  };
+  // return raw pointer, for use with AIterable interface
+  template <class container_t, class accessor_t, typename value_t>
+  static IIterator<value_t>* MakeCustom(const container_t* c) {
+    return new IndexableIterator_<container_t, accessor_t, value_t>(c);
   }
 
-  const value_t& Next() {
-    idx++;
-    size_t cnt = olx_ref::get(cont).Count();
-    if (idx >= cnt) {
-      TExceptionBase::ThrowIndexOutOfRange(__POlxSourceInfo, idx, 0, cnt);
+  /*
+  IIterator<olxstr>::ptr_t i = ListIterator::MakeConst(...)
+  */
+  template <class list_t>
+  static typename IIterator<typename list_t::list_item_type>::ptr_t
+    MakeConst(const list_t& l)
+  {
+    return new ConstContainerIterator_<list_t>(l);
+  }
+
+  /* This will check if the pointer is valid or not and always returns a valid
+  object.
+  IIterator<olxstr>::ptr_t i = ListIterator::MakeConst(...)
+  */
+  template <class list_t>
+  static typename IIterator<typename list_t::list_item_type>::ptr_t
+    MakeConst(const olx_object_ptr<list_t>& p)
+  {
+    if (p.ok()) {
+      return new ConstContainerIterator_<list_t>(*p);
     }
-    return accessor_t::get(olx_ref::get(cont), idx);
+    return new DummyConstContainerIterator_<list_t>();
   }
 };
 

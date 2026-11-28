@@ -90,6 +90,25 @@ void TXAngle::Create(const olxstr& cName) {
   }
 }
 //...........................................................................
+vec3d_alist::const_list_type TXAngle::CalcPoints() const {
+  int sections = GetSettings().GetSections();
+  vec3d_alist rv(olx_reserve(sections*2));
+  vec3d a = (from - center) * radius + center - draw_center;
+  vec3d b = (to - center) * radius + center - draw_center;
+
+  double ang = acos(a.CAngle(b));
+  mat3d rm;
+  double ca = cos(ang / ((double)sections - 0.5) / 2);
+  olx_create_rotation_matrix(rm, a.XProdVec(b).Normalise(), ca);
+  for (int i = 0; i < sections; i++) {
+    rv << a;
+    a *= rm;
+    rv << a;
+    a *= rm;
+  }
+  return rv;
+}
+//...........................................................................
 bool TXAngle::Orient(TGlPrimitive& glp) {
   vec3d a = (from - center) * radius + center - draw_center;
   vec3d b = (to - center) * radius + center - draw_center;

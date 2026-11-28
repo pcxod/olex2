@@ -57,6 +57,9 @@ protected:
   const vec3d &GetCenter() const {
     return center;
   }
+  const vec3d& GetDrawCenter() const {
+    return draw_center;
+  }
   const vec3d& GetFrom() const {
     return from;
   }
@@ -72,6 +75,12 @@ protected:
   void SetTo(const vec3d& v) {
     to = v;
   }
+
+  vec3d_alist::const_list_type CalcPoints() const;
+
+  double GetThickness() const { return thickness; }
+
+  double GetRadius() const { return radius; }
 
   class Settings : public AGOSettings {
     mutable int mask, sections;

@@ -192,8 +192,9 @@ public:
       return s.Get(idx);
     }
   };
+  // interface implementation, must be raw pointer
   IIterator<object_t>* iterate() const {
-    return new IndexableIterator<olxset, ValueAccessor, object_t>(this);
+    return IndexableIterator::MakeCustom<olxset, ValueAccessor, object_t>(this);
   }
 public:
   typedef object_t list_item_type;

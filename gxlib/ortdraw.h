@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2004-2011 O. Dolomanov, OlexSys                               *
+* Copyright (c) 2004-2026 O. Dolomanov, OlexSys                               *
 *                                                                             *
 * This file is part of the OlexSys Development Framework.                     *
 *                                                                             *
@@ -28,37 +28,47 @@ static const vec3f NullVec;
 struct a_ort_object {
   const OrtDraw& parent;
 public:
-  a_ort_object(const OrtDraw& _parent) : parent(_parent) {}
+  a_ort_object(const OrtDraw& _parent)
+    : parent(_parent)
+  {}
   virtual ~a_ort_object(){}
   virtual void render(PSWriter&) const = 0;
   virtual float get_z() const = 0;
-  virtual void update_size(evecf &size) const {  return;  }
+  virtual void update_size(evecf &size) const { }
   static void update_min_max(evecf &size, const vec3f& crd)  {
-    if( size[0] > crd[0] )  size[0] = crd[0];
-    if( size[2] < crd[0] )  size[2] = crd[0];
-    if( size[1] > crd[1] )  size[1] = crd[1];
-    if( size[3] < crd[1] )  size[3] = crd[1];
+    if (size[0] > crd[0]) {
+      size[0] = crd[0];
+    }
+    if (size[2] < crd[0]) {
+      size[2] = crd[0];
+    }
+    if (size[1] > crd[1]) {
+      size[1] = crd[1];
+    }
+    if (size[3] < crd[1]) {
+      size[3] = crd[1];
+    }
   }
 };
 
 struct ort_atom : public a_ort_object {
   const TXAtom& atom;
   vec3f crd;
-  mat3f *p_elpm, *p_ielpm, *elpm;
+  mat3f* p_elpm, * p_ielpm, * elpm;
   float draw_rad;
   uint16_t draw_style;
   uint32_t sphere_color, rim_color, mask;
   ort_atom(const OrtDraw& parent, const TXAtom& a);
-  ~ort_atom()  {
+  ~ort_atom() {
     olx_del_obj(p_elpm);
     olx_del_obj(p_ielpm);
     olx_del_obj(elpm);
   }
-  virtual void render(PSWriter&) const;
-  virtual float get_z() const {  return crd[2];  }
-  virtual void update_size(evecf &size) const;
+  void render(PSWriter&) const;
+  float get_z() const { return crd[2]; }
+  void update_size(evecf& size) const;
   bool IsSpherical() const;
-  bool IsSolid() const {  return mask != 0 && mask != 16;  }
+  bool IsSolid() const { return mask != 0 && mask != 16; }
 protected:
   void render_rims(PSWriter&) const;
   void render_elp(PSWriter&) const;
@@ -68,75 +78,111 @@ protected:
 
 
 template <class draw_t>
-struct ort_bond : public a_ort_object  {
-  const draw_t &object;
-  const ort_atom &atom_a, &atom_b;
+struct ort_bond : public a_ort_object {
+  const draw_t& object;
+  const ort_atom& atom_a, & atom_b;
   const bool swapped;
   uint16_t draw_style;
-  ort_bond(const OrtDraw& parent, const draw_t &object,
+  ort_bond(const OrtDraw& parent, const draw_t& object,
     const ort_atom& a1, const ort_atom& a2);
-  virtual void render(PSWriter&) const;
+  void render(PSWriter&) const;
   //virtual float get_z() const {  return (atom_a.crd[2]+atom_b.crd[2])/2;  }
-  virtual float get_z() const {
+  float get_z() const {
     return olx_min(atom_a.crd[2], atom_b.crd[2]) +
-      (olx_abs(atom_a.crd[2]-atom_b.crd[2]) < 1e-3f ? -0.01f : +0.01f);
+      (olx_abs(atom_a.crd[2] - atom_b.crd[2]) < 1e-3f ? -0.01f : +0.01f);
   }
 protected:
   void _render(PSWriter&, float scalex, uint32_t mask) const;
   uint32_t get_color(int primitive, uint32_t def) const;
 };
 
-struct ort_bond_line : public a_ort_object  {
-  const TXLine &line;
-  ort_atom *a1, *a2;
+struct ort_bond_line : public a_ort_object {
+  const TXLine& line;
+  ort_atom* a1, * a2;
   vec3f from, to, p_from, p_to;
   uint16_t draw_style;
   ort_bond_line(const OrtDraw& parent, const TXLine& line,
     const vec3f& from, const vec3f& to);
-  virtual void render(PSWriter&) const;
-  //virtual float get_z() const { return (p_from[2] + p_to[2]) / 2; }
-  virtual float get_z() const { return olx_min(p_from[2], p_to[2]); }
-  virtual void update_size(evecf &sz) const {
+  void render(PSWriter&) const;
+  //float get_z() const { return (p_from[2] + p_to[2]) / 2; }
+  float get_z() const { return olx_min(p_from[2], p_to[2]); }
+  void update_size(evecf& sz) const {
     a_ort_object::update_min_max(sz, p_from);
     a_ort_object::update_min_max(sz, p_to);
   }
 protected:
   void _render(PSWriter&, float scalex, uint32_t mask) const;
-  uint32_t get_color(int primitive, uint32_t def=0xFF) const;
+  uint32_t get_color(int primitive, uint32_t def = 0xFF) const;
 };
 
-struct ort_line : public a_ort_object  {
+struct a_ort_object_list : public a_ort_object {
+  TTypeList<a_ort_object> objects;
+  a_ort_object_list(const OrtDraw& parent)
+    : a_ort_object(parent)
+  {}
+  void render(PSWriter& pw) const {
+    for (size_t i = 0; i < objects.Count(); i++) {
+      objects[i].render(pw);
+    }
+  }
+};
+
+struct ort_plane : public a_ort_object_list {
+  const TXPlane& plane;
+  uint16_t draw_style;
+  float Z;
+  ort_plane(const OrtDraw& parent, const TXPlane& plane);
+  float get_z() const { return Z; }
+protected:
+  void _render(PSWriter&, float scalex, uint32_t mask) const;
+};
+
+struct ort_angle : public a_ort_object_list {
+  const TXAngle& angle;
+  uint16_t draw_style;
+  float Z;
+  ort_angle(const OrtDraw& parent, const TXAngle& angle);
+  float get_z() const { return Z; }
+protected:
+  void _render(PSWriter&, float scalex, uint32_t mask) const;
+  uint32_t get_color(int primitive, uint32_t def) const;
+};
+
+struct ort_line : public a_ort_object {
   vec3f from, to;
   uint32_t color;
   float width;
   ort_line(const OrtDraw& parent, const vec3f& _from, const vec3f _to,
     uint32_t _color = 0, float width = 0.1f)
-    :  a_ort_object(parent), from(_from), to(_to),
+    : a_ort_object(parent), from(_from), to(_to),
     color(_color), width(width)
   {}
-  virtual void render(PSWriter&) const;
-  virtual float get_z() const;
-  void update_size(evecf &sz) const {
+  void render(PSWriter&) const;
+  float get_z() const;
+  void update_size(evecf& sz) const {
     a_ort_object::update_min_max(sz, from);
     a_ort_object::update_min_max(sz, to);
   }
 };
 
-struct ort_poly : public a_ort_object  {
+struct ort_poly : public a_ort_object {
   vec3f_list points;
-  bool fill;
+  bool fill, join;
   float line_width;
   uint32_t color;
-  ort_poly(const OrtDraw& parent, bool _fill) :
+  olx_object_ptr<TStrList> custom_before, custom_after;
+  ort_poly(const OrtDraw& parent, bool _fill, bool join=true) :
     a_ort_object(parent),
-    fill(_fill),
+    fill(_fill), join(join),
     line_width(1.0f),
-    color(0x0) {  }
-  virtual void render(PSWriter&) const;
-  virtual float get_z() const;
-  void update_size(evecf &sz) const {
-    for (size_t i=0; i < points.Count(); i++)
+    color(0x0)
+  {}
+  void render(PSWriter&) const;
+  float get_z() const;
+  void update_size(evecf& sz) const {
+    for (size_t i = 0; i < points.Count(); i++) {
       a_ort_object::update_min_max(sz, points[i]);
+    }
   }
 };
 
@@ -148,18 +194,19 @@ struct ort_circle : public a_ort_object {
   uint32_t color;
   ort_circle(const OrtDraw& parent, const vec3f& _center, float _r, bool _fill)
     : a_ort_object(parent),
-      center(_center),
-      fill(_fill),
-      line_width(1.0f),
-      r(_r),
-      basis(NULL),
-      color(0) {}
-  ~ort_circle()  {
+    center(_center),
+    fill(_fill),
+    line_width(1.0f),
+    r(_r),
+    basis(0),
+    color(0)
+  {}
+  ~ort_circle() {
     olx_del_obj(basis);
   }
-  virtual void render(PSWriter&) const;
-  virtual float get_z() const {  return center[2];  }
-  void update_size(evecf &sz) const;
+  void render(PSWriter&) const;
+  float get_z() const { return center[2]; }
+  void update_size(evecf& sz) const;
 };
 
 struct ort_cone : public a_ort_object  {
@@ -176,9 +223,30 @@ struct ort_cone : public a_ort_object  {
       top_r(tr),
       color(cl),
       divs(5) {}
-  virtual void render(PSWriter&) const;
-  virtual float get_z() const {  return (bottom[2]+top[2])/2;  }
+  void render(PSWriter&) const;
+  float get_z() const {  return (bottom[2]+top[2])/2;  }
   void update_size(evecf &sz) const;
+};
+
+struct ort_arc : public a_ort_object {
+  vec3f center;
+  bool fill;
+  float line_width, r, start_angle, end_angle;
+  uint32_t color;
+  ort_arc(const OrtDraw& parent, const vec3f& _center, float _r,
+    float start_angle, float end_angle, bool _fill)
+    : a_ort_object(parent),
+    center(_center),
+    fill(_fill),
+    line_width(1.0f),
+    r(_r),
+    start_angle(start_angle),
+    end_angle(end_angle),
+    color(0)
+  {}
+  void render(PSWriter&) const;
+  float get_z() const { return center[2]; }
+  void update_size(evecf& sz) const;
 };
 
 class OrtDraw  {
@@ -225,9 +293,11 @@ protected:
   }
   void RenderRims(PSWriter& pw, const mat3f& pm, const vec3f& normal) const;
   void RenderQuads(PSWriter& pw, const mat3f& pm) const;
-  void _process_points(TPtrList<vec3f>& points, ort_poly& otp)  {
-    for( size_t i=0; i < otp.points.Count(); i++ )
+  void _process_points(TPtrList<vec3f>& points, ort_poly& otp) {
+    points.SetCapacity(points.Count() + otp.points.Count());
+    for (size_t i = 0; i < otp.points.Count(); i++) {
       points.Add(otp.points[i]);
+    }
   }
   struct ContourDrawer {
     const OrtDraw& parent;
@@ -303,7 +373,9 @@ public:
   friend struct ort_bond<TXLine>;
   friend struct ort_bond_line;
   friend struct ort_atom;
+  friend struct ort_angle;
   friend struct ort_poly;
+  friend struct ort_plane;
 };
 
 

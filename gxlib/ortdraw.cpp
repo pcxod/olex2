@@ -8,11 +8,10 @@
 ******************************************************************************/
 
 #include "ortdraw.h"
-#include "xatom.h"
-#include "xline.h"
 #include "dring.h"
 #include "styles.h"
 #include "gllabel.h"
+#include "xline.h"
 #include "dunitcell.h"
 #include "dbasis.h"
 #include "xgrid.h"
@@ -23,6 +22,9 @@
 #include "maputil.h"
 #include "arrays.h"
 
+//.............................................................................
+//.............................................................................
+//.............................................................................
 ort_atom::ort_atom(const OrtDraw& parent, const TXAtom& a) :
   a_ort_object(parent),
   atom(a),
@@ -62,7 +64,7 @@ ort_atom::ort_atom(const OrtDraw& parent, const TXAtom& a) :
     mask = 0;
   }
 }
-
+//.............................................................................
 void ort_atom::render_elp(PSWriter& pw) const {
   const mat3f& ielpm = *p_ielpm;
   if (parent.GetAtomOutlineSize() > 0) {
@@ -91,7 +93,7 @@ void ort_atom::render_elp(PSWriter& pw) const {
     render_rims(pw);
   }
 }
-
+//.............................................................................
 void ort_atom::render_sph(PSWriter& pw) const {
   if (parent.GetAtomOutlineSize() > 0) {
     pw.color(parent.GetAtomOutlineColor());
@@ -117,7 +119,7 @@ void ort_atom::render_sph(PSWriter& pw) const {
     pw.drawCircle(NullVec, draw_rad);
   }
 }
-
+//.............................................................................
 void ort_atom::render_standalone(PSWriter& pw) const {
   if ((draw_style&ortep_color_lines) != 0) {
     pw.color(sphere_color);
@@ -128,7 +130,7 @@ void ort_atom::render_standalone(PSWriter& pw) const {
   pw.drawLine(vec3f(-draw_rad, 0, 0), vec3f(draw_rad, 0, 0));
   pw.drawLine(vec3f(0, -draw_rad, 0), vec3f(0, draw_rad, 0));
 }
-
+//.............................................................................
 bool ort_atom::IsSpherical() const {
   bool res = !(p_elpm != 0 &&
     (atom.DrawStyle() == adsEllipsoid ||
@@ -138,9 +140,11 @@ bool ort_atom::IsSpherical() const {
   }
   return res;
 }
-
+//.............................................................................
 void ort_atom::render(PSWriter& pw) const {
-  if (mask == 0)  return;
+  if (mask == 0) {
+    return;
+  }
   pw.translate(crd);
   pw.lineWidth(parent.ElpLineWidth);
   if (mask == 16 && atom.DrawStyle() == adsStandalone) {
@@ -156,7 +160,7 @@ void ort_atom::render(PSWriter& pw) const {
   }
   pw.translate(-crd);
 }
-
+//.............................................................................
 void ort_atom::update_size(evecf &size) const {
   if (mask == 0) {
     return;
@@ -187,7 +191,7 @@ void ort_atom::update_size(evecf &size) const {
     size[3] = crd[1] + mh;
   }
 }
-
+//.............................................................................
 void ort_atom::render_rims(PSWriter& pw) const {
   if ((draw_style&(ortep_color_lines | ortep_color_fill)) != 0) {
     pw.color(rim_color);
@@ -209,7 +213,9 @@ void ort_atom::render_rims(PSWriter& pw) const {
     parent.RenderQuads(pw, pelpm);
   }
 }
-
+//.............................................................................
+//.............................................................................
+//.............................................................................
 template <class draw_t>
 ort_bond<draw_t>::ort_bond(const OrtDraw& parent,
   const draw_t &object,
@@ -222,8 +228,7 @@ ort_bond<draw_t>::ort_bond(const OrtDraw& parent,
 {
   draw_style = 0;
 }
-
-
+//.............................................................................
 template <class draw_t>
 uint32_t ort_bond<draw_t>::get_color(int primitive, uint32_t def) const {
   TGlPrimitive *glp = object.GetPrimitives().FindPrimitiveByName(
@@ -236,7 +241,7 @@ uint32_t ort_bond<draw_t>::get_color(int primitive, uint32_t def) const {
   }
   return glp == 0 ? def : glp->GetProperties().AmbientF.GetRGB();
 }
-
+//.............................................................................
 template <class draw_t>
 void ort_bond<draw_t>::render(PSWriter& pw) const {
   uint32_t mask = object.GetPrimitiveMask();
@@ -268,7 +273,7 @@ void ort_bond<draw_t>::render(PSWriter& pw) const {
   _render(pw, 1, mask);
   pw.translate(-atom_a.crd);
 }
-
+//.............................................................................
 template <class draw_t>
 void ort_bond<draw_t>::_render(PSWriter& pw, float scalex, uint32_t mask) const {
   if (mask == (1<<12) || mask == (1<<13) || (mask&((1<<6)|(1<<7))) != 0 ) {
@@ -504,6 +509,8 @@ void ort_bond<draw_t>::_render(PSWriter& pw, float scalex, uint32_t mask) const 
   }
 }
 //.............................................................................
+//.............................................................................
+//.............................................................................
 ort_bond_line::ort_bond_line(const OrtDraw& parent, const TXLine& line,
   const vec3f& from, const vec3f& to)
   : a_ort_object(parent),
@@ -539,7 +546,7 @@ ort_bond_line::ort_bond_line(const OrtDraw& parent, const TXLine& line,
     }
   }
 }
-
+//.............................................................................
 uint32_t ort_bond_line::get_color(int primitive, uint32_t def) const {
   TGlPrimitive *glp = line.GetPrimitives().FindPrimitiveByName(
     TXBond::GetSettings(this->parent.app.GetRenderer())
@@ -583,7 +590,7 @@ void ort_bond_line::render(PSWriter& pw) const {
   _render(pw, 1, mask);
   pw.translate(-shift);
 }
-
+//.............................................................................
 void ort_bond_line::_render(PSWriter& pw, float scalex, uint32_t mask) const {
   if (mask == (1 << 12) || mask == (1 << 13) || (mask&((1 << 6) | (1 << 7))) != 0) {
     pw.lineWidth(scalex);
@@ -704,36 +711,156 @@ void ort_bond_line::_render(PSWriter& pw, float scalex, uint32_t mask) const {
   }
 }
 //.............................................................................
+//.............................................................................
+//.............................................................................
+ort_angle::ort_angle(const OrtDraw& parent, const TXAngle &a)
+: a_ort_object_list(parent),
+angle(a), Z(0.0f)
+{
+  vec3f pa = (a.GetFrom() - a.GetCenter()) * a.GetRadius() + a.GetCenter() - a.GetDrawCenter();
+  vec3f pb = (a.GetTo() - a.GetCenter()) * a.GetRadius() + a.GetCenter() - a.GetDrawCenter();
+  vec3d_alist pts = a.CalcPoints();
+  ort_poly* p = new ort_poly(parent, false, false);
+  p->custom_before = &(*(new TStrList()) << "[8 8] 0 setdash");
+  p->custom_after = &(*(new TStrList()) << "[] 0 setdash");
+  if ((parent.GetColorMode() & ortep_color_lines) != 0) {
+    const TGraphicsStyle& style = a.GetPrimitives().GetStyle();
+    size_t lmi = style.IndexOfMaterial("Lines");
+    if (lmi == InvalidIndex) {
+      lmi = style.IndexOfMaterial("Balls");
+    }
+    if (lmi == InvalidIndex) {
+      lmi = style.IndexOfMaterial("Cylinders");
+    }
+    if (lmi != InvalidIndex) {
+      TGlMaterial& glm = style.GetPrimitiveStyle(lmi).GetProperties();
+      p->color = glm.AmbientF.GetRGB();
+    }
+  }
+  p->points.SetCapacity(pts.Count());
+  for (size_t pi = 0; pi < pts.Count(); pi++) {
+    vec3f pt = parent.ProjectPoint(pts[pi] + a.GetDrawCenter());
+    p->points << pt;
+    if (pi == 0) {
+      Z = pt[2];
+    }
+    else if (pt[2] > Z) {
+      Z = pt[2];
+    }
+  }
+  objects << p;
+}
+//.............................................................................
+//.............................................................................
+//.............................................................................
+ort_plane::ort_plane(const OrtDraw& parent, const TXPlane& p)
+: a_ort_object_list(parent),
+  plane(p)
+{
+  for (size_t i = 0; i < p.GetPrimitives().PrimitiveCount(); i++) {
+    TGlPrimitive& gp = p.GetPrimitives().GetPrimitive(i);
+    vec3f cnt = parent.ProjectPoint(p.GetCenter());
+    switch (gp.GetOwnerId()) {
+    case 0: // plane
+    {
+      ort_poly* l = new ort_poly(parent, true);
+      if ((parent.GetColorMode() & ortep_color_planes) != 0) {
+        l->color = gp.GetProperties().AmbientF.GetRGB();
+      }
+      else {
+        l->color = OLX_RGB(0x5f, 0x5f, 0x5f);
+      }
+      for (size_t i = 0; i < p.Count(); i++) {
+        vec3d v = (p.GetAtom(i).crd() - p.GetCenter()) * 0.9 + p.GetCenter();
+        l->points.AddNew(parent.ProjectPoint(v));
+      }
+      objects << l;
+    }
+    break;
+    case 1: // centroid
+    {
+      ort_circle* c = new ort_circle(parent, cnt,
+        parent.DrawScale * (float)gp.Params[0], true);
+      if ((parent.GetColorMode() & ortep_color_planes) != 0) {
+        c->color = gp.GetProperties().AmbientF.GetRGB();
+      }
+      objects << c;
+    }
+    break;
+    case 2: // ring
+    {
+      ort_circle* c = new ort_circle(parent, cnt, parent.DrawScale * 0.85f, false);
+      if ((parent.GetColorMode() & ortep_color_planes) != 0) {
+        c->color = gp.GetProperties().AmbientF.GetRGB();
+      }
+      c->line_width = 3;
+      mat3f m = p.GetBasis();
+      m.SwapRows(0, 2);
+      m[1] = m[2].XProdVec(m[0]).Normalise();
+      c->basis = new mat3f(m * parent.app.GetRenderer().GetBasis().GetMatrix());
+      objects.Add(c);
+    }
+    break;
+    case 3: // normal
+    {
+    }
+    break;
+    }
+  }
+  Z = parent.ProjectPoint(p.GetCenter())[2];
+}
+//.............................................................................
+//.............................................................................
+//.............................................................................
 void ort_line::render(PSWriter& pw) const {
   pw.lineWidth(width);
   pw.color(color);
   pw.drawLine(from, to);
 }
-
+//.............................................................................
 float ort_line::get_z() const {
   return (from[2] + to[2]) / 2; 
   //return olx_min(from[2], to[2]);
   //return olx_min(from[2], to[2]);
 }
-
+//.............................................................................
+//.............................................................................
 //.............................................................................
 void ort_poly::render(PSWriter& pw) const {
+  // more 'generic' use of the pointer
+  if (custom_before.ok()) {
+    const TStrList& l = *custom_before;
+    for (size_t i = 0; i < l.Count(); i++) {
+      pw.custom(l[i]);
+    }
+  }
   if (fill && points.Count() > 2) {
     pw.color(color);
-    pw.drawLines(points, InvalidSize, true, &PSWriter::fill);
+    pw.drawLines(points, InvalidSize, join, &PSWriter::fill);
   }
   else {
     if (color != 0xffffffff) {
       pw.lineWidth(line_width*1.2);
       pw.color(0xffffffff);
-      pw.drawLines(points, InvalidSize, true);
+      pw.drawLines(points, InvalidSize, join);
     }
     pw.lineWidth(line_width);
     pw.color(color);
-    pw.drawLines(points, InvalidSize, true);
+    pw.drawLines(points, InvalidSize, join);
   }
-}
 
+  //alternative uses - passed olx_object_ptr os checked for validity
+  for (IIterator<olxstr>::ptr_t i = IndexableIterator::MakeConst(custom_after);
+    i->HasNext();)
+  {
+    pw.custom(i->Next());
+  }
+   // this needs to check if the pointer is valid!
+  //for (IIterator<olxstr>::ptr_t i = custom_after->Iterate(); i->HasNext();) {
+  //  pw.custom(i->Next());
+  //}
+}
+//.............................................................................
 float ort_poly::get_z() const {
   float z = 0;
   for (size_t i = 0; i < points.Count(); i++) {
@@ -746,8 +873,9 @@ float ort_poly::get_z() const {
   //}
   //return points.IsEmpty() ? 0 : z;
 }
-
-
+//.............................................................................
+//.............................................................................
+//.............................................................................
 void ort_circle::render(PSWriter& pw) const {
   pw.color(color);
   pw.lineWidth(line_width);
@@ -773,7 +901,7 @@ void ort_circle::render(PSWriter& pw) const {
     }
   }
 }
-
+//.............................................................................
 void ort_circle::update_size(evecf &sz) const {
   if (basis == 0) {
     a_ort_object::update_min_max(sz, vec3f(center[0] + r, center[1] + r, 0));
@@ -787,8 +915,9 @@ void ort_circle::update_size(evecf &sz) const {
     a_ort_object::update_min_max(sz, vec3f(center[0] - hmx, center[1] - hmy, 0));
   }
 }
-
-
+//.............................................................................
+//.............................................................................
+//.............................................................................
 void ort_cone::render(PSWriter& pw) const {
   vec3f n = (top-bottom).Normalise();
   mat3f rm, basis = TEBasis::CalcBasis<vec3f,mat3f>(n);
@@ -805,7 +934,7 @@ void ort_cone::render(PSWriter& pw) const {
   pw.color(color);
   pw.drawQuads(b_crd, t_crd, &PSWriter::fill);
 }
-
+//.............................................................................
 void ort_cone::update_size(evecf &sz) const {
   try {
     vec3f _n = (top-bottom),
@@ -820,12 +949,33 @@ void ort_cone::update_size(evecf &sz) const {
     return;
   }
 }
-
-
+//.............................................................................
+//.............................................................................
+//.............................................................................
+void ort_arc::render(PSWriter& pw) const {
+  pw.color(color);
+  pw.lineWidth(line_width);
+  if (fill) {
+    pw.drawArc(center, r, start_angle, end_angle, &PSWriter::gsaveAndFill);
+    pw.color(0x0);
+    pw.stroke();
+  }
+  else {
+    pw.drawArc(center, r, start_angle, end_angle, &PSWriter::stroke);
+  }
+}
+//.............................................................................
+void ort_arc::update_size(evecf& sz) const {
+  a_ort_object::update_min_max(sz, vec3f(center[0] + r, center[1] + r, 0));
+  a_ort_object::update_min_max(sz, vec3f(center[0] - r, center[1] - r, 0));
+}
+//.............................................................................
+//.............................................................................
+//.............................................................................
 size_t OrtDraw::GetStippleCount(const ort_bond_line &l, bool half) const {
   return stipples_for_mask(l.line.GetPrimitiveMask(), half);
 }
-
+//.............................................................................
 void OrtDraw::RenderRims(PSWriter& pw, const mat3f& pelpm,
   const vec3f& norm_vec) const
 {
@@ -847,7 +997,7 @@ void OrtDraw::RenderRims(PSWriter& pw, const mat3f& pelpm,
   pts_cnt = PrepareArc(Arc, FilteredArc, norm_vec);
   pw.drawLines_vp(FilteredArc, pts_cnt, false);
 }
-
+//.............................................................................
 void OrtDraw::RenderQuads(PSWriter& pw, const mat3f& pelpm) const {
   pw.drawLine(NullVec, pelpm[0]);
   pw.drawLine(NullVec, pelpm[1]);
@@ -864,7 +1014,7 @@ void OrtDraw::RenderQuads(PSWriter& pw, const mat3f& pelpm) const {
       pelpm[2]*((float)(PieDiv-j)/PieDiv));
   }
 }
-
+//.............................................................................
 size_t OrtDraw::PrepareArc(const TArrayList<vec3f>& in,
   TPtrList<const vec3f>& out, const vec3f& normal) const
 {
@@ -893,7 +1043,7 @@ size_t OrtDraw::PrepareArc(const TArrayList<vec3f>& in,
   }
   return cnt;
 }
-
+//.............................................................................
 void OrtDraw::Init(PSWriter& pw) {
   ElpCrd.SetCount(ElpDiv);
   Arc.SetCount(ElpDiv);
@@ -954,6 +1104,7 @@ void OrtDraw::Init(PSWriter& pw) {
   ProjMatr = basis.GetMatrix()*DrawScale;
   UnProjMatr = ProjMatr.GetInverse();
 }
+//.............................................................................
 /*
 Grid interpolation stuff...
 http://xtal.sourceforge.net/man/slant-desc.html
@@ -1023,7 +1174,7 @@ void OrtDraw::Render(const olxstr& fileName) {
   TGXApp::AtomIterator ai = app.GetAtoms();
   TGXApp::BondIterator bi = app.GetBonds();
   TGXApp::PlaneIterator pi = app.GetPlanes();
-
+  
   size_t extra_tria_cnt = 0;
   while (ai.HasNext()) {
     TXAtom& xa = ai.Next();
@@ -1037,58 +1188,7 @@ void OrtDraw::Render(const olxstr& fileName) {
     if (!p.IsVisible()) {
       continue;
     }
-    for (size_t i = 0; i < p.GetPrimitives().PrimitiveCount(); i++) {
-      TGlPrimitive &gp = p.GetPrimitives().GetPrimitive(i);
-      vec3f cnt = ProjectPoint(p.GetCenter());
-      switch (gp.GetOwnerId()) {
-      case 0: // plane
-      {
-        ort_poly* l = new ort_poly(*this, true);
-        if ((GetColorMode() & ortep_color_planes) != 0) {
-          l->color = gp.GetProperties().AmbientF.GetRGB();
-        }
-        else {
-          l->color = OLX_RGB(0x5f, 0x5f, 0x5f);
-        }
-        for (size_t i = 0; i < p.Count(); i++) {
-          vec3d v = (p.GetAtom(i).crd() - p.GetCenter()) * 0.9 + p.GetCenter();
-          l->points.AddNew(ProjectPoint(v));
-        }
-        objects.Add(l);
-        _process_points(all_points, *l);
-      }
-      break;
-      case 1: // centroid
-      {
-        ort_circle *c = new ort_circle(*this, cnt, DrawScale*(float)gp.Params[0], true);
-        if ((GetColorMode() & ortep_color_planes) != 0) {
-          c->color = gp.GetProperties().AmbientF.GetRGB();
-        }
-        objects.Add(c);
-        all_points.Add(c->center);
-      }
-      break;
-      case 2: // ring
-      {
-        ort_circle *c = new ort_circle(*this, cnt, DrawScale*0.85f, false);
-        if ((GetColorMode() & ortep_color_planes) != 0) {
-          c->color = gp.GetProperties().AmbientF.GetRGB();
-        }
-        c->line_width = 3;
-        mat3f m = p.GetBasis();
-        m.SwapRows(0, 2);
-        m[1] = m[2].XProdVec(m[0]).Normalise();
-        c->basis = new mat3f(m*app.GetRenderer().GetBasis().GetMatrix());
-        objects.Add(c);
-        all_points.Add(&c->center);
-      }
-      break;
-      case 3: // normal
-      {
-      }
-      break;
-      }
-    }
+    objects << new ort_plane(*this, p);
   }
   atoms.Clear();
   ai.Reset();
@@ -1294,6 +1394,13 @@ void OrtDraw::Render(const olxstr& fileName) {
       delete[] data[i];
     }
   }
+  for (size_t i = 0; i < app.AngleCount(); i++) {
+    const TXAngle& a = app.GetAngle(i);
+    if (!a.IsVisible()) {
+      continue;
+    }
+    objects << new ort_angle(*this, a);
+  }
   QuickSorter::SortSF(objects, OrtObjectsZSort);
   if (app.AtomLegend().IsVisible()) {
     const TAtomLegend &al = app.AtomLegend();
@@ -1358,6 +1465,12 @@ void OrtDraw::Render(const olxstr& fileName) {
     TXLine &l = app.GetLine(i);
     if (l.GetGlLabel().IsVisible()) {
       Labels.Add(l.GetGlLabel());
+    }
+  }
+  for (size_t i = 0; i < app.AngleCount(); i++) {
+    const TXAngle& a = app.GetAngle(i);
+    if (a.GetGlLabel().IsVisible()) {
+      Labels.Add(a.GetGlLabel());
     }
   }
   evecf boundary(4);
@@ -1454,7 +1567,7 @@ void OrtDraw::Render(const olxstr& fileName) {
   boundary[3] += YOffset;
   pw.writeBoundingBox(boundary);
 }
-
+//.............................................................................
 void OrtDraw::ContourDrawer::draw(float x1, float y1, float x2, float y2,
   float z)
 {
@@ -1468,7 +1581,7 @@ void OrtDraw::ContourDrawer::draw(float x1, float y1, float x2, float y2,
   objects.Add(new ort_line(parent, parent.ProjectPoint(p1),
     parent.ProjectPoint(p2), color));
 }
-
+//.............................................................................
 float OrtDraw::GetLineRad(const ort_bond_line& b, uint32_t mask) const {
   float r = BondRad;
   //even thinner for line or "balls" bond

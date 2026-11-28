@@ -221,8 +221,9 @@ public:
       return s.GetValue(idx);
     }
   };
+  // interface implementation, must be raw pointer
   IIterator<VType>* iterate() const {
-    return new IndexableIterator<olxdict, ValueAccessor, VType>(this);
+    return IndexableIterator::MakeCustom<olxdict, ValueAccessor, VType>(this);
   }
 public:
   typedef KType key_item_type;

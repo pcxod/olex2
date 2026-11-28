@@ -336,8 +336,9 @@ namespace sorted {
         return s.GetValue(idx);
       }
     };
+    // interface implementation, must be raw pointer
     IIterator<obj_t>* iterate() const {
-      return new IndexableIterator< StringAssociation, ValueAccessor, obj_t>(this);
+      return IndexableIterator::MakeCustom<StringAssociation, ValueAccessor, obj_t>(this);
     }
   };
 }

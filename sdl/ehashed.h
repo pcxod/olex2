@@ -441,7 +441,7 @@ template <typename item_t, class comparator_t>
 struct SetFactory {
   typedef olxset<item_t, comparator_t> basket_t;
   typedef item_t value_t;
-  typedef IndexableIterator<basket_t, MDValueAccessor, value_t> value_iterator_t;
+  typedef IIterator<value_t> value_iterator_t;
   comparator_t cmp;
   SetFactory() {}
   SetFactory(const comparator_t& cmp)
@@ -453,7 +453,7 @@ struct SetFactory {
     //return new basket_t(cmp, olx_reserve(1));
   }
   value_iterator_t* new_iterator(basket_t* b) const {
-    return new value_iterator_t(b);
+    return IndexableIterator::MakeCustom<basket_t, MDValueAccessor, value_t>(b);
   }
 };
 
@@ -461,7 +461,7 @@ template <typename key_t, typename item_t, class comparator_t>
 struct MapFactory {
   typedef olxdict<key_t, item_t, comparator_t> basket_t;
   typedef item_t value_t;
-  typedef IndexableIterator<basket_t, MDValueAccessor, value_t> value_iterator_t;
+  typedef IIterator<value_t> value_iterator_t;
   comparator_t cmp;
   MapFactory() {}
   MapFactory(const comparator_t& cmp)
@@ -473,7 +473,7 @@ struct MapFactory {
     //return new basket_t(cmp, olx_reserve(1));
   }
   value_iterator_t* new_iterator(basket_t* b) const {
-    return new value_iterator_t(b);
+    return IndexableIterator::MakeCustom<basket_t, MDValueAccessor, value_t>(b);
   }
 };
 
